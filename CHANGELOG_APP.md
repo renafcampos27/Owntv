@@ -9,6 +9,17 @@
 > (e.g. `(community PR #40 by @codeVerine)`). Issue numbers that are part of a title (e.g. `(#57)`) are
 > fine; explanatory parentheticals are not. Descriptions belong in CHANGELOG.md, never here.
 
+## v6.0.0 — 2026-09-24
+
+### ✨ New features
+
+- **👤 Pre-fill default profile name**
+
+### 🩹 Fixes
+
+- **⚡ Instant app startup optimization**
+- **📺 Reliable playback for predefined startup channels**
+
 ## v5.0.2 — 2026-09-21
 
 ### 🩹 Fixes

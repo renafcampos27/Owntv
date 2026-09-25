@@ -1,5 +1,20 @@
 # Changelog
 
+## v6.0.0 — 2026-09-24
+
+### ✨ New features
+
+#### 👤 Profile Creation Pre-fill
+- New profiles automatically pre-fill the name "Renato" for faster profile setup.
+
+### 🩹 Fixes
+
+#### ⚡ Instant App Startup
+- Optimized database probe on launch to avoid blocking the main UI thread, resulting in instant startup.
+
+#### 📺 Predefined Startup Channel Resolution
+- Improved profile resolution and added fallback channel matching so auto-start channels always play reliably on cold launch.
+
 ## v5.0.2 — 2026-09-21
 
 ### 🩹 Fixes
