@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zapping_stop_clear">Restart stream when changing channels (test)</string>
+    <string name="zapping_stop_clear_description">Compare an explicit stop before opening a different fullscreen channel in ExoPlayer. Off by default.</string>
+</resources>

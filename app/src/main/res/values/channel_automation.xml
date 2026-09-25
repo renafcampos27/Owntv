@@ -1,0 +1,14 @@
+<resources>
+    <string name="channel_recovery">Automatic channel alternatives</string>
+    <string name="channel_recovery_description">If a channel does not open within the selected wait time, try another version of the same channel. Remote navigation always takes priority.</string>
+    <string name="channel_recovery_switching">Trying %1$s…</string>
+    <string name="channel_recovery_failed">No working version found. Choose another channel or try again.</string>
+    <string name="auto_start_boot">Open after power-on or restart</string>
+    <string name="auto_start_boot_description">Requires the optional automatic-start service in system Accessibility settings.</string>
+    <string name="auto_start_wake">Open when the box wakes up</string>
+    <string name="auto_start_wake_description">Return to OwnTV after wake, including from the home screen. Requires the automatic-start service.</string>
+    <string name="auto_start_permission">Configure automatic-start service</string>
+    <string name="auto_start_service_name">OwnTV automatic start</string>
+    <string name="auto_start_service_description">Enable OwnTV automatic start in Accessibility. This optional service listens for wake events and opens OwnTV. It does not read screen content or control your remote. You can disable it at any time. Box firmware may restrict automatic opening.</string>
+    <string name="auto_start_settings_unavailable">Open Accessibility in the box system settings and enable OwnTV automatic start.</string>
+</resources>

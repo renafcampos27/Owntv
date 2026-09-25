@@ -1,0 +1,8 @@
+<resources>
+    <string name="channel_recovery_timeout">Tempo antes de tentar outra versão</string>
+    <string name="channel_recovery_timeout_description">Escolha entre 1 e 60 segundos para cada tentativa de abertura. Aplica-se a partir do próximo canal que abrir.</string>
+    <string name="channel_recovery_seconds">%1$d s</string>
+    <string name="auto_start_failure">O serviço de arranque falhou (%1$s). Desative e volte a ativar o serviço na Acessibilidade e tente novamente.</string>
+    <string name="auto_start_app_info">Abrir definições de sistema da OwnTV</string>
+    <string name="auto_start_restricted_help">Se o Android bloquear a ativação, abra as informações da app e procure Permitir definições restritas, se disponível. Depois volte à Acessibilidade. Se o serviço se desligar sem mensagem, comunique esse comportamento; só está confirmado quando aparecer Ativado aqui.</string>
+</resources>

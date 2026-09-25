@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="simple_mode_categories">Modo simples — ocultar categorias</string>
+    <string name="simple_mode_categories_description">Mostrar todos os canais das listas atualmente selecionadas.</string>
+    <string name="simple_mode_sidebar">Ocultar barra lateral na TV em direto</string>
+    <string name="simple_mode_sidebar_description">Abrir na TV em direto. Na lista de canais, prima Voltar para aceder às Definições ou sair. Ative ambas as opções para mostrar apenas os canais.</string>
+    <string name="simple_mode_on">Ativado</string>
+    <string name="simple_mode_off">Desativado</string>
+    <string name="simple_mode_menu">Menu da lista de canais</string>
+    <string name="simple_mode_menu_description">Abra as definições, saia da app ou regresse aos canais.</string>
+</resources>

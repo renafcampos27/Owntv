@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="zapping_stop_clear">Reiniciar stream ao mudar de canal (teste)</string>
+    <string name="zapping_stop_clear_description">Compara uma paragem antes de abrir outro canal em ecrã inteiro no ExoPlayer. Desativado por predefinição.</string>
+</resources>

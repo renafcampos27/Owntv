@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_complete_settings_description">Player, appearance, hidden menus, channel recovery and timeout, automatic startup and zapping options.</string>
+</resources>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="simple_mode_categories">Simple mode — hide categories</string>
+    <string name="simple_mode_categories_description">Show all channels in the current playlist selection.</string>
+    <string name="simple_mode_sidebar">Hide sidebar in Live TV</string>
+    <string name="simple_mode_sidebar_description">Start in Live TV. Press Back in the channel list for Settings or Exit. Enable both options to show only channels.</string>
+    <string name="simple_mode_on">On</string>
+    <string name="simple_mode_off">Off</string>
+    <string name="simple_mode_menu">Channel list menu</string>
+    <string name="simple_mode_menu_description">Open settings, exit the app or return to channels.</string>
+</resources>

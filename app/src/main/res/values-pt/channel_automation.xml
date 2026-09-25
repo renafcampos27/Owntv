@@ -1,0 +1,14 @@
+<resources>
+    <string name="channel_recovery">Alternativas automáticas de canais</string>
+    <string name="channel_recovery_description">Se o canal não abrir no tempo escolhido, tentar outra versão do mesmo canal. O comando tem sempre prioridade.</string>
+    <string name="channel_recovery_switching">A tentar %1$s…</string>
+    <string name="channel_recovery_failed">Nenhuma versão disponível. Escolha outro canal ou tente novamente.</string>
+    <string name="auto_start_boot">Abrir ao ligar ou reiniciar</string>
+    <string name="auto_start_boot_description">Requer ativar o serviço opcional de arranque automático na Acessibilidade do sistema.</string>
+    <string name="auto_start_wake">Abrir ao sair da suspensão</string>
+    <string name="auto_start_wake_description">Voltar à OwnTV após suspensão, mesmo a partir do ecrã inicial. Requer o serviço de arranque automático.</string>
+    <string name="auto_start_permission">Configurar serviço de arranque automático</string>
+    <string name="auto_start_service_name">Arranque automático OwnTV</string>
+    <string name="auto_start_service_description">Ative Arranque automático OwnTV na Acessibilidade. Este serviço opcional deteta o despertar da box e abre a OwnTV. Não lê o conteúdo do ecrã nem controla o comando. Pode desativá-lo a qualquer momento. O sistema da box pode limitar a abertura automática.</string>
+    <string name="auto_start_settings_unavailable">Abra a Acessibilidade nas definições da box e ative Arranque automático OwnTV.</string>
+</resources>
