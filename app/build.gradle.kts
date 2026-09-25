@@ -47,10 +47,9 @@ android {
         applicationId = "tv.own.owntv"
         minSdk = 26
         targetSdk = 36
-        // Custom version 6. Keep the code above the previously installed debug builds (99999).
-        // CI may override these values explicitly.
-        versionCode = (System.getenv("VERSION_CODE") ?: "100000").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "6.0.0"
+        // Release version 100.0.0 (versionCode 1000000) so it installs directly over legacy 99.99 builds.
+        versionCode = (System.getenv("VERSION_CODE") ?: "1000000").toInt()
+        versionName = System.getenv("VERSION_NAME") ?: "100.0.0"
 
         // Opt-in local diagnostic APKs keep the rolling playback trace enabled even when they are
         // release-signed (so they can update an installed production build without changing its data).
