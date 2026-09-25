@@ -19,6 +19,7 @@ import org.koin.android.ext.koin.androidLogger
 import org.koin.core.context.GlobalContext
 import org.koin.core.context.startKoin
 import org.koin.core.logger.Level
+import tv.own.owntv.core.CoreBuildInfo
 import tv.own.owntv.core.util.Perf
 import tv.own.owntv.core.di.coreModule
 import tv.own.owntv.core.di.databaseModule
@@ -91,7 +92,7 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         // this value, so the line changes nothing today — it is here so the television names its own
         // repository instead of relying on core to guess it, the same as the phone app does. A
         // default that happens to be right for one app is a trap for every other one.
-        tv.own.owntv.core.CoreBuildInfo.releaseRepo = "ahXN00/OwnTV"
+        CoreBuildInfo.releaseRepo = "renafcampos27/Owntv"
         // First thing after the context exists: a crash from here on leaves a trace on disk that the
         // user can export from Settings, instead of being lost with the process.
         tv.own.owntv.core.util.CrashRecorder.diagnostics = { tv.own.owntv.player.LiveDiagnosticsLog.snapshot() }
