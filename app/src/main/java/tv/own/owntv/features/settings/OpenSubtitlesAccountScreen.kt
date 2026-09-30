@@ -355,17 +355,6 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
             )
         }
 
-        // Delete downloaded subtitles (available regardless of sign-in state — cached files are local).
-        Spacer(Modifier.height(14.dp))
-        GroupLabel(stringResource(R.string.player_subtitles_downloads))
-        ServiceSettingsRow(
-            icon = OwnTVIcon.DOWNLOADS, title = stringResource(R.string.player_subtitles_delete_action),
-            desc = stringResource(R.string.player_subtitles_delete_description),
-            chevron = true,
-            modifier = Modifier.focusRequester(deleteFocus),
-            onClick = { showDeleteSubs = true },
-        )
-
         // Push the credit block clearly below the actions, toward the bottom of the panel.
         // (Can't use weight() here — the column is verticalScroll'ed, so height is unbounded.)
         Spacer(Modifier.height(64.dp))

@@ -20,8 +20,8 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/ahXN00/OwnTV/actions/workflows/android.yml">
-    <img alt="Android CI" src="https://github.com/ahXN00/OwnTV/actions/workflows/android.yml/badge.svg">
+  <a href="https://github.com/renatofc27/OwnTV/actions/workflows/android.yml">
+    <img alt="Android CI" src="https://github.com/renatofc27/OwnTV/actions/workflows/android.yml/badge.svg">
   </a>
 </p>
 
@@ -171,9 +171,9 @@ OwnTV_Mobile/  (separate repo, the phone and tablet app on the same core)
 
 **Related repositories**
 
-- 📱 **[OwnTV Mobile](https://github.com/ahXN00/OwnTV_Mobile)** — the phone and tablet app, built on
+- 📱 **[OwnTV Mobile](https://github.com/renatofc27/OwnTV_Mobile)** — the phone and tablet app, built on
   the same core.
-- 🧩 **[OwnTV Core](https://github.com/ahXN00/OwnTV_Core)** — the shared engine both apps run on.
+- 🧩 **[OwnTV Core](https://github.com/renatofc27/OwnTV_Core)** — the shared engine both apps run on.
 
 ## 📚 Docs (`extras/`)
 
@@ -184,11 +184,11 @@ OwnTV_Mobile/  (separate repo, the phone and tablet app on the same core)
 
 ## 📥 Installing (Fire TV / Android TV)
 
-Grab the signed APK from the [**latest release**](https://github.com/ahXN00/OwnTV/releases/latest).
+Grab the signed APK from the [**latest release**](https://github.com/renatofc27/OwnTV/releases/latest).
 This link always points at the newest build:
 
 ```
-https://github.com/ahXN00/OwnTV/releases/latest/download/OwnTV.apk
+https://github.com/renatofc27/OwnTV/releases/latest/download/OwnTV.apk
 ```
 
 - **Fire TV** — install **Downloader** (by AFTVnews), then enter code **`4308278`**. Enable *Apps from
@@ -206,10 +206,10 @@ https://github.com/ahXN00/OwnTV/releases/latest/download/OwnTV.apk
 > **[install the APK](#-installing-fire-tv--android-tv)**.
 
 **One extra step first: a GitHub token.** Half the app lives in the separate
-[OwnTV_Core](https://github.com/ahXN00/OwnTV_Core) repository and is pulled from GitHub Packages,
+[OwnTV_Core](https://github.com/renatofc27/OwnTV_Core) repository and is pulled from GitHub Packages,
 which always asks who you are. Without it, Gradle sync fails with a `401`.
 
-1. **Get the code** — `git clone https://github.com/ahXN00/OwnTV.git` (or download the ZIP).
+1. **Get the code** — `git clone https://github.com/renatofc27/OwnTV.git` (or download the ZIP).
 2. **Add a token** — create a [personal access token (classic)](https://github.com/settings/tokens)
    with the single scope **`read:packages`**, then put it in `~/.gradle/gradle.properties`
    (`C:\Users\<you>\.gradle\gradle.properties`) — never inside the project:

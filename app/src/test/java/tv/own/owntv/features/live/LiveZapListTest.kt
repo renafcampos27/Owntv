@@ -264,4 +264,57 @@ class LiveZapListTest {
         h.releaseWindow = false
         h.stop()
     }
+
+    @Test
+    fun `a lineup of 240 channels arms completely and zaps fluidly with wraparound`() {
+        val channels240 = (1L..240L).map {
+            ChannelEntity(id = it, sourceId = 1, categoryId = 10, name = "Ch $it", streamUrl = "http://x/$it.ts", remoteId = "$it")
+        }
+        val h = Harness(category = channels240)
+        h.zap.armFromBrowse(channels240, title = "All Channels", key = LiveKey.All, categoryId = null)
+        assertEquals(240, h.zap.channels.value.size)
+        assertTrue(h.zap.canZap.value)
+
+        // Step forward from channel 1
+        h.playing = 1L
+        assertEquals(2L, h.zap.next(1)?.id)
+        // Step backward from channel 1 wraps to channel 240
+        assertEquals(240L, h.zap.next(-1)?.id)
+
+        // Step forward from channel 240 wraps to channel 1
+        h.playing = 240L
+        assertEquals(1L, h.zap.next(1)?.id)
+        assertEquals(239L, h.zap.next(-1)?.id)
+
+        // Step around channel 120
+        h.playing = 120L
+        assertEquals(121L, h.zap.next(1)?.id)
+        assertEquals(119L, h.zap.next(-1)?.id)
+
+        h.stop()
+    }
+
+    @Test
+    fun `a numeric tune within a 240 channel lineup does not trigger window builds`() {
+        val channels240 = (1L..240L).map {
+            ChannelEntity(id = it, sourceId = 1, categoryId = 10, name = "Ch $it", streamUrl = "http://x/$it.ts", remoteId = "$it")
+        }
+        val h = Harness(category = channels240, window = channels240)
+        h.zap.armFromBrowse(channels240, title = "Category 10", key = null, categoryId = 10L)
+        h.playing = 1L
+
+        val played = mutableListOf<Long>()
+        runBlocking {
+            h.zap.directTune(currentChannelId = 1L, tuned = channels240[234]) { played += it.id } // Channel 235
+        }
+        assertEquals(listOf(235L), played)
+        runBlocking { delay(40) }
+        assertEquals(0, h.windowBuilds)
+
+        h.playing = 235L
+        assertEquals(236L, h.zap.next(1)?.id)
+        assertEquals(234L, h.zap.next(-1)?.id)
+
+        h.stop()
+    }
 }

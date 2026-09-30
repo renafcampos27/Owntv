@@ -53,6 +53,7 @@ import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.modalScrim
 import tv.own.owntv.ui.components.trapAllFocusExit
 import tv.own.owntv.ui.theme.OwnTVTheme
+import tv.own.owntv.ui.theme.gradientWash
 
 /**
  * Read-only, already-merged data for the [MediaDetailsScreen] window. The caller applies the §7.1/§4.1
@@ -131,9 +132,7 @@ fun MediaDetailsScreen(details: MediaDetailsUi, onExit: () -> Unit, modifier: Mo
                     )
                 }
                 Box(
-                    modifier = Modifier.fillMaxSize().background(
-                        Brush.verticalGradient(0.55f to Color.Transparent, 1f to colors.surfaceContainerHigh),
-                    ),
+                    modifier = Modifier.fillMaxSize().gradientWash(vertical = true, 0.55f to Color.Transparent, 1f to colors.surfaceContainerHigh),
                 )
             }
 

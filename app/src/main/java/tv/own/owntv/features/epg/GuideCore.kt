@@ -33,6 +33,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
@@ -144,18 +145,21 @@ internal fun ProgrammeStripCanvas(
     val catchupGlyph = remember(catchupStyle) { measurer.measure("↻", catchupStyle) }
 
     val scrollPx = hScroll.value.toFloat() // read in composable scope so Canvas redraws on scroll
+    val cells = remember(programmes, windowStart, windowEnd) { GuideProgrammeCells.layout(programmes, windowStart, windowEnd) }
     Canvas(Modifier.fillMaxSize()) {
         val viewW = size.width
         val h = size.height
-        programmes.forEachIndexed { i, p ->
-            val s = p.startMs.coerceIn(windowStart, windowEnd)
-            val e = p.stopMs.coerceIn(windowStart, windowEnd)
-            if (e <= s) return@forEachIndexed
+        cells.forEach { cell ->
+            val i = cell.programmeIndex
+            val p = programmes[i]
+            val s = cell.startMs
+            val e = cell.stopMs
             val x = ((s - windowStart) / 60_000f) * pxPerMin - scrollPx
             val w = (((e - s) / 60_000f) * pxPerMin - gapPx).coerceAtLeast(0f)
-            if (x + w <= 0f || x >= viewW) return@forEachIndexed // cull off-screen programmes
+            if (w <= 0f || x + w <= 0f || x >= viewW) return@forEach // cull off-screen programmes
             val isNow = now in p.startMs until p.stopMs
-            val hi = highlightTime != null && highlightTime in p.startMs until p.stopMs
+            val hi = highlightTime != null && highlightTime in s until e
+            clipRect(left = x.coerceAtLeast(0f), top = 0f, right = (x + w).coerceAtMost(viewW), bottom = h) {
             val bg = when {
                 hi -> colors.card
                 isNow -> colors.primaryContainer.copy(alpha = 0.18f)
@@ -171,19 +175,22 @@ internal fun ProgrammeStripCanvas(
                 )
             }
             if (hi) drawRoundRect(color = colors.focusBorder, topLeft = Offset(x, 0f), size = Size(w, h), cornerRadius = corner, style = Stroke(borderPx))
-            val textW = (w - padPx * 2f).toInt()
+            val textX = x.coerceAtLeast(0f) + padPx
+            val badgeSpace = if (p.id in catchupIds && w > padPx * 4) catchupGlyph.size.width + padPx else 0f
+            val textW = ((x + w).coerceAtMost(viewW) - textX - padPx - badgeSpace).toInt()
             if (textW > 8) {
                 val tStyle = if (isNow && !hi) titleNowStyle else titleStyle
                 val mStyle = if (isNow && !hi) timeNowStyle else timeStyle
                 val title = measurer.measure(p.title, tStyle, overflow = TextOverflow.Ellipsis, maxLines = 1, constraints = Constraints(maxWidth = textW))
                 val time = measurer.measure(labels[i], mStyle, overflow = TextOverflow.Ellipsis, maxLines = 1, constraints = Constraints(maxWidth = textW))
                 val top = (h - (title.size.height + time.size.height + 2)) / 2f
-                drawText(title, topLeft = Offset(x + padPx, top))
-                drawText(time, topLeft = Offset(x + padPx, top + title.size.height + 2))
+                drawText(title, topLeft = Offset(textX, top))
+                drawText(time, topLeft = Offset(textX, top + title.size.height + 2))
             }
             // Catch-up badge (↻) at the cell's top-right — only on programmes this channel can rewind from.
             if (p.id in catchupIds && w > 50f) {
                 drawText(catchupGlyph, topLeft = Offset(x + w - catchupGlyph.size.width - 4f, 3f))
+            }
             }
         }
         // Vertical "now" marker — drawn on every row so it reads as one continuous line down the grid.
@@ -221,6 +228,7 @@ internal fun ProgrammeDetailDialog(
     // INTERNAL/EXTERNAL go straight there. Defaulted so non-catch-up callers can ignore it.
     catchupPlayer: SettingsRepository.CatchupPlayer = SettingsRepository.CatchupPlayer.INTERNAL,
     onPlayCatchupExternal: () -> Unit = {},
+    replayUnconfirmed: Boolean = false,
     // Denser variant for the Live TV catch-up picker, which opens this on top of an already-small
     // popup chain — full-size chrome dwarfed the picker it came from. Guide keeps the roomy layout.
     compact: Boolean = false,
@@ -300,6 +308,13 @@ internal fun ProgrammeDetailDialog(
                     )
                 }
                 Spacer(Modifier.height(if (compact) 16.dp else 24.dp))
+                if (replayUnconfirmed) {
+                    Text(stringResource(R.string.epg_replay_unconfirmed), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                } else if (!canCatchup && programme.stopMs <= System.currentTimeMillis()) {
+                    Text(stringResource(R.string.content_epg_catchup_unavailable), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                }
                 // FlowRow so the actions wrap to a second line on narrower screens instead of the last
                 // button being clipped off the dialog edge (4 buttons don't fit one row when catch-up adds
                 // "Watch from start" + "Watch channel").
@@ -317,10 +332,10 @@ internal fun ProgrammeDetailDialog(
                                 SettingsRepository.CatchupPlayer.EXTERNAL -> onPlayCatchupExternal()
                             }
                         }
-                        OwnTVButton(stringResource(R.string.content_epg_watch_start), onClick = startCatchup, icon = OwnTVIcon.PLAY, compact = compact, modifier = Modifier.focusRequester(fr))
-                        OwnTVButton(stringResource(R.string.content_epg_watch_channel), onClick = onWatch, style = OwnTVButtonStyle.SECONDARY, compact = compact)
+                        OwnTVButton(stringResource(if (replayUnconfirmed) R.string.epg_try_replay else R.string.content_epg_watch_start), onClick = startCatchup, icon = OwnTVIcon.PLAY, compact = compact, modifier = Modifier.focusRequester(fr))
+                        OwnTVButton(stringResource(R.string.epg_watch_live), onClick = onWatch, style = OwnTVButtonStyle.SECONDARY, compact = compact)
                     } else {
-                        OwnTVButton(stringResource(R.string.content_epg_watch_channel), onClick = onWatch, icon = OwnTVIcon.PLAY, compact = compact, modifier = Modifier.focusRequester(fr))
+                        OwnTVButton(stringResource(R.string.epg_watch_live), onClick = onWatch, icon = OwnTVIcon.PLAY, compact = compact, modifier = Modifier.focusRequester(fr))
                     }
                     // Record. What it offers depends on what is already true of this programme, so
                     // the button never lies: nothing yet → Record (or "from catch-up" when the

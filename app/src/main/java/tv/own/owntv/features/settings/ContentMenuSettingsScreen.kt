@@ -85,7 +85,7 @@ fun ContentMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier)
     val vm: SettingsViewModel = koinViewModel()
     val colors = OwnTVTheme.colors
     val scrollState = rememberScrollState()
-    val rowFocus = remember { ContentMenu.entries.associateWith { FocusRequester() } }
+    val rowFocus = remember { listOf(ContentMenu.LIVE).associateWith { FocusRequester() } }
     var openMenu by remember { mutableStateOf<ContentMenu?>(null) }
     LaunchedEffect(Unit) { runCatching { rowFocus.getValue(ContentMenu.LIVE).requestFocus() } }
     BackHandler { onBack() }
@@ -109,7 +109,7 @@ fun ContentMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier)
         )
         Spacer(Modifier.height(16.dp))
 
-        ContentMenu.entries.forEach { menu ->
+        listOf(ContentMenu.LIVE).forEach { menu ->
             val saved by remember(menu) { vm.menuOrder(menu) }.collectAsStateWithLifecycle(emptyList())
             Row2(
                 icon = menuIcon(menu),
@@ -127,7 +127,7 @@ fun ContentMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier)
         Row2(
             icon = OwnTVIcon.REFRESH,
             title = stringResource(R.string.common_reset),
-            onClick = { ContentMenu.entries.forEach { vm.setMenuOrder(it, emptyList()) } },
+            onClick = { listOf(ContentMenu.LIVE).forEach { vm.setMenuOrder(it, emptyList()) } },
         )
     }
 

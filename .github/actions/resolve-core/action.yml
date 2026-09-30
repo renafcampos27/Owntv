@@ -9,7 +9,7 @@ description: >
 # from a FORK. GPR_TOKEN is therefore empty for every outside contributor, dependency resolution
 # fails before a line is compiled, and their pull request goes red through no fault of their own.
 #
-# ahXN00/OwnTV_Core is public, so `git clone` needs no credentials at all — only GitHub's Maven
+# renatofc27/OwnTV_Core is public, so `git clone` needs no credentials at all — only GitHub's Maven
 # registry does, and only because it demands a login even for public packages. Cloning core at the
 # tag the pin names and building it through the composite gives the same code by a route that works
 # without secrets. settings.gradle.kts already reads owntv.corePath; this is the same mechanism the
@@ -61,9 +61,9 @@ runs:
         # the tag matches coreVersion in build.gradle.kts — so this tag always exists for a pin that
         # was produced by the bump workflow.
         DEST="$RUNNER_TEMP/owntv-core"
-        echo "Cloning ahXN00/OwnTV_Core at core-$VERSION"
+        echo "Cloning renatofc27/OwnTV_Core at core-$VERSION"
         git clone --depth 1 --branch "core-$VERSION" \
-          https://github.com/ahXN00/OwnTV_Core.git "$DEST"
+          https://github.com/renatofc27/OwnTV_Core.git "$DEST"
 
         # The home gradle.properties, never the repo's: owntv.corePath is a machine-local setting and
         # writing it into a checked-in file would follow the branch into a merge.

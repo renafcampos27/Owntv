@@ -232,6 +232,8 @@ fun MoviesScreen(
     val listState = rememberLazyListState()
     val selFocus = remember { FocusRequester() }
     val firstItemFocus = remember { FocusRequester() }
+    // Right from the rail on an empty list: the list's search box, so a search with no results can be cleared.
+    val listSearchFocus = remember { FocusRequester() }
 
     // CH+- key paging: shared settings + hoisted rail state. gridPaneFocused/railPaneFocused let
     // chNavPaging consume the keys only for whichever pane is focused.
@@ -252,6 +254,7 @@ fun MoviesScreen(
     // states to the top whenever the category changes (fixes the cross-category scroll-leak bug).
     val perCategoryGrid = remember { mutableStateMapOf<LiveKey, LazyGridState>() }
     val perCategoryList = remember { mutableStateMapOf<LiveKey, LazyListState>() }
+    val perCategoryMovieIds = remember { mutableStateMapOf<LiveKey, Long>() }
     // NOTE: plain constructors, not remember*State() — these are created lazily inside getOrPut, so a
     // @Composable/rememberSaveable call here would register slots conditionally and corrupt the slot table.
     val effectiveGridState = if (rememberMovies) perCategoryGrid.getOrPut(selectedKey) { LazyGridState() } else gridState
@@ -290,11 +293,17 @@ fun MoviesScreen(
     LaunchedEffect(effectiveGridState, effectiveListState, viewMode, movies) {
         val grid = viewMode != SettingsRepository.VodViewMode.LIST
         snapshotFlow {
-            val info = if (grid) effectiveGridState.layoutInfo.visibleItemsInfo.map { it.index }
-            else effectiveListState.layoutInfo.visibleItemsInfo.map { it.index }
-            info.filter { it < movies.itemCount }
+            val count = movies.itemCount
+            val indices = if (grid) {
+                effectiveGridState.layoutInfo.visibleItemsInfo.map { it.index }
+            } else {
+                effectiveListState.layoutInfo.visibleItemsInfo.map { it.index }
+            }
+            indices.asSequence()
+                .filter { it < count }
                 .mapNotNull { movies.peek(it) }
                 .filter { it.posterUrl.isNullOrBlank() }
+                .toList()
         }.distinctUntilChanged().collect { vm.onPosterlessVisible(it) }
     }
     // Returning from the player: scroll to and focus the movie you just played (waits for the grid to load).
@@ -444,6 +453,37 @@ fun MoviesScreen(
             },
             listState = catListState,
             focusRequester = railFocus,
+            onNavigateRight = {
+                val targetId = if (rememberMovies) {
+                    perCategoryMovieIds[selectedKey] ?: selectedMovie?.id
+                } else {
+                    selectedMovie?.id
+                }
+                scope.launch {
+                    if (movies.itemCount > 0) {
+                        val targetIdx = if (targetId != null) {
+                            movies.itemSnapshotList.items.indexOfFirst { it.id == targetId }.takeIf { it >= 0 } ?: 0
+                        } else 0
+                        if (viewMode == SettingsRepository.VodViewMode.GRID) {
+                            runCatching { effectiveGridState.scrollToItem(targetIdx) }
+                        } else {
+                            runCatching { effectiveListState.scrollToItem(targetIdx) }
+                        }
+                        withFrameNanos { }
+                        repeat(3) {
+                            val focused = if (targetId != null) {
+                                runCatching { selFocus.requestFocus() }.getOrDefault(false)
+                            } else false
+                            if (focused) return@launch
+                            if (runCatching { firstItemFocus.requestFocus() }.getOrDefault(false)) return@launch
+                            if (runCatching { selFocus.requestFocus() }.getOrDefault(false)) return@launch
+                            withFrameNanos { }
+                        }
+                    } else {
+                        runCatching { listSearchFocus.requestFocus() }
+                    }
+                }
+            },
             // Cinematic floats the category panel on the artwork as its own frosted plate; the
             // Separate layout has the content panel behind it and needs none.
             showPanel = cinematic,
@@ -529,8 +569,14 @@ fun MoviesScreen(
                 // from outside (internal moves don't re-trigger it).
                 .focusProperties {
                     onEnter = {
-                        if (runCatching { selFocus.requestFocus() }.isFailure) {
-                            runCatching { firstItemFocus.requestFocus() }
+                        val targetMovieId = if (rememberMovies) perCategoryMovieIds[selectedKey] ?: selectedMovie?.id else selectedMovie?.id
+                        val focused = if (targetMovieId != null) {
+                            runCatching { selFocus.requestFocus() }.getOrDefault(false)
+                        } else false
+                        if (!focused) {
+                            if (!runCatching { firstItemFocus.requestFocus() }.getOrDefault(false)) {
+                                runCatching { selFocus.requestFocus() }
+                            }
                         }
                     }
                 }
@@ -549,17 +595,22 @@ fun MoviesScreen(
                 val meta = selectedMovieMeta?.takeIf { it.movieId == m?.id }?.cache
                 if (m != null) {
                     val providerPlot = m.plot?.takeIf { it.isNotBlank() }
+                    val cineQuality = remember(m.qualityRank, m.advertisedCapabilities) {
+                        tv.own.owntv.features.shell.components.cinematicQualityBadges(m.qualityRank, m.advertisedCapabilities)
+                    }
+                    val cineGenres = remember(meta?.genresJson) { jsonList(meta?.genresJson) }
+                    val cineCast = remember(meta?.castJson) { tv.own.owntv.core.metadata.MetadataCast.parse(meta?.castJson) }
                     tv.own.owntv.features.shell.components.CinematicDetails(
                         title = m.name,
                         logoUrl = tv.own.owntv.core.metadata.MetadataImages.logo(meta?.logoPath),
                         metaLine = metaLine(m, meta, metadataMode.tmdbWins),
-                        qualityBadges = tv.own.owntv.features.shell.components.cinematicQualityBadges(m.qualityRank, m.advertisedCapabilities),
+                        qualityBadges = cineQuality,
                         resumeLabel = selectedProgress
                             ?.takeIf { selectedMovie?.id == m.id && !vm.isMovieCompleted(it) && it.positionMs > 0 }
                             ?.let { stringResource(R.string.content_resume_at, tv.own.owntv.ui.components.formatTimestamp(it.positionMs)) },
-                        genres = jsonList(meta?.genresJson),
+                        genres = cineGenres,
                         plot = if (metadataMode.tmdbWins) meta?.overview ?: providerPlot else providerPlot ?: meta?.overview,
-                        cast = tv.own.owntv.core.metadata.MetadataCast.parse(meta?.castJson),
+                        cast = cineCast,
                         modifier = Modifier.heightIn(max = cine?.detailsHeight ?: Dp.Unspecified),
                     )
                     Spacer(Modifier.height(14.dp))
@@ -587,7 +638,7 @@ fun MoviesScreen(
                     query = searchQuery,
                     onQueryChange = vm::setSearchQuery,
                     placeholder = stringResource(R.string.content_search_movies, selectedLabel),
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier.weight(1f).focusRequester(listSearchFocus),
                 )
                 Spacer(Modifier.width(10.dp))
                 SortChip(mode = sortMode, onToggle = vm::toggleSort, playlistLabel = stringResource(R.string.content_provider))
@@ -624,22 +675,36 @@ fun MoviesScreen(
                     ) { index ->
                         val movie = movies[index]
                         if (movie != null) {
-                            val prog = movieProgress[movie.id]
+                            val mId = movie.id
+                            val prog = movieProgress[mId]
+                            val onFocusRow = remember(mId, rememberMovies, selectedKey) {
+                                {
+                                    vm.onMovieFocused(movie)
+                                    if (rememberMovies) {
+                                        perCategoryMovieIds[selectedKey] = mId
+                                    }
+                                }
+                            }
+                            val onClickRow = remember(mId) { { startMovie(movie) } }
+                            val onLongClickRow = remember(mId, index) {
+                                { contextMovie = movie; contextMovieId = mId; contextMovieIndex = index }
+                            }
+                            val targetMovieId = if (rememberMovies) perCategoryMovieIds[selectedKey] ?: selectedMovie?.id else selectedMovie?.id
                             MovieListRow(
                                 movie = movie,
-                                posterUrl = movie.posterUrl?.takeIf { it.isNotBlank() } ?: cachedPosters[movie.id],
-                                isFavorite = favoriteIds.contains(movie.id),
+                                posterUrl = movie.posterUrl?.takeIf { it.isNotBlank() } ?: cachedPosters[mId],
+                                isFavorite = favoriteIds.contains(mId),
                                 completed = prog?.let { vm.isMovieCompleted(it) } == true,
                                 providerName = providerNames[movie.sourceId],
                                 modifier = Modifier.gridFocusTarget(
-                                    itemId = movie.id, index = index,
+                                    itemId = mId, index = index,
                                     contextId = contextMovieId, contextFocus = contextFocus,
-                                    selectedId = selectedMovie?.id, selectedFocus = selFocus,
+                                    selectedId = targetMovieId, selectedFocus = selFocus,
                                     firstItemFocus = firstItemFocus,
                                 ),
-                                onFocus = { vm.onMovieFocused(movie) },
-                                onClick = { startMovie(movie) },
-                                onLongClick = { contextMovie = movie; contextMovieId = movie.id; contextMovieIndex = index },
+                                onFocus = onFocusRow,
+                                onClick = onClickRow,
+                                onLongClick = onLongClickRow,
                             )
                         }
                     }
@@ -658,26 +723,40 @@ fun MoviesScreen(
                     ) { index ->
                         val movie = movies[index]
                         if (movie != null) {
-                            val prog = movieProgress[movie.id]
+                            val mId = movie.id
+                            val prog = movieProgress[mId]
                             val done = prog?.let { vm.isMovieCompleted(it) } == true
+                            val onFocusCard = remember(mId, rememberMovies, selectedKey) {
+                                {
+                                    vm.onMovieFocused(movie)
+                                    if (rememberMovies) {
+                                        perCategoryMovieIds[selectedKey] = mId
+                                    }
+                                }
+                            }
+                            val onClickCard = remember(mId) { { startMovie(movie) } }
+                            val onLongClickCard = remember(mId, index) {
+                                { contextMovie = movie; contextMovieId = mId; contextMovieIndex = index }
+                            }
+                            val targetMovieId = if (rememberMovies) perCategoryMovieIds[selectedKey] ?: selectedMovie?.id else selectedMovie?.id
                             PosterCard(
-                                posterUrl = movie.posterUrl?.takeIf { it.isNotBlank() } ?: cachedPosters[movie.id],
+                                posterUrl = movie.posterUrl?.takeIf { it.isNotBlank() } ?: cachedPosters[mId],
                                 title = movie.name,
                                 rating = movie.rating,
                                 completed = done,
                                 progressFraction = if (done || prog == null || prog.durationMs <= 0) null
                                     else (prog.positionMs.toFloat() / prog.durationMs).takeIf { it > 0f },
-                                isFavorite = favoriteIds.contains(movie.id),
+                                isFavorite = favoriteIds.contains(mId),
                                 providerName = providerNames[movie.sourceId],
                                 modifier = Modifier.gridFocusTarget(
-                                    itemId = movie.id, index = index,
+                                    itemId = mId, index = index,
                                     contextId = contextMovieId, contextFocus = contextFocus,
-                                    selectedId = selectedMovie?.id, selectedFocus = selFocus,
+                                    selectedId = targetMovieId, selectedFocus = selFocus,
                                     firstItemFocus = firstItemFocus,
                                 ),
-                                onFocus = { vm.onMovieFocused(movie) },
-                                onClick = { startMovie(movie) },
-                                onLongClick = { contextMovie = movie; contextMovieId = movie.id; contextMovieIndex = index },
+                                onFocus = onFocusCard,
+                                onClick = onClickCard,
+                                onLongClick = onLongClickCard,
                             )
                         }
                     }

@@ -24,7 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.geometry.Offset
@@ -103,16 +103,9 @@ fun FocusableSurface(
     val glassy = surface != null && glassConfig.isGlassy(surface)
     val motion = LocalGlassMotion.current
     val motionToken = remember { Any() }
-    val focusCenter = remember { arrayOf(Offset.Unspecified) }
-    val travelPx = with(LocalDensity.current) { 40.dp.toPx() }
+    val density = LocalDensity.current
+    val travelPx = remember(density) { with(density) { 40.dp.toPx() } }
     val motionEnabled = glassy && glassConfig.depthEffects && animationsOn
-    LaunchedEffect(focused, motionEnabled, motion) {
-        if (focused && motion != null) {
-            // Let focus-driven bringIntoView settle its first layout before measuring arrival direction.
-            withFrameNanos { }
-            motion.focusArrived(motionToken, focusCenter[0], travelPx, motionEnabled)
-        }
-    }
     val compactFocusableRow = focusedScale <= 1.012f
     val compactGlassRow = glassy && compactFocusableRow
     // Primary action pills deliberately remain solid brand anchors. All other standard solid-mode
@@ -154,7 +147,7 @@ fun FocusableSurface(
         focused && glassy && surface == GlassSurface.CARDS && !focusFrostSettled
     ) 0f else glassFrostScale
 
-    val scale by animateFloatAsState(
+    val scaleState = animateFloatAsState(
         when {
             (focused || pressed) && glassy && !glassConfig.depthEffects -> 1f
             pressed -> 0.992f
@@ -162,7 +155,7 @@ fun FocusableSurface(
             focused -> focusedScale
             else -> 1f
         },
-        animationSpec = tv.own.owntv.ui.theme.ownTvTween(if (pressed) 80 else 170),
+        animationSpec = tv.own.owntv.ui.theme.ownTvTween(if (pressed) 80 else if (compactFocusableRow) 0 else 170),
         label = "focusScale",
     )
     val container by animateColorAsState(
@@ -198,14 +191,16 @@ fun FocusableSurface(
     Box(
         modifier = modifier
             .then(
-                if (motion != null) Modifier.onGloballyPositioned { coordinates ->
-                    val bounds = coordinates.boundsInRoot()
-                    val center = bounds.center
-                    focusCenter[0] = center
-                    if (focused) motion.updateFocusedPosition(motionToken, center)
+                if (motion != null && motionEnabled && focused) Modifier.onGloballyPositioned { coordinates ->
+                    val center = coordinates.boundsInRoot().center
+                    motion.focusArrived(motionToken, center, travelPx, motionEnabled)
                 } else Modifier,
             )
-            .scale(scale)
+            .graphicsLayer {
+                val s = scaleState.value
+                scaleX = s
+                scaleY = s
+            }
             .then(
                 // A separately elevated row layer can remain at its old GPU position for a frame
                 // while bringIntoView scrolls its parent, which reads as a moving black bar in light

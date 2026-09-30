@@ -131,15 +131,6 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
             Row2(
                 icon = OwnTVIcon.MENU,
-                title = stringResource(R.string.zapping_stop_clear),
-                desc = stringResource(R.string.zapping_stop_clear_description),
-                chip = stringResource(if (options.stopClearZapping) R.string.simple_mode_on else R.string.simple_mode_off),
-                primaryChip = options.stopClearZapping,
-                onClick = { scope.launch { SimpleModePreferences.setStopClearZapping(context, !options.stopClearZapping) } },
-            )
-
-            Row2(
-                icon = OwnTVIcon.MENU,
                 title = stringResource(R.string.auto_start_boot),
                 desc = stringResource(R.string.auto_start_boot_description),
                 chip = stringResource(if (options.startOnBoot) R.string.simple_mode_on else R.string.simple_mode_off),

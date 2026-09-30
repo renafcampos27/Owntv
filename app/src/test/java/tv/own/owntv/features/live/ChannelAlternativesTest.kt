@@ -6,6 +6,31 @@ import org.junit.Test
 import tv.own.owntv.core.database.entity.ChannelEntity
 
 class ChannelAlternativesTest {
+    @Test fun prebufferProgressReceivesFiniteOpeningAllowance() = runBlocking {
+        val tried = mutableListOf<Int>()
+        val result = tryChannelAlternatives(
+            initial = 1,
+            alternatives = { listOf(2) },
+            timeoutMs = 80,
+            attempt = { tried += it; delay(180); true },
+            failed = {}, switching = {},
+            startupProgress = { tv.own.owntv.player.LiveStartupProgress(1, 400, 100) },
+        )
+        assertTrue(result)
+        assertEquals(listOf(1), tried)
+    }
+
+    @Test fun prebufferSilenceStillTimesOutAndMovesToAnAlternative() = runBlocking {
+        val tried = mutableListOf<Int>()
+        assertTrue(tryChannelAlternatives(
+            initial = 1, alternatives = { listOf(2) }, timeoutMs = 80,
+            attempt = { tried += it; if (it == 1) awaitCancellation(); true },
+            failed = {}, switching = {},
+            startupProgress = { tv.own.owntv.player.LiveStartupProgress(1, 10_000, 0) },
+        ))
+        assertEquals(listOf(1, 2), tried)
+    }
+
     private fun ch(id: Long, name: String, source: Long = 1, url: String = "https://test/$id") =
         ChannelEntity(id = id, name = name, sourceId = source, categoryId = 1, streamUrl = url, remoteId = "$id")
 
@@ -52,5 +77,82 @@ class ChannelAlternativesTest {
         val tried = mutableListOf<Int>()
         assertFalse(tryChannelAlternatives(1, { listOf(2,3) }, attempt = { tried += it; false }, failed = {}, switching = {}))
         assertEquals(listOf(1,2,3), tried)
+    }
+    @Test fun providerBackoffPausesTimeoutAndAllowsSuccess() = runBlocking {
+        var backingOff = true
+        val tried = mutableListOf<Int>()
+        val result = tryChannelAlternatives(
+            initial = 1,
+            alternatives = { listOf(2) },
+            timeoutMs = 60,
+            attempt = {
+                tried += it
+                delay(100)
+                backingOff = false
+                true
+            },
+            failed = {},
+            switching = {},
+            isBackingOff = { backingOff },
+        )
+        assertTrue(result)
+        assertEquals(listOf(1), tried)
+    }
+    @Test fun providerBackoffSkipsAlternatives() = runBlocking {
+        val tried = mutableListOf<Int>()
+        val result = tryChannelAlternatives(
+            initial = 1,
+            alternatives = { listOf(2, 3) },
+            timeoutMs = 20,
+            attempt = { tried += it; false },
+            failed = {},
+            switching = {},
+            isBackingOff = { true },
+        )
+        assertFalse(result)
+        assertEquals(listOf(1), tried)
+    }
+    @Test fun shouldSkipAlternativeSkipsDesignatedCandidates() = runBlocking {
+        val tried = mutableListOf<Int>()
+        val result = tryChannelAlternatives(
+            initial = 1,
+            alternatives = { listOf(2, 3, 4) },
+            timeoutMs = 20,
+            attempt = { tried += it; it == 4 },
+            failed = {},
+            switching = {},
+            shouldSkipAlternative = { it == 2 || it == 3 },
+        )
+        assertTrue(result)
+        assertEquals(listOf(1, 4), tried)
+    }
+
+    @Test fun shouldSkipAlternativeDoesNotSkipInitialChannel() = runBlocking {
+        val tried = mutableListOf<Int>()
+        val result = tryChannelAlternatives(
+            initial = 1,
+            alternatives = { listOf(2) },
+            timeoutMs = 20,
+            attempt = { tried += it; true },
+            failed = {},
+            switching = {},
+            shouldSkipAlternative = { it == 1 || it == 2 },
+        )
+        assertTrue(result)
+        assertEquals(listOf(1), tried)
+    }
+
+    @Test fun backoffCeilingTimesOutWhenBackoffExceedsCeiling() = runBlocking {
+        val result = runWithBackoffAwareTimeout(
+            timeoutMs = 200,
+            isBackingOff = { true },
+            backoffRemainingMs = { 5000L },
+            maxWaitCeilingMs = 80L,
+            block = {
+                delay(200)
+                true
+            },
+        )
+        assertFalse(result)
     }
 }

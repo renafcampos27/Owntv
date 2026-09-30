@@ -14,8 +14,8 @@ internal object SimpleModeBackupCodec {
         .put("recoveryTimeoutSeconds", RecoveryTimeout.normalize(options.recoveryTimeoutSeconds))
         .put("startOnBoot", options.startOnBoot)
         .put("startOnWake", options.startOnWake)
-        .put("stopClearZapping", options.stopClearZapping)
 
+    // Retired experimental fields in older backups are intentionally ignored.
     fun decode(data: JSONObject, current: SimpleModeOptions): SimpleModeOptions {
         val version = data.get("version")
         require(version is Number && version.toDouble() == 1.0) { "Unsupported simple-mode backup version" }
@@ -38,7 +38,6 @@ internal object SimpleModeBackupCodec {
             recoveryTimeoutSeconds = timeout,
             startOnBoot = flag("startOnBoot", current.startOnBoot),
             startOnWake = flag("startOnWake", current.startOnWake),
-            stopClearZapping = flag("stopClearZapping", current.stopClearZapping),
         )
     }
 }

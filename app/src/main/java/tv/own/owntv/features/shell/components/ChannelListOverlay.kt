@@ -20,6 +20,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -35,7 +37,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
 import tv.own.owntv.R
 import tv.own.owntv.core.i18n.HorizontalDirection
 import tv.own.owntv.core.i18n.horizontalDirection
@@ -76,11 +77,18 @@ fun ChannelListOverlay(
     val currentIndex = remember(channels, currentId) {
         channels.indexOfFirst { it.id == currentId }.coerceAtLeast(0)
     }
-    val listState = rememberLazyListState()
+    val initialScrollIndex = (currentIndex - 2).coerceAtLeast(0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialScrollIndex)
     val focusCurrent = remember { FocusRequester() }
-    LaunchedEffect(Unit) {
-        runCatching { listState.scrollToItem(currentIndex) }
-        runCatching { focusCurrent.requestFocus() }
+    LaunchedEffect(currentId) {
+        if (currentIndex > 0) {
+            runCatching { listState.scrollToItem(initialScrollIndex) }
+        }
+        withFrameNanos { }
+        if (runCatching { focusCurrent.requestFocus() }.isFailure) {
+            delay(50)
+            runCatching { focusCurrent.requestFocus() }
+        }
     }
     BackHandler { onDismiss() }
 
@@ -113,15 +121,16 @@ fun ChannelListOverlay(
                 contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp, vertical = 6.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                items(channels, key = { it.id }) { ch ->
+                items(channels, key = { it.id }, contentType = { "channel" }) { ch ->
                     val isCurrent = ch.id == currentId
+                    val onRowClick = remember(ch.id) { { onSelect(ch) } }
                     ChannelRow(
                         channel = ch,
                         isCurrent = isCurrent,
                         nowTitle = nowPlaying[ch.id],
                         showNumber = showNumbers,
                         providerName = providerNames[ch.sourceId],
-                        onClick = { onSelect(ch) },
+                        onClick = onRowClick,
                         modifier = if (ch.id == channels.getOrNull(currentIndex)?.id) Modifier.focusRequester(focusCurrent) else Modifier,
                     )
                 }
@@ -145,23 +154,21 @@ private fun ChannelRow(
         onClick = onClick,
         selected = isCurrent,
         modifier = modifier.fillMaxWidth(),
-        surface = GlassSurface.DIALOGS,
     ) { focused ->
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Box(
-                modifier = Modifier.size(40.dp).clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)).background(colors.surfaceContainerLowest),
-                contentAlignment = Alignment.Center,
-            ) {
-                if (!channel.displayLogoUrl.isNullOrBlank()) {
-                    AsyncImage(model = channel.displayLogoUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
-                } else {
+            tv.own.owntv.ui.components.ChannelLogoTile(
+                logoUrl = channel.displayLogoUrl,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
+                fallback = {
                     OwnTVIcon(OwnTVIcon.LIVE_TV, tint = colors.onSurfaceVariant, modifier = Modifier.size(20.dp))
-                }
-            }
+                },
+            )
             // Fixed-width number strip, so names stay aligned whatever the digit count (see LiveScreen).
             if (showNumber) {
                 tv.own.owntv.ui.components.ChannelNumberColumn(

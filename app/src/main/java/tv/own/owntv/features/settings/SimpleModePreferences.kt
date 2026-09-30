@@ -14,11 +14,9 @@ import org.json.JSONObject
 // App-owned preferences, included in SETTINGS backups through TvBackupAppSettings.
 private val Context.simpleModeStore by preferencesDataStore(name = "owntv_simple_mode")
 
-data class SimpleModeOptions(val hideCategories: Boolean = false, val hideSidebar: Boolean = false, val channelRecovery: Boolean = true, val startOnBoot: Boolean = false, val startOnWake: Boolean = false, val recoveryTimeoutSeconds: Int = RecoveryTimeout.DEFAULT_SECONDS, val stopClearZapping: Boolean = false)
+data class SimpleModeOptions(val hideCategories: Boolean = false, val hideSidebar: Boolean = false, val channelRecovery: Boolean = true, val startOnBoot: Boolean = false, val startOnWake: Boolean = false, val recoveryTimeoutSeconds: Int = RecoveryTimeout.DEFAULT_SECONDS)
 
 object SimpleModePreferences {
-    private val stopClear = booleanPreferencesKey("stop_clear_zapping_experiment")
-    suspend fun setStopClearZapping(context: Context, enabled: Boolean) { context.applicationContext.simpleModeStore.edit { it[stopClear] = enabled } }
 
     private val categories = booleanPreferencesKey("hide_categories")
     private val sidebar = booleanPreferencesKey("hide_sidebar")
@@ -43,7 +41,6 @@ object SimpleModePreferences {
         startOnBoot = prefs[boot] ?: false,
         startOnWake = prefs[wake] ?: false,
         recoveryTimeoutSeconds = RecoveryTimeout.normalize(prefs[recoveryTimeout]),
-        stopClearZapping = prefs[stopClear] ?: false,
     )
 
     fun observe(context: Context) = context.applicationContext.simpleModeStore.data.map(::options)
@@ -54,7 +51,7 @@ object SimpleModePreferences {
     internal suspend fun exportBackup(store: DataStore<Preferences>): JSONObject = SimpleModeBackupCodec.encode(options(store.data.first()))
 
     internal suspend fun restoreBackup(store: DataStore<Preferences>, data: JSONObject) {
-        // Decode all fields before changing any key; edit commits all seven values atomically.
+        // Decode all fields before changing any key; edit commits all six values atomically.
         store.edit { prefs ->
             val restored = SimpleModeBackupCodec.decode(data, options(prefs))
             prefs[categories] = restored.hideCategories
@@ -63,7 +60,6 @@ object SimpleModePreferences {
             prefs[recoveryTimeout] = restored.recoveryTimeoutSeconds
             prefs[boot] = restored.startOnBoot
             prefs[wake] = restored.startOnWake
-            prefs[stopClear] = restored.stopClearZapping
         }
     }
 

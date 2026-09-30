@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_live_guide_delay">Detalhes do guia na TV em direto</string>
+    <string name="settings_live_guide_delay_description">Carregar o guia detalhado apenas após 3 segundos com o foco no canal; prima para alternar com o carregamento imediato. A reprodução não é afetada.</string>
+    <string name="settings_live_guide_immediate">Imediato</string>
+    <string name="settings_live_guide_after_three">Após 3 s</string>
+</resources>

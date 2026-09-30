@@ -18,6 +18,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.withFrameNanos
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -65,12 +67,16 @@ fun CategoryBrowserOverlay(
     val currentIndex = remember(categories, currentCategoryId) {
         categories.indexOfFirst { it.first.id == currentCategoryId }.coerceAtLeast(0)
     }
-    val listState = rememberLazyListState()
+    val initialScrollIndex = (currentIndex - 2).coerceAtLeast(0)
+    val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialScrollIndex)
     val focusCurrent = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
-        runCatching { listState.scrollToItem(currentIndex) }
-        runCatching { focusCurrent.requestFocus() }
+        withFrameNanos { }
+        if (runCatching { focusCurrent.requestFocus() }.isFailure) {
+            delay(50)
+            runCatching { focusCurrent.requestFocus() }
+        }
     }
 
     BackHandler { onDismiss() }
@@ -106,12 +112,13 @@ fun CategoryBrowserOverlay(
                 ),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                items(categories, key = { it.first.id }) { (cat, displayName) ->
+                items(categories, key = { it.first.id }, contentType = { "category" }) { (cat, displayName) ->
                     val isCurrent = cat.id == currentCategoryId
+                    val onRowClick = remember(cat.id) { { onSelect(cat.id) } }
                     CategoryRow(
                         name = displayName,
                         isCurrent = isCurrent,
-                        onClick = { onSelect(cat.id) },
+                        onClick = onRowClick,
                         modifier = if (cat.id == categories.getOrNull(currentIndex)?.first?.id) {
                             Modifier.focusRequester(focusCurrent)
                         } else {
@@ -136,7 +143,6 @@ private fun CategoryRow(
         onClick = onClick,
         selected = isCurrent,
         modifier = modifier.fillMaxWidth(),
-        surface = GlassSurface.DIALOGS,
     ) { focused ->
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 10.dp),

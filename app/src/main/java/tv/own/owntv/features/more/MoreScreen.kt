@@ -532,8 +532,6 @@ private fun ColumnScope.CountsPane(counts: TypeCounts, items: List<PaneItem>) {
     ) {
         listOf(
             stringResource(R.string.common_nav_live_tv) to counts.live,
-            stringResource(R.string.common_nav_movies) to counts.movies,
-            stringResource(R.string.common_nav_series) to counts.series,
         ).forEach { (label, n) ->
             Column(
                 modifier = Modifier

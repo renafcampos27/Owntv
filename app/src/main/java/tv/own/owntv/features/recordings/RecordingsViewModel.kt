@@ -4,6 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -67,6 +69,9 @@ class RecordingsViewModel(
     /** The recording last asked to play, so returning from the player lands back on its row. */
     val lastPlayedId: StateFlow<Long?> = _lastPlayedId.asStateFlow()
 
+    private val _retryUnavailable = MutableSharedFlow<Unit>()
+    val retryUnavailable = _retryUnavailable.asSharedFlow()
+
     /**
      * Play a finished recording from the file on disk.
      *
@@ -79,7 +84,7 @@ class RecordingsViewModel(
      * growing file and a picture that stops at whatever byte it started from.
      */
     fun play(recording: RecordingEntity) {
-        if (recording.status != RecordingStatus.COMPLETED) return
+        if (recording.status != RecordingStatus.COMPLETED && recording.status != RecordingStatus.PARTIAL) return
         val path = recording.filePath ?: return
         _lastPlayedId.value = recording.id
         viewModelScope.launch {
@@ -95,7 +100,7 @@ class RecordingsViewModel(
     val externalPlayerOn: StateFlow<Boolean> = settings.externalPlayerFor(MediaType.LIVE)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
-    /** Ends a running recording and keeps what it captured — a short recording, not a failure. */
+    /** Ends a running recording and keeps the captured file, including a partial capture. */
     fun stop(recording: RecordingEntity) = recordings.stop(recording)
 
     /** Drops a scheduled recording. Nothing on disk is touched, because nothing is there yet. */
@@ -104,12 +109,10 @@ class RecordingsViewModel(
     /** Removes the row **and** the file. The only thing here that deletes anything (D2). */
     fun delete(recording: RecordingEntity) = recordings.delete(recording)
 
-    /**
-     * Try a missed or failed recording again — only possible while its window is still open, which
-     * for a live programme is rarely. Re-scheduling is the honest action: the engine decides again
-     * whether there is a connection for it.
-     */
+    /** Retry a live window or request a separate archive recovery, keeping the original file. */
     fun retry(recording: RecordingEntity) {
-        viewModelScope.launch { recordings.schedule(recording) }
+        viewModelScope.launch {
+            if (!recordings.retryRecording(recording)) _retryUnavailable.emit(Unit)
+        }
     }
 }

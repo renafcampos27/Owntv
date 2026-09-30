@@ -4,7 +4,7 @@ import javax.inject.Inject
 import org.gradle.process.ExecOperations
 
 // Packaged locale qualifiers are read from tools/i18n/locales.json entries where packaged = true.
-// That catalogue is owned by the core repo (ahXN00/OwnTV_Core), which holds the strings; the copy
+// That catalogue is owned by the core repo (renatofc27/OwnTV_Core), which holds the strings; the copy
 // here exists only because Gradle needs the list before any dependency is resolved. Change it there
 // first, then copy it across, or the app will package a locale set core does not translate.
 // The build consumes the ``resourceQualifier`` field specifically (NOT languageTag, NOT weblateCode): a
@@ -47,9 +47,9 @@ android {
         applicationId = "tv.own.owntv"
         minSdk = 26
         targetSdk = 36
-        // Release version 100.0.0 (versionCode 1000000) so it installs directly over legacy 99.99 builds.
-        versionCode = (System.getenv("VERSION_CODE") ?: "1000000").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "100.0.0"
+        // Release version 105.0.4.4 (versionCode 1050044) so it installs directly over legacy 99.99 builds.
+        versionCode = (System.getenv("VERSION_CODE") ?: "1050044").toInt()
+        versionName = System.getenv("VERSION_NAME") ?: "105.0.4.4"
 
         // Opt-in local diagnostic APKs keep the rolling playback trace enabled even when they are
         // release-signed (so they can update an installed production build without changing its data).
@@ -105,6 +105,15 @@ android {
         create("x86_64") {
             dimension = "abi"
             ndk { abiFilters += listOf("x86_64") }
+        }
+    }
+
+    splits {
+        abi {
+            isEnable = true
+            reset()
+            include("armeabi-v7a", "arm64-v8a")
+            isUniversalApk = true
         }
     }
 
@@ -166,6 +175,8 @@ android {
             )
             if (releaseKeystore != null) {
                 signingConfig = signingConfigs.getByName("release")
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
             }
         }
     }
@@ -337,7 +348,7 @@ tasks.named("preBuild") { dependsOn(verifyI18nLiterals) }
 
 dependencies {
     // The shared data/settings/sync module. It lives in its own repository now — see
-    // https://github.com/ahXN00/OwnTV_Core. Set owntv.corePath in ~/.gradle/gradle.properties to
+    // https://github.com/renatofc27/OwnTV_Core. Set owntv.corePath in ~/.gradle/gradle.properties to
     // build against its source instead of this pinned version.
     implementation(libs.owntv.core)
 

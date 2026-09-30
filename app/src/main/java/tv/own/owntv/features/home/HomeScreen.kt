@@ -111,6 +111,7 @@ import tv.own.owntv.ui.components.ContentPanelFill
 import tv.own.owntv.ui.components.roundedPanel
 import tv.own.owntv.ui.format.formatSystemTime
 import tv.own.owntv.ui.theme.Dimens
+import tv.own.owntv.ui.theme.gradientWash
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.ui.format.localizedInteger
@@ -178,11 +179,17 @@ fun HomeScreen(
     var expandedHeroIndex by remember { mutableStateOf(-1) }
     var focusedHeroIndex by remember { mutableStateOf(-1) }
     val orderedRows = state.config.visibleOrder
-    val heroVisible = HomeRow.HERO in orderedRows
-    val hasNonHeroContent = orderedRows.any { it != HomeRow.HERO && rowHasData(it, state) }
+    val heroVisible = remember(orderedRows) { HomeRow.HERO in orderedRows }
+    val hasNonHeroContent = remember(orderedRows, state) {
+        orderedRows.any { it != HomeRow.HERO && rowHasData(it, state) }
+    }
     val showHeroFallback = heroVisible && state.heroItems.isEmpty() && !hasNonHeroContent
-    val renderRows = orderedRows.filter { rowCanRender(it, state, showHeroFallback) }
-    val firstDataRow = renderRows.firstOrNull { it != HomeRow.HERO && rowHasData(it, state) }
+    val renderRows = remember(orderedRows, state, showHeroFallback) {
+        orderedRows.filter { rowCanRender(it, state, showHeroFallback) }
+    }
+    val firstDataRow = remember(renderRows, state) {
+        renderRows.firstOrNull { it != HomeRow.HERO && rowHasData(it, state) }
+    }
     val showAllHiddenState = orderedRows.isEmpty()
     val showEmptyState = orderedRows.isNotEmpty() && renderRows.isEmpty()
     val rowFocusRequester: (HomeRow) -> FocusRequester? = { row ->
@@ -325,11 +332,9 @@ fun HomeScreen(
     ) {
         itemsIndexed(renderRows, key = { _, row -> row.name }) { index, row ->
             val firstItemFocusRequester = rowFocusRequester(row)
-            val nextRowIndex = renderRows
-                .drop(index + 1)
-                .indexOfFirst { rowFocusRequester(it) != null }
-                .takeIf { it >= 0 }
-                ?.let { index + 1 + it }
+            val nextRowIndex = ((index + 1) until renderRows.size).firstOrNull {
+                rowFocusRequester(renderRows[it]) != null
+            }
             val onMoveToNextRow: (() -> Unit)? = nextRowIndex?.let { targetIndex ->
                 val targetFocusRequester = rowFocusRequester(renderRows[targetIndex]) ?: return@let null
                 {
@@ -718,18 +723,15 @@ private fun TrendingHeroSection(
                 )
             }
             Box(
-                modifier = Modifier.fillMaxSize().background(
-                    Brush.horizontalGradient(
-                        0f to colors.surfaceContainerLowest.copy(alpha = 0.98f),
-                        0.58f to colors.surfaceContainerLowest.copy(alpha = 0.68f),
-                        1f to Color.Transparent,
-                    ),
+                modifier = Modifier.fillMaxSize().gradientWash(
+                    vertical = false,
+                    0f to colors.surfaceContainerLowest.copy(alpha = 0.98f),
+                    0.58f to colors.surfaceContainerLowest.copy(alpha = 0.68f),
+                    1f to Color.Transparent,
                 ),
             )
             Box(
-                modifier = Modifier.fillMaxSize().background(
-                    Brush.verticalGradient(0.58f to Color.Transparent, 1f to colors.surfaceContainerLowest),
-                ),
+                modifier = Modifier.fillMaxSize().gradientWash(vertical = true, 0.58f to Color.Transparent, 1f to colors.surfaceContainerLowest),
             )
 
             Row(
@@ -1470,13 +1472,12 @@ private fun HeroRowSection(
                         Box(
                             Modifier
                                 .fillMaxSize()
-                                .background(
-                                    Brush.verticalGradient(
-                                        listOf(
-                                            Color.Transparent,
-                                            Color.Transparent,
-                                            Color.Black.copy(alpha = 0.86f),
-                                        ),
+                                .gradientWash(
+                                    vertical = true,
+                                    colors = listOf(
+                                        Color.Transparent,
+                                        Color.Transparent,
+                                        Color.Black.copy(alpha = 0.86f),
                                     ),
                                 ),
                         )
@@ -1712,7 +1713,11 @@ private fun ContinueWatchingRow(
             contentPadding = PaddingValues(horizontal = Dimens.HomeRowPaddingH),
             modifier = Modifier.focusGroup(),
         ) {
-            itemsIndexed(items, key = { _, item -> item.stableKey }) { index, item ->
+            itemsIndexed(
+                items,
+                key = { _, item -> item.stableKey },
+                contentType = { _, _ -> 0 },
+            ) { index, item ->
                 val itemModifier = when {
                     firstItemFocusRequester != null && index == 0 -> Modifier.focusRequester(firstItemFocusRequester)
                     else -> Modifier
@@ -1776,7 +1781,11 @@ private fun TrendingPosterRow(
             contentPadding = PaddingValues(horizontal = Dimens.HomeRowPaddingH),
             modifier = Modifier.focusGroup(),
         ) {
-            itemsIndexed(items, key = { _, item -> item.stableKey }) { index, item ->
+            itemsIndexed(
+                items,
+                key = { _, item -> item.stableKey },
+                contentType = { _, _ -> 0 },
+            ) { index, item ->
                 val itemModifier =
                     if (firstItemFocusRequester != null && index == 0) {
                         Modifier.focusRequester(firstItemFocusRequester)

@@ -122,7 +122,7 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(10.dp))
         GroupLabel(stringResource(R.string.settings_remote_shortcuts_assignments))
-        bindings.sortedWith(compareBy<RemoteShortcutBinding> { it.keyCode }.thenBy { it.press.ordinal }).forEach { binding ->
+        bindings.filter { it.action != RemoteShortcutAction.OPEN_MOVIES && it.action != RemoteShortcutAction.OPEN_SERIES }.sortedWith(compareBy<RemoteShortcutBinding> { it.keyCode }.thenBy { it.press.ordinal }).forEach { binding ->
             val buttonLabel = remoteButtonLabel(binding.keyCode)
             val pressLabel = stringResource(
                 if (binding.press == RemoteShortcutPress.SHORT) R.string.settings_remote_shortcuts_short_press
@@ -236,7 +236,7 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             onDismiss = { dialog = ChNavDialog.NONE },
         )
         ChNavDialog.ACTION -> pendingBinding?.let { binding ->
-            val actionOptions = RemoteShortcutAction.entries.map { it.name to remoteActionLabel(it) }
+            val actionOptions = RemoteShortcutAction.entries.filter { it != RemoteShortcutAction.OPEN_MOVIES && it != RemoteShortcutAction.OPEN_SERIES }.map { it.name to remoteActionLabel(it) }
             PickerDialog(
                 title = stringResource(R.string.settings_remote_shortcuts_choose_action),
                 options = if (editingExisting) listOf(String() to stringResource(R.string.common_delete)) + actionOptions else actionOptions,

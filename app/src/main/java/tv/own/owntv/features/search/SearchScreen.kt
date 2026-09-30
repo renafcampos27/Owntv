@@ -186,7 +186,7 @@ private fun LauncherEmptyState(
         // Intent launcher chips
         SectionLabel(stringResource(R.string.search_jump_to))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            SearchIntent.entries.forEach { i ->
+            listOf(SearchIntent.CHANNELS).forEach { i ->
                 PillChip(label = i.displayLabel(), tonal = true) { onIntent(i) }
             }
         }

@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_nav_downloads">Recordings</string>
+    <string name="content_downloads_title">Recordings</string>
+    <string name="search_hint">Search channels…</string>
+    <string name="settings_movies_series_player">Recorded video player</string>
+    <string name="settings_movies_player_description">Player used for recorded video. Live and catch-up keep their own player settings.</string>
+    <string name="settings_content_menus_description">Rearrange the actions in channel menus</string>
+    <string name="settings_browsing_description">Remember the last category and channel in Live TV</string>
+    <string name="settings_browsing_description_full">Choose where the channel list opens when you return.</string>
+    <string name="settings_vp_section_episodes">Mini-player</string>
+    <string name="settings_vp_section_episodes_summary">Mini-player size and position</string>
+    <string name="settings_reset_player_choices_confirm_description">Saved player choices return to the configured default.</string>
+    <string name="settings_customize_description">Hide, rename and reorder channels and categories for this profile. Changes survive list updates.</string>
+    <string name="settings_sources_delete_message">This removes the source and its associated content from every profile.</string>
+    <string name="settings_backup_section_favorites_desc">Saved channel favourites</string>
+    <string name="settings_backup_section_resume_desc">Saved playback positions</string>
+    <string name="settings_backup_section_reorder_desc">Your channel and category order</string>
+    <string name="settings_customize_new_category_description">A combined category for this profile. Move channels into it.</string>
+    <string name="settings_panel_width_description">Resize the category, channel list and preview panels.</string>
+    <string name="more_spine_favorites_summary">Channels</string>
+    <string name="settings_afr_pause_description">For recorded video, wait after a display mode change so playback does not begin during the HDMI transition. Seamless changes do not pause.</string>
+    <string name="settings_afr_resolution_description">Allow display resolution changes during recorded video playback.</string>
+    <string name="settings_reset_player_choices_description">Reset saved player choices to the recorded-video default. Live channel choices are kept.</string>
+    <string name="settings_reset_saved_zoom_description">Reset saved zoom choices to the default zoom.</string>
+    <string name="settings_reset_saved_zoom_confirm_description">Saved zoom choices return to the default. Saved volumes are kept.</string>
+    <string name="settings_reset_saved_volume_description">Reset saved volume choices to the default volume.</string>
+    <string name="settings_reset_saved_volume_confirm_description">Saved volumes return to the default. Saved zoom settings are kept.</string>
+    <string name="settings_reset_saved_audio_delay_description">Reset saved audio delays to the configured audio sync.</string>
+    <string name="settings_reset_saved_audio_delay_confirm_description">Saved audio delays return to the configured default. Zoom and volume settings are kept.</string>
+    <string name="settings_seek_step_description">Rewind and forward step for video that supports seeking.</string>
+    <string name="settings_resume_playback_description">Choose what happens when a video has a saved playback position.</string>
+    <string name="settings_android_tv_home_description">Show recent live channels on the TV home screen.</string>
+</resources>

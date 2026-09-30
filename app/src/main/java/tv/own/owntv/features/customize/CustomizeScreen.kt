@@ -243,9 +243,7 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             SectionChip(stringResource(R.string.settings_live_tv), section == MediaType.LIVE, Modifier.focusRequester(firstFocus)) { vm.selectSection(MediaType.LIVE) }
             Spacer(Modifier.width(10.dp))
-            SectionChip(stringResource(R.string.settings_movies), section == MediaType.MOVIE) { vm.selectSection(MediaType.MOVIE) }
             Spacer(Modifier.width(10.dp))
-            SectionChip(stringResource(R.string.settings_series), section == MediaType.SERIES) { vm.selectSection(MediaType.SERIES) }
             Spacer(Modifier.weight(1f))
             // Sort pill — reuses the same per-section sort mode that Browse uses.
             OwnTVButton(

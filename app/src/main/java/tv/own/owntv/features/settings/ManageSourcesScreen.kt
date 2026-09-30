@@ -463,7 +463,7 @@ private fun SourceRow(
                 },
                 source.url,
             )
-            val visibleCounts = if (activeSync == null) counts?.breakdownText() else activeCounts?.displayText()
+            val visibleCounts = if (activeSync == null) counts?.copy(movies = 0, series = 0)?.breakdownText() else activeCounts?.displayText()
             val details = buildList {
                 add(sourceTypeText)
                 if (autoRefresh.mode != PlaylistAutoRefresh.OFF) add(stringResource(R.string.settings_sources_auto_refresh, playlistAutoRefreshLabel(autoRefresh)))
@@ -524,11 +524,11 @@ private fun CatalogSyncState.Syncing.countsLabel(sourceType: SourceType, stored:
         )
         SourceType.XTREAM -> SyncProgressCounts(
             live = live,
-            movies = movies,
-            series = series,
+            movies = 0,
+            series = 0,
             liveActive = liveActive || live > 0,
-            moviesActive = moviesActive || movies > 0,
-            seriesActive = seriesActive || series > 0,
+            moviesActive = false,
+            seriesActive = false,
         )
         SourceType.LOCAL_BACKUP -> SyncProgressCounts(
             live = 0,
@@ -541,11 +541,11 @@ private fun CatalogSyncState.Syncing.countsLabel(sourceType: SourceType, stored:
         // Stalker: LIVE (Phase C-1) + VOD/series (Phase D-1) all populate.
         SourceType.STALKER -> SyncProgressCounts(
             live = live,
-            movies = movies,
-            series = series,
+            movies = 0,
+            series = 0,
             liveActive = liveActive || live > 0,
-            moviesActive = moviesActive || movies > 0,
-            seriesActive = seriesActive || series > 0,
+            moviesActive = false,
+            seriesActive = false,
         )
     }
     return counts.takeIf { it.hasItems }

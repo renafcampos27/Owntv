@@ -342,7 +342,7 @@ class ShellViewModel(
     val selectedSection: StateFlow<MainSection> = _selectedSection.asStateFlow()
 
     fun selectSection(section: MainSection) {
-        _selectedSection.value = section
+        _selectedSection.value = if (section == MainSection.MOVIES || section == MainSection.SERIES) MainSection.LIVE_TV else section
     }
 
     /** Which browse sections currently show as icons in the rail (v4.3.0 — Nav menu customization).

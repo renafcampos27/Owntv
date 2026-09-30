@@ -55,15 +55,10 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val vm: HomeSettingsViewModel = koinViewModel()
     val settingsVm: SettingsViewModel = koinViewModel()
     val config by vm.config.collectAsStateWithLifecycle()
-    val trendingAvailability by vm.trendingAvailability.collectAsStateWithLifecycle()
-    val devRebuild by vm.devRebuild.collectAsStateWithLifecycle()
     val heroPreviewEnabled by vm.heroPreviewEnabled.collectAsStateWithLifecycle()
     val androidTvHomeEnabled by settingsVm.androidTvHomeEnabled.collectAsStateWithLifecycle()
     val tvHomeRefresh by settingsVm.tvHomeRefresh.collectAsStateWithLifecycle()
     val colors = OwnTVTheme.colors
-    val trendingEnabled = HomeRow.TRENDING !in config.hidden
-    val trendingDescription = HomeRow.TRENDING.settingsDescription()
-    val trendingStatus = trendingStatusText(hidden = !trendingEnabled, availability = trendingAvailability)
 
     val firstFocus = remember { FocusRequester() }
     // onEnter alone can miss when entering this screen: the first row lives inside a LazyColumn and may
@@ -99,49 +94,6 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             item {
-                GroupLabel(stringResource(R.string.home_row_now_trending))
-            }
-
-            item {
-                Row2(
-                    icon = OwnTVIcon.STAR,
-                    title = stringResource(R.string.home_row_now_trending),
-                    desc = "$trendingDescription\n$trendingStatus",
-                    chip = stringResource(if (trendingEnabled) R.string.common_on else R.string.common_off),
-                    primaryChip = trendingEnabled,
-                    modifier = Modifier.focusRequester(firstFocus),
-                    onClick = { vm.setRowHidden(HomeRow.TRENDING, trendingEnabled) },
-                )
-            }
-
-            // Only while the row is actually on — with Trending off there is nothing for the choice
-            // to apply to, so it is not shown at all.
-            if (trendingEnabled) {
-                item {
-                    Row2(
-                        icon = OwnTVIcon.MOVIES,
-                        title = stringResource(R.string.home_trending_style),
-                        desc = stringResource(R.string.home_row_trending_description),
-                        chip = stringResource(
-                            when (config.trendingStyle) {
-                                HomeTrendingStyle.HERO -> R.string.home_trending_style_hero
-                                HomeTrendingStyle.POSTERS -> R.string.home_trending_style_posters
-                            },
-                        ),
-                        primaryChip = true,
-                        onClick = {
-                            vm.setTrendingStyle(
-                                when (config.trendingStyle) {
-                                    HomeTrendingStyle.HERO -> HomeTrendingStyle.POSTERS
-                                    HomeTrendingStyle.POSTERS -> HomeTrendingStyle.HERO
-                                },
-                            )
-                        },
-                    )
-                }
-            }
-
-            item {
                 Spacer(Modifier.height(14.dp))
                 Text(stringResource(R.string.settings_sections), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
@@ -153,12 +105,12 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 Spacer(Modifier.height(4.dp))
             }
 
-            itemsIndexed(config.settingsRows, key = { _, row -> row.name }) { index, row ->
+            itemsIndexed(config.settingsRows.filter { it == HomeRow.HERO || it == HomeRow.RECENT_CHANNELS || it == HomeRow.FAVORITE_CHANNELS }, key = { _, row -> row.name }) { index, row ->
                 HomeRowCard(
                     row = row,
                     hidden = row in config.hidden,
                     canMoveUp = index > 0,
-                    canMoveDown = index < config.settingsRows.lastIndex,
+                    canMoveDown = index < config.settingsRows.filter { it == HomeRow.HERO || it == HomeRow.RECENT_CHANNELS || it == HomeRow.FAVORITE_CHANNELS }.lastIndex,
                     onMoveUp = { vm.move(row, up = true) },
                     onMoveDown = { vm.move(row, up = false) },
                     onMoveTop = { vm.moveToEdge(row, top = true) },
@@ -173,27 +125,6 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 )
             }
 
-            // Maintainer-only. BuildConfig.DEV_TOOLS is a compile-time constant that is false in every
-            // published APK, so R8 removes this row (and the view-model call behind it) entirely.
-            if (BuildConfig.DEV_TOOLS) {
-                item {
-                    Spacer(Modifier.height(14.dp))
-                    GroupLabel("Developer")
-                }
-                item {
-                    Row2(
-                        icon = OwnTVIcon.SHARE,
-                        title = "Rebuild Now Trending",
-                        desc = "Forces a fresh TMDB trending download for every playlist, ignoring the multi-day fetch timer.",
-                        chip = when (devRebuild) {
-                            HomeSettingsViewModel.DevRebuildState.STARTED -> stringResource(R.string.settings_rebuilding)
-                            else -> null
-                        },
-                        onClick = { vm.rebuildTrendingNow() },
-                    )
-                }
-            }
-
             item {
                 Spacer(Modifier.height(14.dp))
                 GroupLabel(stringResource(R.string.settings_keep_watching))
@@ -206,27 +137,8 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     desc = stringResource(R.string.settings_live_keep_watching_description),
                     chip = if (config.heroIncludeLive) stringResource(R.string.common_on) else stringResource(R.string.common_off),
                     primaryChip = config.heroIncludeLive,
+                    modifier = Modifier.focusRequester(firstFocus),
                     onClick = { vm.setHeroInclude(HeroKind.LIVE, !config.heroIncludeLive) },
-                )
-            }
-            item {
-                Row2(
-                    icon = OwnTVIcon.MOVIES,
-                    title = stringResource(R.string.settings_movies_keep_watching),
-                    desc = stringResource(R.string.settings_movies_keep_watching_description),
-                    chip = if (config.heroIncludeMovies) stringResource(R.string.common_on) else stringResource(R.string.common_off),
-                    primaryChip = config.heroIncludeMovies,
-                    onClick = { vm.setHeroInclude(HeroKind.MOVIES, !config.heroIncludeMovies) },
-                )
-            }
-            item {
-                Row2(
-                    icon = OwnTVIcon.SERIES,
-                    title = stringResource(R.string.settings_series_keep_watching),
-                    desc = stringResource(R.string.settings_series_keep_watching_description),
-                    chip = if (config.heroIncludeSeries) stringResource(R.string.common_on) else stringResource(R.string.common_off),
-                    primaryChip = config.heroIncludeSeries,
-                    onClick = { vm.setHeroInclude(HeroKind.SERIES, !config.heroIncludeSeries) },
                 )
             }
             item {

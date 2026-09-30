@@ -1,5 +1,7 @@
 package tv.own.owntv.features.more
 
+import kotlinx.coroutines.flow.map
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,6 +83,7 @@ class MoreCountsViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     private val ctx: StateFlow<ActiveProfileSources> = activeProfileSources(settings, sourceDao)
+        .map { context -> context.copy(sources = context.sources.map { it.copy(syncMovies = false, syncSeries = false) }) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ActiveProfileSources(-1L, emptyList()))
 
     val favorites: StateFlow<TypeCounts> = counts(favorites = true)

@@ -74,7 +74,7 @@ data class HomeUiState(
     val continuationArtwork: Map<String, String> = emptyMap(),
     val recentLive: List<ChannelEntity> = emptyList(),
     val favoriteLive: List<ChannelEntity> = emptyList(),
-    val config: HomeConfig = HomeConfig(),
+    val config: HomeConfig = HomeConfig(hidden = setOf(tv.own.owntv.core.model.HomeRow.TRENDING, tv.own.owntv.core.model.HomeRow.CONTINUE_MOVIES, tv.own.owntv.core.model.HomeRow.CONTINUE_SERIES, tv.own.owntv.core.model.HomeRow.RECENT_CHANNELS)),
     val recentGuide: GuideSliceState = GuideSliceState(),
     val favoriteGuide: GuideSliceState = GuideSliceState(),
     /**
@@ -168,7 +168,7 @@ class HomeViewModel(
     val continueTarget: StateFlow<ContinueTarget?> = settings.activeProfileId
         .flatMapLatest { pid ->
             if (pid < 0) flowOf(null)
-            else historyDao.observeMostRecent(pid).map { h -> h?.let { resolveContinue(pid, it) } }
+            else historyDao.observeMostRecent(pid).map { h -> h?.takeIf { it.mediaType == MediaType.LIVE }?.let { resolveContinue(pid, it) } }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -308,7 +308,7 @@ class HomeViewModel(
      */
     private suspend fun loadHomeData(profileId: Long) {
         val previous = _uiState.value
-        val data = feed.load(profileId)
+        val data = feed.load(profileId, liveOnly = true)
         _uiState.value = HomeUiState(
             trendingItems = data.trendingItems,
             activeTrendingIndex = previous.activeTrendingIndex

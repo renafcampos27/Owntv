@@ -114,7 +114,7 @@ private fun UserDataScreen(
     settingsVm: SettingsViewModel = koinViewModel(),
 ) {
     val history = key == LiveKey.History
-    var tab by rememberSaveable { mutableStateOf(UserDataTab.LIVE) }
+    val tab = UserDataTab.LIVE
     var showClear by remember { mutableStateOf(false) }
     val counted by (if (history) counts.history else counts.favorites).collectAsStateWithLifecycle()
 
@@ -164,10 +164,10 @@ private fun UserDataScreen(
                 color = OwnTVTheme.colors.onSurface,
                 modifier = Modifier.padding(end = 10.dp),
             )
-            UserDataTab.entries.forEach { entry ->
+            listOf(UserDataTab.LIVE).forEach { entry ->
                 OwnTVButton(
                     label = entry.label(counted),
-                    onClick = { tab = entry },
+                    onClick = { },
                     style = if (entry == tab) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
                     selected = entry == tab,
                     compact = true,

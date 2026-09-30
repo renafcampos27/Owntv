@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="common_nav_downloads">Gravações</string>
+    <string name="content_downloads_title">Gravações</string>
+    <string name="search_hint">Pesquisar canais…</string>
+    <string name="settings_movies_series_player">Reprodutor de vídeo gravado</string>
+    <string name="settings_movies_player_description">Reprodutor utilizado para vídeo gravado. O direto e o diferido mantêm as suas próprias definições de reprodução.</string>
+    <string name="settings_content_menus_description">Reordenar as ações dos menus de canais</string>
+    <string name="settings_browsing_description">Memorizar a última categoria e o último canal de TV</string>
+    <string name="settings_browsing_description_full">Escolhe onde abre a lista de canais quando regressas.</string>
+    <string name="settings_vp_section_episodes">Mini-reprodutor</string>
+    <string name="settings_vp_section_episodes_summary">Tamanho e posição do mini-reprodutor</string>
+    <string name="settings_reset_player_choices_confirm_description">As escolhas de reprodutor guardadas voltam à predefinição configurada.</string>
+    <string name="settings_customize_description">Ocultar, renomear e reordenar canais e categorias deste perfil. As alterações mantêm-se após atualizar as listas.</string>
+    <string name="settings_sources_delete_message">Remove a fonte e o respetivo conteúdo de todos os perfis.</string>
+    <string name="settings_backup_section_favorites_desc">Canais favoritos guardados</string>
+    <string name="settings_backup_section_resume_desc">Posições de reprodução guardadas</string>
+    <string name="settings_backup_section_reorder_desc">A tua ordem dos canais e categorias</string>
+    <string name="settings_customize_new_category_description">Uma categoria combinada para este perfil. Move canais para ela.</string>
+    <string name="settings_panel_width_description">Ajustar a largura dos painéis de categorias, canais e pré-visualização.</string>
+    <string name="more_spine_favorites_summary">Canais</string>
+    <string name="settings_afr_pause_description">No vídeo gravado, aguardar após mudar o modo do ecrã para evitar iniciar durante a transição HDMI. Mudanças sem interrupção não fazem pausa.</string>
+    <string name="settings_afr_resolution_description">Permitir mudanças de resolução do ecrã durante a reprodução de vídeo gravado.</string>
+    <string name="settings_reset_player_choices_description">Repor as escolhas guardadas do reprodutor de vídeo gravado. As escolhas dos canais em direto são mantidas.</string>
+    <string name="settings_reset_saved_zoom_description">Repor as escolhas de zoom guardadas para o zoom predefinido.</string>
+    <string name="settings_reset_saved_zoom_confirm_description">As escolhas de zoom guardadas voltam à predefinição. Os volumes guardados são mantidos.</string>
+    <string name="settings_reset_saved_volume_description">Repor os volumes guardados para o volume predefinido.</string>
+    <string name="settings_reset_saved_volume_confirm_description">Os volumes guardados voltam à predefinição. As definições de zoom guardadas são mantidas.</string>
+    <string name="settings_reset_saved_audio_delay_description">Repor os atrasos de áudio guardados para a sincronização configurada.</string>
+    <string name="settings_reset_saved_audio_delay_confirm_description">Os atrasos de áudio guardados voltam à predefinição configurada. O zoom e o volume são mantidos.</string>
+    <string name="settings_seek_step_description">Intervalo de retrocesso e avanço em vídeo que permite deslocar a reprodução.</string>
+    <string name="settings_resume_playback_description">Escolher o que acontece quando um vídeo tem uma posição de reprodução guardada.</string>
+    <string name="settings_android_tv_home_description">Mostrar canais recentes no ecrã inicial da TV.</string>
+</resources>

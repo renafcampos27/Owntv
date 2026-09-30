@@ -24,7 +24,7 @@ permissions:
   contents: write   # required so tag builds can create a Release
 
 # Resolving tv.own.owntv:core and :player-core from GitHub Packages. The registry belongs to a
-# DIFFERENT repository (ahXN00/OwnTV_Core) and the built-in GITHUB_TOKEN is scoped to this one — so a
+# DIFFERENT repository (renatofc27/OwnTV_Core) and the built-in GITHUB_TOKEN is scoped to this one — so a
 # personal access token with read:packages is required, stored as the GPR_TOKEN secret. That repo is
 # public; GitHub's Maven registry demands a login even for public packages, which is why the token is
 # needed at all. Every Gradle step needs it, hence workflow level rather than per job.
@@ -77,7 +77,7 @@ jobs:
 
           # Core publishes the release only AFTER its tests pass and both artifacts are pushed, so a
           # release existing is proof the version is real and installable.
-          LATEST=$(gh api repos/ahXN00/OwnTV_Core/releases/latest --jq .tag_name)
+          LATEST=$(gh api repos/renatofc27/OwnTV_Core/releases/latest --jq .tag_name)
           LATEST="${LATEST#core-}"
           if [ "$PIN" != "$LATEST" ]; then
             echo "::error::Pinned $PIN but core's newest release is $LATEST."
@@ -88,7 +88,7 @@ jobs:
           # reads it at configure time to build localeFilters, and core's own copy never reaches
           # here. A stale copy silently strips a language out of the APK with a green build.
           curl -fsSL -o /tmp/locales.core.json \
-            "https://raw.githubusercontent.com/ahXN00/OwnTV_Core/core-$PIN/tools/i18n/locales.json"
+            "https://raw.githubusercontent.com/renatofc27/OwnTV_Core/core-$PIN/tools/i18n/locales.json"
           if ! diff -u /tmp/locales.core.json tools/i18n/locales.json; then
             echo "::error::tools/i18n/locales.json differs from core's copy at core-$PIN."
             exit 1

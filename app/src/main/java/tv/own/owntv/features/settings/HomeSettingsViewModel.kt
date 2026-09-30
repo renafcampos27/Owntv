@@ -118,7 +118,7 @@ class HomeSettingsViewModel(
 
     fun move(row: HomeRow, up: Boolean) {
         updateConfig { config ->
-            val rows = config.settingsRows.toMutableList()
+            val rows = config.settingsRows.filter { it == HomeRow.HERO || it == HomeRow.RECENT_CHANNELS || it == HomeRow.FAVORITE_CHANNELS }.toMutableList()
             val from = rows.indexOf(row)
             if (from < 0) {
                 config
@@ -128,7 +128,7 @@ class HomeSettingsViewModel(
                     config
                 } else {
                     rows.add(to, rows.removeAt(from))
-                    config.copy(order = rows + config.order.filterNot { it.implemented })
+                    config.copy(order = rows + config.order.filterNot { it in rows })
                 }
             }
         }
@@ -136,7 +136,7 @@ class HomeSettingsViewModel(
 
     fun moveToEdge(row: HomeRow, top: Boolean) {
         updateConfig { config ->
-            val rows = config.settingsRows.toMutableList()
+            val rows = config.settingsRows.filter { it == HomeRow.HERO || it == HomeRow.RECENT_CHANNELS || it == HomeRow.FAVORITE_CHANNELS }.toMutableList()
             val from = rows.indexOf(row)
             if (from < 0) {
                 config
@@ -146,7 +146,7 @@ class HomeSettingsViewModel(
                     config
                 } else {
                     rows.add(to, rows.removeAt(from))
-                    config.copy(order = rows + config.order.filterNot { it.implemented })
+                    config.copy(order = rows + config.order.filterNot { it in rows })
                 }
             }
         }

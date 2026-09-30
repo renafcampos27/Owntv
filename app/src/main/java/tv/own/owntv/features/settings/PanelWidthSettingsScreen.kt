@@ -84,7 +84,7 @@ fun PanelWidthSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) 
     val colors = OwnTVTheme.colors
 
     var open by remember { mutableStateOf<PanelSection?>(null) }
-    val rowFocus = remember { PanelSection.entries.associateWith { FocusRequester() } }
+    val rowFocus = remember { listOf(PanelSection.LIVE).associateWith { FocusRequester() } }
     val scrollState = rememberScrollState()
     var dialogReturn by remember { mutableStateOf<FocusRequester?>(null) }
 
@@ -122,10 +122,10 @@ fun PanelWidthSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) 
 
             val vodLayout by vm.vodLayout.collectAsStateWithLifecycle()
             val cinematic = vodLayout == tv.own.owntv.core.settings.SettingsRepository.VodLayout.CINEMATIC
-            val detailsHeights = PanelSection.entries.associateWith {
+            val detailsHeights = listOf(PanelSection.LIVE).associateWith {
                 vm.cinematicDetailsHeight(it).collectAsStateWithLifecycle().value
             }
-            PanelSection.entries.forEach { section ->
+            listOf(PanelSection.LIVE).forEach { section ->
                 val enabled by vm.panelWidthEnabled.getValue(section).collectAsStateWithLifecycle()
                 val shares by vm.panelShares.getValue(section).collectAsStateWithLifecycle()
                 val current = shares ?: defaultPanelShares(section, rowWidth)
@@ -343,11 +343,13 @@ private fun PanelWidthDialog(
                         // together: whatever one gives up, the other takes. Without this the total
                         // could sit at 100 while a column was over the per-panel 80% cap, which
                         // `isValid` rejects — Okay then refused to save anything at all, silently.
-                        // The 20..80 bounds are what keep BOTH sides inside that cap.
+                        // These bounds keep BOTH sides inside their caps: the category 10..80, the
+                        // list up to the two-panel ceiling (90), so the category can reach 10%.
+                        val listMax = PanelWidthLimits.listMax(preview = 0)
                         StepRow(
                             stringResource(R.string.settings_panel_width_category),
                             draft.category,
-                            minimum = PanelWidthLimits.TOTAL - PanelWidthLimits.MAX,
+                            minimum = PanelWidthLimits.TOTAL - listMax,
                             maximum = PanelWidthLimits.MAX,
                         ) { draft = PanelShares(it, PanelWidthLimits.TOTAL - it, 0) }
                         Spacer(Modifier.height(6.dp))
@@ -355,12 +357,12 @@ private fun PanelWidthDialog(
                             listLabel(section, cinematic),
                             draft.list,
                             minimum = PanelWidthLimits.TOTAL - PanelWidthLimits.MAX,
-                            maximum = PanelWidthLimits.MAX,
+                            maximum = listMax,
                         ) { draft = PanelShares(PanelWidthLimits.TOTAL - it, it, 0) }
                     } else {
                     StepRow(stringResource(R.string.settings_panel_width_category), draft.category) { draft = draft.copy(category = it) }
                     Spacer(Modifier.height(6.dp))
-                    StepRow(listLabel(section, cinematic), draft.list) { draft = draft.copy(list = it) }
+                    StepRow(listLabel(section, cinematic), draft.list, maximum = PanelWidthLimits.listMax(draft.preview)) { draft = draft.copy(list = it) }
                     }
                     if (!showDetailsHeight) {
                         Spacer(Modifier.height(6.dp))
@@ -368,7 +370,10 @@ private fun PanelWidthDialog(
                             thirdSliderLabel(section, cinematic),
                             draft.preview,
                             minimum = 0,
-                        ) { draft = draft.copy(preview = it) }
+                        ) {
+                            // Bringing the third panel back lowers the list's ceiling to MAX again.
+                            draft = draft.copy(preview = it, list = draft.list.coerceAtMost(PanelWidthLimits.listMax(it)))
+                        }
                     }
 
                     Spacer(Modifier.height(10.dp))

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_live_buffer_seconds">%1$d s</string>
+    <string name="settings_live_buffer_automatic">Automatic</string>
+    <string name="settings_live_initial_buffer_title">Initial buffer</string>
+    <string name="settings_live_initial_buffer_description">Initial media target: automatic, or 2–10 seconds. The player may start earlier because of live delay or memory limits. Applies when you next open a channel.</string>
+    <string name="settings_live_initial_buffer_sources">Initial buffer per playlist</string>
+    <string name="settings_live_initial_buffer_sources_description">Set an initial buffer for each playlist, or follow the global setting. Applies when you next open a channel.</string>
+    <string name="settings_live_restart_title">Resume after buffering</string>
+    <string name="settings_live_restart_description">Playback resumes as soon as audio and video can be played, without collecting the initial buffer again.</string>
+    <string name="settings_live_restart_immediate">Immediate</string>
+    <string name="settings_live_reserve_title">Playback reserve</string>
+    <string name="settings_live_reserve_description">Forward media target: Balanced 8–10 seconds; Stable 15–17 seconds. A larger initial buffer raises these targets. Actual reserve depends on the stream and memory. Applies on the next channel open.</string>
+    <string name="settings_live_reserve_sources">Playback reserve per playlist</string>
+    <string name="settings_live_reserve_sources_description">Set a reserve range for each playlist, or follow the global setting. Applies when you next open a channel.</string>
+    <string name="settings_live_reserve_balanced">Balanced · 8–10 s</string>
+    <string name="settings_live_reserve_stable">Stable · 15–17 s</string>
+    <string name="settings_live_reserve_low">Legacy low reserve</string>
+    <string name="settings_live_reserve_custom">Custom (advanced)</string>
+    <string name="settings_live_reserve_custom_title">Custom playback reserve</string>
+    <string name="settings_live_reserve_custom_description">Choose minimum and maximum reserve targets, for example 8 and 12 seconds. Maximum can be up to 10 seconds above minimum. Applies when you next open a channel.</string>
+    <string name="settings_live_reserve_minimum">Minimum reserve</string>
+    <string name="settings_live_reserve_maximum">Maximum reserve</string>
+    <string name="settings_live_reserve_range">%1$d–%2$d s</string>
+    <string name="settings_live_offset_title">Delay behind live</string>
+    <string name="settings_live_offset_description">Live delay for ExoPlayer/HLS, separate from playback reserve. Automatic follows HLS; other players use the source default. Applies on the next channel open.</string>
+    <string name="settings_live_offset_sources">Delay behind live per playlist</string>
+    <string name="settings_live_offset_sources_description">Set the requested live delay for each playlist, or follow the global setting. Applies when you next open a channel.</string>
+    <string name="settings_live_offset_automatic">Automatic (HLS)</string>
+    <string name="settings_live_offset_low">Low delay</string>
+    <string name="settings_live_offset_stable">Stable delay</string>
+    <string name="settings_live_offset_custom_title">Custom delay behind live</string>
+    <string name="settings_live_offset_warning">Low live delay</string>
+    <string name="settings_live_offset_warning_description">A smaller delay places playback closer to the live edge. Some streams may pause more often when new media has not arrived yet.</string>
+    <string name="settings_search_keywords_live_reserve">buffer reserve storage minimum maximum balanced stable refill memory live playback</string>
+    <string name="settings_live_reserve_effective">Effective targets: %1$d–%2$d s. A larger initial buffer raises these targets.</string>
+    <string name="settings_live_reserve_engine_difference">ExoPlayer uses the minimum and maximum; mpv uses the maximum only.</string>
+    <string name="settings_live_reserve_draft">Changes stay in this draft. Done saves; Back cancels.</string>
+</resources>

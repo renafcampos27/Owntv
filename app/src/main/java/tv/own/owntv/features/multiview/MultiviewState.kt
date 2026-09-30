@@ -146,6 +146,9 @@ class MultiviewState(
         val source = live.sourceOf(channel)
         when (val grant = connectionBudget(source, registry.openOn(channel.sourceId), StreamPurpose.WATCHING)) {
             is StreamGrant.Refused -> {
+                live.cancelTile(tile)
+                pool.release(tile)
+                soundOnly.remove(tile)
                 tiles[tile] = MultiviewTile(refusal = grant)
                 return
             }
@@ -155,7 +158,14 @@ class MultiviewState(
         tiles[tile] = MultiviewTile(channel = channel)
         // The first channel to arrive takes the sound; after that the user decides.
         val takesSound = tiles.none { it.channel != null && it != tiles[tile] }
-        live.tuneTile(pool.engineFor(tile), channel, muted = !takesSound && audible != tile)
+        val engine = pool.engineFor(tile)
+        live.tuneTile(
+            tile = tile,
+            engine = engine,
+            channel = channel,
+            muted = !takesSound && audible != tile,
+            isStillActive = { pool.peek(tile) === engine && !engine.isDisposed && tiles.getOrNull(tile)?.channel?.id == channel.id },
+        )
         if (takesSound) giveSoundTo(tile) else if (audible == tile) pool.giveSoundTo(tile)
     }
 
@@ -174,6 +184,7 @@ class MultiviewState(
      */
     fun refuseDeviceLimit(tile: Int) {
         if (tiles.getOrNull(tile)?.channel == null) return
+        live.cancelTile(tile)
         releaseClaim(tile)
         pool.release(tile)
         soundOnly.remove(tile)
@@ -194,11 +205,13 @@ class MultiviewState(
      */
     fun clear(tile: Int) {
         if (tile !in tiles.indices) return
+        live.cancelTile(tile)
         releaseClaim(tile)
         pool.release(tile)
         soundOnly.remove(tile)
         tiles[tile] = MultiviewTile()
         while (tiles.size > openingTileCount(maxTiles) && tiles.last().isEmpty) {
+            live.cancelTile(tiles.lastIndex)
             pool.release(tiles.lastIndex)
             tiles.removeAt(tiles.lastIndex)
         }
@@ -208,6 +221,7 @@ class MultiviewState(
 
     /** Leaving the grid. Every engine and every claim goes, or the next tile is refused for a ghost. */
     fun releaseAll() {
+        live.releaseAllTiles()
         claims.values.forEach { registry.release(it) }
         claims.clear()
         pool.releaseAll()

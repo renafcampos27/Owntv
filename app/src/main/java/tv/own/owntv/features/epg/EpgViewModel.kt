@@ -36,6 +36,7 @@ import tv.own.owntv.core.epg.CatchupUrl
 import tv.own.owntv.core.epg.EpgAutoMatcher
 import tv.own.owntv.core.epg.GuideCandidate
 import tv.own.owntv.core.epg.GuideCandidates
+import tv.own.owntv.core.epg.GuideHistoryPolicy
 import tv.own.owntv.core.model.SourceType
 import tv.own.owntv.core.parser.XtreamClient
 import tv.own.owntv.core.customize.CustomizationStore
@@ -585,10 +586,11 @@ class EpgViewModel(
     /** True when a programme can be played from the archive: a catch-up channel, already started, and
      *  still inside the channel's archive window. The Guide gates its "Watch from start" button on this. */
     fun canCatchup(channel: ChannelEntity, programme: EpgProgrammeEntity, now: Long): Boolean {
-        if (!channel.catchup || programme.startMs > now) return false
-        val windowMs = channel.catchupDays.coerceAtLeast(1) * 24L * 60 * 60 * 1000
-        return now - programme.startMs <= windowMs
+        return GuideHistoryPolicy.canCatchup(channel.catchup, channel.catchupDays, programme.startMs, now)
     }
+
+    fun canAttemptCatchup(channel: ChannelEntity, programme: EpgProgrammeEntity, now: Long): Boolean =
+        GuideHistoryPolicy.canAttemptCatchup(channel.catchup, programme.startMs, now)
 
     /** Live channels this profile has favourited — so the Guide can show/toggle a channel's star. */
     val favoriteChannelIds: StateFlow<Set<Long>> = settings.activeProfileId
@@ -653,8 +655,25 @@ class EpgViewModel(
             if (ids.isEmpty()) return@launch
             // One cache pass for the whole set; only re-sync over the network if the cache is gone/stale
             // (returns false when it held none of the matched channels' programmes).
-            val handled = runCatching { epgRepository.storeProgrammesForIdsFromCache(ids) }.getOrDefault(false)
-            if (!handled) runCatching { refreshAllEpgFromNetwork() }
+            val handled = try {
+                epgRepository.storeProgrammesForIdsFromCache(ids)
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
+            } catch (_: Exception) {
+                false
+            }
+            if (!handled) {
+                refreshAllEpgFromNetwork()
+            } else {
+                // Cached guide imports can move existing timers just like a network refresh.
+                tv.own.owntv.core.recording.RecordingGuideUpdate.run(
+                    refresh = { Unit },
+                    reconcile = { recordings.applyRules() },
+                    onReconcileFailure = {},
+                )
+                prefetchJob?.cancelAndJoin()
+                cachedWindow = null
+            }
             load()
             // Single-channel match (manual pick / review Accept / single auto-match): if the feed has no
             // current-or-upcoming programmes for it, its guide row will be empty even though the match
@@ -672,8 +691,30 @@ class EpgViewModel(
 
     private suspend fun refreshAllEpgFromNetwork() {
         val pid = settings.activeProfileId.first()
-        if (pid >= 0) sourceRepository.observeSources(pid).first().forEach { runCatching { epgRepository.refresh(it) } }
-        epgSourceStore.getAll().forEach { runCatching { epgRepository.refreshUrl(it.id, it.url, it.userAgent) } }
+        var updated = false
+        suspend fun refreshOne(refresh: suspend () -> Int) {
+            try {
+                tv.own.owntv.core.recording.RecordingGuideUpdate.run(
+                    refresh = refresh,
+                    reconcile = { recordings.applyRules() },
+                    onReconcileFailure = {},
+                )
+                updated = true
+            } catch (c: kotlinx.coroutines.CancellationException) {
+                throw c
+            } catch (_: Exception) {
+                // Keep trying independent feeds; a failed import does not reconcile its timers.
+            }
+        }
+        if (pid >= 0) sourceRepository.observeSources(pid).first()
+            .filter { epgRepository.guideUrl(it) != null }
+            .forEach { refreshOne { epgRepository.refresh(it) } }
+        epgSourceStore.getAll().forEach { refreshOne { epgRepository.refreshUrl(it.id, it.url, it.userAgent) } }
+        if (updated) {
+            prefetchJob?.cancelAndJoin()
+            // Timing changes need fresh rows even when the number of stored programmes is unchanged.
+            cachedWindow = null
+        }
     }
 
     // ---- Smart EPG matching (#13): scan channels with no working guide and match them by name ----
@@ -847,13 +888,9 @@ class EpgViewModel(
 
         val now = System.currentTimeMillis()
         val nowAligned = now - (now % HALF_HOUR_MS) // align to the half hour
-        // Always retain two recent hours so the centered "now" marker has programmes on its left.
-        // Catch-up channels can extend the same window farther back to their archive limit.
-        val maxCatchupDays = channelDao.maxCatchupDays(playlistIds)
-        val catchupLookbackMs = if (maxCatchupDays > 0)
-            minOf(maxCatchupDays * DAY_MS, CATCHUP_LOOKBACK_CAP_MS) else 0L
-        val lookbackMs = maxOf(GUIDE_VISIBLE_PAST_MS, catchupLookbackMs)
-        val windowStart = nowAligned - lookbackMs
+        // History can be browsed on every channel; playback still requires catch-up support.
+        val windowStart = GuideHistoryPolicy.windowStart(nowAligned, channelDao.maxCatchupDays(playlistIds))
+        val lookbackMs = nowAligned - windowStart
         // How far the grid can scroll forward is the SAME value that decides how much is stored.
         // Storing a week and only letting the user reach tomorrow would be half a feature — and the
         // 48-hour horizon this replaced is the reason the guide appeared to "run dry" at all.
@@ -984,9 +1021,7 @@ class EpgViewModel(
                 "totalMs=${android.os.SystemClock.elapsedRealtime() - loadStartedAt}"
         }
 
-        // A second background pass used to merge the older catch-up history in afterwards, because
-        // the blocking pass could not afford the whole lookback. Both are gone: a row is read for
-        // the full window in one query, so the history is simply there when the row is drawn.
+        // Each visible row reads its full history lazily; no all-channel programme matrix is loaded.
     }
 
     /** Apply per-channel manual EPG overrides to the auto-matched guide list. */
@@ -1055,7 +1090,6 @@ class EpgViewModel(
         // it settles is not something anyone is waiting on.
         private const val GUIDE_DATA_SETTLE_MS = 10_000L
         private const val HALF_HOUR_MS = 30L * 60 * 1000
-        private const val GUIDE_VISIBLE_PAST_MS = 2L * 60 * 60 * 1000
         // How many guide rows to keep read. A screen shows ~8; this is generous enough that scrolling
         // back never re-reads, and small enough that the grid's memory does not grow with the
         // catalogue. ~100 programmes a row, so a few megabytes at the cap.
@@ -1065,8 +1099,6 @@ class EpgViewModel(
         // should be two screens, so do not raise it on a hunch.
         private const val PREFETCH_AHEAD = 10
         private const val DAY_MS = 24L * 60 * 60 * 1000
-        // How far back the Guide may extend for catch-up (must stay within EpgRepository's retention).
-        private const val CATCHUP_LOOKBACK_CAP_MS = 7L * 24 * 60 * 60 * 1000
         // Generous safety bound only (rows load lazily, so this is about the channel list itself).
         private const val MAX_CHANNELS = 20_000
         // Cap the candidate set the bulk matcher scans against (keeps the O(channels×candidates) scan bounded).

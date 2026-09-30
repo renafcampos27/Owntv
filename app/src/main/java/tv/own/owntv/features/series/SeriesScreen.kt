@@ -322,6 +322,8 @@ private fun SeriesGrid(
     val selectedLabel = selectedItem?.displayLabel(R.string.content_category_all_series) ?: stringResource(R.string.content_category_all_series)
     val gridSelFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     val firstItemFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+    // Right from the rail on an empty list: the list's search box, so a search with no results can be cleared.
+    val listSearchFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     val gridState = androidx.compose.foundation.lazy.grid.rememberLazyGridState()
     val listState = androidx.compose.foundation.lazy.rememberLazyListState()
 
@@ -344,6 +346,7 @@ private fun SeriesGrid(
     // (fixes the cross-category scroll-leak bug).
     val perCategoryGrid = remember { mutableStateMapOf<LiveKey, androidx.compose.foundation.lazy.grid.LazyGridState>() }
     val perCategoryList = remember { mutableStateMapOf<LiveKey, androidx.compose.foundation.lazy.LazyListState>() }
+    val perCategorySeriesIds = remember { mutableStateMapOf<LiveKey, Long>() }
     // NOTE: plain constructors, not remember*State() — these are created lazily inside getOrPut, so a
     // @Composable/rememberSaveable call here would register slots conditionally and corrupt the slot table.
     val effectiveGridState = if (rememberSeries) perCategoryGrid.getOrPut(selectedKey) { androidx.compose.foundation.lazy.grid.LazyGridState() } else gridState
@@ -360,11 +363,17 @@ private fun SeriesGrid(
     LaunchedEffect(effectiveGridState, effectiveListState, viewMode, series) {
         val grid = viewMode != SettingsRepository.VodViewMode.LIST
         snapshotFlow {
-            val indices = if (grid) effectiveGridState.layoutInfo.visibleItemsInfo.map { it.index }
-            else effectiveListState.layoutInfo.visibleItemsInfo.map { it.index }
-            indices.filter { it < series.itemCount }
+            val total = series.itemCount
+            val indices = if (grid) {
+                effectiveGridState.layoutInfo.visibleItemsInfo.map { it.index }
+            } else {
+                effectiveListState.layoutInfo.visibleItemsInfo.map { it.index }
+            }
+            indices.asSequence()
+                .filter { it < total }
                 .mapNotNull { series.peek(it) }
                 .filter { it.posterUrl.isNullOrBlank() }
+                .toList()
         }.distinctUntilChanged().collect { vm.onPosterlessVisible(it) }
     }
 
@@ -524,6 +533,37 @@ private fun SeriesGrid(
             },
             listState = catListState,
             focusRequester = railFocus,
+            onNavigateRight = {
+                val targetId = if (rememberSeries) {
+                    perCategorySeriesIds[selectedKey] ?: selectedSeries?.id
+                } else {
+                    selectedSeries?.id
+                }
+                scope.launch {
+                    if (series.itemCount > 0) {
+                        val targetIdx = if (targetId != null) {
+                            series.itemSnapshotList.items.indexOfFirst { it.id == targetId }.takeIf { it >= 0 } ?: 0
+                        } else 0
+                        if (viewMode == SettingsRepository.VodViewMode.LIST) {
+                            runCatching { effectiveListState.scrollToItem(targetIdx) }
+                        } else {
+                            runCatching { effectiveGridState.scrollToItem(targetIdx) }
+                        }
+                        withFrameNanos { }
+                        repeat(3) {
+                            val focused = if (targetId != null) {
+                                runCatching { gridSelFocus.requestFocus() }.getOrDefault(false)
+                            } else false
+                            if (focused) return@launch
+                            if (runCatching { firstItemFocus.requestFocus() }.getOrDefault(false)) return@launch
+                            if (runCatching { gridSelFocus.requestFocus() }.getOrDefault(false)) return@launch
+                            withFrameNanos { }
+                        }
+                    } else {
+                        runCatching { listSearchFocus.requestFocus() }
+                    }
+                }
+            },
             // Cinematic floats the category panel on the artwork as its own frosted plate; the
             // Separate layout has the content panel behind it and needs none.
             showPanel = cinematic,
@@ -603,8 +643,14 @@ private fun SeriesGrid(
                 // from outside (internal moves don't re-trigger it).
                 .focusProperties {
                     onEnter = {
-                        if (runCatching { gridSelFocus.requestFocus() }.isFailure) {
-                            runCatching { firstItemFocus.requestFocus() }
+                        val targetSeriesId = if (rememberSeries) perCategorySeriesIds[selectedKey] ?: selectedSeries?.id else selectedSeries?.id
+                        val focused = if (targetSeriesId != null) {
+                            runCatching { gridSelFocus.requestFocus() }.getOrDefault(false)
+                        } else false
+                        if (!focused) {
+                            if (!runCatching { firstItemFocus.requestFocus() }.getOrDefault(false)) {
+                                runCatching { gridSelFocus.requestFocus() }
+                            }
                         }
                     }
                 }
@@ -627,6 +673,11 @@ private fun SeriesGrid(
                     val rating = if (tmdbWins) meta?.rating?.takeIf { it > 0 } ?: s.rating?.takeIf { it > 0 }
                         else s.rating?.takeIf { it > 0 } ?: meta?.rating?.takeIf { it > 0 }
                     val providerPlot = s.plot?.takeIf { it.isNotBlank() }
+                    val cineQuality = remember(s.qualityRank, s.advertisedCapabilities) {
+                        tv.own.owntv.features.shell.components.cinematicQualityBadges(s.qualityRank, s.advertisedCapabilities)
+                    }
+                    val cineGenres = remember(meta?.genresJson) { jsonStringList(meta?.genresJson) }
+                    val cineCast = remember(meta?.castJson) { tv.own.owntv.core.metadata.MetadataCast.parse(meta?.castJson) }
                     tv.own.owntv.features.shell.components.CinematicDetails(
                         title = s.name,
                         logoUrl = tv.own.owntv.core.metadata.MetadataImages.logo(meta?.logoPath),
@@ -634,13 +685,13 @@ private fun SeriesGrid(
                             year?.let { localizedInteger(it, grouping = false) },
                             rating?.let { stringResource(R.string.content_rating, it) },
                         ).joinToString(stringResource(R.string.content_metadata_separator)),
-                        qualityBadges = tv.own.owntv.features.shell.components.cinematicQualityBadges(s.qualityRank, s.advertisedCapabilities),
+                        qualityBadges = cineQuality,
                         // A show's episodes are only synced once it is opened, so there is nothing
                         // here to resume from until then — see the Series note in the plan.
                         resumeLabel = null,
-                        genres = jsonStringList(meta?.genresJson),
+                        genres = cineGenres,
                         plot = if (tmdbWins) meta?.overview ?: providerPlot else providerPlot ?: meta?.overview,
-                        cast = tv.own.owntv.core.metadata.MetadataCast.parse(meta?.castJson),
+                        cast = cineCast,
                         modifier = Modifier.heightIn(max = cine?.detailsHeight ?: Dp.Unspecified),
                     )
                     Spacer(Modifier.height(14.dp))
@@ -659,7 +710,7 @@ private fun SeriesGrid(
                 Spacer(Modifier.height(14.dp))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SearchBar(query = searchQuery, onQueryChange = vm::setSearchQuery, placeholder = stringResource(R.string.content_search_series, selectedLabel), modifier = Modifier.weight(1f))
+                SearchBar(query = searchQuery, onQueryChange = vm::setSearchQuery, placeholder = stringResource(R.string.content_search_series, selectedLabel), modifier = Modifier.weight(1f).focusRequester(listSearchFocus))
                 Spacer(Modifier.width(10.dp))
                 SortChip(mode = sortMode, onToggle = vm::toggleSort, playlistLabel = stringResource(R.string.content_provider))
                 // Cinematic is grid-only, so the toggle would be a button that changes nothing.
@@ -694,20 +745,34 @@ private fun SeriesGrid(
                     ) { index ->
                         val s = series[index]
                         if (s != null) {
+                            val sId = s.id
+                            val onFocusRow = remember(sId, rememberSeries, selectedKey) {
+                                {
+                                    vm.onSeriesFocused(s)
+                                    if (rememberSeries) {
+                                        perCategorySeriesIds[selectedKey] = sId
+                                    }
+                                }
+                            }
+                            val onClickRow = remember(sId) { { vm.openSeries(s) } }
+                            val onLongClickRow = remember(sId, index) {
+                                { contextSeries = s; contextSeriesId = sId; contextSeriesIndex = index }
+                            }
+                            val targetSeriesId = if (rememberSeries) perCategorySeriesIds[selectedKey] ?: selectedSeries?.id else selectedSeries?.id
                             SeriesListRow(
                                 series = s,
-                                posterUrl = s.posterUrl?.takeIf { it.isNotBlank() } ?: cachedPosters[s.id],
-                                isFavorite = favoriteIds.contains(s.id),
+                                posterUrl = s.posterUrl?.takeIf { it.isNotBlank() } ?: cachedPosters[sId],
+                                isFavorite = favoriteIds.contains(sId),
                                 providerName = providerNames[s.sourceId],
                                 modifier = Modifier.gridFocusTarget(
-                                    itemId = s.id, index = index,
+                                    itemId = sId, index = index,
                                     contextId = contextSeriesId, contextFocus = contextFocus,
-                                    selectedId = selectedSeries?.id, selectedFocus = gridSelFocus,
+                                    selectedId = targetSeriesId, selectedFocus = gridSelFocus,
                                     firstItemFocus = firstItemFocus,
                                 ),
-                                onFocus = { vm.onSeriesFocused(s) },
-                                onClick = { vm.openSeries(s) },
-                                onLongClick = { contextSeries = s; contextSeriesId = s.id; contextSeriesIndex = index },
+                                onFocus = onFocusRow,
+                                onClick = onClickRow,
+                                onLongClick = onLongClickRow,
                             )
                         }
                     }
@@ -726,21 +791,35 @@ private fun SeriesGrid(
                     ) { index ->
                         val s = series[index]
                         if (s != null) {
+                            val sId = s.id
+                            val onFocusCard = remember(sId, rememberSeries, selectedKey) {
+                                {
+                                    vm.onSeriesFocused(s)
+                                    if (rememberSeries) {
+                                        perCategorySeriesIds[selectedKey] = sId
+                                    }
+                                }
+                            }
+                            val onClickCard = remember(sId) { { vm.openSeries(s) } }
+                            val onLongClickCard = remember(sId, index) {
+                                { contextSeries = s; contextSeriesId = sId; contextSeriesIndex = index }
+                            }
+                            val targetSeriesId = if (rememberSeries) perCategorySeriesIds[selectedKey] ?: selectedSeries?.id else selectedSeries?.id
                             PosterCard(
-                                posterUrl = s.posterUrl?.takeIf { it.isNotBlank() } ?: cachedPosters[s.id],
+                                posterUrl = s.posterUrl?.takeIf { it.isNotBlank() } ?: cachedPosters[sId],
                                 title = s.name,
                                 rating = s.rating,
-                                isFavorite = favoriteIds.contains(s.id),
+                                isFavorite = favoriteIds.contains(sId),
                                 providerName = providerNames[s.sourceId],
                                 modifier = Modifier.gridFocusTarget(
-                                    itemId = s.id, index = index,
+                                    itemId = sId, index = index,
                                     contextId = contextSeriesId, contextFocus = contextFocus,
-                                    selectedId = selectedSeries?.id, selectedFocus = gridSelFocus,
+                                    selectedId = targetSeriesId, selectedFocus = gridSelFocus,
                                     firstItemFocus = firstItemFocus,
                                 ),
-                                onFocus = { vm.onSeriesFocused(s) },
-                                onClick = { vm.openSeries(s) },
-                                onLongClick = { contextSeries = s; contextSeriesId = s.id; contextSeriesIndex = index },
+                                onFocus = onFocusCard,
+                                onClick = onClickCard,
+                                onLongClick = onLongClickCard,
                             )
                         }
                     }

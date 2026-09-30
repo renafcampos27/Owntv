@@ -87,3 +87,16 @@ fun formatTimestamp(ms: Long): String {
         stringResource(R.string.common_timestamp_minutes, m, s)
     }
 }
+
+/** The same format outside composition — a value read at a button press rather than on every tick. */
+fun formatTimestamp(res: android.content.res.Resources, ms: Long): String {
+    val totalSec = ms.coerceAtLeast(0L) / 1000
+    val h = totalSec / 3600
+    val m = (totalSec % 3600) / 60
+    val s = totalSec % 60
+    return if (h > 0) {
+        res.getString(R.string.common_timestamp_hours, h, m, s)
+    } else {
+        res.getString(R.string.common_timestamp_minutes, m, s)
+    }
+}

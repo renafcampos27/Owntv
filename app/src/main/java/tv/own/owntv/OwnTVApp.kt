@@ -113,11 +113,14 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         // the live preview engine, which is a lazy singleton — so nothing wrote to the diagnostics log
         // until the user happened to open Live TV, and a fault during startup, a VOD open or an EPG sync
         // produced an empty report from a user who had deliberately turned logging on.
+        tv.own.owntv.player.LiveDiagnosticsLog.init(this)
         appScope.launch {
             val settings = GlobalContext.get().get<tv.own.owntv.core.settings.SettingsRepository>()
+            tv.own.owntv.player.PlaybackSettings.of(settings)
             settings.detailedDiagnostics.collect { on ->
                 tv.own.owntv.player.LiveDiagnosticsLog.enabled =
-                    on || BuildConfig.DEBUG || BuildConfig.DIAGNOSTIC_BUILD
+                    on
+                tv.own.owntv.player.LiveDiagnosticsLog.event("diagnostics_setting enabled=$on")
             }
         }
         // Seed the one persisted playback quirk (panels whose catch-up archive needs a software
@@ -165,6 +168,15 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
             .newBuilder()
             .retryOnConnectionFailure(true)
             .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
+            .addNetworkInterceptor { chain ->
+                val response = chain.proceed(chain.request())
+                // IPTV providers often return "no-cache" or no cache headers for channel logos.
+                // Force a 180-day client-side cache so logos are cached on disk and never compete with live streams.
+                response.newBuilder()
+                    .header("Cache-Control", "public, max-age=15552000")
+                    .removeHeader("Pragma")
+                    .build()
+            }
             .build()
         return ImageLoader.Builder(context)
             .components { add(OkHttpNetworkFetcherFactory(callFactory = { imageHttpClient })) }
@@ -206,9 +218,11 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         // TRIM_MEMORY_RUNNING_LOW is deprecated on API 34+ but still the only signal on TV devices
         // running older Android, so keep honouring it.
         @Suppress("DEPRECATION")
-        if (level >= TRIM_MEMORY_RUNNING_LOW) {
+        if (level != TRIM_MEMORY_UI_HIDDEN && level >= TRIM_MEMORY_RUNNING_LOW) {
             runCatching { SingletonImageLoader.get(this).memoryCache?.clear() }
-            runCatching { GlobalContext.getOrNull()?.getOrNull<tv.own.owntv.player.OwnTVPlayer>()?.onTrimMemory() }
         }
+        // The engines judge the level themselves: UI_HIDDEN (every Home press) is not pressure for them,
+        // and used to leave mpv on a trimmed cache for the rest of the session.
+        runCatching { GlobalContext.getOrNull()?.getOrNull<tv.own.owntv.player.OwnTVPlayer>()?.onTrimMemory(level) }
     }
 }

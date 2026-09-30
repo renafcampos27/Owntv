@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_live_guide_delay">Live TV guide details</string>
+    <string name="settings_live_guide_delay_description">Load detailed guide only after the focus stays on a channel for 3 seconds; press to switch to immediate loading. Playback is unaffected.</string>
+    <string name="settings_live_guide_immediate">Immediate</string>
+    <string name="settings_live_guide_after_three">After 3 s</string>
+</resources>

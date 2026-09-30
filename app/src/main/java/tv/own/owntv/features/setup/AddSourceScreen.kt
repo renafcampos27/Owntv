@@ -182,12 +182,6 @@ fun AddSourceScreen(
     var syncLive by remember(initial) {
         mutableStateOf(if (initial?.syncLive == false) SyncScopeChoice.Off else SyncScopeChoice.Now)
     }
-    var syncMovies by remember(initial) {
-        mutableStateOf(if (initial?.syncMovies == false) SyncScopeChoice.Off else SyncScopeChoice.Now)
-    }
-    var syncSeries by remember(initial) {
-        mutableStateOf(if (initial?.syncSeries == false) SyncScopeChoice.Off else SyncScopeChoice.Now)
-    }
     var hasRemoteStalkerScopes by remember { mutableStateOf(false) }
     var showFileBrowser by remember { mutableStateOf(false) }
     var showAutoRefreshPicker by remember { mutableStateOf(false) }
@@ -376,8 +370,6 @@ fun AddSourceScreen(
                     stalkerDeviceId2 = payload.deviceId2
                     stalkerSignature = payload.signature
                     syncLive = payload.syncLive
-                    syncMovies = payload.syncMovies
-                    syncSeries = payload.syncSeries
                     hasRemoteStalkerScopes = true
                     kind = SourceKind.STALKER
                 }
@@ -386,8 +378,6 @@ fun AddSourceScreen(
                     username = payload.user
                     password = payload.pass
                     syncLive = payload.syncLive
-                    syncMovies = payload.syncMovies
-                    syncSeries = payload.syncSeries
                     hasRemoteStalkerScopes = false
                     kind = SourceKind.XTREAM
                 }
@@ -397,18 +387,8 @@ fun AddSourceScreen(
         }
     }
 
-    // Stalker add defaults: Live Now, Movies/Series Later (VOD has no bulk endpoint). Skip when
-    // editing, retrying a failed add, or applying explicit choices from a remote Stalker payload.
-    LaunchedEffect(kind, initial, hasRemoteStalkerScopes) {
-        if (initial != null || kind != SourceKind.STALKER || hasRemoteStalkerScopes) return@LaunchedEffect
-        if (syncLive == SyncScopeChoice.Now && syncMovies == SyncScopeChoice.Now && syncSeries == SyncScopeChoice.Now) {
-            syncMovies = SyncScopeChoice.Later
-            syncSeries = SyncScopeChoice.Later
-        }
-    }
-
     val showContentToggles = kind == SourceKind.XTREAM || kind == SourceKind.STALKER
-    val hasAnySectionOn = syncLive != SyncScopeChoice.Off || syncMovies != SyncScopeChoice.Off || syncSeries != SyncScopeChoice.Off
+    val hasAnySectionOn = syncLive != SyncScopeChoice.Off
     val macValid = tv.own.owntv.core.stalker.StalkerClient.canonicalizeMac(mac) != null
     val canStart = when (kind) {
         SourceKind.XTREAM -> server.isNotBlank() && username.isNotBlank() && password.isNotBlank() && hasAnySectionOn
@@ -606,9 +586,7 @@ fun AddSourceScreen(
                 Spacer(Modifier.height(10.dp))
                 SyncScopeRow(label = stringResource(R.string.setup_live_tv), desc = stringResource(R.string.setup_channels_categories), value = syncLive, editing = editing) { syncLive = it }
                 Spacer(Modifier.height(8.dp))
-                SyncScopeRow(label = stringResource(R.string.setup_movies), desc = stringResource(R.string.setup_vod_movie_catalog), value = syncMovies, editing = editing) { syncMovies = it }
                 Spacer(Modifier.height(8.dp))
-                SyncScopeRow(label = stringResource(R.string.setup_series), desc = stringResource(R.string.setup_tv_series_catalog), value = syncSeries, editing = editing) { syncSeries = it }
             }
 
             if (!editing && hideNewCatsProfile >= 0) {
@@ -628,11 +606,11 @@ fun AddSourceScreen(
                     label = if (editing) stringResource(R.string.setup_update_source_save) else stringResource(R.string.setup_start_import),
                     onClick = {
                         when (kind) {
-                            SourceKind.XTREAM -> onStartXtream(name, server, username, password, userAgent, epgUrl, autoRefresh, syncLive, syncMovies, syncSeries, isDefault, preferHls)
+                            SourceKind.XTREAM -> onStartXtream(name, server, username, password, userAgent, epgUrl, autoRefresh, syncLive, SyncScopeChoice.Off, SyncScopeChoice.Off, isDefault, preferHls)
                             SourceKind.M3U -> onStartM3u(name, m3uUrl, userAgent, epgUrl, autoRefresh, isDefault)
                             SourceKind.STALKER -> onStartStalker?.invoke(
                                 name, portalUrl, mac, stalkerSerialNumber, stalkerDeviceId, stalkerDeviceId2,
-                                stalkerSignature, userAgent, autoRefresh, isDefault, syncLive, syncMovies, syncSeries,
+                                stalkerSignature, userAgent, autoRefresh, isDefault, syncLive, SyncScopeChoice.Off, SyncScopeChoice.Off,
                             )
                         }
                     },

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_live_buffer_seconds">%1$d s</string>
+    <string name="settings_live_buffer_automatic">Automático</string>
+    <string name="settings_live_initial_buffer_title">Buffer inicial</string>
+    <string name="settings_live_initial_buffer_description">Objetivo inicial de conteúdo: automático ou entre 2 e 10 segundos. O reprodutor pode iniciar antes devido ao atraso do direto ou aos limites de memória. Aplica-se na próxima abertura de um canal.</string>
+    <string name="settings_live_initial_buffer_sources">Buffer inicial por lista</string>
+    <string name="settings_live_initial_buffer_sources_description">Definir o buffer inicial de cada lista ou seguir a definição global. Aplica-se na próxima abertura de um canal.</string>
+    <string name="settings_live_restart_title">Retoma após buffering</string>
+    <string name="settings_live_restart_description">A reprodução retoma assim que for possível reproduzir áudio e vídeo, sem voltar a acumular o buffer inicial.</string>
+    <string name="settings_live_restart_immediate">Imediata</string>
+    <string name="settings_live_reserve_title">Reserva de reprodução</string>
+    <string name="settings_live_reserve_description">Objetivo de conteúdo à frente: Equilibrada 8–10 segundos; Estável 15–17 segundos. Um buffer inicial maior aumenta estes objetivos. A reserva real depende do fluxo e da memória. Aplica-se na próxima abertura.</string>
+    <string name="settings_live_reserve_sources">Reserva de reprodução por lista</string>
+    <string name="settings_live_reserve_sources_description">Definir o intervalo de reserva de cada lista ou seguir a definição global. Aplica-se na próxima abertura de um canal.</string>
+    <string name="settings_live_reserve_balanced">Equilibrada · 8–10 s</string>
+    <string name="settings_live_reserve_stable">Estável · 15–17 s</string>
+    <string name="settings_live_reserve_low">Reserva baixa anterior</string>
+    <string name="settings_live_reserve_custom">Personalizada (avançado)</string>
+    <string name="settings_live_reserve_custom_title">Reserva de reprodução personalizada</string>
+    <string name="settings_live_reserve_custom_description">Escolher os objetivos de reserva mínima e máxima, por exemplo 8 e 12 segundos. A máxima pode ficar até 10 segundos acima da mínima. Aplica-se na próxima abertura de um canal.</string>
+    <string name="settings_live_reserve_minimum">Reserva mínima</string>
+    <string name="settings_live_reserve_maximum">Reserva máxima</string>
+    <string name="settings_live_reserve_range">%1$d–%2$d s</string>
+    <string name="settings_live_offset_title">Atraso face ao direto</string>
+    <string name="settings_live_offset_description">Atraso do direto para ExoPlayer/HLS, independente da reserva. Automático segue o HLS; outros reprodutores usam o valor da origem. Aplica-se na próxima abertura de um canal.</string>
+    <string name="settings_live_offset_sources">Atraso face ao direto por lista</string>
+    <string name="settings_live_offset_sources_description">Definir o atraso pretendido de cada lista ou seguir a definição global. Aplica-se na próxima abertura de um canal.</string>
+    <string name="settings_live_offset_automatic">Automático (HLS)</string>
+    <string name="settings_live_offset_low">Atraso reduzido</string>
+    <string name="settings_live_offset_stable">Atraso estável</string>
+    <string name="settings_live_offset_custom_title">Atraso personalizado face ao direto</string>
+    <string name="settings_live_offset_warning">Atraso reduzido face ao direto</string>
+    <string name="settings_live_offset_warning_description">Um atraso menor aproxima a reprodução do direto. Alguns fluxos podem parar mais vezes quando ainda não chegou conteúdo novo.</string>
+    <string name="settings_search_keywords_live_reserve">buffer reserva armazenamento mínimo máximo equilibrada estável reposição memória direto reprodução</string>
+    <string name="settings_live_reserve_effective">Objetivos efetivos: %1$d–%2$d s. Um buffer inicial maior eleva estes objetivos.</string>
+    <string name="settings_live_reserve_engine_difference">ExoPlayer usa mínimo e máximo; mpv usa apenas o máximo.</string>
+    <string name="settings_live_reserve_draft">As alterações ficam neste rascunho. Concluído guarda; Voltar cancela.</string>
+</resources>

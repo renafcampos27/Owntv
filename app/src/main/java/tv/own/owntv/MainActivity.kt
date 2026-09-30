@@ -36,6 +36,11 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.repeatOnLifecycle
+import kotlinx.coroutines.awaitCancellation
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import coil3.compose.AsyncImage
 import org.koin.android.ext.android.get
 import org.koin.android.ext.android.inject
@@ -70,6 +75,12 @@ import kotlin.math.min
 private const val BG_TAG = "BgImage"
 
 class MainActivity : ComponentActivity() {
+    @Volatile private var uiPerformanceMonitor: tv.own.owntv.diagnostics.UiPerformanceMonitor? = null
+
+    override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
+        uiPerformanceMonitor?.key(event)
+        return super.dispatchKeyEvent(event)
+    }
     companion object {
         private const val TAG = "OwnTVHome"
 
@@ -184,6 +195,27 @@ class MainActivity : ComponentActivity() {
         // postSplashScreenTheme (Theme.OwnTV), so the activity ends up in the same theme as before.
         val splash = installSplashScreen()
         super.onCreate(savedInstanceState)
+        lifecycleScope.launch {
+            repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                get<tv.own.owntv.core.settings.SettingsRepository>().detailedDiagnostics.collectLatest { enabled ->
+                    if (enabled) {
+                        val monitor = tv.own.owntv.diagnostics.UiPerformanceMonitor(window)
+                        try {
+                            monitor.start()
+                            uiPerformanceMonitor = monitor
+                            awaitCancellation()
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                            throw cancelled
+                        } catch (failed: Exception) {
+                            tv.own.owntv.player.LiveDiagnosticsLog.event("ui_perf_unavailable type=${failed.javaClass.simpleName}")
+                        } finally {
+                            uiPerformanceMonitor = null
+                            monitor.close()
+                        }
+                    }
+                }
+            }
+        }
         val splashDeadline = SystemClock.uptimeMillis() + SPLASH_TIMEOUT_MS
         splash.setKeepOnScreenCondition { !contentReady && SystemClock.uptimeMillis() < splashDeadline }
         pendingDeepLink = LauncherDeepLink.parse(intent.data)
@@ -494,6 +526,8 @@ private fun BackgroundLayer(path: String) {
     val request = remember(path) {
         coil3.request.ImageRequest.Builder(context)
             .data(android.net.Uri.fromFile(file))
+            .size(1920, 1080)
+            .precision(coil3.size.Precision.INEXACT)
             .build()
     }
     Box(modifier = Modifier.fillMaxSize()) {

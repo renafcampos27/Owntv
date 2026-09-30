@@ -74,8 +74,11 @@ import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
+import coil3.request.ImageRequest
+import coil3.size.Precision
 import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.database.entity.EpgProgrammeEntity
@@ -511,7 +514,11 @@ fun EpgScreen(
                     Spacer(Modifier.height(8.dp))
 
                     LazyColumn(modifier = Modifier.weight(1f), state = rowListState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        itemsIndexed(state.channels, key = { _, ch -> ch.id }) { index, channel ->
+                        itemsIndexed(
+                            state.channels,
+                            key = { _, ch -> ch.id },
+                            contentType = { _, _ -> 0 },
+                        ) { index, channel ->
                             GuideChannelRow(
                                 vm = vm,
                                 channel = channel,
@@ -577,7 +584,8 @@ fun EpgScreen(
             // A provider-fetched row is in no table, so its synopsis is the one it already carries;
             // only a stored row needs fetching by id.
             loadDescription = { id -> p.description ?: vm.programmeDescription(id) },
-            canCatchup = vm.canCatchup(channel, p, liveNow),
+            canCatchup = vm.canAttemptCatchup(channel, p, liveNow),
+            replayUnconfirmed = vm.canAttemptCatchup(channel, p, liveNow) && !vm.canCatchup(channel, p, liveNow),
             canRecord = vm.canRecord(channel, p, liveNow),
             recording = existingRecording,
             clashWith = clash,
@@ -946,8 +954,16 @@ private fun GuideChannelLogo(channel: ChannelEntity) {
     if (url.isNullOrBlank()) return
     var failed by remember(url) { mutableStateOf(false) }
     if (failed) return
+    val context = LocalContext.current
+    val imageRequest = remember(url, context) {
+        ImageRequest.Builder(context)
+            .data(url)
+            .size(128, 128)
+            .precision(Precision.INEXACT)
+            .build()
+    }
     AsyncImage(
-        model = url,
+        model = imageRequest,
         contentDescription = null,
         contentScale = ContentScale.Fit,
         modifier = Modifier.size(34.dp),
@@ -971,7 +987,7 @@ private fun moveGuideCursor(
 
 /** Open the programme the cursor is on (the one airing at [cursorTime], else the nearest before it). */
 private fun openAtCursor(progs: List<EpgProgrammeEntity>, cursorTime: Long, onOpen: (EpgProgrammeEntity) -> Unit) {
-    val p = progs.firstOrNull { cursorTime in it.startMs until it.stopMs }
+    val p = progs.lastOrNull { cursorTime in it.startMs until it.stopMs }
         ?: progs.lastOrNull { it.startMs <= cursorTime }
         ?: progs.firstOrNull()
     p?.let(onOpen)
@@ -1000,7 +1016,7 @@ private fun GuideInfoStrip(
     val programme = remember(focusedChannel?.id, cursorTime, inCellMode) {
         if (!inCellMode || focusedChannel == null || cursorTime <= 0L) null
         else vm.cachedProgrammes(focusedChannel)?.let { progs ->
-            progs.firstOrNull { cursorTime in it.startMs until it.stopMs }
+            progs.lastOrNull { cursorTime in it.startMs until it.stopMs }
                 ?: progs.lastOrNull { it.startMs <= cursorTime }
         }
     }

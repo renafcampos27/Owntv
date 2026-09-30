@@ -7,7 +7,7 @@ name: i18n
 #   validate  — the Kotlin-side checks: locale-stable number formatting and bounded text overflow.
 #               The strings themselves live in the core repository now, so locales.json schema,
 #               placeholder/plural parity, translation coverage and the toolkit's own regression
-#               tests run there — see ahXN00/OwnTV_Core's i18n workflow.
+#               tests run there — see renatofc27/OwnTV_Core's i18n workflow.
 #   pseudo    — inspects the BUILT debug and release APKs and proves pseudolocales survived
 #               localeFilters in debug and are absent in release. The flag being set is not proof.
 #
@@ -42,7 +42,7 @@ permissions:
   contents: read
 
 # The pseudo job assembles APKs, so it resolves core from the GitHub Packages registry of
-# ahXN00/OwnTV_Core — see the note in android.yml, including what happens on a fork pull request,
+# renatofc27/OwnTV_Core — see the note in android.yml, including what happens on a fork pull request,
 # where this secret is empty.
 env:
   GITHUB_ACTOR: ${{ github.actor }}

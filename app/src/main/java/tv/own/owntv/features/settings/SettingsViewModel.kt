@@ -256,6 +256,13 @@ class SettingsViewModel(
         viewModelScope.launch { settings.setDefaultSource(id) }
     }
 
+    val liveGuideDelayMs: StateFlow<Int> = settings.liveGuideDelayMs
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 3_000)
+
+    fun setLiveGuideDelayMs(delayMs: Int) {
+        viewModelScope.launch { settings.setLiveGuideDelayMs(delayMs) }
+    }
+
     val livePreviewEnabled: StateFlow<Boolean> = settings.livePreviewEnabled
         .stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
@@ -308,6 +315,13 @@ class SettingsViewModel(
     fun setAutoFrameRate(enabled: Boolean) {
         viewModelScope.launch { settings.setAutoFrameRate(enabled) }
     }
+
+    // N7 — Auto frame rate's film extras.
+    val afrPauseMaxSecs: Int get() = settings.afrPauseMaxSecs
+    val afrPauseSecs: StateFlow<Int> = settings.afrPauseSecs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
+    fun setAfrPauseSecs(secs: Int) { viewModelScope.launch { settings.setAfrPauseSecs(secs) } }
+    val afrMatchResolution: StateFlow<Boolean> = settings.afrMatchResolution.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    fun setAfrMatchResolution(enabled: Boolean) { viewModelScope.launch { settings.setAfrMatchResolution(enabled) } }
 
     // The old surround BOOLEAN is gone from here: [surroundMode] replaced it, and the leftover flow
     // defaulted to `true` where the setting's own default is `false` — a trap for anyone who wired a UI
@@ -473,6 +487,8 @@ class SettingsViewModel(
     val measuredStreamStats: StateFlow<Boolean> = settings.measuredStreamStats.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     fun setMeasuredStreamStats(enabled: Boolean) { viewModelScope.launch { settings.setMeasuredStreamStats(enabled) } }
 
+    val liveHlsOnly = settings.liveHlsOnly.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+    fun setLiveHlsOnly(enabled: Boolean) { viewModelScope.launch { settings.setLiveHlsOnly(enabled) } }
     val detailedDiagnostics: StateFlow<Boolean> = settings.detailedDiagnostics.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
     fun setDetailedDiagnostics(enabled: Boolean) { viewModelScope.launch { settings.setDetailedDiagnostics(enabled) } }
 
@@ -772,6 +788,12 @@ class SettingsViewModel(
     val dynamicCaps: StateFlow<Set<tv.own.owntv.core.nav.MainSection>> = navVisibility.dynamicCaps()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.nav.MainSection.allBrowse)
 
+    val liveTvOnlyMode: StateFlow<Boolean> = settings.liveTvOnlyMode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    fun setLiveTvOnlyMode(enabled: Boolean) {
+        viewModelScope.launch { settings.setLiveTvOnlyMode(enabled) }
+    }
+
     val uiZoomPercent: StateFlow<Int> = settings.uiZoomPercent.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), UiZoom.DEFAULT)
     fun setUiZoom(percent: Int) { viewModelScope.launch { settings.setUiZoomPercent(UiZoom.clamp(percent)) } }
 
@@ -803,7 +825,29 @@ class SettingsViewModel(
         viewModelScope.launch { settings.setLiveLatencyCustomSecs(secs) }
     }
 
-    /** "Pre-buffer" (F07): the global choice, in seconds (0 = Off). */
+    /** Forward media reserve, independent of the requested live offset. */
+    val liveReserveMode: StateFlow<tv.own.owntv.core.settings.LiveLatency> =
+        settings.liveReserveMode
+            .map { tv.own.owntv.core.settings.LiveLatency.fromName(it) }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.LiveLatency.DEFAULT)
+    val liveReserveCustomSecs: StateFlow<Int> =
+        settings.liveReserveCustomSecs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.LiveBuffer.CUSTOM_DEFAULT)
+    val liveReserveExtraSecs: StateFlow<Int> =
+        settings.liveReserveExtraSecs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 2)
+    fun setLiveReserveMode(mode: tv.own.owntv.core.settings.LiveLatency) {
+        viewModelScope.launch { settings.setLiveReserveMode(mode.name) }
+    }
+    fun setLiveReserveCustomSecs(secs: Int) {
+        viewModelScope.launch { settings.setLiveReserveCustomSecs(secs) }
+    }
+    fun setLiveReserveRange(minimumSecs: Int, maximumSecs: Int) {
+        viewModelScope.launch { settings.setLiveReserveRange(minimumSecs, maximumSecs) }
+    }
+    fun setSourceLiveReserve(sourceId: Long, mode: String?, customSecs: Int, extraSecs: Int = -1) {
+        viewModelScope.launch { sourceDao.updateLiveReserve(sourceId, mode, customSecs, extraSecs) }
+    }
+
+    /** Initial pre-buffer target, in seconds (0 = automatic). */
     val livePrerollSecs: StateFlow<Int> =
         settings.livePrerollSecs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.LiveBuffer.PREROLL_OFF)
     fun setLivePrerollSecs(secs: Int) {

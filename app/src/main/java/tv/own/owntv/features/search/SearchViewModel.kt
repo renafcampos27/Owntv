@@ -72,6 +72,7 @@ class SearchViewModel(
     // immediately (was read once at startup, so a new playlist showed nothing until app restart).
     // Per-section Off flags split the id sets so an Off section never surfaces in results.
     private val ctx: StateFlow<ActiveProfileSources> = activeProfileSources(settings, sourceDao)
+        .map { context -> context.copy(sources = context.sources.map { it.copy(syncMovies = false, syncSeries = false) }) }
         .distinctUntilChanged()
         .stateIn(viewModelScope, SharingStarted.Eagerly, ActiveProfileSources(-1L, emptyList()))
 

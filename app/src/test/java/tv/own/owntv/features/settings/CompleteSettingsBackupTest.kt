@@ -20,7 +20,7 @@ class CompleteSettingsBackupTest {
     @get:Rule val folder = TemporaryFolder()
     private val configured = SimpleModeOptions(
         hideCategories = true, hideSidebar = true, channelRecovery = false,
-        startOnBoot = true, startOnWake = true, recoveryTimeoutSeconds = 17, stopClearZapping = true,
+        startOnBoot = true, startOnWake = true, recoveryTimeoutSeconds = 17,
     )
 
     private class StoreSettings(private val store: DataStore<Preferences>) : BackupAppSettings {
@@ -98,10 +98,19 @@ class CompleteSettingsBackupTest {
         }
     }
 
+    @Test fun retiredZappingExperimentDoesNotPreventRestoringOldBackups() = runBlocking {
+        withStore("retired") { store ->
+            val legacy = SimpleModeBackupCodec.encode(configured).put("stopClearZapping", true)
+            SimpleModePreferences.restoreBackup(store, legacy)
+            assertEquals(configured, read(store))
+            assertFalse(SimpleModePreferences.exportBackup(store).has("stopClearZapping"))
+        }
+    }
+
     @Test fun invalidLaterFieldCannotPartiallyApplyEarlierFlags() = runBlocking {
         withStore("atomic") { store ->
             SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(configured))
-            val malformed = SimpleModeBackupCodec.encode(SimpleModeOptions()).put("stopClearZapping", "false")
+            val malformed = SimpleModeBackupCodec.encode(SimpleModeOptions()).put("startOnWake", "false")
             try {
                 SimpleModePreferences.restoreBackup(store, malformed)
                 fail("Invalid boolean must fail before any change")

@@ -1,6 +1,8 @@
 package tv.own.owntv.features.live
 
 import tv.own.owntv.core.epg.displayLogoUrl
+import tv.own.owntv.ui.components.ContextMenuDivider
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.rememberScrollState
@@ -31,11 +33,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.produceState
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -101,7 +106,6 @@ import tv.own.owntv.ui.components.PreviewPanelFill
 import tv.own.owntv.ui.components.roundedPanel
 import tv.own.owntv.ui.components.dialogPanel
 import tv.own.owntv.ui.components.modalScrim
-import tv.own.owntv.ui.components.gridFocusTarget
 import tv.own.owntv.ui.format.rememberBestDateFormatter
 import tv.own.owntv.ui.format.rememberSystemTimeFormatter
 import tv.own.owntv.ui.theme.Dimens
@@ -153,7 +157,8 @@ fun LiveScreen(
     val previewCategoryName by vm.previewCategoryName.collectAsStateWithLifecycle()
     val previewArmed by vm.previewArmed.collectAsStateWithLifecycle()
     val previewBlockedSingleSession by vm.previewBlockedSingleSession.collectAsStateWithLifecycle()
-    val nowNext by vm.nowNext.collectAsStateWithLifecycle()
+    val browseGuide by vm.browseNowNext.collectAsStateWithLifecycle()
+    val nowNext = browseGuide.second.takeIf { browseGuide.first == previewChannel?.id }
     val searchQuery by vm.searchQuery.collectAsStateWithLifecycle()
     val sortMode by vm.sortMode.collectAsStateWithLifecycle()
     val livePreviewSetting by vm.livePreviewEnabled.collectAsStateWithLifecycle()
@@ -169,9 +174,18 @@ fun LiveScreen(
     // used to re-query every loaded channel on every append and again every 60 seconds, which deep
     // in a large category was a dozen chunked queries a minute to learn nothing new.
     val nowPlaying by vm.nowPlaying.collectAsStateWithLifecycle()
-    val loadedChannels = channels.itemSnapshotList.items.filterNotNull()
-    LaunchedEffect(loadedChannels.size, loadedChannels.firstOrNull()?.id, loadedChannels.lastOrNull()?.id) {
-        vm.ensureNowPlaying(loadedChannels)
+    LaunchedEffect(channels) {
+        snapshotFlow {
+            val items = channels.itemSnapshotList.items
+            Triple(items.size, items.firstOrNull()?.id, items.lastOrNull()?.id)
+        }
+        .distinctUntilChanged()
+        .collect {
+            val loaded = channels.itemSnapshotList.items
+            if (loaded.isNotEmpty()) {
+                vm.ensureNowPlaying(loaded)
+            }
+        }
     }
     // Turnover happens on the minute, so wait for the next one rather than 60s from mount — otherwise
     // rows change late and at different instants from each other.
@@ -179,7 +193,7 @@ fun LiveScreen(
         while (true) {
             val now = System.currentTimeMillis()
             kotlinx.coroutines.delay(60_000 - (now % 60_000))
-            vm.refreshNowPlaying(channels.itemSnapshotList.items.filterNotNull())
+            vm.refreshNowPlaying(channels.itemSnapshotList.items)
         }
     }
     // Preview runs only when the player isn't busy (previewEnabled) AND the user hasn't turned it off.
@@ -200,9 +214,12 @@ fun LiveScreen(
         vm.playPreview(ch)
     }
 
-    val listState = androidx.compose.foundation.lazy.rememberLazyListState()
+    val initialChannelIndex = remember(selectedKey) { vm.getSavedScrollIndex(selectedKey) }
+    val listState = androidx.compose.foundation.lazy.rememberLazyListState(initialFirstVisibleItemIndex = initialChannelIndex)
     val selFocus = remember { FocusRequester() }
     val firstItemFocus = remember { FocusRequester() }
+    // Right from the rail on an empty list: the list's search box, so a search with no results can be cleared.
+    val listSearchFocus = remember { FocusRequester() }
 
     // CH+- key paging: shared settings + a hoisted rail state so the same modifier can page both the
     // category rail and this channel list. Channel-list pane focus is tracked separately from rail
@@ -217,9 +234,15 @@ fun LiveScreen(
     // state map (so A→B→A lands back where you were in A). OFF → reset the shared state to the top whenever
     // the category changes (fixes the cross-category scroll-leak bug).
     val perCategoryStates = remember { mutableStateMapOf<LiveKey, androidx.compose.foundation.lazy.LazyListState>() }
+    val perCategoryChannelIds = remember { mutableStateMapOf<LiveKey, Long>() }
     val effectiveListState =
-        if (rememberLive) perCategoryStates.getOrPut(selectedKey) { androidx.compose.foundation.lazy.LazyListState() }
+        if (rememberLive) perCategoryStates.getOrPut(selectedKey) {
+            androidx.compose.foundation.lazy.LazyListState(firstVisibleItemIndex = vm.getSavedScrollIndex(selectedKey))
+        }
         else listState
+    LaunchedEffect(effectiveListState.firstVisibleItemIndex) {
+        vm.saveScrollIndex(selectedKey, effectiveListState.firstVisibleItemIndex)
+    }
     LaunchedEffect(selectedKey, rememberLive) {
         if (!rememberLive) runCatching { listState.scrollToItem(0) }
     }
@@ -403,19 +426,41 @@ fun LiveScreen(
     // Returning from fullscreen: scroll to and focus the channel you were watching (waits for the list to load).
     // Also used by "Startup → Live · Favorites": there's no remembered channel yet, so land on the first row
     // (not the nav panel).
-    LaunchedEffect(restoreFocus, channels.itemCount) {
-        if (!restoreFocus || channels.itemCount == 0) return@LaunchedEffect
-        val ch = previewChannel
-        val idx = if (ch != null) channels.itemSnapshotList.items.indexOfFirst { it.id == ch.id } else -1
-        if (idx >= 0) {
-            runCatching { effectiveListState.scrollToItem(idx) }
-            delay(60)
-            runCatching { selFocus.requestFocus() }
-        } else {
-            delay(60)
-            runCatching { firstItemFocus.requestFocus() }
+    LaunchedEffect(restoreFocus, channels.itemCount, selectedKey, previewChannel?.id) {
+        if (!restoreFocus) return@LaunchedEffect
+        suspend fun requestAttachedFocus(target: FocusRequester): Boolean {
+            repeat(6) {
+                withFrameNanos { }
+                if (runCatching { target.requestFocus() }.getOrDefault(false)) return true
+            }
+            return false
         }
-        onRestored()
+        if (channels.itemCount == 0) {
+            if (requestAttachedFocus(listSearchFocus)) onRestored()
+            return@LaunchedEffect
+        }
+        val ch = previewChannel
+        val idx = if (ch != null) channels.itemSnapshotList.indexOfFirst { it?.id == ch.id } else -1
+        val restored = if (idx >= 0) {
+            // Fullscreen zapping may have moved away from the category's last focused row.
+            if (rememberLive && ch != null) perCategoryChannelIds[selectedKey] = ch.id
+            runCatching { effectiveListState.scrollToItem(idx) }
+            requestAttachedFocus(selFocus)
+        } else {
+            val savedIdx = vm.getSavedScrollIndex(selectedKey)
+            if (savedIdx in 0 until channels.itemCount) {
+                if (rememberLive) channels.peek(savedIdx)?.let { perCategoryChannelIds[selectedKey] = it.id }
+                runCatching { effectiveListState.scrollToItem(savedIdx) }
+                requestAttachedFocus(selFocus)
+            } else {
+                false
+            }
+        }
+        val hasFocus = restored || run {
+            runCatching { effectiveListState.scrollToItem(0) }
+            requestAttachedFocus(firstItemFocus) || requestAttachedFocus(selFocus) || requestAttachedFocus(listSearchFocus)
+        }
+        if (hasFocus) onRestored()
     }
 
     val selectedIndex = railItems.indexOfFirst { it.key == selectedKey }.coerceAtLeast(0)
@@ -478,6 +523,33 @@ fun LiveScreen(
             onFocused = { if (previewEnabled) vm.stopPreview() },
             listState = catListState,
             focusRequester = railFocus,
+            onNavigateRight = {
+                val targetId = if (rememberLive) {
+                    perCategoryChannelIds[selectedKey] ?: previewChannel?.id
+                } else {
+                    previewChannel?.id
+                }
+                scope.launch {
+                    if (channels.itemCount > 0) {
+                        val targetIdx = if (targetId != null) {
+                            channels.itemSnapshotList.items.indexOfFirst { it.id == targetId }.takeIf { it >= 0 } ?: 0
+                        } else 0
+                        runCatching { effectiveListState.scrollToItem(targetIdx) }
+                        withFrameNanos { }
+                        repeat(3) {
+                            val focused = if (targetId != null) {
+                                runCatching { selFocus.requestFocus() }.getOrDefault(false)
+                            } else false
+                            if (focused) return@launch
+                            if (runCatching { firstItemFocus.requestFocus() }.getOrDefault(false)) return@launch
+                            if (runCatching { selFocus.requestFocus() }.getOrDefault(false)) return@launch
+                            withFrameNanos { }
+                        }
+                    } else {
+                        runCatching { listSearchFocus.requestFocus() }
+                    }
+                }
+            },
             showPanel = false,
             modifier = Modifier
                 .onFocusChanged { railPaneFocused = it.hasFocus }
@@ -560,8 +632,14 @@ fun LiveScreen(
                 // only for directional entry from outside (internal moves don't re-trigger it).
                 .focusProperties {
                     onEnter = {
-                        if (runCatching { selFocus.requestFocus() }.isFailure) {
-                            runCatching { firstItemFocus.requestFocus() }
+                        val targetId = if (rememberLive) perCategoryChannelIds[selectedKey] ?: previewChannel?.id else previewChannel?.id
+                        val focused = if (targetId != null) {
+                            runCatching { selFocus.requestFocus() }.getOrDefault(false)
+                        } else false
+                        if (!focused) {
+                            if (!runCatching { firstItemFocus.requestFocus() }.getOrDefault(false)) {
+                                runCatching { selFocus.requestFocus() }
+                            }
                         }
                     }
                 }
@@ -594,7 +672,7 @@ fun LiveScreen(
                     query = searchQuery,
                     onQueryChange = vm::setSearchQuery,
                     placeholder = stringResource(R.string.content_search_channels, selectedLabel),
-                    modifier = Modifier.weight(1f).onFocusChanged { if (it.hasFocus && previewEnabled) vm.stopPreview() },
+                    modifier = Modifier.weight(1f).focusRequester(listSearchFocus).onFocusChanged { if (it.hasFocus && previewEnabled) vm.stopPreview() },
                 )
                 Spacer(Modifier.size(10.dp))
                 SortChip(mode = sortMode, onToggle = vm::toggleSort)
@@ -618,34 +696,48 @@ fun LiveScreen(
                     ) { index ->
                         val channel = channels[index]
                         if (channel != null) {
+                            val chId = channel.id
+                            val currentChannel by rememberUpdatedState(channel)
+                            val onFocusRow = remember(chId, rememberLive, selectedKey) {
+                                {
+                                    vm.onChannelFocused(currentChannel)
+                                    if (rememberLive) {
+                                        perCategoryChannelIds[selectedKey] = chId
+                                    }
+                                }
+                            }
+                            val onClickRow = remember(chId, externalPlayerOn) {
+                                {
+                                    vm.watchFullscreen(currentChannel, channels.itemSnapshotList.items)
+                                    if (!externalPlayerOn) onFullscreen()
+                                }
+                            }
+                            val onLongClickRow = remember(chId) {
+                                { contextChannel = currentChannel; contextChannelId = chId }
+                            }
+                            val targetChannelId = if (rememberLive) perCategoryChannelIds[selectedKey] ?: previewChannel?.id else previewChannel?.id
+                            val isFocusedChannel = chId == targetChannelId
+                            val rowModifier = when {
+                                chId == contextChannelId -> Modifier.focusRequester(contextFocus)
+                                isFocusedChannel -> Modifier.focusRequester(selFocus)
+                                index == 0 -> Modifier.focusRequester(firstItemFocus)
+                                else -> Modifier
+                            }
+                            val rowNowTitle = if (isFocusedChannel) {
+                                nowNext?.now?.title?.takeIf { it.isNotBlank() } ?: nowPlaying[chId]
+                            } else {
+                                nowPlaying[chId]
+                            }
                             ChannelRow(
                                 channel = channel,
-                                isFavorite = favoriteIds.contains(channel.id),
-                            // The batch answers from the stored guide plus whatever the preview has
-                            // already resolved; the channel under the cursor is answered from the
-                            // preview ITSELF, so the row and the pane beside it can never disagree and
-                            // the line appears at once rather than at the next 60s refresh.
-                            nowTitle = if (channel.id == previewChannel?.id) {
-                                nowNext?.now?.title?.takeIf { it.isNotBlank() } ?: nowPlaying[channel.id]
-                            } else {
-                                nowPlaying[channel.id]
-                            },
-                            showNumber = showChannelNumbers,
-                            providerName = providerNames[channel.sourceId],
-                                modifier = Modifier.gridFocusTarget(
-                                    itemId = channel.id, index = index,
-                                    contextId = contextChannelId, contextFocus = contextFocus,
-                                    selectedId = previewChannel?.id, selectedFocus = selFocus,
-                                    firstItemFocus = firstItemFocus,
-                                ),
-                                onFocus = { vm.onChannelFocused(channel) },
-                                onClick = {
-                                    vm.watchFullscreen(channel, channels.itemSnapshotList.items.filterNotNull())
-                                    // External player on for Live TV: the channel went to another app, so
-                                    // don't mount the fullscreen player (it would spin up an idle engine).
-                                    if (!externalPlayerOn) onFullscreen()
-                                },
-                                onLongClick = { contextChannel = channel; contextChannelId = channel.id },
+                                isFavorite = favoriteIds.contains(chId),
+                                nowTitle = rowNowTitle,
+                                showNumber = showChannelNumbers,
+                                providerName = providerNames[channel.sourceId],
+                                modifier = rowModifier,
+                                onFocus = onFocusRow,
+                                onClick = onClickRow,
+                                onLongClick = onLongClickRow,
                             )
                         }
                     }
@@ -999,7 +1091,7 @@ private fun ChannelContextMenu(
             }
             var previousGroup: Int? = null
             arranged(ContentMenu.LIVE, actions).forEachIndexed { index, action ->
-                if (previousGroup != null && action.group != previousGroup) ChannelMenuDivider()
+                if (previousGroup != null && action.group != previousGroup) ContextMenuDivider()
                 previousGroup = action.group
                 ChannelMenuAction(
                     label = action.label,
@@ -1010,7 +1102,7 @@ private fun ChannelContextMenu(
                 )
             }
 
-            ChannelMenuDivider()
+            ContextMenuDivider()
             ChannelMenuAction(stringResource(R.string.content_close), onDismiss, OwnTVIcon.CLOSE, Modifier.fillMaxWidth())
         }
     }
@@ -1063,16 +1155,6 @@ private fun ChannelMenuAction(
     }
 }
 
-@Composable
-private fun ChannelMenuDivider() {
-    Box(
-        Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp)
-            .height(1.dp)
-            .background(OwnTVTheme.colors.outlineVariant.copy(alpha = 0.45f)),
-    )
-}
 
 @Composable
 private fun LivePreviewPane(

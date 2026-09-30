@@ -45,6 +45,7 @@ import org.koin.androidx.compose.koinViewModel
 import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.RecordingEntity
 import tv.own.owntv.core.model.RecordingStatus
+import tv.own.owntv.core.model.RecordingFailure
 import tv.own.owntv.core.recording.RecordingRules
 import tv.own.owntv.core.recording.RecordingStorageInfo
 import tv.own.owntv.ui.components.ContentPanelFill
@@ -62,10 +63,8 @@ import java.util.Locale
 /**
  * Everything the recorder has done, is doing, or could not do.
  *
- * Five groups rather than the four Downloads has, and the fifth is the one that matters: **Missed**.
- * A download that fails can be tried again tomorrow; a live programme that was not recorded is gone,
- * so "it did not happen, and here is why" is a result the user has to be told rather than an error
- * to retry. That is why every missed and failed row carries its reason in words.
+ * Saved and partial files stay playable; failed and missed captures retain their reason.
+ * Archive recovery, when available, creates a separate file and preserves the captured original.
  */
 @Composable
 fun RecordingsScreen(
@@ -85,6 +84,12 @@ fun RecordingsScreen(
     val storage by vm.storage.collectAsStateWithLifecycle()
     val externalPlayerOn by vm.externalPlayerOn.collectAsStateWithLifecycle()
     val colors = OwnTVTheme.colors
+    val context = LocalContext.current
+    LaunchedEffect(vm, context) {
+        vm.retryUnavailable.collect {
+            android.widget.Toast.makeText(context, R.string.recording_retry_unavailable, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
 
     val listRows = remember(rows) { buildRecordingRows(rows) }
     val firstItemId = listRows.firstNotNullOfOrNull { (it as? RecordingListRow.Item)?.recording?.id }
@@ -238,11 +243,12 @@ fun RecordingsScreen(
     if (!embedded) androidx.activity.compose.BackHandler(onBack = onBack)
 }
 
-/** The five groups, in the order the screen shows them: most urgent first. */
+/** Most urgent groups first; partial captures are separate from saved files. */
 private enum class RecordingGroup(val labelRes: Int) {
     NOW(R.string.recording_group_now),
     SCHEDULED(R.string.recording_group_scheduled),
-    COMPLETED(R.string.recording_group_completed),
+    PARTIAL(R.string.recording_group_partial),
+    COMPLETED(R.string.recording_group_saved),
     FAILED(R.string.recording_group_failed),
     MISSED(R.string.recording_group_missed),
 }
@@ -270,12 +276,14 @@ private fun buildRecordingRows(recordings: List<RecordingEntity>): List<Recordin
     // Soonest first: a scheduled list is read forwards, unlike the finished ones.
     val scheduled = recordings.filter { it.status == RecordingStatus.SCHEDULED }.sortedBy { it.startMs }
     val completed = recordings.filter { it.status == RecordingStatus.COMPLETED }
+    val partial = recordings.filter { it.status == RecordingStatus.PARTIAL }
     val failed = recordings.filter { it.status == RecordingStatus.FAILED }
     val missed = recordings.filter { it.status == RecordingStatus.MISSED }
     return buildList {
         listOf(
             RecordingGroup.NOW to now,
             RecordingGroup.SCHEDULED to scheduled,
+            RecordingGroup.PARTIAL to partial,
             RecordingGroup.COMPLETED to completed,
             RecordingGroup.FAILED to failed,
             RecordingGroup.MISSED to missed,
@@ -378,7 +386,7 @@ private fun RecordingRow(
         when (recording.status) {
             // No icon: it sits next to Delete, and the glyph made Play the wider of the two for no
             // reason a viewer could name.
-            RecordingStatus.COMPLETED -> OwnTVButton(
+            RecordingStatus.COMPLETED, RecordingStatus.PARTIAL -> OwnTVButton(
                 stringResource(R.string.content_downloads_play),
                 onClick = onPlay,
                 modifier = focusModifier,
@@ -395,15 +403,21 @@ private fun RecordingRow(
                 style = OwnTVButtonStyle.SECONDARY,
                 modifier = focusModifier,
             )
-            // A missed or failed recording can only be retried while its window is somehow still
-            // open, which for a live programme is rare — but the row must not be a dead end.
             RecordingStatus.FAILED, RecordingStatus.MISSED -> OwnTVButton(
-                stringResource(R.string.common_retry),
+                stringResource(if (recording.programmeStopMs <= System.currentTimeMillis()) R.string.recording_recover_archive else R.string.common_retry),
                 onClick = onRetry,
                 style = OwnTVButtonStyle.SECONDARY,
                 modifier = focusModifier,
             )
             RecordingStatus.CANCELLED -> Unit
+        }
+        if (recording.status == RecordingStatus.PARTIAL) {
+            Spacer(Modifier.width(10.dp))
+            OwnTVButton(
+                stringResource(if (recording.programmeStopMs <= System.currentTimeMillis()) R.string.recording_recover_archive else R.string.common_retry),
+                onClick = onRetry,
+                style = OwnTVButtonStyle.SECONDARY,
+            )
         }
         // Nothing to delete while it is only scheduled: there is no file yet, and Cancel is the
         // action that means "do not do this".
@@ -424,17 +438,13 @@ private fun StatusLine(recording: RecordingEntity) {
     val colors = OwnTVTheme.colors
     val context = LocalContext.current
     when (recording.status) {
-        // With the size as it grows. A live recording has no known total to show a percentage
-        // against — it ends when the programme does — so the bytes on disk are the only honest sign
-        // that it is actually moving, which is the whole reason for showing them.
+        // Confirmed media duration and file bytes, never wall-clock time relabelled as captured media.
         RecordingStatus.RECORDING -> Text(
-            if (recording.bytes > 0) {
-                stringResource(R.string.recording_group_now) +
-                    stringResource(R.string.content_epg_bits_separator) +
-                    stringResource(R.string.common_size_mb, sizeMb(recording.bytes))
-            } else {
-                stringResource(R.string.recording_group_now)
-            },
+            buildList {
+                add(stringResource(R.string.recording_group_now))
+                if (recording.capturedDurationMs > 0) add(stringResource(R.string.recording_captured_duration, captureDurationText(recording.capturedDurationMs)))
+                if (recording.bytes > 0) add(stringResource(R.string.common_size_mb, sizeMb(recording.bytes)))
+            }.joinToString(stringResource(R.string.content_epg_bits_separator)),
             style = MaterialTheme.typography.bodySmall,
             color = colors.primary,
             fontWeight = FontWeight.SemiBold,
@@ -444,23 +454,42 @@ private fun StatusLine(recording: RecordingEntity) {
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
         )
-        // How long it runs for *and* how big it is. The length is what the programme was; the size is
-        // what it cost, and on a 48 GB stick that is the number that decides what gets deleted next.
-        RecordingStatus.COMPLETED -> Text(
-            buildList {
-                add(
-                    androidx.compose.ui.res.pluralStringResource(
-                        R.plurals.recording_minutes,
-                        recordedMinutes(recording),
-                        recordedMinutes(recording),
-                    ),
+        RecordingStatus.COMPLETED, RecordingStatus.PARTIAL -> Column {
+            Text(
+                buildList {
+                    add(stringResource(if (recording.status == RecordingStatus.PARTIAL) R.string.recording_group_partial else R.string.recording_file_saved))
+                    if (recording.capturedDurationMs > 0) {
+                        add(stringResource(R.string.recording_captured_duration, captureDurationText(recording.capturedDurationMs)))
+                    } else {
+                        add(stringResource(R.string.recording_duration_unmeasured))
+                    }
+                    if (recording.bytes > 0) add(stringResource(R.string.common_size_mb, sizeMb(recording.bytes)))
+                }.joinToString(stringResource(R.string.content_epg_bits_separator)),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.primary,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                stringResource(R.string.recording_expected_duration, captureDurationText(recording.programmeStopMs - recording.programmeStartMs)),
+                style = MaterialTheme.typography.labelSmall,
+                color = colors.onSurfaceVariant,
+            )
+            if (recording.missingDurationMs > 0 || recording.gapCount > 0) {
+                Text(
+                    stringResource(R.string.recording_missing_estimate, captureDurationText(recording.missingDurationMs), recording.gapCount),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = colors.onSurfaceVariant,
                 )
-                if (recording.bytes > 0) add(stringResource(R.string.common_size_mb, sizeMb(recording.bytes)))
-            }.joinToString(stringResource(R.string.content_epg_bits_separator)),
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.primary,
-            fontWeight = FontWeight.SemiBold,
-        )
+            }
+            if (recording.status == RecordingStatus.PARTIAL && recording.failure != RecordingFailure.NONE) {
+                RecordingRules.displayTextOf(recording.failure, context.resources)?.let { reason ->
+                    Text(reason, style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                }
+            }
+            if (recording.recoveryOfId != null) {
+                Text(stringResource(R.string.recording_archive_copy), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+            }
+        }
         // The whole point of the Missed group: the reason, in words, not a code.
         RecordingStatus.FAILED, RecordingStatus.MISSED -> Text(
             RecordingRules.displayTextOf(recording.failure, context.resources)
@@ -534,22 +563,6 @@ private fun StorageBar(info: RecordingStorageInfo) {
 @Composable
 private fun whenText(atMs: Long): String =
     formatBestDateTime(LocalContext.current, "EEEdMMMjm", atMs)
-
-/**
- * How many minutes were actually captured — from the clock where the recorder wrote one, and from
- * the programme's own length where it did not. Never zero: a recording that exists ran for some part
- * of a minute, and "0 minutes" would read as a failure that it is not.
- */
-private fun recordedMinutes(recording: RecordingEntity): Int {
-    val started = recording.startedAt
-    val ended = recording.endedAt
-    val span = if (started != null && ended != null && ended > started) {
-        ended - started
-    } else {
-        recording.programmeStopMs - recording.programmeStartMs
-    }
-    return (span / 60_000L).toInt().coerceAtLeast(1)
-}
 
 private fun decimal(value: Double): String = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
     minimumFractionDigits = 1

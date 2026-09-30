@@ -93,7 +93,7 @@ fun DownloadsScreen(
 
     // Which type this screen is showing. Live TV is first and is where a remote lands, because a
     // recording is the one thing here that can be *running* and wanting attention.
-    var tab by rememberSaveable { mutableStateOf(DownloadsTab.LIVE) }
+    val tab = DownloadsTab.LIVE
     val tabFocus = remember { androidx.compose.ui.focus.FocusRequester() }
 
     // Which tab holds which kind is core's rule (MediaFolders.folderFor), and the comment that used
@@ -244,10 +244,10 @@ fun DownloadsScreen(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(10.dp),
         ) {
-            DownloadsTab.entries.forEach { entry ->
+            listOf(DownloadsTab.LIVE).forEach { entry ->
                 OwnTVButton(
                     label = stringResource(entry.labelRes),
-                    onClick = { tab = entry },
+                    onClick = { },
                     style = if (entry == tab) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
                     selected = entry == tab,
                     compact = true,
