@@ -53,7 +53,7 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 internal fun CatchupJumpRows(
     offsetsSec: List<Int>,
     firstFocus: FocusRequester,
-    onPick: (Int) -> Unit,
+    onPick: (Long) -> Unit,
     modifier: Modifier = Modifier,
     // Last row: leave the suggestions behind and type an exact day + time. Null hides it.
     onChooseExact: (() -> Unit)? = null,
@@ -70,7 +70,7 @@ internal fun CatchupJumpRows(
             val at = CatchupJumps.instantFor(offset, nowMs)
             val label = if (CatchupJumps.crossesDay(offset, nowMs, zone)) withDay(at) else timeOnly(at)
             FocusableSurface(
-                onClick = { onPick(offset) },
+                onClick = { onPick(at) },
                 modifier = if (offset == offsetsSec.first()) {
                     Modifier.fillMaxWidth().focusRequester(firstFocus)
                 } else {
@@ -115,7 +115,7 @@ internal fun CatchupJumpDialog(
     title: String,
     offsetsSec: List<Int>,
     windowSec: Int,
-    onPick: (Int) -> Unit,
+    onPick: (Long) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = OwnTVTheme.colors
@@ -167,6 +167,24 @@ internal fun CatchupJumpDialog(
                         style = OwnTVButtonStyle.SECONDARY,
                     )
                 }
+            }
+        }
+    }
+}
+
+@Composable
+internal fun CatchupFailureDialog(channelName: String, onRetry: () -> Unit, onLive: () -> Unit, onDismiss: () -> Unit) {
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { kotlinx.coroutines.delay(60); runCatching { focus.requestFocus() } }
+    androidx.activity.compose.BackHandler(onBack = onDismiss)
+    tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = onDismiss) {
+        Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
+            Column(Modifier.dialogPanel(width = 460.dp, corner = 16.dp, padding = 18.dp, scroll = false), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(channelName, style = MaterialTheme.typography.titleMedium)
+                Text(stringResource(R.string.catchup_open_failed), style = MaterialTheme.typography.bodyMedium)
+                OwnTVButton(stringResource(R.string.common_retry), onClick = onRetry, modifier = Modifier.focusRequester(focus))
+                OwnTVButton(stringResource(R.string.catchup_return_live), onClick = onLive, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
             }
         }
     }

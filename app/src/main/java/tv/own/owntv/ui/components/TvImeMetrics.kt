@@ -38,7 +38,7 @@ internal object TvImeDefaults {
 }
 
 @Stable
-internal class TvImeWatcher(private val hostView: View) {
+internal class TvImeWatcher(private val hostView: View, private val allowEstimate: Boolean = true) {
     var metrics by mutableStateOf(TvImeMetrics())
         private set
     var imeRequested by mutableStateOf(false)
@@ -123,11 +123,11 @@ internal class TvImeWatcher(private val hostView: View) {
             frameObscured >= minKeyboard -> frameObscured to TvImeMetrics.Source.VISIBLE_FRAME
             else -> null
         }
-        if (measured != null) {
+        if (measured != null && allowEstimate) {
             prefs.edit().putInt(KEY_CALIBRATED_HEIGHT, measured.first).apply()
         }
 
-        val obstruction = measured?.first ?: if (imeRequested) {
+        val obstruction = measured?.first ?: if (imeRequested && allowEstimate) {
             prefs.getInt(KEY_CALIBRATED_HEIGHT, 0).takeIf { it >= minKeyboard }
                 ?: (displayHeight * TvImeDefaults.FALLBACK_KEYBOARD_FRACTION).roundToInt()
         } else 0

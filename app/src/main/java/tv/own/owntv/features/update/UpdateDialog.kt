@@ -1,5 +1,6 @@
 package tv.own.owntv.features.update
 
+import tv.own.owntv.ui.components.longPressMenuGuard
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -55,24 +56,30 @@ import tv.own.owntv.ui.theme.OwnTVTheme
  * [checkOnOpen] makes opening the dialog trigger a fresh check (the Settings path).
  */
 @Composable
-fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false) {
+fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false, compact: Boolean = false) {
     val manager: UpdateManager = koinInject()
     val state by manager.state.collectAsStateWithLifecycle()
     val colors = OwnTVTheme.colors
     val focus = remember { FocusRequester() }
+    val laterFocus = remember { FocusRequester() }
 
     LaunchedEffect(Unit) {
         if (checkOnOpen) manager.check()
     }
     LaunchedEffect(state) {
         if (state is UpdateManager.State.Available || state is UpdateManager.State.UpToDate || state is UpdateManager.State.Failed) {
-            runCatching { focus.requestFocus() }
+            repeat(3) {
+                kotlinx.coroutines.delay(60)
+                val target = if (state is UpdateManager.State.Available) laterFocus else focus
+                if (runCatching { target.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
+            }
         }
     }
-    BackHandler { onDismiss() }
+    val dismiss: () -> Unit = { manager.cancelPendingUpdate(); onDismiss() }
+    BackHandler { dismiss() }
 
     Box(
-        modifier = Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(),
+        modifier = Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup().longPressMenuGuard(),
         contentAlignment = Alignment.Center,
     ) {
         Column(Modifier.dialogPanel(width = 520.dp, corner = 20.dp, padding = 28.dp)) {
@@ -94,7 +101,7 @@ fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false) {
                     )
                     Spacer(Modifier.height(20.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                        OwnTVButton(stringResource(R.string.settings_close), onClick = onDismiss, modifier = Modifier.focusRequester(focus))
+                        OwnTVButton(stringResource(R.string.settings_close), onClick = dismiss, modifier = Modifier.focusRequester(focus))
                     }
                 }
                 is UpdateManager.State.Available -> {
@@ -102,7 +109,7 @@ fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false) {
                         stringResource(R.string.update_available_version, s.info.version, manager.currentVersion),
                         style = MaterialTheme.typography.bodyMedium, color = colors.onSurface,
                     )
-                    if (s.info.notes.isNotBlank()) {
+                    if (!compact && s.info.notes.isNotBlank()) {
                         Spacer(Modifier.height(12.dp))
                         Text(stringResource(R.string.update_whats_new), style = MaterialTheme.typography.titleSmall, color = colors.onSurface)
                         Spacer(Modifier.height(6.dp))
@@ -118,7 +125,7 @@ fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false) {
                     }
                     Spacer(Modifier.height(20.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OwnTVButton(stringResource(R.string.update_later), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                        OwnTVButton(stringResource(if (compact) R.string.update_not_now else R.string.update_later), onClick = dismiss, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.focusRequester(laterFocus))
                         Spacer(Modifier.weight(1f))
                         OwnTVButton(stringResource(R.string.update_now), onClick = { manager.downloadAndInstall() }, icon = OwnTVIcon.DOWNLOADS, modifier = Modifier.focusRequester(focus))
                     }
@@ -143,7 +150,7 @@ fun UpdateDialog(onDismiss: () -> Unit, checkOnOpen: Boolean = false) {
                     )
                     Spacer(Modifier.height(20.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OwnTVButton(stringResource(R.string.settings_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                        OwnTVButton(stringResource(R.string.settings_close), onClick = dismiss, style = OwnTVButtonStyle.SECONDARY)
                         Spacer(Modifier.weight(1f))
                         OwnTVButton(stringResource(R.string.update_try_again), onClick = { manager.retry() }, modifier = Modifier.focusRequester(focus))
                     }

@@ -307,6 +307,7 @@ internal fun CenterControls(
 internal fun BottomBar(
     player: PlaybackEngine, isLive: Boolean, position: () -> Long, duration: Long,
     volume: Int, audioCount: Int, subCount: Int, zoomMode: ZoomMode, speedLabel: String,
+    scrubContextKey: Any?, scrubWindowSec: (() -> Int)?,
     onScrubLive: ((Int) -> Unit)?, timeshiftOffset: () -> Int?, onGoToLive: (() -> Unit)?, onOpenJumpBack: (() -> Unit)?,
     liveProgrammes: List<LiveProgramme> = emptyList(),
     compatMode: Boolean?, onToggleCompatMode: (() -> Unit)?,
@@ -334,6 +335,8 @@ internal fun BottomBar(
                             programmes = liveProgrammes,
                             liveEdgeMs = System.currentTimeMillis(),
                             onScrub = onScrubLive,
+                            contextKey = scrubContextKey,
+                            windowSec = scrubWindowSec?.invoke()?.takeIf { it > 0 } ?: LIVE_WINDOW_SEC,
                         )
                     }
                     Spacer(Modifier.width(12.dp))
@@ -472,7 +475,8 @@ internal fun BottomBar(
 
 /** Visible on every live channel; scrubbing is enabled only for a real seekable server window. */
 @Composable
-private fun NativeLiveTimeline(player: PlaybackEngine) {
+internal fun NativeLiveTimeline(player: PlaybackEngine) {
+    val meta by player.currentMeta.collectAsStateWithLifecycle()
     val window by player.liveSeekWindow.collectAsStateWithLifecycle()
     val seekStep by player.liveSeekStepMs.collectAsStateWithLifecycle()
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -482,7 +486,7 @@ private fun NativeLiveTimeline(player: PlaybackEngine) {
             Spacer(Modifier.width(12.dp))
             Box(Modifier.weight(1f)) {
                 SeekBar(liveWindow.positionMs, liveWindow.durationMs, liveWindow.bufferedMs,
-                    seekStep, player::seekLiveBy)
+                    seekStep, player::seekLiveBy, contextKey = meta)
             }
             Spacer(Modifier.width(12.dp))
             GoLivePill(enabled = liveWindow.behindDefaultMs > 1_000) { player.seekToLiveEdge() }
@@ -500,6 +504,7 @@ private fun NativeLiveTimeline(player: PlaybackEngine) {
  *  only part that recomposes as it ticks (T14). */
 @Composable
 private fun VodTimeline(player: PlaybackEngine, position: () -> Long, duration: Long) {
+    val meta by player.currentMeta.collectAsStateWithLifecycle()
     val seekStep by player.seekStepMs.collectAsStateWithLifecycle() // Settings -> Seek step
     val buffered by player.bufferedMs.collectAsStateWithLifecycle()
     val pos = position()
@@ -507,7 +512,7 @@ private fun VodTimeline(player: PlaybackEngine, position: () -> Long, duration: 
         TimeCap(formatTime(pos), Alignment.Start)
         Spacer(Modifier.width(12.dp))
         Box(Modifier.weight(1f)) {
-            SeekBar(positionMs = pos, durationMs = duration, bufferedMs = buffered, stepMs = seekStep, onSeek = { player.seekBy(it) })
+            SeekBar(positionMs = pos, durationMs = duration, bufferedMs = buffered, stepMs = seekStep, onSeek = { player.seekBy(it) }, contextKey = meta)
         }
         Spacer(Modifier.width(12.dp))
         TimeCap(stringResource(R.string.player_time_remaining, formatTime((duration - pos).coerceAtLeast(0))), Alignment.End)

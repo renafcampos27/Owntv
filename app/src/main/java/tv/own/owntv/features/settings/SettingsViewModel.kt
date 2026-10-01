@@ -2,6 +2,8 @@
 
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.model.MediaType
+
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -243,6 +245,13 @@ class SettingsViewModel(
     /** Configured download folder ("" = app-specific storage). */
     val downloadRoot: StateFlow<String> = settings.downloadRoot
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
+
+    val internalMediaQuotaGiB = settings.internalMediaQuotaGiB
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 4)
+    val externalMediaQuotaGiB = settings.externalMediaQuotaGiB
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 16)
+    fun setInternalMediaQuotaGiB(value: Int) { viewModelScope.launch { settings.setInternalMediaQuotaGiB(value) } }
+    fun setExternalMediaQuotaGiB(value: Int) { viewModelScope.launch { settings.setExternalMediaQuotaGiB(value) } }
 
     fun setDownloadRoot(path: String) {
         viewModelScope.launch { settings.setDownloadRoot(path) }
@@ -762,6 +771,20 @@ class SettingsViewModel(
 
     // --- Nav menu customization (v4.3.0) ---
     /** STATIC (default): user picks which icons to hide. DYNAMIC: icons adapt to the active playlist. */
+    val channelVersionSettings = settings.activeProfileId.flatMapLatest { pid ->
+        if (pid < 0) flowOf(tv.own.owntv.core.customize.SectionCustomizations())
+        else customizationStore.observe(pid, MediaType.LIVE)
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.customize.SectionCustomizations())
+
+    fun setGroupChannelVersions(enabled: Boolean) { viewModelScope.launch {
+        val pid = settings.activeProfileId.first()
+        if (pid >= 0) customizationStore.update(pid, MediaType.LIVE) { it.copy(groupChannelVersions = enabled) }
+    } }
+    fun setPrioritizeChannelVersions(enabled: Boolean) { viewModelScope.launch {
+        val pid = settings.activeProfileId.first()
+        if (pid >= 0) customizationStore.update(pid, MediaType.LIVE) { it.copy(prioritizeChannelVersions = enabled) }
+    } }
+
     val navMenuMode: StateFlow<tv.own.owntv.core.settings.SettingsRepository.NavMenuMode> =
         settings.navMenuMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.SettingsRepository.NavMenuMode.STATIC)
     fun setNavMenuMode(mode: tv.own.owntv.core.settings.SettingsRepository.NavMenuMode) {
@@ -877,8 +900,13 @@ class SettingsViewModel(
         viewModelScope.launch { sourceDao.updateLiveLatency(sourceId, mode, customSecs) }
     }
 
+    val visualProfile = settings.visualProfile.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.theme.VisualProfile.AUTO)
+    fun setVisualProfile(profile: tv.own.owntv.core.theme.VisualProfile) { viewModelScope.launch { settings.setVisualProfile(profile) } }
+    val uiDiagnostics = settings.uiDiagnostics.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    fun setUiDiagnostics(enabled: Boolean) { viewModelScope.launch { settings.setUiDiagnostics(enabled) } }
+
     val animationLevel: StateFlow<tv.own.owntv.core.theme.AnimationLevel> =
-        settings.animationLevel.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.theme.AnimationLevel.FULL)
+        settings.requestedAnimationLevel.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.theme.AnimationLevel.FULL)
     fun setAnimationLevel(level: tv.own.owntv.core.theme.AnimationLevel) { viewModelScope.launch { settings.setAnimationLevel(level) } }
 
     /** Separate panels (the default) or the Cinematic frame, shared by Movies and Series. */

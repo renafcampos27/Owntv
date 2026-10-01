@@ -77,7 +77,6 @@
 2	technical	app/src/main/java/tv/own/owntv/features/epg/EpgScreen.kt	ALL
 1	technical	app/src/main/java/tv/own/owntv/features/epg/EpgScreen.kt	EEEdMMM
 1	empty	app/src/main/java/tv/own/owntv/features/epg/EpgViewModel.kt	\0
-1	technical	app/src/main/java/tv/own/owntv/features/epg/EpgViewModel.kt	${channel.id}|$shift
 1	log	app/src/main/java/tv/own/owntv/features/epg/EpgViewModel.kt	EpgViewModel
 1	log	app/src/main/java/tv/own/owntv/features/epg/EpgViewModel.kt	Stalker catch-up resolve failed channelId=${channel.id}
 1	log	app/src/main/java/tv/own/owntv/features/epg/EpgViewModel.kt	cache-reused
@@ -140,6 +139,23 @@
 1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelAlternatives.kt	pt:historia
 1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelAlternatives.kt	sd
 1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelAlternatives.kt	uhd
+3	empty	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	\0
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	${ch.sourceId}:${ChannelAlternatives.key(ch.name)}
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	.
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	1080p
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	4k
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	720p
+1	regex	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	\\s+\\(?(full\\s*hd|fhd|1080p|4k|uhd|hevc|hvec|h[. ]?265|hd|720p|sd|low|hq|h[. ]?264)\\)?$
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	fhd
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	fullhd
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	h265
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	hd
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	hevc
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	hq
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	hvec
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	low
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	sd
+1	protocol	app/src/main/java/tv/own/owntv/features/live/ChannelVersionPolicy.kt	uhd
 1	empty	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	${it}p
 2	technical	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	+
@@ -151,6 +167,7 @@
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	epg_offset
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	favourite
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	hide
+1	protocol	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	local_timeshift
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	match_epg
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	move
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	move_to_category
@@ -158,18 +175,21 @@
 1	technical	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	record
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	remove_history
 1	preference-key	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	rename
+1	protocol	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	versions
 2	technical	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	−
 3	empty	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	#$it
 1	technical	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	LIVE
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	LiveEngine
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	OwnTVHome
+2	protocol	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	User-Agent
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	catch-up '${ch.name}' prog='${programme.title}' -> ${tv.own.owntv.core.network.HttpClient.redactUrl(url)}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	catch-up external '${ch.name}' prog='${programme.title}'
-1	technical	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	choice tuneId=$tuneId channelId=${channel.id} timeMs=${android.os.SystemClock.elapsedRealtime()}
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	choice tuneId=$tuneId channelId=${requestedChannel.id} timeMs=${android.os.SystemClock.elapsedRealtime()}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	engine: $message
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	ensurePlaying history profile=$pid channelId=${channel.id}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	ensurePlaying history record failed channelId=${channel.id} profile=$pid
+1	protocol	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	local-timeshift
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker resolve failed channelId=${channel.id}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	tuneByNumber($number) failed
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveZapList.kt	LiveZapList
@@ -386,6 +406,7 @@
 1	log	app/src/main/java/tv/own/owntv/features/settings/OpenSubtitlesViewModel.kt	user-info refresh failed: ${it.message}
 1	technical	app/src/main/java/tv/own/owntv/features/settings/PanelWidthSettingsScreen.kt	+
 1	technical	app/src/main/java/tv/own/owntv/features/settings/PanelWidthSettingsScreen.kt	–
+3	empty	app/src/main/java/tv/own/owntv/features/settings/RecordingSettingsScreen.kt	\0
 28	empty	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	FIT
 1	log	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	Metadata cache wipe after language change failed: ${it.message}
@@ -486,13 +507,13 @@
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_zoom
 2	locale	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	zho
 3	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	–
-13	empty	app/src/main/java/tv/own/owntv/features/setup/AddSourceScreen.kt	\0
 2	file-path	app/src/main/java/tv/own/owntv/features/setup/AddSourceScreen.kt	/
 1	technical	app/src/main/java/tv/own/owntv/features/setup/AddSourceScreen.kt	m3u
 1	technical	app/src/main/java/tv/own/owntv/features/setup/AddSourceScreen.kt	m3u8
 9	empty	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	\0
 1	empty	app/src/main/java/tv/own/owntv/features/setup/SetupWizard.kt	\0
-5	technical	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
+14	empty	app/src/main/java/tv/own/owntv/features/setup/SourceDraftViewModel.kt	\0
+7	empty	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
 2	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	Action
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	All Channels
 1	protocol	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	All Downloads
@@ -547,7 +568,7 @@
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/CinematicBrowse.kt	•
 1	empty	app/src/main/java/tv/own/owntv/features/shell/components/MediaDetailsScreen.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/MediaDetailsScreen.kt	·
-10	empty	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	\0
+12	empty	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	\0
 5	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	#
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	#%06X
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	#F5B400
@@ -603,9 +624,11 @@
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	tab_
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	tab_${tab.name}
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	theme
+1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	ui_measurement
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	ui_zoom
 1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	update_startup
 2	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	v${tv.own.owntv.BuildConfig.VERSION_NAME}
+1	technical	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	visual_profile
 1	preference-key	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	vp_afr
 1	preference-key	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	vp_channel_numbers
 1	preference-key	app/src/main/java/tv/own/owntv/features/shell/components/SettingsScreen.kt	vp_hdr

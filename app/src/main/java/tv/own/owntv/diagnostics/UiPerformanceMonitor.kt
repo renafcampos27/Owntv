@@ -13,7 +13,7 @@ import android.view.Display
 import android.view.Window
 import tv.own.owntv.player.LiveDiagnosticsLog
 
-/** Installed only while detailed diagnostics are enabled and the activity is visible. */
+/** Installed only while UI measurement or detailed diagnostics are enabled and the activity is visible. */
 internal class UiPerformanceMonitor(private val window: Window) : AutoCloseable {
     private val samples = UiPerformanceWindow()
     private val thread = HandlerThread("owntv-ui-diagnostics", Process.THREAD_PRIORITY_BACKGROUND)
@@ -48,8 +48,9 @@ internal class UiPerformanceMonitor(private val window: Window) : AutoCloseable 
     }
     private val report = object : Runnable {
         override fun run() {
-            if (closed || !LiveDiagnosticsLog.enabled) return
+            if (closed) return
             val snapshot = samples.take()
+            UiPerformanceSummary.publish(snapshot)
             val cpuMs = Process.getElapsedCpuTime()
             val wallMs = SystemClock.elapsedRealtime()
             val gcCount = gcStat("art.gc.gc-count")
@@ -69,6 +70,7 @@ internal class UiPerformanceMonitor(private val window: Window) : AutoCloseable 
     }
 
     fun start() {
+        UiPerformanceSummary.reset()
         thread.start()
         handler = Handler(thread.looper)
         lastCpuMs = Process.getElapsedCpuTime()

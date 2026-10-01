@@ -10,6 +10,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
@@ -86,6 +87,7 @@ fun FocusableSurface(
     content: @Composable BoxScope.(focused: Boolean) -> Unit,
 ) {
     val colors = OwnTVTheme.colors
+    val touchTarget = if (rememberRemoteTextInput()) Modifier else Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val pressed by interaction.collectIsPressedAsState()
@@ -189,7 +191,7 @@ fun FocusableSurface(
     }
 
     Box(
-        modifier = modifier
+        modifier = touchTarget.then(modifier)
             .then(
                 if (motion != null && motionEnabled && focused) Modifier.onGloballyPositioned { coordinates ->
                     val center = coordinates.boundsInRoot().center

@@ -2,6 +2,17 @@ package tv.own.owntv.ui.components
 
 import android.view.WindowManager
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -40,9 +51,16 @@ fun OwnTVPopup(
     onDismissRequest: () -> Unit,
     dismissOnBackPress: Boolean = true,
     dismissOnClickOutside: Boolean = true,
-    fontScale: Float = 0.70f,
+    fontScale: Float? = null,
+    automaticPrompt: Boolean = false,
     content: @Composable () -> Unit,
 ) {
+    val remote = rememberRemoteTextInput()
+    val owner = remember { Any() }
+    DisposableEffect(owner, automaticPrompt) {
+        if (!automaticPrompt) popupPresence.enter(owner)
+        onDispose { if (!automaticPrompt) popupPresence.leave(owner) }
+    }
     Dialog(
         onDismissRequest = onDismissRequest,
         properties = DialogProperties(
@@ -76,7 +94,7 @@ fun OwnTVPopup(
             dialogWindow?.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_NOTHING)
         }
 
-        val watcher = remember(dialogView) { TvImeWatcher(dialogView) }
+        val watcher = remember(dialogView, remote) { TvImeWatcher(dialogView, allowEstimate = remote) }
         DisposableEffect(watcher) {
             watcher.attach()
             onDispose { watcher.detach() }
@@ -94,8 +112,10 @@ fun OwnTVPopup(
         val metrics = watcher.metrics
         val displayHeightPx = metrics.displayHeightPx.takeIf { it > 0 }
             ?: dialogView.resources.displayMetrics.heightPixels
-        val topSafePx = with(baseDensity) { 24.dp.roundToPx() }
-        val bottomSafePx = with(baseDensity) { 24.dp.roundToPx() }
+        val systemSafe = WindowInsets.systemBars.union(WindowInsets.displayCutout)
+        val marginPx = with(baseDensity) { 24.dp.roundToPx() }
+        val topSafePx = if (remote) marginPx else maxOf(marginPx, systemSafe.getTop(baseDensity))
+        val bottomSafePx = if (remote) marginPx else maxOf(marginPx, systemSafe.getBottom(baseDensity))
         val keyboardGapPx = with(baseDensity) { 16.dp.roundToPx() }
         val usableBottomPx = if (metrics.visible) {
             (metrics.keyboardTopPx - keyboardGapPx).coerceAtLeast(topSafePx)
@@ -105,7 +125,7 @@ fun OwnTVPopup(
         val availableHeightPx = (usableBottomPx - topSafePx).coerceAtLeast(1)
         val availableHeightDp = with(baseDensity) { availableHeightPx.toDp() }
 
-        val popupScale = 0.70f
+        val popupScale = popupBaseScale(remote)
         // The host owns the fixed TV-safe base scale. PopupFontTheme applies the user's independent
         // popup geometry and font controls for both hosted and legacy inline popup content.
         val popupDensity = Density(
@@ -113,7 +133,11 @@ fun OwnTVPopup(
             fontScale = baseDensity.fontScale / popupScale,
         )
 
-        Box(Modifier.fillMaxSize()) {
+        // The host already excludes the measured keyboard band. Mark its inset consumed so inline
+        // focus traps do not subtract the same keyboard again; their IME padding remains useful
+        // when used outside this host.
+        Box(Modifier.fillMaxSize().consumeWindowInsets(WindowInsets.ime)
+            .then(if (remote) Modifier else Modifier.windowInsetsPadding(systemSafe.only(WindowInsetsSides.Horizontal)))) {
             // Centre inside the unobstructed physical band. ADJUST_NOTHING ensures this is the only
             // movement, eliminating double pan/translation across different TV implementations.
             Box(
@@ -128,9 +152,14 @@ fun OwnTVPopup(
                     LocalTvImeWatcher provides watcher,
                     LocalTvImeMetrics provides metrics,
                 ) {
-                    PopupFontTheme(fontScale = fontScale) {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            content()
+                    PopupFontTheme(fontScale = fontScale ?: popupScale) {
+                        BoxWithConstraints(
+                            Modifier.fillMaxSize().then(if (remote) Modifier else Modifier.padding(horizontal = 16.dp)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CompositionLocalProvider(LocalPopupMaxWidth provides if (remote) null else maxWidth) {
+                                content()
+                            }
                         }
                     }
                 }

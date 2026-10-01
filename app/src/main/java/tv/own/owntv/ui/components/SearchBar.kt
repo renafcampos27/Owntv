@@ -41,6 +41,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -53,7 +54,7 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.ui.theme.glass
 
 /**
- * Inline search field for a section, TV-style: the pill itself takes D-pad focus like any other
+ * Inline search field: touch devices edit directly; on TV the pill takes D-pad focus like any other
  * control — the keyboard only opens when the user presses OK on it (the inner text field is not
  * focusable until then), so focus can pass through / land on search without an IME popup.
  *
@@ -73,6 +74,8 @@ fun SearchBar(
     surface: GlassSurface? = GlassSurface.CARDS,
 ) {
     val colors = OwnTVTheme.colors
+    val remote = rememberRemoteTextInput()
+    val focusManager = LocalFocusManager.current
     val resolvedPlaceholder = placeholder ?: stringResource(R.string.common_search_hint)
     val interaction = remember { MutableInteractionSource() }
     val pillFocused by interaction.collectIsFocusedAsState()
@@ -101,8 +104,10 @@ fun SearchBar(
     LaunchedEffect(editing) {
         if (editing) {
             tvImeWatcher?.onImeRequested()
-            runCatching { fieldFocus.requestFocus() }
-            keyboard?.show()
+            if (remote) {
+                runCatching { fieldFocus.requestFocus() }
+                keyboard?.show()
+            }
             kotlinx.coroutines.delay(120)
             runCatching { bringIntoView.bringIntoView() }
         } else {
@@ -131,8 +136,8 @@ fun SearchBar(
                 color = borderColor,
                 shape = shape,
             )
-            .focusRequester(pillFocus)
-            .clickable(interactionSource = interaction, indication = null) { editing = true },
+            .then(if (remote) Modifier.focusRequester(pillFocus)
+                .clickable(interactionSource = interaction, indication = null) { editing = true } else Modifier),
         contentAlignment = Alignment.CenterStart,
     ) {
         Row(
@@ -156,12 +161,12 @@ fun SearchBar(
                         .fillMaxWidth()
                         .bringIntoViewRequester(bringIntoView)
                         .focusRequester(fieldFocus)
-                        .focusProperties { canFocus = editing }
-                        .onFocusChanged { if (editing && !it.isFocused) editing = false }
+                        .focusProperties { canFocus = !remote || editing }
+                        .onFocusChanged { if (!remote) editing = it.isFocused else if (editing && !it.isFocused) editing = false }
                         .onPreviewKeyEvent {
                             // After the IME closed itself, Back hands focus back to the pill
                             // instead of bubbling to the screen's BackHandler.
-                            if (it.key == Key.Back) {
+                            if (remote && it.key == Key.Back) {
                                 if (it.type == KeyEventType.KeyUp) {
                                 editing = false
                                 keyboard?.hide()
@@ -179,7 +184,7 @@ fun SearchBar(
                     keyboardActions = KeyboardActions(onSearch = {
                         editing = false
                         keyboard?.hide()
-                        runCatching { pillFocus.requestFocus() }
+                        if (remote) runCatching { pillFocus.requestFocus() } else focusManager.clearFocus()
                     }),
                 )
             }

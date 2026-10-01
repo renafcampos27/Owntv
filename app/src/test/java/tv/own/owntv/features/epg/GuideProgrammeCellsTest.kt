@@ -34,4 +34,39 @@ class GuideProgrammeCellsTest {
         assertEquals(50L, cells.first().stopMs)
         assertEquals(100L, cells.last().startMs)
     }
+
+    @Test fun gapDoesNotSelectPreviousOrFutureProgramme() {
+        val rows = listOf(programme(0, 50), programme(100, 150))
+        assertNull(GuideProgrammeCells.at(rows, 75, 0, 200))
+        assertNull(GuideProgrammeCells.at(rows, -1, 0, 200))
+        assertNull(GuideProgrammeCells.at(rows, 150, 0, 200))
+    }
+
+    @Test fun exactBoundarySelectsVisibleNextProgramme() {
+        val rows = listOf(programme(0, 100), programme(80, 180))
+        assertSame(rows[0], GuideProgrammeCells.at(rows, 79, 0, 200))
+        assertSame(rows[1], GuideProgrammeCells.at(rows, 80, 0, 200))
+        assertNull(GuideProgrammeCells.at(rows, 180, 0, 200))
+    }
+
+    @Test fun selectionCannotOpenClippedOrHiddenOverlap() {
+        val rows = listOf(programme(0, 100), programme(50, 60))
+        assertSame(rows[1], GuideProgrammeCells.at(rows, 55, 20, 90))
+        assertNull(GuideProgrammeCells.at(rows, 70, 20, 90))
+        assertNull(GuideProgrammeCells.at(rows, 19, 20, 90))
+    }
+
+    @Test fun navigationSkipsHiddenDuplicateAndUsesDrawingOrder() {
+        val rows = listOf(programme(100, 150), programme(10, 50), programme(10, 60))
+        assertSame(rows[2], GuideProgrammeCells.at(rows, 10, 0, 200))
+        assertEquals(100L, GuideProgrammeCells.adjacentTime(rows, 10, 1, 0, 200))
+        assertEquals(10L, GuideProgrammeCells.adjacentTime(rows, 100, -1, 0, 200))
+    }
+
+    @Test fun navigationCanLeaveGapInEitherDirection() {
+        val rows = listOf(programme(0, 50), programme(100, 150))
+        assertEquals(0L, GuideProgrammeCells.adjacentTime(rows, 75, -1, 0, 200))
+        assertEquals(100L, GuideProgrammeCells.adjacentTime(rows, 75, 1, 0, 200))
+        assertNull(GuideProgrammeCells.adjacentTime(emptyList(), 75, 1, 0, 200))
+    }
 }

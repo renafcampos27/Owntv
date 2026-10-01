@@ -213,6 +213,8 @@ fun SettingsScreen(
     // A cross-script language change recreates the Activity so Android can apply the new script's
     // shaping and font fallback. Keep the open settings sub-screen across that configuration change
     // instead of dropping back to the Settings root/sidebar.
+    val compactLayout = tv.own.owntv.ui.components.rememberCompactLayout()
+    var showCategories by remember { mutableStateOf(false) }
     var tab by rememberSaveable { mutableStateOf(SettingsTab.ROOT) }
     // Deep-link from the Guide's "Add EPG" button: jump straight to EPG Sources in add mode.
     var consumeEpgAdd by remember { mutableStateOf(false) }
@@ -225,6 +227,7 @@ fun SettingsScreen(
     var showUpdate by remember { mutableStateOf(false) }
     var showCatchupTime by remember { mutableStateOf(false) }
     var showEpgOffset by remember { mutableStateOf(false) }
+    var showVisualProfile by remember { mutableStateOf(false) }
     var showAnimations by remember { mutableStateOf(false) }
     var showVodLayout by remember { mutableStateOf(false) }
     var showStartup by remember { mutableStateOf(false) }
@@ -264,6 +267,8 @@ fun SettingsScreen(
     val catchupRowFocus = remember { FocusRequester() }
     val epgOffsetRowFocus = remember { FocusRequester() }
     val liveGuideDelayRowFocus = remember { FocusRequester() }
+    val visualProfileFocus = remember { FocusRequester() }
+    val uiDiagnosticsFocus = remember { FocusRequester() }
     val animationsRowFocus = remember { FocusRequester() }
     val vodLayoutRowFocus = remember { FocusRequester() }
     val startupRowFocus = remember { FocusRequester() }
@@ -285,13 +290,13 @@ fun SettingsScreen(
         savedIndex = listState.firstVisibleItemIndex
         savedOffset = listState.firstVisibleItemScrollOffset
     }
-    val anyDialogOpen = showZoom || showPopupSize || showFontCustomization || showTheme || showAccent || showUpdate || showCatchupTime || showEpgOffset || showAnimations || showStartup || showStartupChannelPicker || showAfrWarning || showLivePreviewPanelWarning || showBgImageChooser || showBgPicker || showAmbientGlow || showBrowsing || showFocusHighlight || showBgRemote || showVodLayout
+    val anyDialogOpen = showCategories || showVisualProfile || showZoom || showPopupSize || showFontCustomization || showTheme || showAccent || showUpdate || showCatchupTime || showEpgOffset || showAnimations || showStartup || showStartupChannelPicker || showAfrWarning || showLivePreviewPanelWarning || showBgImageChooser || showBgPicker || showAmbientGlow || showBrowsing || showFocusHighlight || showBgRemote || showVodLayout
     // When a dialog closes, restore focus to the row that opened it. NOTE: this restore crosses
     // INTO the root focus group from outside (the dialog), but onEnter does NOT fire for programmatic
     // requestsFocus (only for directional entry) — so dialogReturn must be cleared HERE, not in onEnter.
     // If it's left set, the next directional entry (e.g. sidebar→here) would re-route to a stale row.
     var dialogReturn by remember { mutableStateOf<FocusRequester?>(null) }
-    LaunchedEffect(showZoom, showPopupSize, showFontCustomization, showTheme, showAccent, showUpdate, showCatchupTime, showEpgOffset, showAnimations, showStartup, showStartupChannelPicker, showAfrWarning, showLivePreviewPanelWarning, showBgImageChooser, showBgPicker, showAmbientGlow, showBrowsing, showFocusHighlight, showBgRemote, showVodLayout) {
+    LaunchedEffect(showCategories, showVisualProfile, showZoom, showPopupSize, showFontCustomization, showTheme, showAccent, showUpdate, showCatchupTime, showEpgOffset, showAnimations, showStartup, showStartupChannelPicker, showAfrWarning, showLivePreviewPanelWarning, showBgImageChooser, showBgPicker, showAmbientGlow, showBrowsing, showFocusHighlight, showBgRemote, showVodLayout) {
         if (!anyDialogOpen) {
             // Focus back on the opener row, with the scroll offset held still the whole way — see
             // [restoreAfterDialogClose] for why doing those two in sequence made the highlight travel.
@@ -327,6 +332,17 @@ fun SettingsScreen(
     val glassConfig by settingsVm.glassConfig.collectAsStateWithLifecycle()
     val glassOn = glassConfig.enabled
     val animationLevel by settingsVm.animationLevel.collectAsStateWithLifecycle()
+    val visualProfile by settingsVm.visualProfile.collectAsStateWithLifecycle()
+    val uiDiagnostics by settingsVm.uiDiagnostics.collectAsStateWithLifecycle()
+    val uiSummary by tv.own.owntv.diagnostics.UiPerformanceSummary.snapshot.collectAsStateWithLifecycle()
+    val visualLabels = mapOf(
+        tv.own.owntv.core.theme.VisualProfile.AUTO to stringResource(R.string.visual_profile_auto),
+        tv.own.owntv.core.theme.VisualProfile.LIGHT to stringResource(R.string.visual_profile_light),
+        tv.own.owntv.core.theme.VisualProfile.FULL to stringResource(R.string.visual_profile_full),
+    )
+    val uiSummaryText = uiSummary?.let { stringResource(R.string.ui_measurement_summary,
+        it.frames, it.slowFrames, it.frameP95BucketMs ?: 0, it.keys, it.keyQueueP95BucketMs ?: 0) }
+        ?: stringResource(R.string.ui_measurement_waiting)
     val vodLayout by settingsVm.vodLayout.collectAsStateWithLifecycle()
     val ambientGlowEnabled by settingsVm.ambientGlowEnabled.collectAsStateWithLifecycle()
     val ambientGlowPulse by settingsVm.ambientGlowPulse.collectAsStateWithLifecycle()
@@ -617,6 +633,21 @@ fun SettingsScreen(
             chip = stringResource(R.string.common_percent, uiZoomPercent), chipTone = TileTone.SECONDARY,
             focus = zoomRowFocus,
             onClick = { saveScroll(); dialogReturn = zoomRowFocus; showZoom = true },
+        ),
+        RootRow(
+            "visual_profile", TileTone.SECONDARY, OwnTVIcon.MOTION,
+            title = stringResource(R.string.visual_profile_title), desc = stringResource(R.string.visual_profile_description),
+            chip = visualLabels.getValue(visualProfile), chipTone = TileTone.SECONDARY,
+            focus = visualProfileFocus,
+            onClick = { saveScroll(); dialogReturn = visualProfileFocus; showVisualProfile = true },
+        ),
+        RootRow(
+            "ui_measurement", TileTone.SECONDARY, OwnTVIcon.MOTION,
+            title = stringResource(R.string.ui_measurement_title),
+            desc = stringResource(R.string.ui_measurement_description) + if (uiDiagnostics) "\n" + uiSummaryText else "",
+            chip = stringResource(if (uiDiagnostics) R.string.common_on else R.string.common_off),
+            chipTone = TileTone.SECONDARY, focus = uiDiagnosticsFocus,
+            onClick = { settingsVm.setUiDiagnostics(!uiDiagnostics) },
         ),
         RootRow(
             "animations", TileTone.SECONDARY, OwnTVIcon.MOTION,
@@ -965,6 +996,10 @@ fun SettingsScreen(
             stringResource(R.string.settings_video_player),
         )
         val entries = listOfNotNull(
+            SettingsSearchEntry(stringResource(R.string.settings_group_appearance), stringResource(R.string.visual_profile_title), stringResource(R.string.visual_profile_description), OwnTVIcon.MOTION, TileTone.SECONDARY,
+                chip = visualLabels.getValue(visualProfile), chipTone = TileTone.SECONDARY) { saveScroll(); dialogReturn = searchFieldFocus; showVisualProfile = true },
+            SettingsSearchEntry(stringResource(R.string.settings_group_appearance), stringResource(R.string.ui_measurement_title), stringResource(R.string.ui_measurement_description), OwnTVIcon.MOTION, TileTone.SECONDARY,
+                chip = if (uiDiagnostics) stringResource(R.string.common_on) else stringResource(R.string.common_off), chipTone = TileTone.SECONDARY, showChevron = false) { settingsVm.setUiDiagnostics(!uiDiagnostics) },
             SettingsSearchEntry(stringResource(R.string.settings_group_layout), stringResource(R.string.settings_home_root), stringResource(R.string.settings_search_keywords_home), OwnTVIcon.HOME, TileTone.SECONDARY) { open(SettingsTab.HOME) },
             SettingsSearchEntry(stringResource(R.string.settings_app_group), stringResource(R.string.settings_language), stringResource(R.string.settings_search_keywords_language), OwnTVIcon.LANGUAGE, TileTone.PRIMARY,
                 chip = languageChip, chipTone = TileTone.PRIMARY) { open(SettingsTab.LANGUAGE) },
@@ -1168,11 +1203,19 @@ fun SettingsScreen(
                     // The mockup's `flex:0 1 440px`: a fixed 440 dp measured before the title column,
                     // so the field always ends flush with the right edge of the header instead of
                     // splitting the width with the title and opening from the middle.
-                    modifier = Modifier.width(440.dp),
+                    modifier = if (compactLayout) Modifier.weight(1f) else Modifier.width(440.dp),
                 )
             } else {
                 SearchChip(onClick = { searchExpanded = true })
             }
+        }
+        if (compactLayout && searchQuery.isBlank()) {
+            OwnTVButton(
+                label = categories.getOrNull(selectedGroup)?.first?.label.orEmpty(),
+                onClick = { dialogReturn = selectedCategoryFocus; showCategories = true },
+                style = OwnTVButtonStyle.SECONDARY,
+                modifier = Modifier.fillMaxWidth().padding(bottom = 8.dp).focusRequester(selectedCategoryFocus),
+            )
         }
         BoxWithConstraints(modifier = Modifier.fillMaxWidth().weight(1f)) {
             // 294 dp is the design width, but at 150% UI Zoom the whole panel is not much wider than
@@ -1192,6 +1235,7 @@ fun SettingsScreen(
                 // does not change under the user mid-keystroke.
                 val paneShape = SettingsSkin.PaneShape
                 val searching = searchQuery.isNotBlank()
+                if (!compactLayout) {
                 LazyColumn(
                     state = spineState,
                     modifier = Modifier
@@ -1233,6 +1277,7 @@ fun SettingsScreen(
                         )
                     }
                     item(key = "spine_foot") { SpineFooter() }
+                }
                 }
                 // --- The sheet: ONE container holding the selected group's rows — or, while
                 // searching, every match wherever it lives, with the path it came from.
@@ -1291,7 +1336,7 @@ fun SettingsScreen(
                                 // them, but a full-width row has no neighbour to its left once the ring
                                 // is inside the sheet's own plate — so the sheet says it explicitly.
                                 .onPreviewKeyEvent { e ->
-                                    if (e.type == KeyEventType.KeyDown && e.key == Key.DirectionLeft && !searching) {
+                                    if (!compactLayout && e.type == KeyEventType.KeyDown && e.key == Key.DirectionLeft && !searching) {
                                         runCatching { selectedCategoryFocus.requestFocus() }.isSuccess
                                     } else {
                                         false
@@ -1437,6 +1482,25 @@ fun SettingsScreen(
                 showStartupChannelPicker = false
             },
             onDismiss = { showStartupChannelPicker = false },
+        )
+    }
+    if (showCategories) {
+        tv.own.owntv.features.settings.PickerDialog(
+            title = stringResource(R.string.settings_title),
+            options = categories.mapIndexed { index, (group, _) -> index.toString() to group.label },
+            selected = selectedGroup.toString(),
+            onSelect = { selectedGroup = it.toInt(); showCategories = false },
+            onDismiss = { showCategories = false },
+        )
+    }
+    if (showVisualProfile) {
+        tv.own.owntv.features.settings.PickerDialog(
+            title = stringResource(R.string.visual_profile_title),
+            subtitle = stringResource(R.string.visual_profile_description),
+            options = tv.own.owntv.core.theme.VisualProfile.entries.map { it.name to visualLabels.getValue(it) },
+            selected = visualProfile.name,
+            onSelect = { settingsVm.setVisualProfile(tv.own.owntv.core.theme.VisualProfile.valueOf(it)); showVisualProfile = false },
+            onDismiss = { showVisualProfile = false },
         )
     }
     if (showAnimations) {

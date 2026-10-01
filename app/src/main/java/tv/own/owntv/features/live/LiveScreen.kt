@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -90,6 +91,7 @@ import tv.own.owntv.ui.components.trapVerticalFocusExit
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.ChannelGenre
 import tv.own.owntv.ui.components.OwnTVButton
+import tv.own.owntv.ui.components.OwnTVPopup
 import tv.own.owntv.ui.components.OwnTVButtonStyle
 import tv.own.owntv.core.model.ContentMenu
 import tv.own.owntv.ui.components.MenuAction
@@ -197,7 +199,11 @@ fun LiveScreen(
         }
     }
     // Preview runs only when the player isn't busy (previewEnabled) AND the user hasn't turned it off.
-    val effectivePreview = previewEnabled && livePreviewSetting && !channelsOnly
+    val compactWindow = tv.own.owntv.ui.components.rememberCompactLayout()
+    val effectivePreview = previewEnabled && livePreviewSetting && !channelsOnly && !compactWindow
+    LaunchedEffect(compactWindow, previewEnabled) {
+        if (compactWindow && previewEnabled) vm.stopPreview()
+    }
 
     // NOTE: do NOT stop the player when LiveScreen leaves composition — going fullscreen disposes
     // this screen, and stopping here would abort the stream that was just started. Playback is
@@ -260,10 +266,14 @@ fun LiveScreen(
     val scope = rememberCoroutineScope()
     var channelPaneFocused by remember { mutableStateOf(false) }
     var railPaneFocused by remember { mutableStateOf(false) }
+    var versionChannel by remember { mutableStateOf<ChannelEntity?>(null) }
+    var versionOwner by remember { mutableStateOf<CatchupOwner?>(null) }
     var renaming by remember { mutableStateOf<ChannelEntity?>(null) }
     var matchingEpg by remember { mutableStateOf<ChannelEntity?>(null) }
     var offsettingEpg by remember { mutableStateOf<ChannelEntity?>(null) }
     var catchupChannel by remember { mutableStateOf<ChannelEntity?>(null) }
+    var catchupOwner by remember { mutableStateOf<CatchupOwner?>(null) }
+    val catchupContext by vm.catchupContext.collectAsStateWithLifecycle()
     // Programme picked in the catch-up dialog, awaiting the "Watch from start / Watch channel" choice.
     // The Live picker used to start the archive straight from the pick, so the same programme opened
     // from the Guide (which asks) and from here behaved differently — this makes the two match.
@@ -271,6 +281,13 @@ fun LiveScreen(
         mutableStateOf<Pair<ChannelEntity, tv.own.owntv.core.database.entity.EpgProgrammeEntity>?>(null)
     }
     var contextChannel by remember { mutableStateOf<ChannelEntity?>(null) } // long-press quick menu
+    LaunchedEffect(catchupContext) {
+        if (catchupOwner?.let { !vm.acceptsCatchup(it) } == true) {
+            catchupChannel = null
+            catchupDetail = null
+            catchupOwner = null
+        }
+    }
     // Multiview: whether the menu offers it at all, how many tiles the grid has, and the confirmation
     // after a channel is kept (null = nothing to say).
     val liveSettings = koinInject<tv.own.owntv.core.settings.SettingsRepository>()
@@ -327,7 +344,7 @@ fun LiveScreen(
         contextMenuOpen = false
         // A follow-up dialog (rename / match EPG / catch-up / move) grabs focus itself — only restore
         // for plain closes (Cancel, Favourite, Hide, Close). Those dialogs restore on their own close.
-        if (renaming != null || matchingEpg != null || offsettingEpg != null || catchupChannel != null || enteringMoveMode ||
+        if (versionChannel != null || renaming != null || matchingEpg != null || offsettingEpg != null || catchupChannel != null || enteringMoveMode ||
             moveItem != null || creatingCategory
         ) return@LaunchedEffect
         restoreToContextRow()
@@ -485,7 +502,9 @@ fun LiveScreen(
             )
             .onFocusChanged { if (it.hasFocus) onChildFocused() },
     ) {
-    val previewVisible = !channelsOnly && panelShares?.preview != 0
+    val compact = compactWindow || maxWidth < 600.dp
+    var showCompactCategories by remember { mutableStateOf(false) }
+    val previewVisible = !compact && !channelsOnly && panelShares?.preview != 0
     val innerGapTotal = browsePanelGapTotal(previewVisible)
     val panels = panelShares?.let { computePanelWidths(it, maxWidth, innerGapTotal) }
     Row(
@@ -494,7 +513,7 @@ fun LiveScreen(
     ) {
         // Plan Z — More → Favourites and More → History pin this pane to one folder and put
         // their own three tabs above it, so there is no category rail to draw.
-        if (lockedKey == null) {
+        if (lockedKey == null && !compact && !channelsOnly) {
         CategoryRail(
             width = panels?.category ?: Dimens.RailWidthFixed,
             categories = railItems.map {
@@ -581,7 +600,7 @@ fun LiveScreen(
         // Layer 3 — header + channel list (fixed-width column; the preview pane fills the rest)
         Column(
             modifier = Modifier
-                .then(if (channelsOnly) Modifier.weight(1f) else Modifier.width(panels?.list ?: Dimens.ChannelListWidth))
+                .then(if (channelsOnly || compact) Modifier.weight(1f) else Modifier.width(panels?.list ?: Dimens.ChannelListWidth))
                 .fillMaxHeight()
                 // Track whether this pane holds focus so chNavPaging only consumes CH keys when it does.
                 .onFocusChanged { channelPaneFocused = it.hasFocus }
@@ -651,6 +670,21 @@ fun LiveScreen(
                 .then(if (lockedKey == null || channelsOnly) Modifier.trapVerticalFocusExit() else Modifier)
                 .focusGroup()
         ) {
+            if (compact && lockedKey == null && !channelsOnly) {
+                OwnTVButton(selectedLabel, onClick = { showCompactCategories = true }, modifier = Modifier.fillMaxWidth())
+                if (showCompactCategories) OwnTVPopup(onDismissRequest = { showCompactCategories = false }) {
+                    Column(Modifier.dialogPanel(scroll = false)) {
+                        LazyColumn(Modifier.heightIn(max = 360.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                            items(railItems.size) { index ->
+                                val item = railItems[index]
+                                OwnTVButton(item.displayLabel(), onClick = { vm.select(item.key); showCompactCategories = false },
+                                    selected = index == selectedIndex, modifier = Modifier.fillMaxWidth(),
+                                    onLongClick = { showCompactCategories = false; contextCategory = item; contextCategoryKey = item.key })
+                            }
+                        }
+                    }
+                }
+            }
             Text(
                 stringResource(R.string.content_section_category, stringResource(R.string.common_nav_live_tv), selectedLabel),
                 style = MaterialTheme.typography.headlineMedium,
@@ -769,16 +803,22 @@ fun LiveScreen(
     }
 
     catchupChannel?.let { ch ->
+        val owner = catchupOwner
         CatchupDialog(
             channelName = ch.name,
             loadProgrammes = { vm.catchupProgrammes(ch) },
-            onPick = { prog -> catchupChannel = null; catchupDetail = ch to prog },
+            onPick = { prog ->
+                catchupChannel = null
+                if (owner?.let(vm::acceptsCatchup) == true) catchupDetail = ch to prog
+            },
             jumpOffsetsSec = remember(ch.id) { vm.catchupJumpOptions(ch) },
             jumpWindowSec = remember(ch.id) { vm.catchupWindowOf(ch) },
-            onJump = { offset ->
+            onJump = { at ->
                 catchupChannel = null
-                vm.playCatchupAt(ch, offset)
-                if (!externalPlayerOn) onFullscreen()
+                owner?.takeIf(vm::acceptsCatchup)?.let { owner ->
+                    vm.playCatchupAt(ch, at, owner)
+                    if (!externalPlayerOn) onFullscreen()
+                }
             },
             onDismiss = { catchupChannel = null },
         )
@@ -787,17 +827,30 @@ fun LiveScreen(
     // Same dialog the Guide shows for a programme, so both routes offer the identical choice:
     // replay from the start, tune the channel live, favourite it, or back out.
     catchupDetail?.let { (ch, prog) ->
+        val owner = catchupOwner
+        val replayRevision by tv.own.owntv.features.epg.sessionReplayEvidence.revision.collectAsStateWithLifecycle()
+        val replayEvidence = remember(replayRevision, owner, ch.id, prog.startMs, prog.stopMs) {
+            owner?.let {
+                tv.own.owntv.features.epg.sessionReplayEvidence.get(
+                    tv.own.owntv.features.epg.ReplayEvidenceStore.Key(it.profileId, ch.sourceId, ch.id, prog.startMs, prog.stopMs),
+                )
+            }
+        }
+        val replayNow = System.currentTimeMillis()
+        val canAttemptReplay = tv.own.owntv.core.epg.GuideHistoryPolicy.canAttemptCatchup(ch.catchup, prog.startMs, replayNow)
         tv.own.owntv.features.epg.ProgrammeDetailDialog(
             channelName = ch.name,
             programme = prog,
+            replayEvidence = replayEvidence,
             loadDescription = { vm.programmeDescription(it) },
-            canCatchup = true, // only reachable from the catch-up picker, which already gated on this
+            canCatchup = canAttemptReplay,
+            replayUnconfirmed = canAttemptReplay && !tv.own.owntv.core.epg.GuideHistoryPolicy.canCatchup(ch.catchup, ch.catchupDays, prog.startMs, replayNow),
             isFavorite = favoriteIds.contains(ch.id),
             onToggleFavorite = { vm.toggleFavorite(ch) },
-            onWatch = { catchupDetail = null; vm.watchFullscreen(ch, emptyList()); if (!externalPlayerOn) onFullscreen() },
-            onPlayCatchup = { catchupDetail = null; vm.playCatchupProgramme(ch, prog); onFullscreen() },
+            onWatch = { catchupDetail = null; if (owner?.let(vm::acceptsCatchup) == true) { vm.watchFullscreen(ch, emptyList()); if (!externalPlayerOn) onFullscreen() } },
+            onPlayCatchup = { catchupDetail = null; owner?.takeIf(vm::acceptsCatchup)?.let { vm.playCatchupProgramme(ch, prog, it); onFullscreen() } },
             // External: the archive went to another app, so don't mount the fullscreen player over it.
-            onPlayCatchupExternal = { catchupDetail = null; vm.playCatchupExternal(ch, prog) },
+            onPlayCatchupExternal = { catchupDetail = null; owner?.takeIf(vm::acceptsCatchup)?.let { vm.playCatchupExternal(ch, prog, it) } },
             catchupPlayer = catchupPlayer,
             onDismiss = { catchupDetail = null },
             compact = true,
@@ -845,11 +898,13 @@ fun LiveScreen(
             isHistory = selectedKey == LiveKey.History,
             onToggleFavorite = { vm.toggleFavorite(ch); contextChannel = null },
             onRename = { renaming = ch; contextChannel = null },
+            onVersions = { versionOwner = vm.catchupOwner(ch); versionChannel = ch; contextChannel = null },
             onHide = { vm.hideChannel(ch); contextChannel = null },
             onMatchEpg = { matchingEpg = ch; contextChannel = null },
             onEpgOffset = { offsettingEpg = ch; contextChannel = null },
-            onCatchup = { catchupChannel = ch; contextChannel = null },
+            onCatchup = { catchupOwner = vm.catchupOwner(ch); catchupChannel = ch; contextChannel = null },
             onRecord = { vm.recordNow(ch); contextChannel = null },
+            onLocalTimeshift = { vm.watchWithLocalTimeshift(ch); contextChannel = null; onFullscreen() },
             onPlayExternal = { vm.playExternal(ch); contextChannel = null },
             // Only offered once Multiview is switched on. Adding is silent apart from the toast: the
             // grid opens when the user plays a channel, which is the gesture that says "now".
@@ -886,6 +941,28 @@ fun LiveScreen(
     }
 
     tv.own.owntv.ui.components.InAppToast(multiviewToast)
+
+    LaunchedEffect(versionChannel, catchupContext) {
+        if (versionChannel != null && versionOwner?.let(vm::acceptsCatchup) != true) versionChannel = null
+    }
+    var versionsWereOpen by remember { mutableStateOf(false) }
+    LaunchedEffect(versionChannel) {
+        if (versionChannel != null) versionsWereOpen = true
+        else if (versionsWereOpen) { versionsWereOpen = false; restoreToContextRow() }
+    }
+    versionChannel?.let { channel ->
+        ChannelVersionsDialog(channel, vm,
+            onPlay = { chosen ->
+                if (versionOwner?.let(vm::acceptsCatchup) == true) {
+                    versionsWereOpen = false
+                    versionChannel = null
+                    vm.playChannelVersion(chosen)
+                    if (!externalPlayerOn) onFullscreen()
+                }
+            },
+            onSaveOrder = { order -> if (versionOwner?.let(vm::acceptsCatchup) == true) vm.saveChannelVersionOrder(channel, order) },
+            onDismiss = { versionChannel = null })
+    }
 
     // Move to… a combined category (issue #87), incl. the "＋ New category…" name prompt.
     val moveTargets by vm.moveTargets.collectAsStateWithLifecycle()
@@ -1034,11 +1111,13 @@ private fun ChannelContextMenu(
     isHistory: Boolean,
     onToggleFavorite: () -> Unit,
     onRename: () -> Unit,
+    onVersions: () -> Unit,
     onHide: () -> Unit,
     onMatchEpg: () -> Unit,
     onEpgOffset: () -> Unit,
     onCatchup: () -> Unit,
     onRecord: () -> Unit,
+    onLocalTimeshift: () -> Unit,
     onPlayExternal: () -> Unit,
     // Null unless Multiview is switched on: keep this channel for the grid (Plan D, B5).
     onAddToMultiview: (() -> Unit)?,
@@ -1070,12 +1149,14 @@ private fun ChannelContextMenu(
             val actions = buildList {
                 add(MenuAction("favourite", if (isFavorite) stringResource(R.string.content_remove_favourite) else stringResource(R.string.content_add_favourite), OwnTVIcon.FAVORITE, group = 0, onClick = onToggleFavorite))
                 add(MenuAction("rename", stringResource(R.string.content_rename), group = 0, onClick = onRename))
+                add(MenuAction("versions", stringResource(R.string.channel_versions_title), OwnTVIcon.MENU, group = 1, onClick = onVersions))
                 add(MenuAction("match_epg", stringResource(R.string.content_match_epg), OwnTVIcon.EPG, group = 1, onClick = onMatchEpg))
                 add(MenuAction("epg_offset", stringResource(R.string.content_epg_time_offset), OwnTVIcon.EPG, group = 1, onClick = onEpgOffset))
                 if (hasCatchup) add(MenuAction("catchup", stringResource(R.string.content_catchup), group = 1, onClick = onCatchup))
                 // Record this channel from now. The guide's Record needs a programme, so a channel
                 // the provider publishes no guide for can only be recorded from here.
                 add(MenuAction("record", stringResource(R.string.recording_record), OwnTVIcon.LIVE_TV, group = 1, onClick = onRecord))
+                add(MenuAction("local_timeshift", stringResource(R.string.local_timeshift_start), OwnTVIcon.HISTORY, group = 1, onClick = onLocalTimeshift))
                 // Always offered, regardless of the Live TV external-player default — this is the per-channel
                 // escape hatch for a stream neither in-app engine can open (same as Movies/Series/Downloads).
                 add(MenuAction("play_external", stringResource(R.string.content_play_external_short), OwnTVIcon.PLAY, group = 1, onClick = onPlayExternal))
@@ -1460,14 +1541,17 @@ private fun CatchupDialog(
     // archive is still there, so offer times instead of the old dead-end "go match your EPG" message.
     jumpOffsetsSec: List<Int>,
     jumpWindowSec: Int,
-    onJump: (Int) -> Unit,
+    onJump: (Long) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = OwnTVTheme.colors
     val formatTime = rememberSystemTimeFormatter()
-    val list by androidx.compose.runtime.produceState<List<tv.own.owntv.core.database.entity.EpgProgrammeEntity>?>(initialValue = null) {
-        value = runCatching { loadProgrammes() }.getOrDefault(emptyList())
+    var retry by remember { mutableStateOf(0) }
+    val loaded by androidx.compose.runtime.produceState<CatchupListResult>(initialValue = CatchupListResult.Loading, retry) {
+        value = CatchupListResult.Loading
+        value = loadCatchupList(loadProgrammes)
     }
+    val list = (loaded as? CatchupListResult.Ready)?.programmes
     androidx.activity.compose.BackHandler { onDismiss() }
     // "Choose exact time…" opens on top of this dialog, same as the player's route into it.
     var manualTime by remember { mutableStateOf(false) }
@@ -1479,9 +1563,9 @@ private fun CatchupDialog(
         )
     }
     val firstFocus = remember { FocusRequester() }
-    LaunchedEffect(list) {
+    LaunchedEffect(loaded) {
         // Still loading, or nothing focusable at all (no programmes AND no archive to jump into).
-        if (list == null || (list!!.isEmpty() && jumpOffsetsSec.isEmpty())) return@LaunchedEffect
+        if (loaded == CatchupListResult.Loading || (list?.isEmpty() == true && jumpOffsetsSec.isEmpty())) return@LaunchedEffect
         kotlinx.coroutines.delay(60); runCatching { firstFocus.requestFocus() }
     }
     // Popup(focusable = true) is a hard focus boundary: a stray D-pad press or the Live screen's own
@@ -1512,7 +1596,11 @@ private fun CatchupDialog(
             )
             Spacer(Modifier.height(12.dp))
             when (val progs = list) {
-                null -> Box(Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) { OwnTVSpinner(sizeDp = 28) }
+                null -> if (loaded == CatchupListResult.Error) {
+                    Text(stringResource(R.string.catchup_list_load_failed), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    Spacer(Modifier.height(10.dp))
+                    OwnTVButton(stringResource(R.string.common_retry), onClick = { retry++ }, modifier = Modifier.focusRequester(firstFocus))
+                } else Box(Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) { OwnTVSpinner(sizeDp = 28) }
                 else -> if (progs.isEmpty()) {
                     // No guide for this channel. The archive still exists, so offer times to jump to;
                     // only fall back to the "match your EPG" note when there is no archive window either.

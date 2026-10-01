@@ -39,6 +39,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -54,7 +55,7 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.ui.theme.glass
 
 /**
- * A remote-friendly single-line text field, TV-style and two-stage: D-pad focus only *highlights*
+ * Adaptive single-line text field: touch devices edit directly; TV uses two-stage focus. D-pad focus only *highlights*
  * the field (no keyboard), so you can move past it to other controls / a Save button freely. Press
  * **OK** to start editing (the keyboard appears); **Back** or the IME's Done returns to the field
  * without leaving the form. This mirrors the search bars and fixes the "keyboard pops up on every
@@ -84,6 +85,8 @@ fun OwnTVTextField(
     corner: androidx.compose.ui.unit.Dp = 12.dp,
 ) {
     val colors = OwnTVTheme.colors
+    val remote = rememberRemoteTextInput()
+    val focusManager = LocalFocusManager.current
     val interaction = remember { MutableInteractionSource() }
     val fieldFocused by interaction.collectIsFocusedAsState()
     var editing by remember { mutableStateOf(false) }
@@ -115,8 +118,10 @@ fun OwnTVTextField(
             // Tell the shared popup before showing the IME. If this TV publishes no inset/frame
             // change, the calibrated estimate still constrains the modal immediately.
             tvImeWatcher?.onImeRequested()
-            runCatching { innerFocus.requestFocus() }
-            keyboard?.show()
+            if (remote) {
+                runCatching { innerFocus.requestFocus() }
+                keyboard?.show()
+            }
             kotlinx.coroutines.delay(120)
             runCatching { bringIntoView.bringIntoView() }
         } else {
@@ -157,9 +162,11 @@ fun OwnTVTextField(
             Box(
                 modifier = Modifier
                     .weight(1f)
-                    .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
-                    .focusRequester(pillFocus)
-                    .clickable(interactionSource = interaction, indication = null) { editing = true },
+                    .then(if (remote) Modifier
+                        .then(if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
+                        .focusRequester(pillFocus)
+                        .clickable(interactionSource = interaction, indication = null) { editing = true }
+                    else Modifier),
             ) {
                 BasicTextField(
                     value = value,
@@ -168,11 +175,12 @@ fun OwnTVTextField(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 14.dp)
                     .bringIntoViewRequester(bringIntoView)
+                    .then(if (!remote && focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier)
                     .focusRequester(innerFocus)
-                        .focusProperties { canFocus = editing }
-                        .onFocusChanged { if (editing && !it.isFocused) editing = false }
+                        .focusProperties { canFocus = !remote || editing }
+                        .onFocusChanged { if (!remote) editing = it.isFocused else if (editing && !it.isFocused) editing = false }
                         .onPreviewKeyEvent {
-                            if (it.key == Key.Back) {
+                            if (remote && it.key == Key.Back) {
                                 if (it.type == KeyEventType.KeyUp) {
                                     editing = false
                                     keyboard?.hide()
@@ -186,11 +194,13 @@ fun OwnTVTextField(
                     textStyle = MaterialTheme.typography.bodyLarge.copy(color = colors.onSurface),
                     singleLine = true,
                     cursorBrush = SolidColor(colors.primary),
-                    keyboardOptions = KeyboardOptions(keyboardType = keyboardType, imeAction = ImeAction.Done),
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = if (isPassword && keyboardType == KeyboardType.Text) KeyboardType.Password else keyboardType,
+                        imeAction = ImeAction.Done),
                     keyboardActions = KeyboardActions(onDone = {
                         editing = false
                         keyboard?.hide()
-                        runCatching { pillFocus.requestFocus() }
+                        if (remote) runCatching { pillFocus.requestFocus() } else focusManager.clearFocus()
                     }),
                     visualTransformation = if (isPassword && !showPassword) PasswordVisualTransformation() else VisualTransformation.None,
                     decorationBox = { inner ->

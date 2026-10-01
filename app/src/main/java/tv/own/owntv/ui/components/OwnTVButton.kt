@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
@@ -39,6 +40,7 @@ fun OwnTVButton(
     compact: Boolean = false,
 ) {
     val colors = OwnTVTheme.colors
+    val touch = !rememberRemoteTextInput()
     val shape = RoundedCornerShape(50) // M3 full/pill button
 
     val primary = style == OwnTVButtonStyle.PRIMARY
@@ -50,7 +52,7 @@ fun OwnTVButton(
     FocusableSurface(
         onClick = onClick,
         onLongClick = onLongClick,
-        modifier = modifier,
+        modifier = if (touch) modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp) else modifier,
         enabled = enabled,
         selected = selected,
         shape = shape,

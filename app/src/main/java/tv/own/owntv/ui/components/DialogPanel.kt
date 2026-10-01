@@ -9,6 +9,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
@@ -19,6 +20,11 @@ import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.LocalGlass
 import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.ui.theme.glass
+
+internal val LocalPopupMaxWidth = compositionLocalOf<Dp?> { null }
+internal fun popupBaseScale(remote: Boolean): Float = if (remote) 0.70f else 1f
+internal fun popupPanelWidth(requested: Float, available: Float?): Float =
+    if (available == null) requested else minOf(requested, available.coerceAtLeast(1f))
 
 /**
  * Shared panel chrome for centered popup dialogs: fixed width, rounded clip, surface fill —
@@ -47,7 +53,7 @@ fun Modifier.dialogPanel(
     val glassy = LocalGlass.current.isGlassy(GlassSurface.DIALOGS)
     val outline = OwnTVTheme.colors.outlineVariant.copy(alpha = 0.72f)
     val base = this
-        .width(width)
+        .width(popupPanelWidth(width.value, LocalPopupMaxWidth.current?.value).dp)
         .then(panelHeight?.let { Modifier.height(it) } ?: Modifier)
         .shadow(elevation = if (glassy) 16.dp else 24.dp, shape = shape, clip = false)
         .clip(shape)

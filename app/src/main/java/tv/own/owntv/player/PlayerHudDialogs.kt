@@ -396,3 +396,36 @@ private fun OptionRow(label: String, selected: Boolean, modifier: Modifier = Mod
         }
     }
 }
+
+/** Actions for the channel on screen. Opened after the long OK gesture has ended. */
+@Composable
+internal fun PlayerContextDialog(
+    onDismiss: () -> Unit,
+    onGuide: (() -> Unit)?,
+    onChannels: (() -> Unit)?,
+    onGoLive: (() -> Unit)?,
+    onAudio: () -> Unit,
+    onSubtitles: () -> Unit,
+    onInfo: () -> Unit,
+) {
+    val focus = remember { FocusRequester() }
+    LaunchedEffect(Unit) { requestFocusRetrying(focus) }
+    val actions = listOfNotNull(
+        onGuide?.let { R.string.player_context_guide to it },
+        onChannels?.let { R.string.player_context_channels to it },
+        onGoLive?.let { R.string.player_go_live to it },
+        R.string.player_audio_track to onAudio,
+        R.string.player_subtitles to onSubtitles,
+        R.string.player_stream_info to onInfo,
+    )
+    DialogScaffold(title = stringResource(R.string.player_context_title), onDismiss = onDismiss) {
+        items(actions.size) { index ->
+            val (label, action) = actions[index]
+            OptionRow(
+                label = stringResource(label), selected = false,
+                modifier = if (index == 0) Modifier.focusRequester(focus) else Modifier,
+                onClick = action,
+            )
+        }
+    }
+}

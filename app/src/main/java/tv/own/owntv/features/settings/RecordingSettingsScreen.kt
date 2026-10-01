@@ -41,20 +41,16 @@ import org.koin.androidx.compose.koinViewModel
 import tv.own.owntv.R
 import tv.own.owntv.features.recordings.RecordingsViewModel
 import tv.own.owntv.ui.components.NumberInputDialog
+import tv.own.owntv.ui.components.StorageBrowser
+import tv.own.owntv.ui.components.BrowseMode
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.restoreAfterDialogClose
 import tv.own.owntv.ui.components.roundedPanel
 import tv.own.owntv.ui.theme.OwnTVTheme
 
-private enum class RecordingDialog { NONE, PRE_ROLL, POST_ROLL }
+private enum class RecordingDialog { NONE, PRE_ROLL, POST_ROLL, INTERNAL_QUOTA, EXTERNAL_QUOTA }
 
-/**
- * The three things recording can be told, and one thing it has to tell the user.
- *
- * There is deliberately **no** "what to do when space runs low": that behaviour is fixed — a
- * recording stops with 500 MB free, keeps what it captured, and never deletes anything to make room.
- * A setting implies a choice, and there isn't one.
- */
+/** Destination and quotas apply to new captures; existing content is preserved. */
 @Composable
 fun RecordingSettingsScreen(
     onBack: () -> Unit,
@@ -66,6 +62,15 @@ fun RecordingSettingsScreen(
     val preRoll by vm.recordingPreRollMinutes.collectAsStateWithLifecycle()
     val postRoll by vm.recordingPostRollMinutes.collectAsStateWithLifecycle()
     val recordWatching by vm.recordWhatImWatching.collectAsStateWithLifecycle()
+    val root by vm.downloadRoot.collectAsStateWithLifecycle()
+    val internalQuota by vm.internalMediaQuotaGiB.collectAsStateWithLifecycle()
+    val externalQuota by vm.externalMediaQuotaGiB.collectAsStateWithLifecycle()
+    val storage by recordingsVm.storage.collectAsStateWithLifecycle()
+    var showStorageBrowser by remember { mutableStateOf(false) }
+    var browserOpened by remember { mutableStateOf(false) }
+    val destinationFocus = remember { FocusRequester() }
+    val internalQuotaFocus = remember { FocusRequester() }
+    val externalQuotaFocus = remember { FocusRequester() }
     val colors = OwnTVTheme.colors
 
     val firstFocus = remember { FocusRequester() }
@@ -128,6 +133,36 @@ fun RecordingSettingsScreen(
             onClick = { vm.setRecordingReserveConnection(!reserve) },
             modifier = Modifier.focusRequester(firstFocus),
         )
+        Row2(
+            icon = OwnTVIcon.FOLDER,
+            title = stringResource(R.string.media_destination),
+            desc = stringResource(R.string.media_destination_description),
+            chip = tv.own.owntv.core.storage.StorageAccess.folderLabel(root) ?: stringResource(R.string.media_internal),
+            chevron = true,
+            onClick = { showStorageBrowser = true },
+            modifier = Modifier.focusRequester(destinationFocus),
+        )
+        if (root.isNotBlank()) {
+            Row2(icon = OwnTVIcon.FOLDER, title = stringResource(R.string.media_use_internal),
+                onClick = { vm.setDownloadRoot("") })
+        }
+        Row2(icon = OwnTVIcon.FOLDER, title = stringResource(R.string.media_internal_quota),
+            desc = stringResource(R.string.media_quota_description),
+            chip = internalQuota.toString() + " " + stringResource(R.string.media_gib), chevron = true,
+            onClick = { dialogReturn = internalQuotaFocus; dialog = RecordingDialog.INTERNAL_QUOTA },
+            modifier = Modifier.focusRequester(internalQuotaFocus))
+        Row2(icon = OwnTVIcon.FOLDER, title = stringResource(R.string.media_external_quota),
+            chip = externalQuota.toString() + " " + stringResource(R.string.media_gib), chevron = true,
+            onClick = { dialogReturn = externalQuotaFocus; dialog = RecordingDialog.EXTERNAL_QUOTA },
+            modifier = Modifier.focusRequester(externalQuotaFocus))
+        storage?.let { info ->
+            val label = if (!info.known) stringResource(R.string.media_space_unknown) else
+                stringResource(R.string.media_usage,
+                    formatGiB(info.mediaBytes), formatGiB(info.quotaBytes),
+                    formatGiB(info.freeBytes), formatGiB(info.reserveBytes))
+            Text(label, color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.padding(vertical = 12.dp))
+        }
         // D3 — the player's record button does not exist until this is on, and turning it on is
         // where the one-connection trade-off is explained and accepted. Turning it OFF needs no
         // dialog: nothing is being traded away.
@@ -170,6 +205,19 @@ fun RecordingSettingsScreen(
         )
     }
 
+    if (showStorageBrowser) {
+        StorageBrowser(title = stringResource(R.string.media_destination), mode = BrowseMode.FOLDER,
+            onPick = { folder -> vm.setDownloadRoot(folder.absolutePath); showStorageBrowser = false },
+            onDismiss = { showStorageBrowser = false })
+    }
+    LaunchedEffect(showStorageBrowser) {
+        if (showStorageBrowser) browserOpened = true
+        else if (browserOpened) {
+            browserOpened = false
+            runCatching { destinationFocus.requestFocus() }
+        }
+    }
+
     when (dialog) {
         // min = 0 on both: "no padding at all" is a legitimate choice for a provider whose guide
         // times are exact, and the dialog's usual min of 1 would quietly refuse it.
@@ -200,6 +248,17 @@ fun RecordingSettingsScreen(
             },
             onDismiss = { dialog = RecordingDialog.NONE },
         )
+        RecordingDialog.INTERNAL_QUOTA, RecordingDialog.EXTERNAL_QUOTA -> {
+            val internal = dialog == RecordingDialog.INTERNAL_QUOTA
+            NumberInputDialog(
+                title = stringResource(if (internal) R.string.media_internal_quota else R.string.media_external_quota),
+                value = if (internal) internalQuota else externalQuota,
+                min = 1, max = if (internal) 32 else 256,
+                fieldLabel = stringResource(R.string.media_gib),
+                onSet = { if (internal) vm.setInternalMediaQuotaGiB(it) else vm.setExternalMediaQuotaGiB(it) },
+                onReset = { if (internal) vm.setInternalMediaQuotaGiB(4) else vm.setExternalMediaQuotaGiB(16) },
+                onDismiss = { dialog = RecordingDialog.NONE })
+        }
         RecordingDialog.NONE -> Unit
     }
 }
@@ -262,3 +321,7 @@ private fun RecordWatchingWarningDialog(onKeepOff: () -> Unit, onTurnOn: () -> U
     }
     }
 }
+
+private fun formatGiB(bytes: Long): String = java.text.NumberFormat.getNumberInstance().apply {
+    minimumFractionDigits = 1; maximumFractionDigits = 1
+}.format(bytes / 1_073_741_824.0)

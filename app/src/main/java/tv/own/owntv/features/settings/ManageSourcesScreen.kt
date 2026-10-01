@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -90,10 +91,12 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val defaultPlaylistName = stringResource(R.string.setup_name_default_playlist)
     val defaultPortalName = stringResource(R.string.setup_default_portal)
 
-    var showAdd by remember { mutableStateOf(false) }
+    var showAdd by rememberSaveable { mutableStateOf(false) }
     // Within "Add source": null = the Remote|Manual chooser, else the chosen path.
-    var addMode by remember { mutableStateOf<AddMode?>(null) }
-    var editingSource by remember { mutableStateOf<SourceEntity?>(null) }
+    var addMode by rememberSaveable { mutableStateOf<AddMode?>(null) }
+    // Save the identity only; the entity contains credentials and must never enter the Bundle.
+    var editingSourceId by rememberSaveable { mutableStateOf<Long?>(null) }
+    val editingSource = sources.firstOrNull { it.id == editingSourceId }
     var confirmDelete by remember { mutableStateOf<SourceEntity?>(null) }
     var resyncChoice by remember { mutableStateOf<SourceEntity?>(null) }
     // Set while the "this will stop playback and take a while" confirmation is on screen.
@@ -156,7 +159,7 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     BackHandler {
         when {
             showAdd -> { showAdd = false; addMode = null; vm.stopRemoteListener(); vm.cancelImport() }
-            editingSource != null -> editingSource = null
+            editingSourceId != null -> editingSourceId = null
             else -> onBack()
         }
     }
@@ -176,9 +179,9 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         syncSeries = series != tv.own.owntv.core.sync.SyncScopeChoice.Off,
                         preferHls = preferHls,
                     )
-                    editingSource = null
+                    editingSourceId = null
                 },
-                onStartM3u = { n, url, ua, epg, autoRefresh, isDefault -> vm.updateSource(src.id, n, url, "", "", ua, epg, autoRefresh, isDefault); editingSource = null },
+                onStartM3u = { n, url, ua, epg, autoRefresh, isDefault -> vm.updateSource(src.id, n, url, "", "", ua, epg, autoRefresh, isDefault); editingSourceId = null },
                 onStartStalker = { n, url, mac, serialNumber, deviceId, deviceId2, signature, ua, autoRefresh, isDefault, live, movies, series ->
                     vm.updateSource(
                         src.id, n, url, "", "", ua, "", autoRefresh, isDefault, mac = mac,
@@ -188,9 +191,9 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         syncMovies = movies != tv.own.owntv.core.sync.SyncScopeChoice.Off,
                         syncSeries = series != tv.own.owntv.core.sync.SyncScopeChoice.Off,
                     )
-                    editingSource = null
+                    editingSourceId = null
                 },
-                onBack = { editingSource = null },
+                onBack = { editingSourceId = null },
                 modifier = Modifier,
             )
         } else if (showAdd) {
@@ -343,7 +346,7 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                                     index == 0 -> Modifier.focusRequester(firstRowFocus)
                                     else -> Modifier
                                 },
-                                onEdit = { contextId = source.id; contextIndex = index; editingSource = source },
+                                onEdit = { contextId = source.id; contextIndex = index; editingSourceId = source.id },
                                 onTest = { contextId = source.id; contextIndex = index; vm.testSource(source) },
                                 onResync = { contextId = source.id; contextIndex = index; resyncChoice = source },
                                 onCancelSync = { contextId = source.id; contextIndex = index; vm.cancelResync(source) },

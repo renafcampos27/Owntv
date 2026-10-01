@@ -63,6 +63,7 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val autoStartConnected by tv.own.owntv.features.startup.AutoStartService.connected.collectAsStateWithLifecycle()
     val autoStartFailure by tv.own.owntv.features.startup.AutoStartService.failure.collectAsStateWithLifecycle()
     val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val versions by settingsVm.channelVersionSettings.collectAsStateWithLifecycle()
     val mode by settingsVm.navMenuMode.collectAsStateWithLifecycle()
     val hidden by settingsVm.navMenuHidden.collectAsStateWithLifecycle()
     val colors = OwnTVTheme.colors
@@ -109,6 +110,17 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             onClick = { showModePicker = true },
             modifier = Modifier.focusRequester(firstFocus),
         )
+
+        Row2(icon = OwnTVIcon.MENU, title = stringResource(R.string.channel_versions_group),
+            desc = stringResource(R.string.channel_versions_group_description),
+            chip = stringResource(if (versions.groupChannelVersions) R.string.simple_mode_on else R.string.simple_mode_off),
+            primaryChip = versions.groupChannelVersions,
+            onClick = { settingsVm.setGroupChannelVersions(!versions.groupChannelVersions) })
+        Row2(icon = OwnTVIcon.MENU, title = stringResource(R.string.channel_versions_priority),
+            desc = stringResource(R.string.channel_versions_priority_description),
+            chip = stringResource(if (versions.prioritizeChannelVersions) R.string.simple_mode_on else R.string.simple_mode_off),
+            primaryChip = versions.prioritizeChannelVersions,
+            onClick = { settingsVm.setPrioritizeChannelVersions(!versions.prioritizeChannelVersions) })
 
         simple?.let { options ->
             Row2(

@@ -66,7 +66,7 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 @Composable
 internal fun CatchupManualTimeDialog(
     windowSec: Int,
-    onPick: (Int) -> Unit,
+    onPick: (Long) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val colors = OwnTVTheme.colors
@@ -151,7 +151,7 @@ internal fun CatchupManualTimeDialog(
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OwnTVButton(
                             stringResource(R.string.content_play),
-                            onClick = { onPick(CatchupJumps.offsetSecOf(point, nowMs, zone)) },
+                            onClick = { onPick(CatchupJumps.instantOf(point, nowMs, zone)) },
                         )
                         OwnTVButton(
                             stringResource(R.string.common_cancel),

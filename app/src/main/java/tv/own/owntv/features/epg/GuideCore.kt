@@ -24,6 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -120,19 +121,17 @@ internal fun ProgrammeStripCanvas(
     // Resolve the templates through Compose so a live locale change invalidates the labels.
     val timeRangeTemplate = stringResource(R.string.content_epg_time_range)
     val nowTemplate = stringResource(R.string.content_epg_now)
-    val labels = remember(programmes, now, formatTime, timeRangeTemplate, nowTemplate) {
-        programmes.map { p ->
-            val t = String.format(
-                java.util.Locale.ROOT,
-                timeRangeTemplate,
-                formatTime(p.startMs),
-                formatTime(p.stopMs),
-            )
-            if (now in p.startMs until p.stopMs) {
-                String.format(java.util.Locale.ROOT, nowTemplate, t)
-            } else {
-                t
-            }
+    var viewportWidth by remember { androidx.compose.runtime.mutableIntStateOf(0) }
+    val scrollPx = hScroll.value.toFloat()
+    val cells = remember(programmes, windowStart, windowEnd) { GuideProgrammeCells.layout(programmes, windowStart, windowEnd) }
+    val visible = GuideProgrammeCells.visible(cells,
+        windowStart + (scrollPx / pxPerMin * 60_000).toLong(),
+        windowStart + ((scrollPx + viewportWidth) / pxPerMin * 60_000).toLong())
+    val labels = remember(programmes, cells, visible, now, formatTime, timeRangeTemplate, nowTemplate) {
+        visible.associateWith { index ->
+            val p = programmes[cells[index].programmeIndex]
+            val t = String.format(java.util.Locale.ROOT, timeRangeTemplate, formatTime(p.startMs), formatTime(p.stopMs))
+            if (now in p.startMs until p.stopMs) String.format(java.util.Locale.ROOT, nowTemplate, t) else t
         }
     }
     // Vertical "now" marker + catch-up glyph — measured once, reused each frame.
@@ -144,19 +143,18 @@ internal fun ProgrammeStripCanvas(
     )
     val catchupGlyph = remember(catchupStyle) { measurer.measure("↻", catchupStyle) }
 
-    val scrollPx = hScroll.value.toFloat() // read in composable scope so Canvas redraws on scroll
-    val cells = remember(programmes, windowStart, windowEnd) { GuideProgrammeCells.layout(programmes, windowStart, windowEnd) }
-    Canvas(Modifier.fillMaxSize()) {
+    Canvas(Modifier.fillMaxSize().onSizeChanged { viewportWidth = it.width }) {
         val viewW = size.width
         val h = size.height
-        cells.forEach { cell ->
+        for (cellIndex in visible) {
+            val cell = cells[cellIndex]
             val i = cell.programmeIndex
             val p = programmes[i]
             val s = cell.startMs
             val e = cell.stopMs
             val x = ((s - windowStart) / 60_000f) * pxPerMin - scrollPx
             val w = (((e - s) / 60_000f) * pxPerMin - gapPx).coerceAtLeast(0f)
-            if (w <= 0f || x + w <= 0f || x >= viewW) return@forEach // cull off-screen programmes
+            if (w <= 0f || x + w <= 0f || x >= viewW) continue // cull off-screen programmes
             val isNow = now in p.startMs until p.stopMs
             val hi = highlightTime != null && highlightTime in s until e
             clipRect(left = x.coerceAtLeast(0f), top = 0f, right = (x + w).coerceAtMost(viewW), bottom = h) {
@@ -182,7 +180,7 @@ internal fun ProgrammeStripCanvas(
                 val tStyle = if (isNow && !hi) titleNowStyle else titleStyle
                 val mStyle = if (isNow && !hi) timeNowStyle else timeStyle
                 val title = measurer.measure(p.title, tStyle, overflow = TextOverflow.Ellipsis, maxLines = 1, constraints = Constraints(maxWidth = textW))
-                val time = measurer.measure(labels[i], mStyle, overflow = TextOverflow.Ellipsis, maxLines = 1, constraints = Constraints(maxWidth = textW))
+                val time = measurer.measure(labels.getValue(cellIndex), mStyle, overflow = TextOverflow.Ellipsis, maxLines = 1, constraints = Constraints(maxWidth = textW))
                 val top = (h - (title.size.height + time.size.height + 2)) / 2f
                 drawText(title, topLeft = Offset(textX, top))
                 drawText(time, topLeft = Offset(textX, top + title.size.height + 2))
@@ -229,6 +227,7 @@ internal fun ProgrammeDetailDialog(
     catchupPlayer: SettingsRepository.CatchupPlayer = SettingsRepository.CatchupPlayer.INTERNAL,
     onPlayCatchupExternal: () -> Unit = {},
     replayUnconfirmed: Boolean = false,
+    replayEvidence: ReplayEvidenceStore.Outcome? = null,
     // Denser variant for the Live TV catch-up picker, which opens this on top of an already-small
     // popup chain — full-size chrome dwarfed the picker it came from. Guide keeps the roomy layout.
     compact: Boolean = false,
@@ -308,8 +307,17 @@ internal fun ProgrammeDetailDialog(
                     )
                 }
                 Spacer(Modifier.height(if (compact) 16.dp else 24.dp))
-                if (replayUnconfirmed) {
+                if (canCatchup && replayEvidence != null) {
+                    Text(
+                        stringResource(if (replayEvidence == ReplayEvidenceStore.Outcome.STARTED) R.string.epg_replay_started else R.string.epg_replay_attempt_failed),
+                        style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                } else if (replayUnconfirmed) {
                     Text(stringResource(R.string.epg_replay_unconfirmed), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Spacer(Modifier.height(8.dp))
+                } else if (canCatchup) {
+                    Text(stringResource(R.string.epg_replay_advertised), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                 } else if (!canCatchup && programme.stopMs <= System.currentTimeMillis()) {
                     Text(stringResource(R.string.content_epg_catchup_unavailable), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
@@ -359,7 +367,7 @@ internal fun ProgrammeDetailDialog(
                             else -> OwnTVButton(
                                 stringResource(
                                     if (programme.stopMs <= System.currentTimeMillis()) {
-                                        R.string.recording_from_archive
+                                        R.string.media_save_programme
                                     } else {
                                         R.string.recording_record
                                     },

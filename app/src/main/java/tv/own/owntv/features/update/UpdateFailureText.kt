@@ -16,6 +16,7 @@ internal fun updateFailureText(failure: UpdateManager.Failure): String = when (f
     is UpdateManager.Failure.DownloadHttp -> stringResource(R.string.update_failed_download_http, failure.code.toString())
     UpdateManager.Failure.EmptyDownload -> stringResource(R.string.update_empty_download)
     UpdateManager.Failure.DownloadNetwork -> stringResource(R.string.update_failed_download)
+    UpdateManager.Failure.RecordingsBusy -> stringResource(R.string.update_recordings_busy)
     UpdateManager.Failure.Install -> stringResource(R.string.update_install_failed)
     is UpdateManager.Failure.NotEnoughSpace -> stringResource(
         R.string.update_not_enough_space,

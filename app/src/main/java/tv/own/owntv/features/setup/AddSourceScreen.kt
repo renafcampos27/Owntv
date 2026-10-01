@@ -21,6 +21,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -28,6 +29,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import kotlinx.coroutines.flow.first
@@ -90,8 +93,7 @@ import tv.own.owntv.ui.components.StorageBrowser
 import tv.own.owntv.ui.components.roundedPanel
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
-
-private enum class SourceKind { XTREAM, M3U, STALKER }
+import tv.own.owntv.core.ui.findActivity
 
 /** UI state of the Xtream "Test HLS support" probe. Local to this screen — the probe is one short
  *  request and saves nothing unless the source already exists. */
@@ -151,38 +153,38 @@ fun AddSourceScreen(
 ) {
     val colors = OwnTVTheme.colors
     val editing = initial != null
-    var kind by remember {
-        mutableStateOf(
-            when (initial?.type) {
-                SourceType.M3U -> SourceKind.M3U
-                SourceType.STALKER -> SourceKind.STALKER
-                else -> SourceKind.XTREAM
-            },
-        )
+    val settings: SettingsRepository = koinInject()
+    val profile by settings.activeProfileId.collectAsStateWithLifecycle(initialValue = null)
+    // Only this random identifier is saved; URLs, credentials and draft fields stay in memory.
+    val formToken = rememberSaveable(initial?.id) { java.util.UUID.randomUUID().toString() }
+    val draftVm: SourceDraftViewModel = viewModel()
+    val draft = draftVm.obtain(formToken, profile, initial, initialAutoRefresh, initialIsDefault)
+    val activity = LocalContext.current.findActivity()
+    DisposableEffect(formToken, draftVm, activity) {
+        onDispose { if (activity?.isChangingConfigurations != true) draftVm.discard(formToken) }
     }
-    var name by remember(initial) { mutableStateOf(initial?.name ?: "") }
-    var server by remember(initial) { mutableStateOf(if (initial != null && initial.type == SourceType.XTREAM) initial.url else "") }
-    var username by remember(initial) { mutableStateOf(initial?.username ?: "") }
-    var password by remember(initial) { mutableStateOf(initial?.password ?: "") }
-    var m3uUrl by remember(initial) { mutableStateOf(if (initial != null && initial.type == SourceType.M3U) initial.url else "") }
-    var portalUrl by remember(initial) { mutableStateOf(if (initial != null && initial.type == SourceType.STALKER) initial.url else "") }
-    var mac by remember(initial) { mutableStateOf(initial?.mac ?: "") }
-    var stalkerSerialNumber by remember(initial) { mutableStateOf(initial?.stalkerSerialNumber ?: "") }
-    var stalkerDeviceId by remember(initial) { mutableStateOf(initial?.stalkerDeviceId ?: "") }
-    var stalkerDeviceId2 by remember(initial) { mutableStateOf(initial?.stalkerDeviceId2 ?: "") }
-    var stalkerSignature by remember(initial) { mutableStateOf(initial?.stalkerSignature ?: "") }
+    var kind by draft.kind
+    var name by draft.name
+    var server by draft.server
+    var username by draft.username
+    var password by draft.password
+    var m3uUrl by draft.m3uUrl
+    var portalUrl by draft.portalUrl
+    var mac by draft.mac
+    var stalkerSerialNumber by draft.serial
+    var stalkerDeviceId by draft.deviceId
+    var stalkerDeviceId2 by draft.deviceId2
+    var stalkerSignature by draft.signature
     var showUaPresetPicker by remember { mutableStateOf(false) }
-    var epgUrl by remember(initial) { mutableStateOf(initial?.epgUrl ?: "") }
-    var userAgent by remember(initial) { mutableStateOf(initial?.userAgent ?: "") }
-    var autoRefresh by remember(initialAutoRefresh) { mutableStateOf(initialAutoRefresh) }
-    var isDefault by remember(initialIsDefault) { mutableStateOf(initialIsDefault) }
-    var preferHls by remember(initial) { mutableStateOf(initial?.preferHls == true) }
+    var epgUrl by draft.epgUrl
+    var userAgent by draft.userAgent
+    var autoRefresh by draft.autoRefresh
+    var isDefault by draft.isDefault
+    var preferHls by draft.preferHls
     // Edit: On(=Now)/Off from persisted flags. Add: default all Now for Xtream; Stalker defaults
     // Live Now + Movies/Series Later when the kind switches (see LaunchedEffect below).
-    var syncLive by remember(initial) {
-        mutableStateOf(if (initial?.syncLive == false) SyncScopeChoice.Off else SyncScopeChoice.Now)
-    }
-    var hasRemoteStalkerScopes by remember { mutableStateOf(false) }
+    var syncLive by draft.syncLive
+    var hasRemoteStalkerScopes by draft.hasRemoteStalkerScopes
     var showFileBrowser by remember { mutableStateOf(false) }
     var showAutoRefreshPicker by remember { mutableStateOf(false) }
     var showManualDaysPicker by remember { mutableStateOf(false) }
@@ -194,7 +196,6 @@ fun AddSourceScreen(
     // DataStore — no callback signature change — so it lands on the ACTIVE profile at add time. The row
     // is only shown while ADDING (an edit re-syncs nothing new) and only when a profile exists (the
     // setup wizard may still be profile-less; the value defaults to off there).
-    val settings: SettingsRepository = koinInject()
     val profileDao: ProfileDao = koinInject()
     val scope = rememberCoroutineScope()
     var hideNewCatsProfile by remember { mutableStateOf(-1L) }

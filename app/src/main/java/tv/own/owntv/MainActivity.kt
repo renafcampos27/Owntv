@@ -197,7 +197,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         lifecycleScope.launch {
             repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-                get<tv.own.owntv.core.settings.SettingsRepository>().detailedDiagnostics.collectLatest { enabled ->
+                val diagnosticsSettings = get<tv.own.owntv.core.settings.SettingsRepository>()
+                kotlinx.coroutines.flow.combine(diagnosticsSettings.detailedDiagnostics, diagnosticsSettings.uiDiagnostics) { detailed, ui -> detailed || ui }.collectLatest { enabled ->
                     if (enabled) {
                         val monitor = tv.own.owntv.diagnostics.UiPerformanceMonitor(window)
                         try {
@@ -263,9 +264,19 @@ class MainActivity : ComponentActivity() {
             val focusHighlightWidth by viewModel.focusHighlightWidth.collectAsStateWithLifecycle()
             val uiZoomPercent by viewModel.uiZoomPercent.collectAsStateWithLifecycle()
             val fontCustomization by viewModel.fontCustomization.collectAsStateWithLifecycle()
-            val animationLevel by viewModel.animationLevel.collectAsStateWithLifecycle()
+            val requestedAnimationLevel by viewModel.animationLevel.collectAsStateWithLifecycle()
+            val visualProfile by get<tv.own.owntv.core.settings.SettingsRepository>().visualProfile.collectAsStateWithLifecycle(initialValue = tv.own.owntv.core.theme.VisualProfile.AUTO)
+            val deviceMemory = remember {
+                val manager = getSystemService(android.app.ActivityManager::class.java)
+                val info = android.app.ActivityManager.MemoryInfo()
+                manager.getMemoryInfo(info)
+                manager.isLowRamDevice to info.totalMem
+            }
+            val lightVisuals = tv.own.owntv.core.theme.VisualProfilePolicy.isLight(visualProfile, deviceMemory.first, deviceMemory.second)
+            val animationLevel = tv.own.owntv.core.theme.VisualProfilePolicy.animation(requestedAnimationLevel, lightVisuals)
             val bgImagePath by viewModel.bgImagePath.collectAsStateWithLifecycle()
-            val glassConfig by viewModel.glassConfig.collectAsStateWithLifecycle()
+            val requestedGlass by viewModel.glassConfig.collectAsStateWithLifecycle()
+            val glassConfig = tv.own.owntv.core.theme.VisualProfilePolicy.glass(requestedGlass, lightVisuals)
             val avatarId by viewModel.avatarId.collectAsStateWithLifecycle()
             val avatarPath by viewModel.avatarPath.collectAsStateWithLifecycle()
             val profileName by viewModel.profileName.collectAsStateWithLifecycle()
@@ -379,7 +390,7 @@ class MainActivity : ComponentActivity() {
                 // Phase 4 — real backdrop blur. Load+blur the background once (cached) when glass is on,
                 // a background image is set, blur strength > 0, and the device supports it (API 31+).
                 // Otherwise this stays null and panels fall back to Tier-1 translucency.
-                val needsBackdropAssets = glassActive && bgImagePath.isNotBlank()
+                val needsBackdropAssets = glassActive && effectiveGlass.blurStrength > 0f && bgImagePath.isNotBlank()
                 val supportsFrostPyramid = supportsBackdropBlur()
                 val blurred by produceState<BlurredBackdrop?>(
                     initialValue = null,

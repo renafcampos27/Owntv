@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import tv.own.owntv.core.database.entity.RecordingEntity
 import tv.own.owntv.core.model.MediaType
@@ -33,7 +34,7 @@ import tv.own.owntv.player.OwnTVPlayer
  * hidden-items list the way downloads are: a recording is a file the user asked for by name, not a
  * catalogue row, and hiding a channel should not make last night's programme disappear.
  */
-@OptIn(ExperimentalCoroutinesApi::class)
+@OptIn(ExperimentalCoroutinesApi::class, kotlinx.coroutines.FlowPreview::class)
 class RecordingsViewModel(
     private val settings: SettingsRepository,
     private val recordings: RecordingManager,
@@ -53,7 +54,10 @@ class RecordingsViewModel(
      * old one until the app was restarted, and with nothing recorded yet the list never changes.
      */
     val storage: StateFlow<RecordingStorageInfo?> =
-        combine(rows, settings.downloadRoot) { _, _ -> Unit }
+        kotlinx.coroutines.flow.merge(
+            combine(rows, settings.downloadRoot, settings.internalMediaQuotaGiB, settings.externalMediaQuotaGiB) { _, _, _, _ -> Unit },
+            kotlinx.coroutines.flow.flow { while (true) { emit(Unit); kotlinx.coroutines.delay(2_000) } },
+        ).sample(1_000)
             .mapLatest { recordings.storageInfo() }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -72,27 +76,40 @@ class RecordingsViewModel(
     private val _retryUnavailable = MutableSharedFlow<Unit>()
     val retryUnavailable = _retryUnavailable.asSharedFlow()
 
-    /**
-     * Play a finished recording from the file on disk.
-     *
-     * `isLive = false` even though what it holds is live television: the flag describes the *source*,
-     * and a file on disk seeks, pauses and ends. Treating it as live would take the scrub bar away
-     * from the one recording the user most wants to skip through.
-     *
-     * A recording that is still running is deliberately not playable here. A `.ts` can be played
-     * while it is being written, and offering that from this screen would mean two readers on one
-     * growing file and a picture that stops at whatever byte it started from.
-     */
-    fun play(recording: RecordingEntity) {
-        if (recording.status != RecordingStatus.COMPLETED && recording.status != RecordingStatus.PARTIAL) return
-        val path = recording.filePath ?: return
-        _lastPlayedId.value = recording.id
+    private val _playUnavailable = MutableSharedFlow<Unit>()
+    val playUnavailable = _playUnavailable.asSharedFlow()
+    private val _partsRequireInternal = MutableSharedFlow<Unit>()
+    val partsRequireInternal = _partsRequireInternal.asSharedFlow()
+
+    /** Finished files and the local, committed segment view use the same player controls. */
+    fun play(recording: RecordingEntity, onStarted: () -> Unit = {}) {
         viewModelScope.launch {
-            if (settings.externalPlayerFor(MediaType.LIVE).first()) {
-                externalPlayerLauncher.launch(path, recording.title)
-                return@launch
+            if (settings.activeProfileId.first() != recording.profileId) return@launch
+            val current = recordings.current(recording) ?: return@launch
+            val external = settings.externalPlayerFor(MediaType.LIVE).first()
+            if (current.status == RecordingStatus.RECORDING) {
+                if (external) return@launch
+                val playback = recordings.openInProgress(current)
+                if (playback == null) { _playUnavailable.emit(Unit); return@launch }
+                if (settings.activeProfileId.first() != current.profileId) { playback.close(); return@launch }
+                try { player.playLocalRecording(playback, current.title) }
+                catch (_: Exception) { playback.close(); _playUnavailable.emit(Unit); return@launch }
+            } else {
+                if (!tv.own.owntv.core.recording.RecordingIntegrity.canPlay(current)) return@launch
+                val path = current.filePath ?: return@launch
+                if (settings.activeProfileId.first() != current.profileId) return@launch
+                if (recordings.isParts(current)) {
+                    if (external) { _partsRequireInternal.emit(Unit); return@launch }
+                    val playback = recordings.openParts(current)
+                    if (playback == null) { _playUnavailable.emit(Unit); return@launch }
+                    if (settings.activeProfileId.first() != current.profileId) { playback.close(); return@launch }
+                    try { player.playLocalRecording(playback, current.title) }
+                    catch (_: Exception) { playback.close(); _playUnavailable.emit(Unit); return@launch }
+                } else if (external) externalPlayerLauncher.launch(path, current.title)
+                else player.play(path, title = current.title, isLive = false)
             }
-            player.play(path, title = recording.title, isLive = false)
+            _lastPlayedId.value = current.id
+            onStarted()
         }
     }
 
@@ -101,17 +118,42 @@ class RecordingsViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     /** Ends a running recording and keeps the captured file, including a partial capture. */
-    fun stop(recording: RecordingEntity) = recordings.stop(recording)
+    fun stop(recording: RecordingEntity) { viewModelScope.launch {
+        if (settings.activeProfileId.first() == recording.profileId) recordings.stopAndAwait(recording)
+    } }
+
+    private val _archiveActionUnavailable = MutableSharedFlow<Unit>()
+    val archiveActionUnavailable = _archiveActionUnavailable.asSharedFlow()
+
+    fun pauseArchive(recording: RecordingEntity) { viewModelScope.launch {
+        if (settings.activeProfileId.first() == recording.profileId && !recordings.pauseArchive(recording))
+            _archiveActionUnavailable.emit(Unit)
+    } }
+
+    fun resumeArchive(recording: RecordingEntity) { viewModelScope.launch {
+        if (settings.activeProfileId.first() == recording.profileId) {
+            if (_lastPlayedId.value == recording.id && player.hasLocalRecordingPlayback) player.stop()
+            if (!recordings.resumeArchive(recording)) _archiveActionUnavailable.emit(Unit)
+        }
+    } }
 
     /** Drops a scheduled recording. Nothing on disk is touched, because nothing is there yet. */
-    fun cancel(recording: RecordingEntity) = recordings.cancel(recording)
+    fun cancel(recording: RecordingEntity) { viewModelScope.launch {
+        if (settings.activeProfileId.first() == recording.profileId) recordings.cancel(recording)
+    } }
 
     /** Removes the row **and** the file. The only thing here that deletes anything (D2). */
-    fun delete(recording: RecordingEntity) = recordings.delete(recording)
+    fun delete(recording: RecordingEntity) { viewModelScope.launch {
+        if (settings.activeProfileId.first() == recording.profileId) {
+            if (_lastPlayedId.value == recording.id && player.hasLocalRecordingPlayback) player.stop()
+            recordings.delete(recording)
+        }
+    } }
 
     /** Retry a live window or request a separate archive recovery, keeping the original file. */
     fun retry(recording: RecordingEntity) {
         viewModelScope.launch {
+            if (settings.activeProfileId.first() != recording.profileId) return@launch
             if (!recordings.retryRecording(recording)) _retryUnavailable.emit(Unit)
         }
     }

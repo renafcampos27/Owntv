@@ -25,6 +25,23 @@ import tv.own.owntv.core.live.LiveKey
  */
 class LiveZapListTest {
 
+    @Test fun groupedZappingAnchorsToThePlayingAlternativeInsteadOfItsRepresentativeId() = runBlocking {
+        val representative = ChannelEntity(id = 1, sourceId = 1, name = "SIC Full HD", streamUrl = "")
+        val alternative = representative.copy(id = 99, name = "SIC HD")
+        val next = representative.copy(id = 2, name = "RTP 1")
+        var playing = alternative
+        val scope = CoroutineScope(Dispatchers.Default)
+        try {
+            val list = LiveZapList(scope, { playing.id }, { emptyList() }, { emptyList() }, { emptyList() }, { null },
+                matchesPlaying = { item, id -> item.id == id || ChannelVersionPolicy.groupKey(item) == ChannelVersionPolicy.groupKey(playing) })
+            list.armFromBrowse(listOf(representative, next), null, LiveKey.All, null)
+            assertEquals(next, list.next(1))
+            assertEquals(next, list.next(-1))
+            playing = next
+            assertEquals(representative, list.next(1))
+        } finally { scope.cancel() }
+    }
+
     private fun channel(id: Long) = ChannelEntity(
         id = id, sourceId = 1, categoryId = 10, name = "Ch $id",
         streamUrl = "http://x/$id.ts", remoteId = "$id",

@@ -38,7 +38,15 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,13 +92,24 @@ internal fun mmss(sec: Int): String = tv.own.owntv.ui.components.formatTimestamp
 
 @Composable
 internal fun CircleButton(icon: OwnTVIcon, size: Int, primary: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val remote = tv.own.owntv.ui.components.rememberRemoteTextInput()
+    val description = stringResource(when (icon) {
+        OwnTVIcon.BACK -> R.string.common_back
+        OwnTVIcon.PLAY -> R.string.adaptive_play
+        OwnTVIcon.PAUSE -> R.string.adaptive_pause
+        OwnTVIcon.REWIND -> R.string.adaptive_rewind
+        OwnTVIcon.FORWARD -> R.string.adaptive_forward
+        OwnTVIcon.SKIP_PREVIOUS -> R.string.adaptive_previous
+        OwnTVIcon.SKIP_NEXT -> R.string.adaptive_next
+        else -> R.string.common_nav_more
+    })
     // Focus fills the button with the accent and rings it in a white hairline. The glyph takes
     // onAccentOnVideo rather than a fixed dark, so a deep custom accent still gets a readable icon —
     // that role is already derived from the seed's luminance, which is the check this needs.
     val accent = OwnTVTheme.colors.accentOnVideo
     FocusableSurface(
         onClick = onClick,
-        modifier = modifier.size(size.dp),
+        modifier = modifier.size((if (remote) size else maxOf(48, size)).dp).semantics { contentDescription = description },
         shape = CircleShape,
         focusedScale = 1.1f,
         focusedContainerColor = accent,
@@ -346,10 +365,13 @@ internal fun CtrlButton(
     label: String,
     onClick: () -> Unit,
 ) {
+    val remote = tv.own.owntv.ui.components.rememberRemoteTextInput()
     FocusableSurface(
         onClick = onClick,
         // A square 44 dp while collapsed; focus lets it grow sideways to fit its label.
-        modifier = Modifier.height(44.dp).widthIn(min = 44.dp),
+        modifier = Modifier.height(if (remote) 44.dp else 48.dp)
+            .widthIn(min = if (remote) 44.dp else 48.dp)
+            .semantics { contentDescription = label },
         shape = RoundedCornerShape(12.dp),
         // Focus as light: the accent rim, a 22% wash of it and a soft bloom, all from the accent that
         // reads over video. Reduce animations keeps the rim and drops the bloom.
@@ -394,16 +416,35 @@ private fun BoxScope.Playhead(frac: Float) {
 }
 
 @Composable
-internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepMs: Long, onSeek: (Long) -> Unit) {
+internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepMs: Long, onSeek: (Long) -> Unit, contextKey: Any? = null) {
+    val touch = !tv.own.owntv.ui.components.rememberRemoteTextInput()
+    var preview by remember(contextKey) { mutableStateOf<Float?>(null) }
+    var touchDuration by remember(contextKey) { mutableStateOf<Long?>(null) }
+    val currentSeek by rememberUpdatedState(onSeek)
+    val currentPosition by rememberUpdatedState(positionMs)
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
-    val frac = if (durationMs > 0) (positionMs.toFloat() / durationMs).coerceIn(0f, 1f) else 0f
+    val shownDuration = touchDuration ?: durationMs
+    val frac = preview ?: if (shownDuration > 0) (positionMs.toFloat() / shownDuration).coerceIn(0f, 1f) else 0f
+    val shownPosition = if (preview != null) (frac.toDouble() * shownDuration).toLong() else positionMs
+    val accessibleLabel = stringResource(R.string.player_time_progress, formatTime(shownPosition), formatTime(shownDuration))
     // The buffer ghost: how far ahead the engine has data. Never behind the playhead, so a stale or
     // unreported value simply draws nothing rather than a stripe that contradicts the fill.
-    val bufferedFrac = if (durationMs > 0) (bufferedMs.toFloat() / durationMs).coerceIn(frac, 1f) else frac
+    val bufferedFrac = if (shownDuration > 0) (bufferedMs.toFloat() / shownDuration).coerceIn(frac, 1f) else frac
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
     Box(
-        modifier = Modifier.fillMaxWidth().height(24.dp)
+        modifier = Modifier.fillMaxWidth().height(if (touch) 48.dp else 24.dp)
+            .touchScrub(contextKey, touch && durationMs > 0, { fraction ->
+                if (fraction == null) { preview = null; touchDuration = null }
+                else { if (touchDuration == null) touchDuration = durationMs; preview = fraction }
+            }) {
+                currentSeek(timelineDelta(it, touchDuration ?: durationMs, currentPosition))
+            }
+            .semantics {
+                contentDescription = accessibleLabel
+                progressBarRangeInfo = ProgressBarRangeInfo(frac, 0f..1f)
+                setProgress { if (durationMs <= 0) false else { currentSeek(timelineDelta(it, durationMs, currentPosition)); true } }
+            }
             .onKeyEvent { e ->
                 // Physical by design: left rewinds and right advances media time in every locale.
                 if (e.type == KeyEventType.KeyDown) when (e.key) {
@@ -419,7 +460,7 @@ internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepM
             Box(Modifier.fillMaxWidth(bufferedFrac).fillMaxHeight().clip(RoundedCornerShape(50)).background(Color.White.copy(alpha = 0.28f)))
             Box(Modifier.fillMaxWidth(frac).fillMaxHeight().clip(RoundedCornerShape(50)).background(OwnTVTheme.colors.accentOnVideo))
         }
-        if (focused) {
+        if (focused || preview != null) {
             Playhead(frac)
             // Time-remaining bubble above the thumb (elapsed is shown at the bar's left, total at the right,
             // so the bubble shows what's LEFT: "-12:34"). Uses a negative offset (not bottom padding) so it
@@ -429,7 +470,7 @@ internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepM
                     Modifier.offset(y = (-32).dp).clip(RoundedCornerShape(8.dp)).background(Color.Black.copy(alpha = 0.9f)).padding(horizontal = 8.dp, vertical = 3.dp),
                 ) {
                     Text(
-                        stringResource(R.string.player_time_remaining, formatTime((durationMs - positionMs).coerceAtLeast(0))),
+                        stringResource(R.string.player_time_remaining, formatTime((shownDuration - shownPosition).coerceAtLeast(0))),
                         style = MaterialTheme.typography.labelMedium.copy(textDirection = TextDirection.Content),
                         color = Color.White,
                     )
@@ -440,36 +481,72 @@ internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepM
     }
 }
 
-private const val LIVE_SCRUB_STEP_SEC = 60     // per Left/Right press (hold to scrub fast); buttons stay 30 s
-
-/** Scrubbable live timeline for a catch-up channel: spans the last [LIVE_WINDOW_SEC] up to the live edge.
- *  Left = back in time, Right = toward live; the thumb is the watched point and the gap to the red LIVE dot
- *  on the right is how far behind live you are. Holding a key scrubs freely; the archive loads when you
- *  settle (the VM debounces). Going past the window keeps working via the ⏪ button — the bar just pins left. */
+/** Live archive timeline. Holding Left/Right previews a target; releasing commits one seek. */
 @Composable
 internal fun LiveTimelineBar(
     offsetSec: Int,
     programmes: List<LiveProgramme>,
     liveEdgeMs: Long,
     onScrub: (Int) -> Unit,
+    contextKey: Any? = null,
+    windowSec: Int = LIVE_WINDOW_SEC,
 ) {
+    val touch = !tv.own.owntv.ui.components.rememberRemoteTextInput()
+    val currentScrub by rememberUpdatedState(onScrub)
+    val currentOffset by rememberUpdatedState(offsetSec)
+    val gesture = remember(contextKey) { LiveScrubGesture() }
+    var previewSec by remember(contextKey) { mutableStateOf<Int?>(null) }
+    // The visible range must stay fixed for the gesture. Recomputing it from its own preview
+    // would repeatedly shrink a days-long archive while the finger remains in the same place.
+    var touchWindow by remember(contextKey) { mutableStateOf<Int?>(null) }
+    val shownOffset = previewSec ?: offsetSec
+    val displayWindow = touchWindow ?: maxOf(LIVE_WINDOW_SEC, shownOffset).coerceAtMost(windowSec.coerceAtLeast(1))
+    val accessibleLabel = stringResource(R.string.player_tool_catchup)
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
-    val frac = offsetFrac(offsetSec) // 1 = live edge, 0 = far edge
+    val frac = offsetFrac(shownOffset, displayWindow) // 1 = live edge, 0 = far edge
     // Keyed on the minute, not the raw instant: the live edge advances every second, and no tick on a
     // two-hour bar can move visibly in less than that.
-    val ticks = remember(programmes, liveEdgeMs / 60_000L) { liveTicks(programmes, liveEdgeMs) }
-    val here = remember(programmes, liveEdgeMs / 60_000L, offsetSec) { programmeAt(programmes, liveEdgeMs, offsetSec) }
+    val ticks = remember(programmes, liveEdgeMs / 60_000L, displayWindow) { liveTicks(programmes, liveEdgeMs, displayWindow) }
+    val here = remember(programmes, liveEdgeMs / 60_000L, shownOffset) { programmeAt(programmes, liveEdgeMs, shownOffset) }
     val clock = rememberSystemTimeFormatter()
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
     Box(
-        modifier = Modifier.fillMaxWidth().height(24.dp)
+        modifier = Modifier.fillMaxWidth().height(if (touch) 48.dp else 24.dp)
+            .touchScrub(contextKey, touch, { fraction ->
+                if (fraction == null) { previewSec = null; touchWindow = null }
+                else {
+                    val range = touchWindow ?: displayWindow.also { touchWindow = it }
+                    previewSec = ((1f - fraction) * range).toInt().coerceIn(0, windowSec.coerceAtLeast(0))
+                }
+            }) { fraction ->
+                val target = ((1f - fraction) * (touchWindow ?: displayWindow)).toInt().coerceIn(0, windowSec.coerceAtLeast(0))
+                currentScrub(target - currentOffset)
+            }
+            .semantics {
+                contentDescription = accessibleLabel
+                progressBarRangeInfo = ProgressBarRangeInfo(frac, 0f..1f)
+                setProgress { currentScrub(((1f - it.coerceIn(0f, 1f)) * displayWindow).toInt() - currentOffset); true }
+            }
+            .onFocusChanged { state ->
+                if (!state.isFocused) { gesture.cancel(); previewSec = null }
+            }
             .onKeyEvent { e ->
-                // Physical by design: left moves away from live; right moves toward the live edge.
-                if (e.type == KeyEventType.KeyDown) when (e.key) {
-                    Key.DirectionLeft -> { onScrub(LIVE_SCRUB_STEP_SEC); true }    // back in time
-                    Key.DirectionRight -> { onScrub(-LIVE_SCRUB_STEP_SEC); true }  // toward live
-                    else -> false
+                val backward = e.key == Key.DirectionLeft
+                if (backward || e.key == Key.DirectionRight) {
+                    if (e.type == KeyEventType.KeyDown) {
+                        previewSec = gesture.press(backward, e.nativeKeyEvent.eventTime, offsetSec, windowSec)
+                    } else if (e.type == KeyEventType.KeyUp) {
+                        gesture.release(backward, offsetSec)?.let(onScrub)
+                        previewSec = gesture.targetSec
+                    }
+                    true
+                } else if (previewSec != null && (e.key == Key.DirectionCenter || e.key == Key.Enter)) {
+                    if (e.type == KeyEventType.KeyUp) {
+                        gesture.commit(offsetSec)?.let(onScrub)
+                        previewSec = null
+                    }
+                    true
                 } else false
             }
             .focusable(interactionSource = interaction),
@@ -484,7 +561,7 @@ internal fun LiveTimelineBar(
         // the boundary and hanging the tick off that box's end, the same placement [Playhead] uses.
         // Matched on position, not on title: a channel that runs the same show twice inside the window
         // would otherwise light up both of its boundaries.
-        val hereStartFrac = here?.let { offsetFrac(((liveEdgeMs - it.startMs) / 1000L).toInt()) }
+        val hereStartFrac = here?.let { offsetFrac(((liveEdgeMs - it.startMs) / 1000L).toInt(), displayWindow) }
         ticks.forEach { tick ->
             if (tick.startFrac <= 0f || tick.startFrac >= 1f) return@forEach
             val current = tick.startFrac == hereStartFrac
@@ -499,19 +576,19 @@ internal fun LiveTimelineBar(
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
             OwnTVIcon(OwnTVIcon.LIVE_DOT, tint = Color(0xFFFF4D4D), filled = true, modifier = Modifier.size(14.dp))
         }
-        if (focused) {
+        if (focused || previewSec != null) {
             Playhead(frac)
             Box(Modifier.fillMaxWidth(frac), contentAlignment = Alignment.CenterEnd) {
                 Box(Modifier.padding(bottom = 30.dp).clip(RoundedCornerShape(8.dp)).background(Color.Black.copy(alpha = 0.9f)).padding(horizontal = 8.dp, vertical = 3.dp)) {
                     // What you are scrubbing INTO, by name — "20:54 · Premier League" says far more than
                     // "−12:04 behind" about whether to stop here. Falls back to the bare offset wherever
                     // the guide has nothing for this channel.
-                    val atClock = clock(liveEdgeMs - offsetSec.coerceAtLeast(0) * 1000L)
+                    val atClock = clock(liveEdgeMs - shownOffset.coerceAtLeast(0) * 1000L)
                     Text(
                         when {
                             here != null -> stringResource(R.string.player_live_scrub_at, atClock, here.title)
-                            offsetSec <= 1 -> stringResource(R.string.player_live)
-                            else -> stringResource(R.string.player_live_offset, mmss(offsetSec))
+                            shownOffset <= 1 -> stringResource(R.string.player_live)
+                            else -> stringResource(R.string.player_live_offset, mmss(shownOffset))
                         },
                         style = MaterialTheme.typography.labelMedium.copy(textDirection = TextDirection.Content),
                         color = Color.White,

@@ -37,6 +37,7 @@ class LiveZapList(
     /** A bounded provider-order window centred on a channel — the rebuild after a numeric tune. */
     private val loadWindowAround: suspend (ChannelEntity) -> List<ChannelEntity>,
     private val categoryName: suspend (Long) -> String?,
+    private val matchesPlaying: (ChannelEntity, Long) -> Boolean = { ch, id -> ch.id == id },
 ) {
 
     private var list: List<ChannelEntity> = emptyList()
@@ -77,6 +78,7 @@ class LiveZapList(
         val targetChannelId: Long,
         val previousList: List<ChannelEntity>,
         val previousIndex: Int,
+        val targetChannel: ChannelEntity? = null,
     )
     private var pending: PendingDirectTune? = null
 
@@ -85,7 +87,7 @@ class LiveZapList(
     /** Rebuild from [channel]'s own provider category. A no-op while zapping inside the same category
      *  (the list is already right), so CH+/CH− stays a pure in-memory step. */
     fun armFor(channel: ChannelEntity) {
-        if (armed && channel.categoryId == categoryId && list.any { it.id == channel.id }) return
+        if (armed && channel.categoryId == categoryId && list.any { matchesPlaying(it, channel.id) }) return
         loadJob?.cancel()
         loadJob = scope.launch {
             publish(
@@ -149,7 +151,7 @@ class LiveZapList(
         _canZap.value = loaded.size > 1
     }
 
-    fun contains(channelId: Long): Boolean = list.any { it.id == channelId }
+    fun contains(channelId: Long): Boolean = list.any { matchesPlaying(it, channelId) }
 
     // ---- Stepping ----------------------------------------------------------------------------------
 
@@ -164,7 +166,7 @@ class LiveZapList(
      */
     fun next(delta: Int): ChannelEntity? {
         val currentId = playingChannelId()
-        val i = if (currentId != null) list.indexOfFirst { it.id == currentId } else -1
+        val i = if (currentId != null) list.indexOfFirst { matchesPlaying(it, currentId) } else -1
         if (i >= 0) {
             val nextIdx = wrappedZapIndex(i, delta, list.size) ?: return null
             return list[nextIdx]
@@ -172,7 +174,8 @@ class LiveZapList(
         // The anchor names the channel it was created for. If that is no longer what is playing (a newer
         // numeric tune, or CH± already moved on), it is stale — drop it rather than jump somewhere else.
         val anchor = pending ?: return null
-        if (anchor.targetChannelId != currentId) {
+        if (anchor.targetChannelId != currentId &&
+            (currentId == null || anchor.targetChannel == null || !matchesPlaying(anchor.targetChannel, currentId))) {
             pending = null
             return null
         }
@@ -181,7 +184,7 @@ class LiveZapList(
             pending = null
             return null
         }
-        pending = anchor.copy(targetChannelId = prev[nextIdx].id, previousIndex = nextIdx)
+        pending = anchor.copy(targetChannelId = prev[nextIdx].id, previousIndex = nextIdx, targetChannel = prev[nextIdx])
         return prev[nextIdx]
     }
 
@@ -203,7 +206,7 @@ class LiveZapList(
 
         val inherited = pending?.takeIf { it.targetChannelId == currentChannelId }
         val anchorList = inherited?.previousList ?: list
-        val anchorIndex = inherited?.previousIndex ?: list.indexOfFirst { it.id == currentChannelId }
+        val anchorIndex = inherited?.previousIndex ?: list.indexOfFirst { matchesPlaying(it, currentChannelId) }
         val hasValidAnchor = anchorList.size >= 2 && anchorIndex in anchorList.indices
 
         if (alreadyInList) {
@@ -225,7 +228,7 @@ class LiveZapList(
         val myGeneration = generation
 
         pending = if (hasValidAnchor) {
-            PendingDirectTune(tuned.id, previousList = anchorList, previousIndex = anchorIndex)
+            PendingDirectTune(tuned.id, previousList = anchorList, previousIndex = anchorIndex, targetChannel = tuned)
         } else {
             null
         }
@@ -241,7 +244,7 @@ class LiveZapList(
                     return@launch
                 }
                 if (myGeneration != generation) return@launch
-                if (playingChannelId() != tuned.id) return@launch
+                if (playingChannelId()?.let { matchesPlaying(tuned, it) } != true) return@launch
                 replace(rebuilt)
                 pending = null
             } finally {
