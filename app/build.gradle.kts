@@ -371,7 +371,6 @@ dependencies {
 
     // Compose for TV
     implementation(libs.androidx.tv.material)
-    implementation(libs.androidx.tvprovider)
 
     // Lifecycle / Navigation
     implementation(libs.androidx.lifecycle.runtime.compose)
@@ -407,21 +406,11 @@ dependencies {
 
     // Networking
     implementation(libs.okhttp)
-    implementation(libs.zxing.core) // QR generation for the Remote (companion) add-source flow
-    implementation(libs.juniversalchardet) // local subtitle charset detection (subtitle plan §7.2)
 
-    // Media playback — libmpv (FFmpeg) engine
-    implementation(libs.libmpv)
-    // Media3 / ExoPlayer — used ONLY for the VOD + image-subtitle (PGS/VOBSUB/DVB) handoff, where it
-    // keeps video zero-copy AND renders bitmap subs on its own layer (mpv's direct path can't). Not a
-    // sidecar: mpv is stopped first, so the provider only ever sees one connection.
+    // Media3 types used directly by the app HUD and subtitle views.
+    // HLS/DASH/network modules remain runtime dependencies of player-core; libmpv is its API.
     implementation(libs.androidx.media3.exoplayer)
-    implementation(libs.androidx.media3.exoplayer.hls) // HLS (.m3u8) support for the Live preview engine
-    // DASH (.mpd) — the container protected channels use (#115). DefaultMediaSourceFactory only
-    // builds a DASH source when this is on the classpath; without it a .mpd fails as "unsupported".
-    implementation(libs.androidx.media3.exoplayer.dash)
     implementation(libs.androidx.media3.ui)
-    implementation(libs.androidx.media3.datasource.okhttp)
 
     // In-app YouTube trailer playback (plan §7.3) — WebView-backed IFrame player; the only ToS-clean
     // way to play YouTube trailers inside the app. Falls back to an "Open in YouTube" intent.

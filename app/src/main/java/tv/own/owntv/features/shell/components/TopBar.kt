@@ -1,12 +1,12 @@
 package tv.own.owntv.features.shell.components
 
 import android.text.format.DateFormat
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -61,19 +60,12 @@ private const val TopBarFrost = 0.45f
 
 @Composable
 fun TopBar(
-    sectionLabel: String,
-    onSearchClick: () -> Unit,
     playlistName: String,
     weatherInfo: WeatherInfo? = null,
     weatherFahrenheit: Boolean = false,
-    searchVisible: Boolean = true,
     playlistInteractive: Boolean = false,
     onPlaylistClick: () -> Unit = {},
     playlistDownFocusRequester: FocusRequester? = null,
-    // Batch 7 — shared "Continue" chip (resume last movie/episode/channel). Null label = nothing to resume.
-    continueLabel: String? = null,
-    continueIcon: OwnTVIcon = OwnTVIcon.PLAY,
-    onContinueClick: () -> Unit = {},
     // Audio Mode (plan §8): the now-playing bar, shown left of the weather chip while PlayerMode.AUDIO
     // is active. Null = not in Audio Mode.
     audioBar: (@Composable () -> Unit)? = null,
@@ -118,15 +110,8 @@ fun TopBar(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            SectionChip(label = sectionLabel)
-            SearchPill(onClick = onSearchClick, visible = searchVisible)
-            // Only focusable while the nav panel holds focus (same rule as the search pill) so it can
-            // never trap D-pad focus inside a section.
-            if (continueLabel != null) {
-                ContinueChip(label = continueLabel, icon = continueIcon, onClick = onContinueClick, visible = searchVisible)
-            }
-        }
+        Spacer(Modifier.weight(1f))
+
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             audioBar?.invoke()
             if (weatherInfo != null) WeatherChip(info = weatherInfo, fahrenheit = weatherFahrenheit)
@@ -139,99 +124,6 @@ fun TopBar(
                     downFocusRequester = playlistDownFocusRequester,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun SectionChip(label: String) {
-    val colors = OwnTVTheme.colors
-    // Keeps its accent tint (marks the current section) but frosts in glass mode like the other chips.
-    val shape = RoundedCornerShape(TopBarChipCorner)
-    Box(Modifier.clip(shape).glass(GlassSurface.TOPBAR, colors.primaryContainer, shape, frostScale = TopBarFrost, condenseChrome = true).padding(horizontal = 14.dp, vertical = 7.dp)) {
-        Text(label, style = MaterialTheme.typography.labelLarge, color = colors.onPrimaryContainer, fontWeight = FontWeight.Bold)
-    }
-}
-
-@Composable
-private fun SearchPill(onClick: () -> Unit, visible: Boolean) {
-    val colors = OwnTVTheme.colors
-    // Fade instead of remove: the pill keeps its space so the top-bar row never shifts, and it
-    // becomes unfocusable while hidden so an escaping vertical focus search can never land on it.
-    val alphaState = animateFloatAsState(if (visible) 1f else 0f, ownTvTween(160), label = "searchPillAlpha")
-    FocusableSurface(
-        onClick = onClick,
-        modifier = Modifier
-            .widthIn(max = 180.dp)
-            .graphicsLayer { this.alpha = alphaState.value }
-            .focusProperties { canFocus = visible },
-        shape = RoundedCornerShape(TopBarChipCorner),
-        surface = GlassSurface.TOPBAR,
-        glassFrostScale = TopBarFrost,
-        glassIdleRimAlpha = 0.18f,
-        glassCondensesWithContent = true,
-        // Neutral when idle; accent fill only when focused (matches the playlist selector).
-        focusedContainerColor = colors.primaryContainer,
-        unfocusedContainerColor = colors.surfaceContainer.copy(alpha = 0.6f),
-        contentAlignment = Alignment.Center,
-    ) { focused ->
-        val fg = if (focused) colors.onPrimaryContainer else colors.onSurfaceVariant
-        Row(Modifier.padding(horizontal = 14.dp, vertical = 7.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            OwnTVIcon(icon = OwnTVIcon.SEARCH, tint = fg, modifier = Modifier.size(16.dp))
-            Text(
-                stringResource(R.string.common_search),
-                style = MaterialTheme.typography.labelLarge,
-                color = fg,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .then(
-                        if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier,
-                    ),
-            )
-        }
-    }
-}
-
-@Composable
-private fun ContinueChip(label: String, icon: OwnTVIcon, onClick: () -> Unit, visible: Boolean) {
-    val colors = OwnTVTheme.colors
-    val alphaState = animateFloatAsState(if (visible) 1f else 0f, ownTvTween(160), label = "continueChipAlpha")
-    FocusableSurface(
-        onClick = onClick,
-        modifier = Modifier
-            .widthIn(max = 240.dp)
-            .graphicsLayer { this.alpha = alphaState.value }
-            .focusProperties { canFocus = visible },
-        shape = RoundedCornerShape(TopBarChipCorner),
-        surface = GlassSurface.TOPBAR,
-        glassFrostScale = TopBarFrost,
-        glassIdleRimAlpha = 0.18f,
-        glassCondensesWithContent = true,
-        focusedContainerColor = colors.primary,
-        unfocusedContainerColor = colors.primaryContainer.copy(alpha = 0.6f),
-        contentAlignment = Alignment.Center,
-    ) { focused ->
-        Row(
-            modifier = Modifier.padding(horizontal = 14.dp, vertical = 7.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            val fg = if (focused) colors.onPrimary else colors.onPrimaryContainer
-            OwnTVIcon(icon = icon, tint = fg, modifier = Modifier.size(16.dp))
-            Text(
-                label,
-                style = MaterialTheme.typography.labelLarge,
-                color = fg,
-                fontWeight = FontWeight.SemiBold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier
-                    .weight(1f)
-                    .then(
-                        if (focused) Modifier.basicMarquee(iterations = Int.MAX_VALUE) else Modifier,
-                    ),
-            )
         }
     }
 }
@@ -338,7 +230,7 @@ private val WeatherCloudColor = Color(0xFFDDEFE9)
 private val WeatherRainColor = Color(0xFF76A7FF)
 private val WeatherRainDrizzleColor = Color(0xFF76A7FF).copy(alpha = 0.72f)
 private val WeatherSnowColor = Color(0xFFF0FCFF)
-private val WeatherFogColor = Color(0xFFDDF8FF)
+
 private val WeatherFogLineColor = Color(0xFFDDF8FF).copy(alpha = 0.74f)
 private val WeatherThunderColor = Color(0xFFFFD166)
 

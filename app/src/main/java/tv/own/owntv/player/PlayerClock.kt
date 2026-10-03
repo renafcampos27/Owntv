@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
+import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import tv.own.owntv.R
 import tv.own.owntv.ui.format.rememberBestDateFormatter
@@ -52,10 +53,14 @@ internal fun PlayerClock(watchingMs: Long?, modifier: Modifier = Modifier) {
     val colors = OwnTVTheme.colors
     val formatTime = rememberSystemTimeFormatter()
     val formatDate = rememberBestDateFormatter("EEEdMMM")
-    // Minute precision is all that is displayed, so a 10 s tick keeps it honest without waking the
-    // frame loop pointlessly. The HUD is only on screen in bursts anyway.
+    // Refresh at the next displayed minute and immediately on foreground, with no background timer.
     var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(Unit) { while (true) { delay(10_000); nowMs = System.currentTimeMillis() } }
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle) {
+        lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+            while (true) { nowMs = System.currentTimeMillis(); delay(60_000 - nowMs % 60_000) }
+        }
+    }
 
     Row(
         modifier

@@ -2,7 +2,6 @@
 
 package tv.own.owntv.features.epg
 
-import tv.own.owntv.core.epg.displayLogoUrl
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.FlowPreview
@@ -43,7 +42,6 @@ import tv.own.owntv.core.model.SourceType
 import tv.own.owntv.core.parser.XtreamClient
 import tv.own.owntv.core.customize.CustomizationStore
 import tv.own.owntv.core.customize.CustomizeKeys
-import tv.own.owntv.core.customize.applyCustomizations
 import tv.own.owntv.core.customize.railCategories
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.database.entity.EpgProgrammeEntity
@@ -134,6 +132,7 @@ class EpgViewModel(
     private val externalPlayerLauncher: tv.own.owntv.core.player.ExternalPlayerLauncher,
     private val customCategoryDao: tv.own.owntv.core.database.dao.CustomCategoryDao,
     private val recordings: tv.own.owntv.core.recording.RecordingManager,
+    private val liveEpgReader: tv.own.owntv.core.live.LiveEpgReader,
 ) : ViewModel() {
 
     /** The one candidate set the picker and both auto-match paths read — see [GuideCandidates]. */
@@ -271,11 +270,6 @@ class EpgViewModel(
 
     /** Every windowed guide read this screen makes. The caches around it stay here — what to keep
      *  depends on how the grid scrolls, which is the screen's business, not core's. */
-    /** The provider-guide half of a row, for channels whose stored guide stops short. Built here for
-     *  the same reason LiveViewModel builds its own: it is a plain core reader, not a shared service. */
-    private val liveEpgReader =
-        tv.own.owntv.core.live.LiveEpgReader(epgDao, epgSourceStore, sourceDao, xtream, streamUrlResolver)
-
     private val guideReader =
         tv.own.owntv.core.live.GuideReader(epgDao, epgSourceStore, sourceDao, liveEpgReader)
 
@@ -288,10 +282,6 @@ class EpgViewModel(
     /** Global guide shift in minutes; a per-channel override in [custom] wins over it. */
     private val epgOffset: StateFlow<Int> = settings.epgOffsetMinutes
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
-
-    /** Guide category filter: null = all channels, otherwise a provider/custom stable key. */
-    private val _categoryFilter = MutableStateFlow<String?>(null)
-    val categoryFilter: StateFlow<String?> = _categoryFilter.asStateFlow()
 
     private val activeSources: StateFlow<ActiveProfileSources> = activeProfileSources(settings, sourceDao)
         .stateIn(viewModelScope, SharingStarted.Eagerly, ActiveProfileSources(-1L, emptyList()))
@@ -351,7 +341,6 @@ class EpgViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    fun setCategoryFilter(categoryKey: String?) { _categoryFilter.value = categoryKey }
 
     private val _state = MutableStateFlow(EpgUiState())
     val state: StateFlow<EpgUiState> = _state.asStateFlow()
@@ -393,6 +382,7 @@ class EpgViewModel(
     private var prefetchJob: kotlinx.coroutines.Job? = null
 
     /** The load in flight, so the next one can cancel it instead of racing it. */
+    private val loadGate = GuideLoadGate()
     private var loadJob: kotlinx.coroutines.Job? = null
     private val loadMutex = kotlinx.coroutines.sync.Mutex()
 
@@ -420,7 +410,13 @@ class EpgViewModel(
         val customization = custom.value
         val offset = epgOffset.value
         val revision = _cacheRevision.value
-        val list = rowCache.get(key) { guideReader.row(channel, customization, offset, key.from, key.to) }
+        val list = rowCache.getOrFallback(
+            key,
+            { guideReader.row(channel, customization, offset, key.from, key.to) },
+        ) { failed ->
+            if (failed !is tv.own.owntv.core.live.ProviderGuideUnavailableException) throw failed
+            failed.lastKnownRows.filter { it.stopMs > key.from && it.startMs < key.to }
+        }
         kotlinx.coroutines.currentCoroutineContext().ensureActive()
         if (revision != _cacheRevision.value || key != cacheKey(channel)) throw kotlinx.coroutines.CancellationException()
         prefetchAfter(channel)
@@ -443,7 +439,13 @@ class EpgViewModel(
                 kotlinx.coroutines.currentCoroutineContext().ensureActive()
                 if (revision != _cacheRevision.value) return@launch
                 val key = cacheKey(ahead)
-                rowCache.get(key) { guideReader.row(ahead, customization, offset, key.from, key.to) }
+                try {
+                    rowCache.get(key) { guideReader.row(ahead, customization, offset, key.from, key.to) }
+                } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                    throw cancelled
+                } catch (_: tv.own.owntv.core.live.ProviderGuideUnavailableException) {
+                    return@launch // Leave retry to the next user/normal refresh read.
+                }
             }
         }
     }
@@ -470,8 +472,7 @@ class EpgViewModel(
             .distinctUntilChanged()
             .onEach { load() }
             .launchIn(viewModelScope)
-        // Reload when the category filter changes (#8).
-        _categoryFilter
+        settings.guideReplayOnly
             .drop(1)
             .distinctUntilChanged()
             .onEach { load() }
@@ -506,6 +507,13 @@ class EpgViewModel(
     /** The Guide's current sort, for the header button. */
     val sortGuide: StateFlow<SettingsRepository.GuideSort> = settings.sortGuide
         .stateIn(viewModelScope, SharingStarted.Eagerly, SettingsRepository.GuideSort.LIVE_TV)
+
+    val replayOnly: StateFlow<Boolean> = settings.guideReplayOnly
+        .stateIn(viewModelScope, SharingStarted.Eagerly, true)
+
+    fun toggleReplayOnly() {
+        viewModelScope.launch { settings.setGuideReplayOnly(!settings.guideReplayOnly.first()) }
+    }
 
     /** Cycle the Guide sort: A–Z → Provider → Live TV → Catch-up → … (Catch-up only when one exists). */
     fun cycleGuideSort() {
@@ -873,7 +881,18 @@ class EpgViewModel(
      * an OutOfMemoryError. Cancelling the one in progress makes the answer the latest one rather than
      * a race between six stale ones, and the mutex closes the gap while a cancelled load unwinds.
      */
+    /** The shell owns visibility/lifecycle. Offscreen changes invalidate without rebuilding rows. */
+    fun setGuideActive(active: Boolean) {
+        if (loadGate.setActive(active)) launchGuideLoad()
+        if (!active) loadJob?.cancel()
+    }
+
     fun load() {
+        if (loadGate.invalidate()) launchGuideLoad()
+    }
+
+    private fun launchGuideLoad() {
+        if (!loadGate.beginLoad()) return
         val previous = loadJob
         loadJob = viewModelScope.launch {
             previous?.cancelAndJoin()
@@ -927,8 +946,8 @@ class EpgViewModel(
         val favoriteIds = favoriteDao.observeFavoriteIds(pid, MediaType.LIVE).first().toSet()
         val sortLiveMode = settings.sortLive.first()
         val sortGuideMode = settings.sortGuide.first()
-        // Hidden categories keep their channels out of the guide too (parity with Live TV), and a
-        // filter pointing at a now-hidden category falls back to "All" instead of an empty grid.
+        val replayOnly = settings.guideReplayOnly.first()
+        // Hidden categories keep their channels out of the guide too (parity with Live TV).
     val isKidsProfile = profileDao.getById(pid)?.isKids == true
     val hiddenCatIds = if (cust.hiddenCategories.isEmpty() && !isKidsProfile) {
         emptySet()
@@ -939,20 +958,18 @@ class EpgViewModel(
             isKidsProfile,
         )
     }
-        val categoryFilter = _categoryFilter.value
-            ?.let { key -> guideCategories.value.firstOrNull { it.key == key } }
-        val customMemberIds = categoryFilter?.customId
-            ?.let { customCategoryDao.itemIds(pid, MediaType.LIVE, it).toSet() }
-        // Heavy work — filter hidden, apply renames + manual EPG matches, sort, category-filter — runs off
+        // Heavy work — filter hidden, apply renames + manual EPG matches and sort — runs off
         // the main thread (#3/#5) so a 50k-channel playlist never freezes the UI building the guide list.
         val channels = withContext(Dispatchers.Default) {
             val auto = rawChannels
                 .filter { CustomizeKeys.channel(it) !in cust.hiddenItems }
                 .filter {
-                    customMemberIds != null || it.categoryId == null || it.categoryId !in hiddenCatIds
+                    it.categoryId == null || it.categoryId !in hiddenCatIds
                 }
                 .map { ch -> cust.itemNames[CustomizeKeys.channel(ch)]?.let { ch.copy(name = it) } ?: ch }
+            // EPG inheritance only supplies programme data; it cannot grant the provider's replay service.
             val matched = applyEpgMatches(auto, cust, playlistIds, q)
+                .filter { !replayOnly || it.catchup }
             // Order the guide by its own sort. LIVE_TV mirrors the Live sort; CATCHUP floats archive
             // channels to the top; ALPHA/PROVIDER are explicit. CATCHUP with none available falls to LIVE_TV.
             val byAlpha = compareBy<ChannelEntity> { it.name.lowercase() }
@@ -971,16 +988,6 @@ class EpgViewModel(
                 SettingsRepository.GuideSort.FAVORITES ->
                     if (favoriteIds.isNotEmpty()) liveOrdered.filter { it.id in favoriteIds } else liveOrdered
                 SettingsRepository.GuideSort.LIVE_TV -> liveOrdered
-            }.let { sorted ->
-                // Category filter (#8): when a group is chosen, show only its channels.
-                when {
-                    customMemberIds != null -> sorted.filter { it.id in customMemberIds }
-                    categoryFilter?.categoryId != null -> sorted.filter { ch ->
-                        ch.categoryId == categoryFilter.categoryId &&
-                            cust.movedFromOrigin[CustomizeKeys.channel(ch)] != categoryFilter.key
-                    }
-                    else -> sorted
-                }
             }
         }
         val stored = epgDao.countForSources(ids)

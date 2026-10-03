@@ -8,6 +8,11 @@ import tv.own.owntv.core.database.entity.ChannelEntity
 /** Group identity uses provider names, never display renames, and cannot cross sources. */
 internal object ChannelVersionPolicy {
     fun groupKey(ch: ChannelEntity) = "${ch.sourceId}:${ChannelAlternatives.key(ch.name)}"
+    fun groupKey(ch: ChannelEntity, settings: SectionCustomizations): String =
+        settings.channelVersionGroups[CustomizeKeys.channel(ch)]
+            ?.takeIf { it.startsWith("${ch.sourceId}:") && it.substringAfter(':').isNotBlank() }
+            ?: groupKey(ch)
+
     fun versionKey(ch: ChannelEntity) = CustomizeKeys.tailOf(CustomizeKeys.channel(ch))
     private val suffix = Regex("\\s+\\(?(full\\s*hd|fhd|1080p|4k|uhd|hevc|hvec|h[. ]?265|hd|720p|sd|low|hq|h[. ]?264)\\)?$", RegexOption.IGNORE_CASE)
 
@@ -32,7 +37,7 @@ internal object ChannelVersionPolicy {
     }
 
     fun manualOrder(ch: ChannelEntity, settings: SectionCustomizations): List<String> =
-        settings.channelVersionOrders[groupKey(ch)]?.let { raw ->
+        settings.channelVersionOrders[groupKey(ch, settings)]?.let { raw ->
             runCatching { JSONArray(raw).let { array -> (0 until array.length()).map { array.getString(it) }.distinct() } }.getOrNull()
         }.orEmpty()
 
@@ -45,5 +50,5 @@ internal object ChannelVersionPolicy {
     }
 
     fun grouped(rows: List<ChannelEntity>, settings: SectionCustomizations): List<ChannelEntity> =
-        if (!settings.groupChannelVersions) rows else rows.filter { CustomizeKeys.channel(it) !in settings.hiddenItems }.groupBy(::groupKey).values.map { ordered(it, settings).first() }
+        if (!settings.groupChannelVersions) rows else rows.filter { CustomizeKeys.channel(it) !in settings.hiddenItems }.groupBy { groupKey(it, settings) }.values.map { ordered(it, settings).first() }
 }

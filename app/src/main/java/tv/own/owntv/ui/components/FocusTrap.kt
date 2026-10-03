@@ -65,48 +65,62 @@ fun Modifier.trapAllFocusExit(): Modifier =
  * Stops as soon as focus has landed and the offset has been steady for a moment, so it never fights a
  * user who is already pressing a direction key.
  */
+internal val dialogRestoreInputGuard = FocusRequestGuard()
+
+/** Shared by scroll and lazy-list restoration; input and cancellation always win. */
+internal suspend fun restoreDialogFocus(
+    hasOpener: Boolean,
+    request: () -> Boolean,
+    restoreScroll: suspend () -> Unit,
+    isCurrent: () -> Boolean,
+    awaitLayout: suspend () -> Unit = { withFrameNanos { } },
+    attempts: Int = RESTORE_MAX_FRAMES,
+) {
+    var landed = !hasOpener
+    var settled = 0
+    repeat(attempts) {
+        awaitLayout()
+        if (!isCurrent()) return
+        try { restoreScroll() }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: IllegalArgumentException) { /* the opener row may have been removed */ }
+        catch (_: IllegalStateException) { /* the scroll host may be leaving composition */ }
+        if (!isCurrent()) return
+        if (!landed) {
+            landed = try { request() }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: IllegalStateException) { false }
+        }
+        if (landed && ++settled > RESTORE_SETTLE_FRAMES) return
+    }
+}
+
 suspend fun restoreAfterDialogClose(
     opener: FocusRequester?,
     scrollState: ScrollState? = null,
     scrollOffset: Int = 0,
 ) {
-    var landed = opener == null
-    var settled = 0
-    repeat(RESTORE_MAX_FRAMES) {
-        withFrameNanos { }
+    val revision = dialogRestoreInputGuard.revision
+    restoreDialogFocus(opener != null, { opener?.requestFocus() == true }, {
         if (scrollState != null && scrollState.value != scrollOffset) {
-            // scrollTo takes the scroll mutex, so it also cancels a bringIntoView animation in flight.
-            runCatching { scrollState.scrollTo(scrollOffset) }
+            scrollState.scrollTo(scrollOffset)
         }
-        if (!landed) landed = opener != null && runCatching { opener.requestFocus() }.isSuccess
-        if (landed && ++settled > RESTORE_SETTLE_FRAMES) return
-    }
+    }, { dialogRestoreInputGuard.revision == revision && !dialogRestoreInputGuard.pointerActive })
 }
 
-/**
- * [restoreAfterDialogClose] for a lazy list, where a position is an item index plus an offset into it.
- *
- * Same two jobs, one extra consequence: an opener row that is scrolled out of view is not composed at
- * all, so its [FocusRequester] is unattached and the request is dropped. Re-asserting the position
- * every frame therefore both holds the list still AND is what puts the row back on screen for the
- * focus request to land on.
- */
+/** Lazy-list version: restores the item before requesting its attached focus target. */
 suspend fun restoreAfterDialogClose(
     opener: FocusRequester?,
     listState: LazyListState,
     index: Int,
     offset: Int,
 ) {
-    var landed = opener == null
-    var settled = 0
-    repeat(RESTORE_MAX_FRAMES) {
-        withFrameNanos { }
+    val revision = dialogRestoreInputGuard.revision
+    restoreDialogFocus(opener != null, { opener?.requestFocus() == true }, {
         if (listState.firstVisibleItemIndex != index || listState.firstVisibleItemScrollOffset != offset) {
-            runCatching { listState.scrollToItem(index, offset) }
+            listState.scrollToItem(index, offset)
         }
-        if (!landed) landed = opener != null && runCatching { opener.requestFocus() }.isSuccess
-        if (landed && ++settled > RESTORE_SETTLE_FRAMES) return
-    }
+    }, { dialogRestoreInputGuard.revision == revision && !dialogRestoreInputGuard.pointerActive })
 }
 
 /** ~10 frames: long enough for a slow TV to finish tearing the dialog down, short enough not to fight

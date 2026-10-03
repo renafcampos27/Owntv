@@ -1,7 +1,6 @@
 package tv.own.owntv.ui.components
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,7 +12,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -22,9 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
@@ -56,18 +52,18 @@ fun TextInputDialog(
     val resolvedConfirmLabel = confirmLabel ?: stringResource(R.string.common_save)
     var value by remember { mutableStateOf(initial) }
     val fieldFocus = remember { FocusRequester() }
+    val focusGuard = remember { FocusRequestGuard() }
     // A focusable platform popup is a hard boundary from the parent dialog/screen. This matters for
     // nested editors (for example Rule builder -> Rule value): an in-tree overlay lets the parent's
     // focus trap keep D-pad focus behind the editor, leaving its text field completely unreachable.
     OwnTVPopup(onDismissRequest = onDismiss) {
         // Wait until the popup window is attached before asking Android to focus/show the IME.
         LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(80)
-            runCatching { fieldFocus.requestFocus() }
+            fieldFocus.requestBoundedFocus(focusGuard, revision = 0L)
         }
         BackHandler { onDismiss() }
         Box(
-            modifier = Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(),
+            modifier = Modifier.fillMaxSize().cancelPendingFocusOnInput(focusGuard).modalScrim().trapAllFocusExit().focusGroup(),
             contentAlignment = Alignment.Center,
         ) {
             Column(

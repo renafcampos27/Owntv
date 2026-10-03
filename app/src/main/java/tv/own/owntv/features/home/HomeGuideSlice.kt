@@ -49,7 +49,6 @@ import tv.own.owntv.core.database.entity.EpgProgrammeEntity
 import tv.own.owntv.core.home.GuideSliceState
 import tv.own.owntv.R
 import tv.own.owntv.core.model.HomeLiveRowMode
-import tv.own.owntv.core.model.HomeRow
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVIcon

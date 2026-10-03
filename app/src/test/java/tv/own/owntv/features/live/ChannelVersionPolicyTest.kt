@@ -49,4 +49,23 @@ class ChannelVersionPolicyTest {
             channelVersionOrders = mapOf(ChannelVersionPolicy.groupKey(rows.first()) to "[\"2\",\"1\"]"))
         assertEquals(rows, ChannelVersionPolicy.ordered(rows, settings))
     }
+
+    @Test fun manualAssociationGroupsDifferentNamesAndSurvivesNewDatabaseIds() {
+        val owner = row(1, "SIC HD")
+        val candidate = row(2, "Portugal Entertainment HEVC")
+        val group = ChannelVersionPolicy.groupKey(owner)
+        val config = automatic.copy(channelVersionGroups = mapOf("1:2" to group),
+            channelVersionOrders = mapOf(group to "[\"2\",\"1\"]"))
+        assertEquals(group, ChannelVersionPolicy.groupKey(candidate.copy(id = 999), config))
+        assertEquals(listOf(candidate), ChannelVersionPolicy.grouped(listOf(owner, candidate), config))
+        assertEquals(listOf(owner), ChannelVersionPolicy.grouped(listOf(owner, candidate), config.copy(hiddenItems = mapOf("1:2" to candidate.name))))
+    }
+
+    @Test fun invalidManualAssociationCannotCrossPlaylistOrEraseGroupIdentity() {
+        val owner = row(1, "SIC HD")
+        for (group in listOf("2:sic", "1:", "1:   ")) {
+            assertEquals(ChannelVersionPolicy.groupKey(owner), ChannelVersionPolicy.groupKey(owner,
+                automatic.copy(channelVersionGroups = mapOf("1:1" to group))))
+        }
+    }
 }

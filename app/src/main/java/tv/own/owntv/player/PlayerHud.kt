@@ -33,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
@@ -123,7 +122,7 @@ private const val PLAYER_SHORTCUT_LONG_PRESS_MS = 600L
 private const val TRACK_POLL_MS = 300L
 private const val TRACK_POLL_TRIES = 20
 
-internal enum class HudDialog { NONE, AUDIO, SUBS, SPEED, ZOOM, VOLUME, SUB_TIMING, JUMP_BACK, CONTEXT }
+internal enum class HudDialog { NONE, AUDIO, SUBS, SPEED, ZOOM, SUB_TIMING, JUMP_BACK, CONTEXT }
 
 /** What the top-left channel OSD shows for direct tune: the digits being typed, the channel a number
  *  resolved to, or a failure message. All three render as the same card as the channel OSD. */
@@ -214,8 +213,9 @@ fun PlayerHud(
     watchingWallMs: (() -> Long?)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val touch = !tv.own.owntv.ui.components.rememberRemoteTextInput()
-    val compact = tv.own.owntv.ui.components.rememberCompactLayout()
+    val interaction = tv.own.owntv.ui.components.rememberInteractionLayout()
+    val touch = interaction.touch
+    val compact = interaction.compactPlayerControls
     val touchContext = jumpBackContextKey to directTuneContextKey
     var touchLocked by remember(touchContext, player) { mutableStateOf(false) }
     var compactMenu by remember(touchContext, player) { mutableStateOf(false) }
@@ -676,8 +676,8 @@ fun PlayerHud(
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                     CenterControls(player, nav, isPlaying, isLive, onRewindLive, onForwardLive, timeshiftOffset, playFocus)
                     if (compact && canZap) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OwnTVButton(stringResource(R.string.adaptive_channel_previous), onClick = { onChannelDown?.invoke() })
-                        OwnTVButton(stringResource(R.string.adaptive_channel_next), onClick = { onChannelUp?.invoke() })
+                        OwnTVButton(stringResource(R.string.adaptive_channel_previous), onClick = { onChannelDown.invoke() })
+                        OwnTVButton(stringResource(R.string.adaptive_channel_next), onClick = { onChannelUp.invoke() })
                     }
                 }
 
@@ -737,7 +737,6 @@ fun PlayerHud(
                 onOpenChannelList?.let { OwnTVButton(stringResource(R.string.common_nav_live_tv), onClick = { compactMenu = false; it() }) }
                 onOpenGuide?.let { OwnTVButton(stringResource(R.string.common_nav_guide), onClick = { compactMenu = false; it() }) }
                 OwnTVButton(stringResource(R.string.player_tool_audio), onClick = { compactMenu = false; dialog = HudDialog.AUDIO })
-                OwnTVButton(stringResource(R.string.player_tool_volume), onClick = { compactMenu = false; dialog = HudDialog.VOLUME })
                 if (!isLive) OwnTVButton(stringResource(R.string.player_tool_speed), onClick = { compactMenu = false; dialog = HudDialog.SPEED })
                 OwnTVButton(stringResource(R.string.player_tool_subtitles), onClick = { compactMenu = false; dialog = HudDialog.SUBS })
                 OwnTVButton(stringResource(R.string.player_tool_aspect), onClick = { compactMenu = false; dialog = HudDialog.ZOOM })
@@ -897,7 +896,6 @@ fun PlayerHud(
         HudDialog.SUB_TIMING -> SubtitleTimingDialog(player, onDismiss = { dialog = HudDialog.NONE })
         HudDialog.SPEED -> SpeedDialog(current = speed, onSelect = { player.setSpeed(it); dialog = HudDialog.NONE }, onDismiss = { dialog = HudDialog.NONE })
         HudDialog.ZOOM -> ZoomDialog(current = zoomMode, onSelect = { player.setZoomModeByUser(it); dialog = HudDialog.NONE }, onDismiss = { dialog = HudDialog.NONE })
-        HudDialog.VOLUME -> VolumeDialog(player, onDismiss = { dialog = HudDialog.NONE })
         // "Go back to…". The options are read here, as the list opens, so the clock times shown are
         // relative to the moment the user asked rather than to when the HUD was first composed.
         HudDialog.JUMP_BACK -> {

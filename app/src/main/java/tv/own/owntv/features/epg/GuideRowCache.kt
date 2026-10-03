@@ -26,6 +26,21 @@ internal class GuideRowCache<K, V>(
     fun peek(key: K): List<V>? = synchronized(lock) { rows[key] }
     fun size(): Int = synchronized(lock) { rows.size }
     fun itemCount(): Int = synchronized(lock) { items }
+    /** Failed reads may be displayed with eligible older data, but never become cached successes. */
+    suspend fun getOrFallback(key: K, loader: suspend () -> List<V>, fallback: (Exception) -> List<V>): List<V> {
+        val owner = synchronized(lock) { generation }
+        return try {
+            get(key, loader)
+        } catch (cancelled: CancellationException) {
+            throw cancelled
+        } catch (failed: Exception) {
+            currentCoroutineContext().ensureActive()
+            synchronized(lock) {
+                if (owner != generation) throw CancellationException()
+                rows[key]
+            } ?: fallback(failed)
+        }
+    }
     fun invalidate() = synchronized(lock) {
         generation++
         rows.clear()

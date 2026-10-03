@@ -11,6 +11,7 @@ import android.view.WindowManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.activity.ComponentActivity
+import androidx.activity.viewModels
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -40,6 +41,7 @@ import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.awaitCancellation
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import coil3.compose.AsyncImage
 import org.koin.android.ext.android.get
@@ -56,7 +58,6 @@ import tv.own.owntv.features.shell.OwnTVShell
 import tv.own.owntv.features.shell.ShellViewModel
 import tv.own.owntv.ui.theme.BlurredBackdrop
 import tv.own.owntv.ui.theme.BackdropLuminanceMap
-import tv.own.owntv.core.theme.GlassConfig
 import tv.own.owntv.ui.theme.GlassMotionState
 import tv.own.owntv.ui.theme.LocalBlurredBackdrop
 import tv.own.owntv.ui.theme.LocalGlass
@@ -69,7 +70,6 @@ import tv.own.owntv.ui.theme.stackBlur
 import tv.own.owntv.ui.theme.supportsBackdropBlur
 import kotlin.math.abs
 import kotlin.math.max
-import kotlin.math.min
 
 /** Logcat tag for the background-image loader (top-level helper outside MainActivity). */
 private const val BG_TAG = "BgImage"
@@ -83,9 +83,6 @@ class MainActivity : ComponentActivity() {
     }
     companion object {
         private const val TAG = "OwnTVHome"
-
-        /** Bounded wait for the startup database probe (see [probeDatabase]). */
-        private const val DB_PROBE_TIMEOUT_MS = 5_000L
 
         /**
          * Hard ceiling on the ST3 splash. A stuck DataStore/profile read must never leave the user
@@ -107,12 +104,26 @@ class MainActivity : ComponentActivity() {
      */
     @Volatile
     private var contentReady = false
+    private val databaseStartup: DatabaseStartupViewModel by viewModels {
+        object : androidx.lifecycle.ViewModelProvider.Factory {
+            @Suppress("UNCHECKED_CAST")
+            override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
+                val graph = org.koin.core.context.GlobalContext.get()
+                return DatabaseStartupViewModel {
+                    graph.get<tv.own.owntv.core.database.OwnTVDatabase>().useWriterConnection { }
+                } as T
+            }
+        }
+    }
+    private val databaseProbeFinished get() = databaseStartup.state.value !is DatabaseStartupViewModel.State.Loading
+    private val databaseProbeError get() = (databaseStartup.state.value as? DatabaseStartupViewModel.State.Failed)?.message
 
     private val player: tv.own.owntv.player.OwnTVPlayer by inject()
     private val previewEngine: tv.own.owntv.player.LivePreviewEngine by inject()
     private val heroPreviewEngine: tv.own.owntv.player.HeroPreviewEngine by inject()
     // Activity-scoped: the same instance Compose retrieves via koinViewModel() inside setContent.
     private val shellViewModel: ShellViewModel by viewModel()
+    private val liveViewModel: tv.own.owntv.features.live.LiveViewModel by viewModel()
     // The sole locale authority (SharedPreferences-backed; see docs/internationalization.md 0b).
     private val localeStore: tv.own.owntv.core.i18n.LocaleStore by inject()
     private var pendingDeepLink by mutableStateOf<LauncherDeepLink?>(null)
@@ -139,7 +150,9 @@ class MainActivity : ComponentActivity() {
         super.onStop()
         // Backgrounded (Home / another app), exited, or logged out: stop playback and free the demuxer
         // cache + decoder buffers — holding them while invisible got the process LMK-killed on real TVs.
-        if (!isChangingConfigurations) {
+        if (!isChangingConfigurations && databaseProbeFinished && databaseProbeError == null) {
+            // One lifecycle authority: rotation keeps the tune, recovery and local timeshift session.
+            liveViewModel.onBackground()
             player.onAppBackgrounded()
             // Live runs on ExoPlayer — remember the channel and free the stream (its audio must stop too).
             previewEngine.onAppBackgrounded()
@@ -151,43 +164,12 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         tv.own.owntv.features.startup.AutoStartService.acknowledge(this)
-        // Paired with onStop: bring back what was freed while backgrounded (notably the TV screensaver, which
-        // kicks in during a long pause) — a VOD restored paused at its position, and a live channel re-tuned
-        // to the live edge — so Play resumes instead of sitting on a dead/empty stream. No-op on fresh launch.
-        player.onAppForegrounded()
-        previewEngine.onAppForegrounded()
+        if (!databaseProbeFinished || databaseProbeError != null) return
+        // Playback resume is owned by the STARTED database-state collector below: one authority,
+        // including cold startup after the asynchronous database probe finishes.
         // Staleness-based auto refresh on resume (interval modes only — STARTUP is cold-start only). The
         // ViewModel throttles this internally so a quick toggle doesn't re-run the check.
         shellViewModel.checkAutoRefresh(includeStartup = false)
-    }
-
-    /**
-     * Probe the database before anything touches it. Room opens lazily, so a failed migration would
-     * otherwise surface as a random crash inside whichever coroutine queried first — and with the
-     * destructive fallback gone (D1) that crash would repeat on every launch. Opening it here, on a
-     * worker thread with a bounded wait, turns that into a deterministic recovery screen.
-     *
-     * On a healthy install this is a version check on an already-migrated file: milliseconds, and it
-     * is work the first query would have done anyway. A timeout is treated as "healthy" so a slow
-     * device never sits on a blank window.
-     */
-    private fun probeDatabase(): String? {
-        var error: String? = null
-        val worker = Thread {
-            // Core configures a SQLiteDriver (its plan Phase B), and `openHelper` throws outright
-            // once one is set. Opening a connection is what this probe was always really doing —
-            // forcing Room to run the migration chain now rather than inside the first query.
-            runCatching {
-                kotlinx.coroutines.runBlocking {
-                    get<tv.own.owntv.core.database.OwnTVDatabase>().useWriterConnection { }
-                }
-            }.onFailure { error = it.message ?: it.javaClass.simpleName }
-        }
-        worker.start()
-        // Fast probe: don't block the UI thread for 5 seconds on cold start
-        worker.join(150L)
-        if (error != null) Log.e(TAG, "database probe failed: $error")
-        return error
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -221,25 +203,43 @@ class MainActivity : ComponentActivity() {
         splash.setKeepOnScreenCondition { !contentReady && SystemClock.uptimeMillis() < splashDeadline }
         pendingDeepLink = LauncherDeepLink.parse(intent.data)
         Log.d(TAG, "onCreate deepLinkHost=${intent.data?.host} deepLinkType=${pendingDeepLink?.javaClass?.simpleName ?: "none"}")
-        val dbError = probeDatabase()
-        if (dbError != null) {
-            contentReady = true // the recovery screen IS the destination — don't hold the splash over it
-            setContent {
+        lifecycleScope.launch {
+            repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+                databaseStartup.state.collect { state ->
+                    if (state is DatabaseStartupViewModel.State.Ready) {
+                        Perf.stamp("db-probed")
+                        if (!liveViewModel.hasFixedStartupChannel() && pendingDeepLink == null) {
+                            player.onAppForegrounded()
+                            previewEngine.onAppForegrounded()
+                        }
+                        shellViewModel.checkAutoRefresh(includeStartup = false)
+                    }
+                }
+            }
+        }
+        setContent {
+            val databaseState by databaseStartup.state.collectAsStateWithLifecycle()
+            val dbError = (databaseState as? DatabaseStartupViewModel.State.Failed)?.message
+            if (dbError != null) {
+                contentReady = true
                 tv.own.owntv.features.recovery.DatabaseRecoveryScreen(
                     message = dbError,
-                    onRetry = { recreate() },
+                    onRetry = { databaseStartup.retry() },
                     onResetData = {
-                        // Explicit, twice-confirmed user choice — the only thing that clears a
-                        // database SQLite refuses to open. Never automatic (that was D1's bug).
                         runCatching { deleteDatabase(tv.own.owntv.core.database.OwnTVDatabase.NAME) }
                         finishAffinity()
                     },
                 )
+                return@setContent
             }
-            return
-        }
-        Perf.stamp("db-probed") // main thread was blocked here: everything above is pre-composition
-        setContent {
+            if (databaseState is DatabaseStartupViewModel.State.Loading) {
+                androidx.compose.foundation.layout.Box(
+                    androidx.compose.ui.Modifier.fillMaxSize(),
+                    contentAlignment = androidx.compose.ui.Alignment.Center,
+                ) { tv.own.owntv.ui.components.OwnTVSpinner(color = androidx.compose.ui.graphics.Color.Gray) }
+                return@setContent
+            }
+
             // First composition pass — splits "process start → Compose is running" from
             // "Compose is running → the destination's data arrived".
             // Deliberately a Unit-returning remember: the point is the side effect happening DURING
@@ -497,6 +497,7 @@ class MainActivity : ComponentActivity() {
                                 isOffline = !isOnline,
                                 onExitApp = { finish() },
                                 onSwitchProfile = {
+                                    liveViewModel.onBackground()
                                     // Stop playback and return to the "Who's watching?" gate — no app restart.
                                     player.onAppBackgrounded(); player.discardBackgroundRestore(); previewEngine.stop(); previewEngine.discardBackgroundRestore(); heroPreviewEngine.stop()
                                     // Force the gate open even with a single unpinned profile (cold-start gate would

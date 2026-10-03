@@ -17,8 +17,6 @@
 1	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsScreen.kt	⤒
 1	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsScreen.kt	⤓
 3	app/src/main/java/tv/own/owntv/features/customize/CustomizeItemsViewModel.kt	\0
-1	app/src/main/java/tv/own/owntv/features/customize/CustomizeScreen.kt	ALPHA
-1	app/src/main/java/tv/own/owntv/features/customize/CustomizeScreen.kt	PLAYLIST
 1	app/src/main/java/tv/own/owntv/features/customize/CustomizeScreen.kt	hid:${entry.key}
 1	app/src/main/java/tv/own/owntv/features/customize/CustomizeViewModel.kt	Custom
 1	app/src/main/java/tv/own/owntv/features/customize/MoveToCategoryDialog.kt	new
@@ -27,7 +25,6 @@
 1	app/src/main/java/tv/own/owntv/features/customize/MoveToCategoryDialog.kt	☐
 1	app/src/main/java/tv/own/owntv/features/customize/MoveToCategoryDialog.kt	☑
 2	app/src/main/java/tv/own/owntv/features/epg/EpgScreen.kt	\0
-1	app/src/main/java/tv/own/owntv/features/epg/EpgScreen.kt	ALL
 1	app/src/main/java/tv/own/owntv/features/epg/MiniGuideOverlay.kt	EEEdMMM
 8	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	\0
 1	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	${cfg.host}$p

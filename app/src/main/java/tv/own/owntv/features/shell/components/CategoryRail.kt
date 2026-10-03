@@ -4,8 +4,6 @@ import tv.own.owntv.ui.components.ContextMenuDivider
 
 import androidx.compose.runtime.Immutable
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -25,7 +23,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.selectable
@@ -53,10 +50,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.zIndex
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import androidx.compose.ui.draw.rotate
 import tv.own.owntv.ui.components.longPressMenuGuard
 import tv.own.owntv.ui.components.ChannelGenre
 import tv.own.owntv.ui.components.NavAccentBar
@@ -155,23 +150,31 @@ fun CategoryRail(
         if (q.isEmpty()) categories.indices.toList()
         else categories.indices.filter { categories[it].fullName.contains(q, ignoreCase = true) }
     }
+    val searchFocus = remember { FocusRequester() }
     val rowFocusers = remember(visible.size) { List(visible.size) { FocusRequester() } }
     // Return the cursor to a specific row (see [focusRowIndex]). The row is addressed by its original
     // category index, so a rail filtered by the search box still resolves to the right focuser.
     LaunchedEffect(focusRowIndex, visible) {
         val target = focusRowIndex ?: return@LaunchedEffect
         val pos = visible.indexOf(target)
-        if (pos >= 0) {
-            runCatching { rowFocusers[pos].requestFocus() }
+        if (pos < 0) {
+            if (runCatching { searchFocus.requestFocus() }.getOrDefault(false)) onRowFocused()
+            return@LaunchedEffect
         }
-        onRowFocused()
+        runCatching { listState.scrollToItem(pos + 1) }
+        repeat(4) {
+            withFrameNanos { }
+            if (runCatching { rowFocusers[pos].requestFocus() }.getOrDefault(false)) {
+                onRowFocused()
+                return@LaunchedEffect
+            }
+        }
     }
     // Phase 2 — the rail is a FIXED full-label column (no collapse/abbreviation overlay), so it never
     // reflows the layout on the D-pad. Always "expanded" = full category names.
     val expanded = true
 
     val selectedFocus = remember { FocusRequester() }
-    val searchFocus = remember { FocusRequester() }
     val scope = rememberCoroutineScope()
     val density = androidx.compose.ui.platform.LocalDensity.current
     val bringIntoViewSpec = androidx.compose.foundation.gestures.LocalBringIntoViewSpec.current

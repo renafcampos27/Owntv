@@ -1,7 +1,6 @@
 package tv.own.owntv.player
 
 import android.app.Activity
-import android.content.Context
 import android.os.Build
 import android.util.Log
 import android.view.Display
@@ -12,9 +11,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
 import android.hardware.display.DisplayManager
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -441,30 +438,58 @@ private const val DISPLAY_CHANGE_WAIT_MS = 5_000L
  * the user pressed play or pause in the meantime, in which case playback is left exactly as they set it.
  * Leaving the player cancels the hold with the surface, and nothing is resumed.
  */
-private suspend fun holdThroughSwitch(activity: Activity, film: PlaybackEngine, holdSecs: Int) = coroutineScope {
-    if (!film.isPlaying.value) return@coroutineScope
-    film.togglePlayPause()
-    // Our own pause turns isPlaying false first; a true after that is the user resuming by hand.
-    var userResumed = false
-    val watch = launch { film.isPlaying.dropWhile { it }.first { it }; userResumed = true }
-    awaitDisplayChange(activity, DISPLAY_CHANGE_WAIT_MS)
-    delay(holdSecs * 1_000L)
-    watch.cancel()
-    if (!userResumed && !film.isPlaying.value) film.togglePlayPause()
+private suspend fun holdThroughSwitch(activity: Activity, film: PlaybackEngine, holdSecs: Int) {
+    if (!film.playbackRequested.value || !film.isPlaying.value) return
+    val item = film.currentMeta.value
+    val pauseRevision = film.pauseForTransition()
+    fun stillOurPause(): Boolean = film.currentMeta.value == item &&
+        film.playbackRequestRevision.value == pauseRevision &&
+        !film.playbackRequested.value && film.error.value == null
+    var finished = false
+    try {
+        awaitDisplayChange(activity, DISPLAY_CHANGE_WAIT_MS)
+        delay(holdSecs * 1_000L)
+        if (stillOurPause()) film.setPlaybackRequested(true)
+        finished = true
+    } finally {
+        if (!finished) {
+            // Stop/new item/user commands can finish in the same disposal pass. Observe their
+            // revision on the next main-loop turn before returning the temporary pause.
+            android.os.Handler(android.os.Looper.getMainLooper()).post {
+                if (!activity.isFinishing && stillOurPause()) film.setPlaybackRequested(true)
+            }
+        }
+    }
 }
 
-/** Suspends until the display this activity is on reports a change, or [timeoutMs] passes. */
+/** Reports only the activity's display and the requested mode, with cleanup on every outcome. */
 private suspend fun awaitDisplayChange(activity: Activity, timeoutMs: Long) {
     val manager = activity.getSystemService(DisplayManager::class.java) ?: return
-    withTimeoutOrNull(timeoutMs) {
-        suspendCancellableCoroutine { cont ->
-            val listener = object : DisplayManager.DisplayListener {
-                override fun onDisplayChanged(displayId: Int) { if (cont.isActive) cont.resume(Unit) }
-                override fun onDisplayAdded(displayId: Int) = Unit
-                override fun onDisplayRemoved(displayId: Int) = Unit
+    @Suppress("DEPRECATION")
+    val display = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) activity.display
+        else activity.windowManager.defaultDisplay
+    val displayId = display?.displayId ?: return
+    val targetMode = activity.window.attributes.preferredDisplayModeId
+    if (targetMode == 0 || manager.getDisplay(displayId)?.mode?.modeId == targetMode) return
+    var registered: DisplayManager.DisplayListener? = null
+    try {
+        withTimeoutOrNull(timeoutMs) {
+            suspendCancellableCoroutine<Unit> { cont ->
+                val listener = object : DisplayManager.DisplayListener {
+                    override fun onDisplayChanged(id: Int) {
+                        if (id == displayId && manager.getDisplay(id)?.mode?.modeId == targetMode && cont.isActive)
+                            cont.resume(Unit)
+                    }
+                    override fun onDisplayAdded(displayId: Int) = Unit
+                    override fun onDisplayRemoved(displayId: Int) = Unit
+                }
+                registered = listener
+                manager.registerDisplayListener(listener, android.os.Handler(android.os.Looper.getMainLooper()))
+                // A switch can finish between the initial read and listener registration.
+                if (manager.getDisplay(displayId)?.mode?.modeId == targetMode && cont.isActive) cont.resume(Unit)
             }
-            manager.registerDisplayListener(listener, android.os.Handler(android.os.Looper.getMainLooper()))
-            cont.invokeOnCancellation { manager.unregisterDisplayListener(listener) }
         }
+    } finally {
+        registered?.let { manager.unregisterDisplayListener(it) }
     }
 }

@@ -19,10 +19,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -49,7 +46,6 @@ import androidx.paging.map
 import tv.own.owntv.core.customize.CustomizationStore
 import tv.own.owntv.core.customize.CustomizeKeys
 import tv.own.owntv.features.customize.MoveTarget
-import tv.own.owntv.core.epg.CatchupUrl
 import tv.own.owntv.core.live.StreamGrant
 import tv.own.owntv.core.recording.RecordingSchedule
 import tv.own.owntv.core.customize.SectionCustomizations
@@ -74,11 +70,9 @@ import tv.own.owntv.core.database.entity.FavoriteEntity
 import tv.own.owntv.core.database.entity.SourceEntity
 import tv.own.owntv.core.database.entity.WatchHistoryEntity
 import tv.own.owntv.core.database.entity.playStreamUrl
-import tv.own.owntv.core.database.entity.resolveStreamUrl
 import tv.own.owntv.core.launcher.LauncherIntegrationRepository
 import tv.own.owntv.core.model.MediaType
 import tv.own.owntv.core.util.throttleLatest
-import tv.own.owntv.core.model.SourceType
 import tv.own.owntv.core.parser.XtEpgEntry
 import tv.own.owntv.core.parser.XtreamClient
 import tv.own.owntv.core.repository.activeProfileSources
@@ -133,6 +127,7 @@ class LiveViewModel(
     private val recordings: tv.own.owntv.core.recording.RecordingManager,
     private val httpClient: okhttp3.OkHttpClient,
     private val streams: tv.own.owntv.core.live.OpenStreamRegistry,
+    private val epgReader: LiveEpgReader,
 ) : ViewModel() {
 
     private var localSession: tv.own.owntv.core.timeshift.LocalTimeshiftSession? = null
@@ -225,7 +220,7 @@ class LiveViewModel(
                     session.status.first { it == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.FAILED ||
                         it == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.ENDED ||
                         it == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.CLOSED }
-                    if (localSession === session && acceptsCatchup(owner) && session.status.value != tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.CLOSED) {
+                    if (localSession === session && acceptsCatchup(owner) && session.status.value == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.FAILED) {
                         android.widget.Toast.makeText(appContext, tv.own.owntv.R.string.local_timeshift_failed, android.widget.Toast.LENGTH_LONG).show()
                     }
                 }
@@ -462,7 +457,6 @@ class LiveViewModel(
     /** Every guide read this screen makes, and the now/next cache that used to live here — see
      *  [LiveEpgReader]. The shift it applies is passed in at each call, so this view model stays the
      *  single place that knows a customization changed. */
-    private val epgReader = LiveEpgReader(epgDao, epgSourceStore, sourceDao, xtreamClient, streamUrlResolver)
 
     /** Metadata only: browsing never touches the tuning controller or playback engine. */
     suspend fun miniGuideProgrammes(channel: ChannelEntity, from: Long, to: Long): List<tv.own.owntv.core.database.entity.EpgProgrammeEntity> {
@@ -553,17 +547,29 @@ class LiveViewModel(
 
     /**
      * The playing channel's guide entries, for the player's live timeline: they become the programme
-     * boundary ticks drawn on the bar and the name the scrub bubble reads out. Keyed on the channel
-     * alone — scrubbing must not re-query the guide, the whole two-hour window is already here.
+     * boundary ticks drawn on the bar and the name the scrub bubble reads out. Active only while the
+     * player consumes them; a compact window refreshes every five minutes, independently of row focus.
+     * The archive picker retains its separate full-history query.
      */
     val timelineProgrammes: StateFlow<List<LiveProgramme>> =
-        combine(_previewChannel, epgRefresh) { ch, tick -> ch to tick }
-            .debounce(200)
-            .distinctUntilChanged { a, b -> a.first?.id == b.first?.id && a.second == b.second }
-            .mapLatest { (ch, _) ->
-                ch?.let { catchupProgrammes(it).map { p -> LiveProgramme(p.startMs, p.stopMs, p.title) } }.orEmpty()
+        combine(_playingChannel, epgRefresh, kotlinx.coroutines.flow.flow {
+            while (true) {
+                val now = System.currentTimeMillis()
+                emit(now / 300_000L)
+                kotlinx.coroutines.delay(300_000L - now % 300_000L)
             }
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+        }) { ch, tick, block -> Triple(ch, tick, block) }
+            .debounce(200)
+            .distinctUntilChanged { a, b -> a.first?.id == b.first?.id && a.second == b.second && a.third == b.third }
+            .mapLatest { (ch, _, _) ->
+                ch?.let {
+                    val now = System.currentTimeMillis()
+                    epgReader.timelineProgrammes(it, custom.value, epgOffset.value, ctx.value.sourceIds,
+                        now - 2 * 3_600_000L, now + 3_600_000L)
+                        .map { p -> LiveProgramme(p.startMs, p.stopMs, p.title) }
+                }.orEmpty()
+            }
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(0), emptyList())
 
     /**
      * The focused channel's REAL category name — resolved from its `categoryId`, NOT from whatever rail
@@ -760,12 +766,12 @@ class LiveViewModel(
                         (cs.cust.movedFromOrigin[CustomizeKeys.channel(ch)]?.let { origin ->
                             key !is LiveKey.Folder || origin != folderContextKeys.value[key.id]
                         } ?: true) },
-                    identity = ChannelVersionPolicy::groupKey,
+                    identity = { ChannelVersionPolicy.groupKey(it, cs.cust) },
                     preferred = { previous, next -> ChannelVersionPolicy.ordered(listOf(previous, next), cs.cust).first() },
                     onReady = { grouped ->
                         if (_selected.value == key && ctx.value == c && custom.value == cs.cust) {
                             if (versionGroupKeys.size > 20_000) versionGroupKeys.clear()
-                            grouped.forEach { versionGroupKeys[it.id] = ChannelVersionPolicy.groupKey(it) }
+                            grouped.forEach { versionGroupKeys[it.id] = ChannelVersionPolicy.groupKey(it, cs.cust) }
                             groupedCount.value = grouped.size
                         }
                     },
@@ -1133,8 +1139,15 @@ class LiveViewModel(
         if (!cust.groupChannelVersions) return rows
         val grouped = ChannelVersionPolicy.grouped(rows, cust)
         if (versionGroupKeys.size > 20_000) versionGroupKeys.clear()
-        grouped.forEach { versionGroupKeys[it.id] = ChannelVersionPolicy.groupKey(it) }
+        grouped.forEach { versionGroupKeys[it.id] = ChannelVersionPolicy.groupKey(it, cust) }
         return grouped
+    }
+
+    /** Fixed startup owns foreground tuning; do not briefly reconnect the previously watched stream. */
+    internal suspend fun hasFixedStartupChannel(): Boolean {
+        val pid = profileDao.resolveExistingProfileId(settings.activeProfileId.first()) ?: return false
+        return pid >= 0 && settings.startupMode(pid).first() == tv.own.owntv.core.settings.StartupMode.SPECIFIC_CHANNEL &&
+            settings.startupChannel(pid).first() != null
     }
 
     internal suspend fun channelVersions(channel: ChannelEntity, includeHidden: Boolean = false): List<ChannelEntity> {
@@ -1142,13 +1155,59 @@ class LiveViewModel(
         val profile = ctx.first { it.profileId >= 0 }
         if (original.sourceId !in profile.sourceIds) return emptyList()
         val cust = customize.observe(profile.profileId, MediaType.LIVE).first()
-        val rows = channelDao.searchList(ChannelAlternatives.searchTerm(original.name), listOf(original.sourceId), 2_000)
+        val rows = loadVersionGroup(original, cust)
         return ChannelVersionPolicy.ordered(rows.filter { candidate ->
-            ChannelVersionPolicy.groupKey(candidate) == ChannelVersionPolicy.groupKey(original) &&
+            ChannelVersionPolicy.groupKey(candidate, cust) == ChannelVersionPolicy.groupKey(original, cust) &&
                 tv.own.owntv.core.content.AdultCategoryClassifier.allows(profile.profileId, candidate.categoryId, profileDao, categoryDao) &&
                 candidate.categoryId?.let { categoryDao.getById(it) }?.let { CustomizeKeys.category(it) !in cust.hiddenCategories } != false &&
                 (includeHidden || CustomizeKeys.channel(candidate) !in cust.hiddenItems)
         }, if (includeHidden) cust.copy(prioritizeChannelVersions = true) else cust, includeHidden = includeHidden)
+    }
+
+    private suspend fun loadVersionGroup(channel: ChannelEntity, cust: SectionCustomizations): List<ChannelEntity> {
+        val group = ChannelVersionPolicy.groupKey(channel, cust)
+        val automatic = channelDao.searchList(ChannelAlternatives.searchTerm(group.substringAfter(':')), listOf(channel.sourceId), 2_000)
+        val explicit = cust.channelVersionGroups.filterValues { it == group }.keys.mapNotNull { key ->
+            if (!key.startsWith("${channel.sourceId}:")) return@mapNotNull null
+            val tail = CustomizeKeys.tailOf(key)
+            channelDao.findByRemote(channel.sourceId, tail) ?: channelDao.findByName(channel.sourceId, tail)
+        }
+        return (automatic + explicit + channel).distinctBy { it.id }
+            .filter { ChannelVersionPolicy.groupKey(it, cust) == group }
+    }
+
+    internal suspend fun channelVersionCandidates(channel: ChannelEntity, query: String): List<ChannelEntity> {
+        if (query.isBlank()) return emptyList()
+        val profile = ctx.first { it.profileId >= 0 }
+        if (channel.sourceId !in profile.sourceIds) return emptyList()
+        val cust = customize.observe(profile.profileId, MediaType.LIVE).first()
+        val group = ChannelVersionPolicy.groupKey(channel, cust)
+        return channelDao.searchList(query.trim(), listOf(channel.sourceId), 200).filter {
+            ChannelVersionPolicy.groupKey(it, cust) != group && isVisibleToActiveProfile(it)
+        }
+    }
+
+    internal fun addChannelVersion(owner: ChannelEntity, candidate: ChannelEntity) {
+        val pid = ctx.value.profileId
+        if (pid < 0 || owner.sourceId != candidate.sourceId) return
+        viewModelScope.launch {
+            if (ctx.value.profileId != pid || !isVisibleToActiveProfile(owner) || !isVisibleToActiveProfile(candidate)) return@launch
+            customize.update(pid, MediaType.LIVE) { current ->
+                val group = ChannelVersionPolicy.groupKey(owner, current)
+                current.copy(channelVersionGroups = current.channelVersionGroups + (CustomizeKeys.channel(candidate) to group))
+            }
+        }
+    }
+
+    internal fun removeManualChannelVersion(channel: ChannelEntity) {
+        val pid = ctx.value.profileId
+        if (pid < 0) return
+        viewModelScope.launch {
+            if (ctx.value.profileId != pid || channel.sourceId !in ctx.value.sourceIds) return@launch
+            customize.update(pid, MediaType.LIVE) { current ->
+                current.copy(channelVersionGroups = current.channelVersionGroups - CustomizeKeys.channel(channel))
+            }
+        }
     }
 
     internal fun saveChannelVersionOrder(channel: ChannelEntity, rows: List<ChannelEntity>?) {
@@ -1157,7 +1216,7 @@ class LiveViewModel(
         viewModelScope.launch {
             val original = channelDao.getById(channel.id) ?: return@launch
             if (ctx.value.profileId != pid || original.sourceId !in ctx.value.sourceIds) return@launch
-            val group = ChannelVersionPolicy.groupKey(original)
+            val group = ChannelVersionPolicy.groupKey(original, custom.value)
             customize.update(pid, MediaType.LIVE) { current ->
                 if (rows == null) current.copy(channelVersionOrders = current.channelVersionOrders - group)
                 else {
@@ -1183,8 +1242,8 @@ class LiveViewModel(
         matchesPlaying = { item, id ->
             val playing = _previewChannel.value
             item.id == id || (custom.value.groupChannelVersions &&
-                (versionGroupKeys[item.id] ?: ChannelVersionPolicy.groupKey(item)) ==
-                    (versionGroupKeys[id] ?: playing?.takeIf { it.id == id }?.let(ChannelVersionPolicy::groupKey)))
+                ChannelVersionPolicy.groupKey(item, custom.value) ==
+                    playing?.takeIf { it.id == id }?.let { ChannelVersionPolicy.groupKey(it, custom.value) })
         },
     )
     val canZap: StateFlow<Boolean> = zapList.canZap
@@ -1282,13 +1341,23 @@ class LiveViewModel(
         }
     }
 
-    /** Called when anything OTHER than a promoted live channel takes over full-screen (a movie/episode,
-     *  catch-up, an EPG/search channel — all play on mpv). Clears the ExoPlayer flag so the shell renders
-     *  mpv's surface (not the leftover live channel) and stops the preview so it doesn't hold a connection. */
-    /** Back out of full-screen to the Live screen: we're no longer full-screen on ExoPlayer, so the preview
-     *  pane may re-take the engine (and re-apply the preview mute) on the next focus. Keeps the stream
-     *  playing (no stop) — just clears the flag so [playPreview] works again. */
+    /** Stable return target, independent of incidental browsing focus during the screen transition. */
+    var fullscreenReturnChannel: ChannelEntity? = null
+        private set
+
+    fun finishFullscreenFocusRestore() {
+        fullscreenReturnChannel = null
+    }
+
+    fun matchesChannelRow(row: ChannelEntity, channel: ChannelEntity): Boolean {
+        val current = custom.value
+        return row.id == channel.id || (current.groupChannelVersions &&
+            ChannelVersionPolicy.groupKey(row, current) == ChannelVersionPolicy.groupKey(channel, current))
+    }
+
     fun onFullscreenExited() {
+        // Snapshot before shell/list focus can change the browsing preview (or clear playback).
+        fullscreenReturnChannel = _playingChannel.value ?: _previewChannel.value
         if (localSession != null) { liveTuner.stopExo(); disposeLocalTimeshift() }
         fullscreenTuneRequested = false
         cancelChannelRecovery()
@@ -1561,8 +1630,25 @@ class LiveViewModel(
     /** Hand [channel] to an external app (VLC, MX Player). Used by the Live TV long-press menu, and by
      *  [playChannel] when Live TV's external-player default is on. Stalker channels store a portal
      *  cmd rather than a URL, so it's resolved first — an external app can't mint one. */
+    private var externalLaunchJob: Job? = null
+
+    suspend fun restoreExternalChannelFocus(channelId: Long) {
+        externalLaunchJob?.cancel()
+        fullscreenTuneRequested = false
+        cancelChannelRecovery()
+        liveTuner.stop()
+        clearTimeshift()
+        _playingChannel.value = null
+        _previewArmed.value = false
+        val channel = channelDao.getById(channelId)?.takeIf { isVisibleToActiveProfile(it) }
+        fullscreenReturnChannel = channel
+        _previewChannel.value = channel
+    }
+
     fun playExternal(channel: ChannelEntity) {
-        viewModelScope.launch {
+        externalLaunchJob?.cancel()
+        externalLaunchJob = viewModelScope.launch {
+            liveTuner.stop()
             if (localSession != null) {
                 liveTuner.stopExo()
                 closeLocalTimeshift()
@@ -1579,13 +1665,20 @@ class LiveViewModel(
             } else {
                 channel.streamUrl
             }
-            externalPlayerLauncher.launch(
+            kotlinx.coroutines.currentCoroutineContext().ensureActive()
+            val opened = externalPlayerLauncher.launch(
                 url = url,
                 title = channel.name,
                 userAgent = source?.userAgent,
                 httpHeaders = channel.httpHeaders,
+                returnChannelId = channel.id,
             )
-            recordLiveHistory(channel, immediate = true)
+            if (opened) {
+                fullscreenReturnChannel = channel
+                _previewChannel.value = channel
+                _previewArmed.value = false
+                recordLiveHistory(channel, immediate = true)
+            }
         }
     }
 
@@ -1674,14 +1767,13 @@ class LiveViewModel(
                     initial = channel,
                     timeoutMs = tv.own.owntv.features.settings.RecoveryTimeout.milliseconds(options.recoveryTimeoutSeconds),
                     alternatives = {
-                        val term = ChannelAlternatives.searchTerm(channel.name)
                         // Same source only: do not cross accounts, regions or playlist permissions.
-                        val rows = channelDao.searchList(term, listOf(channel.sourceId), 2_000)
+                        val rows = loadVersionGroup(channel, policy)
                         tuneSelection.check(tuneId)
                         val visible = rows.filter { isVisibleToActiveProfile(it) }
                         val ordered = if (policy.prioritizeChannelVersions)
-                            ChannelVersionPolicy.ordered(visible.filter { ChannelVersionPolicy.groupKey(it) == ChannelVersionPolicy.groupKey(channel) }, policy)
-                        else ChannelAlternatives.ordered(channel, visible)
+                            ChannelVersionPolicy.ordered(visible.filter { ChannelVersionPolicy.groupKey(it, policy) == ChannelVersionPolicy.groupKey(channel, policy) }, policy)
+                        else if (policy.channelVersionGroups.isNotEmpty()) visible else ChannelAlternatives.ordered(channel, visible)
                         ordered.filter { it.id != channel.id }.distinctBy { it.streamUrl }
                     },
                     attempt = { candidate ->
@@ -1768,10 +1860,6 @@ class LiveViewModel(
         android.util.Log.i(ENGINE_TAG, message)
         tv.own.owntv.player.LiveDiagnosticsLog.event("engine: $message")
     }
-
-    /** Stable key shared by the per-channel engine and playback preferences. */
-    private fun mpvPinKey(channel: ChannelEntity): String? =
-        tv.own.owntv.core.player.enginePinKey(channel.sourceId, "LIVE", channel.remoteId)
 
     fun toggleForceMpv() {
         val channel = _previewChannel.value ?: return
@@ -1955,7 +2043,7 @@ class LiveViewModel(
                 }
                 checkCatchup(owner)
                 Log.i(ENGINE_TAG, "catch-up external '${ch.name}' prog='${programme.title}'")
-                externalPlayerLauncher.launch(url, ch.name, programme.title)
+                externalPlayerLauncher.launch(url, ch.name, programme.title, returnChannelId = ch.id)
                 recordLiveHistory(ch, immediate = true)
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled

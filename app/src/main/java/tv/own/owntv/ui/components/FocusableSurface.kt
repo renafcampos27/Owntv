@@ -20,7 +20,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -53,6 +52,7 @@ fun FocusableSurface(
     selected: Boolean = false,
     enabled: Boolean = true,
     onLongClick: (() -> Unit)? = null,
+    onMediumClick: (() -> Unit)? = null,
     shape: Shape = RoundedCornerShape(Dimens.CardCorner),
     focusedContainerColor: Color = OwnTVTheme.colors.card,
     unfocusedContainerColor: Color = Color.Transparent,
@@ -300,7 +300,9 @@ fun FocusableSurface(
                 },
             )
             .then(
-                if (onLongClick != null) {
+                if (onMediumClick != null && onLongClick != null) {
+                    Modifier.channelPressInput(interaction, enabled, selected, onClick, onMediumClick, onLongClick)
+                } else if (onLongClick != null) {
                     Modifier.combinedClickable(
                         interactionSource = interaction,
                         indication = null,

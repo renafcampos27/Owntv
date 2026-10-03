@@ -1,8 +1,9 @@
 package tv.own.owntv.features.shell.components
 
+import androidx.compose.ui.platform.testTag
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
@@ -27,11 +28,12 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
@@ -69,9 +71,7 @@ import tv.own.owntv.ui.theme.animationsOn
 import tv.own.owntv.ui.theme.glass
 
 /**
- * Layer 1 — the MD3 navigation panel. A FIXED icon rail: brand logo at the top (Phase 2), the nav items
- * (browse + Settings) vertically centered in the middle (Phase 3), and the profile avatar pinned at the
- * bottom (Phase 1). The logo is display-only (not focusable); everything else is a focusable nav item.
+ * Fixed-width navigation rail with centered section icons and the profile avatar pinned at the bottom.
  */
 @Composable
 fun Sidebar(
@@ -85,6 +85,7 @@ fun Sidebar(
     sourceSummary: String?,
     onSwitchProfile: () -> Unit,
     selectedItemFocusRequester: FocusRequester,
+    redirectEntryFocus: Boolean = true,
     onFocused: () -> Unit,
     counts: (MainSection) -> Int = { 0 },
     topInset: Dp = Dimens.TopBarHeight,
@@ -95,6 +96,7 @@ fun Sidebar(
 ) {
     val colors = OwnTVTheme.colors
     var hasFocus by remember { mutableStateOf(false) }
+    val allowEntryRedirect by rememberUpdatedState(redirectEntryFocus)
     val scope = rememberCoroutineScope()
     // Phase 2 — the nav is a FIXED icon rail: it never expands or collapses, so the layout never jumps on
     // the D-pad. The profile avatar is pinned at the bottom (Phase 1). Full section labels live in the panes.
@@ -124,7 +126,11 @@ fun Sidebar(
                 val entered = it.hasFocus && !hasFocus
                 hasFocus = it.hasFocus
                 if (it.hasFocus) onFocused()
-                if (entered) scope.launch { runCatching { selectedItemFocusRequester.requestFocus() } }
+                if (entered && allowEntryRedirect) scope.launch {
+                    withFrameNanos { }
+                    // A fullscreen return may have started, or focus may already have left the rail.
+                    if (hasFocus && allowEntryRedirect) runCatching { selectedItemFocusRequester.requestFocus() }
+                }
             }
             .focusGroup()
             .width(Dimens.SidebarWidthCollapsed)
@@ -132,16 +138,10 @@ fun Sidebar(
             // content panel's 6 dp bottom inset; the horizontal inset keeps the existing shell gap.
             .padding(start = 6.dp, top = topInset, end = 6.dp, bottom = 6.dp)
             .roundedPanel(fillColor = RailPanelFill, surface = GlassSurface.SIDEBAR)
-            // Keep the plate aligned while lowering the logo slightly inside it.
+            // Interior spacing leaves the rail's width and focus targets unchanged.
             .padding(top = 12.dp, bottom = 12.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        // Phase 2 — brand mark pinned at the top of the rail. Non-focusable, so D-pad entry into the
-        // panel still redirects to the selected nav item below (see onFocusChanged) — it can't trap
-        // an "up" press from the first nav item either.
-        AppLogo()
-        Spacer(Modifier.height(12.dp))
-
         // The one way back into a docked mini player from every screen (§8 tier 1). Sits directly under
         // the brand mark, above the browse block, and only exists while there is something to return to.
         // It is NOT a MainSection: OK moves focus into the mini window instead of navigating anywhere,
@@ -308,27 +308,6 @@ private fun NowPlayingItem(
     }
 }
 
-/**
- * Brand mark at the top of the rail — the cyan play-triangle inside a rounded-square outline, the same
- * geometry as [ic_launcher_foreground] (kept consistent with the planned branded splash). Drawn from
- * [OwnTVIcon.PLAY] (filled) inside an outlined [Box] so it matches the visual weight of the 56dp avatar
- * below. Decorative only: a plain Box is not focusable, so it neither captures D-pad focus nor traps an
- * "up" press. Tints with [OwnTVTheme.colors].primary so it follows the user's accent like the nav icons.
- */
-@Composable
-private fun AppLogo(modifier: Modifier = Modifier) {
-    val colors = OwnTVTheme.colors
-    Box(
-        modifier = modifier
-            .size(56.dp)
-            .clip(RoundedCornerShape(20.dp))
-            .border(width = 2.dp, color = colors.primary, shape = RoundedCornerShape(20.dp)),
-        contentAlignment = Alignment.Center,
-    ) {
-        OwnTVIcon(icon = OwnTVIcon.PLAY, tint = colors.primary, modifier = Modifier.size(26.dp), filled = true)
-    }
-}
-
 @Composable
 private fun ProfileCard(
     expanded: Boolean,
@@ -461,7 +440,7 @@ private fun NavItem(
     val shape = RoundedCornerShape(13.dp)
     FocusableSurface(
         onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier.fillMaxWidth().testTag("owntv_nav_${section.name}"),
         selected = active,
         shape = shape,
         focusedContainerColor = Color.Transparent,
@@ -526,7 +505,10 @@ private fun NavItem(
                 NavDuotoneIcon(
                     section = section,
                     color = if (active) colors.onPrimaryContainer else ladder.icon,
-                    modifier = Modifier.size(24.dp),
+                    modifier = Modifier.size(
+                        if (section == MainSection.LIVE_TV || section == MainSection.EPG ||
+                            section == MainSection.SETTINGS || section == MainSection.MORE) 28.dp else 24.dp,
+                    ),
                 )
             }
         }

@@ -26,7 +26,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -36,12 +35,8 @@ import androidx.tv.material3.Text
 import tv.own.owntv.core.model.HeroKind
 import tv.own.owntv.core.model.HomeLiveRowMode
 import tv.own.owntv.core.model.HomeRow
-import tv.own.owntv.core.model.HomeTrendingStyle
-import tv.own.owntv.core.trending.TrendingAvailability
 import tv.own.owntv.features.home.displayTitle
 import tv.own.owntv.features.home.displayLabel
-import tv.own.owntv.features.home.settingsDescription
-import tv.own.owntv.BuildConfig
 import tv.own.owntv.R
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -256,31 +251,3 @@ private fun HomeRowCard(
     }
 }
 
-@Composable
-private fun trendingStatusText(hidden: Boolean, availability: TrendingAvailability): String = when {
-    hidden -> stringResource(R.string.settings_trending_status_off)
-    availability == TrendingAvailability.Building -> stringResource(R.string.settings_trending_status_building)
-    availability == TrendingAvailability.MetadataDisabled -> stringResource(R.string.settings_trending_status_metadata_disabled)
-    availability == TrendingAvailability.NoVodScope -> stringResource(R.string.settings_trending_status_no_vod)
-    availability == TrendingAvailability.Failed -> stringResource(R.string.settings_trending_status_failed)
-    availability == TrendingAvailability.WaitingForSync -> stringResource(R.string.settings_trending_status_waiting)
-    availability is TrendingAvailability.BelowThreshold && availability.matched == 0 -> stringResource(
-        R.string.settings_trending_status_no_matches,
-    )
-    availability is TrendingAvailability.BelowThreshold -> pluralStringResource(
-        R.plurals.settings_trending_status_below_threshold,
-        availability.matched,
-        availability.matched,
-    )
-    availability is TrendingAvailability.Showing && availability.refreshFailed -> pluralStringResource(
-        R.plurals.settings_trending_status_showing_refresh_failed,
-        availability.count,
-        availability.count,
-    )
-    availability is TrendingAvailability.Showing -> pluralStringResource(
-        R.plurals.settings_trending_status_showing,
-        availability.count,
-        availability.count,
-    )
-    else -> stringResource(R.string.settings_trending_status_waiting)
-}

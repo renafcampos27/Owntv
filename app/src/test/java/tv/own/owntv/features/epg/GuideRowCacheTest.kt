@@ -5,6 +5,19 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class GuideRowCacheTest {
+    @Test fun unavailableFallbackIsNotCachedAndNextReadCanRecover() = runBlocking {
+        val scope = CoroutineScope(coroutineContext + SupervisorJob())
+        try {
+            val cache = GuideRowCache<String, Int>(scope, 4, 10)
+            var calls = 0
+            assertEquals(listOf(7), cache.getOrFallback("a", { calls++; error("provider unavailable") }) { listOf(7) })
+            assertNull(cache.peek("a"))
+            assertEquals(listOf(8), cache.getOrFallback("a", { calls++; listOf(8) }) { emptyList() })
+            assertEquals(listOf(8), cache.peek("a"))
+            assertEquals(2, calls)
+        } finally { scope.cancel() }
+    }
+
     @Test fun concurrentQueriesHaveAnExplicitBudget() = runBlocking {
         val cache = GuideRowCache<Int, Int>(this, 10, 20)
         val fourStarted = CompletableDeferred<Unit>()

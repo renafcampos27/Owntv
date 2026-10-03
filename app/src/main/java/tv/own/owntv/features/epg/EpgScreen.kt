@@ -1,17 +1,12 @@
 package tv.own.owntv.features.epg
 
+import androidx.compose.ui.platform.testTag
+
+import tv.own.owntv.ui.components.requestBoundedFocus
+import tv.own.owntv.ui.components.cancelPendingFocusOnInput
 import androidx.activity.compose.BackHandler
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.ui.geometry.CornerRadius
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.window.Popup
-import androidx.compose.ui.window.PopupProperties
-import androidx.compose.ui.text.drawText
-import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
@@ -34,7 +29,6 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.produceState
@@ -77,6 +71,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
@@ -94,7 +89,6 @@ import tv.own.owntv.core.epg.displayLogoUrl
 import tv.own.owntv.core.settings.SettingsRepository
 import tv.own.owntv.ui.components.longPressMenuGuard
 import tv.own.owntv.ui.components.ChannelGenre
-import tv.own.owntv.ui.components.ErrorState
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -113,7 +107,6 @@ import tv.own.owntv.features.epg.ProgrammeDetailDialog
 import tv.own.owntv.features.epg.ProgrammeStripCanvas
 import tv.own.owntv.ui.format.rememberBestDateFormatter
 import tv.own.owntv.ui.format.rememberSystemTimeFormatter
-import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
 
@@ -134,31 +127,6 @@ private fun epgMessageText(message: EpgMessage): String = when (message) {
     EpgMessage.AddPlaylist -> stringResource(R.string.content_epg_add_playlist)
     is EpgMessage.NoChannelsForQuery -> stringResource(R.string.content_epg_no_channels_query, message.query)
     EpgMessage.MismatchedIds -> stringResource(R.string.content_epg_mismatched_ids)
-}
-
-@Composable
-private fun epgStatsText(stats: EpgStats): String {
-    val catchup = if (stats.catchupChannels > 0) {
-        pluralStringResource(R.plurals.content_epg_catchup_count, stats.catchupChannels, stats.catchupChannels)
-    } else {
-        stringResource(R.string.content_epg_no_catchup_channels)
-    }
-    return if (stats.programmes > 0) {
-        stringResource(
-            R.string.content_epg_stats_loaded,
-            pluralStringResource(R.plurals.content_epg_stats_channels, stats.guideChannels, stats.guideChannels),
-            pluralStringResource(R.plurals.content_epg_stats_programmes, stats.programmes, stats.programmes),
-            catchup,
-        )
-    } else if (stats.catchupChannels > 0) {
-        pluralStringResource(
-            R.plurals.content_epg_stats_catchup_available,
-            stats.catchupChannels,
-            stats.catchupChannels,
-        )
-    } else {
-        stringResource(R.string.content_epg_stats_no_catchup)
-    }
 }
 
 @Composable
@@ -220,24 +188,22 @@ fun EpgScreen(
         }
     }
     val state by vm.state.collectAsStateWithLifecycle()
-    val liveNow by produceState(initialValue = System.currentTimeMillis()) {
-        while (true) {
-            delay(30_000L)
-            value = System.currentTimeMillis()
+    val clockLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    val liveNow by produceState(initialValue = System.currentTimeMillis(), clockLifecycle) {
+        clockLifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+            while (true) { value = System.currentTimeMillis(); delay(30_000L) }
         }
     }
     val query by vm.query.collectAsStateWithLifecycle()
-    val matching by vm.matching.collectAsStateWithLifecycle()
     val review by vm.review.collectAsStateWithLifecycle()
     val matchSummary by vm.matchSummary.collectAsStateWithLifecycle()
     val sortGuide by vm.sortGuide.collectAsStateWithLifecycle()
-    val categoryFilter by vm.categoryFilter.collectAsStateWithLifecycle()
+    val replayOnly by vm.replayOnly.collectAsStateWithLifecycle()
     val guideCategories by vm.guideCategories.collectAsStateWithLifecycle()
     val providerNames by vm.providerNames.collectAsStateWithLifecycle()
     val guideWidthShares by vm.guideWidthShares.collectAsStateWithLifecycle()
     val favoriteIds by vm.favoriteChannelIds.collectAsStateWithLifecycle()
     val catchupPlayer by vm.catchupPlayer.collectAsStateWithLifecycle()
-    var showCategoryPicker by remember { mutableStateOf(false) }
     val colors = OwnTVTheme.colors
     val hScroll = rememberScrollState()
     val rowListState = androidx.compose.foundation.lazy.rememberLazyListState()
@@ -278,7 +244,7 @@ fun EpgScreen(
 
     // No BackHandler here: the Guide is a top-level section, so Back is the shell's job (content →
     // sidebar → exit dialog). A screen-level handler would swallow Back forever and block app exit.
-    LaunchedEffect(Unit) { vm.load() } // reload from DB each time the guide is opened
+    // Shell activation coalesces offscreen invalidations into one guide load.
     // Phase 6 fix — don't auto-focus the first channel when the guide mounts. The guide nav item
     // keeps focus on click; RIGHT press from the sidebar enters the grid via focusProperties.onEnter
     // (which routes to firstCell/tunedCell). Auto-focusing here stole the sidebar's focus on section
@@ -434,15 +400,17 @@ fun EpgScreen(
         hadDialog = false
         val idx = restoreChannelId?.let { id -> state.channels.indexOfFirst { it.id == id } } ?: -1
         val target = if (idx >= 0) restoreCell else firstCell
-        if (idx >= 0) runCatching { rowListState.scrollToItem(idx) }
-        pendingEnter = target
-        kotlinx.coroutines.delay(80)
-        if (!runCatching { target.requestFocus() }.getOrDefault(false)) runCatching { firstCell.requestFocus() }
-        restoreChannelId = null // focus is set; release the row so playback-restore can reuse it
+        val inputGuard = tv.own.owntv.ui.components.dialogRestoreInputGuard
+        val revision = inputGuard.revision
+        tv.own.owntv.ui.components.restoreDialogFocus(true, { target.requestFocus() }, {
+            if (idx >= 0 && rowListState.firstVisibleItemIndex > idx) rowListState.scrollToItem(idx)
+        }, { inputGuard.revision == revision && !inputGuard.pointerActive })
+        pendingEnter = null
+        restoreChannelId = null // release the row after restoration, including user cancellation
     }
 
     Column(
-        modifier = modifier
+        modifier = modifier.testTag("owntv_epg_screen")
             .fillMaxSize()
             .roundedPanel(fillColor = ContentPanelFill)
             // Entry from the sidebar lands on the first channel — unless a restore is pending
@@ -461,9 +429,9 @@ fun EpgScreen(
             // (landing on the top bar) — trap vertical exits; Left/Right/Back leave normally.
             .trapVerticalFocusExit()
             .focusGroup()
-            .padding(horizontal = if (compactLayout) 12.dp else 32.dp, vertical = if (compactLayout) 12.dp else 24.dp),
+            .padding(horizontal = if (compactLayout) 8.dp else 12.dp, vertical = if (compactLayout) 8.dp else 12.dp),
     ) {
-        // Header: back + title + date + refresh
+        // Header: back, title, browsed date and return to now.
         GuideHeaderRow(compactLayout) {
             val backDescription = stringResource(R.string.common_back)
             FocusableSurface(onClick = onBack, modifier = Modifier.size(if (touch) 48.dp else 44.dp).semantics { contentDescription = backDescription }, shape = RoundedCornerShape(14.dp), contentAlignment = Alignment.Center, surface = GlassSurface.CARDS) { _ ->
@@ -485,41 +453,25 @@ fun EpgScreen(
                 OwnTVButton(stringResource(R.string.content_epg_jump_now), onClick = jumpToNow, icon = OwnTVIcon.HISTORY, style = OwnTVButtonStyle.SECONDARY)
             }
             if (!compactLayout) Spacer(Modifier.weight(1f))
+        }
+        GuideHeaderRow(compact = true, spacing = 8.dp) {
+            if (state.channels.isNotEmpty()) {
+                OwnTVButton(stringResource(R.string.guide_previous_day), onClick = { moveTime(-1, true) }, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(R.string.guide_next_day), onClick = { moveTime(1, true) }, style = OwnTVButtonStyle.SECONDARY)
+            }
+            OwnTVButton(
+                stringResource(if (replayOnly) R.string.guide_replay_only_on else R.string.guide_replay_only_off),
+                onClick = vm::toggleReplayOnly,
+                icon = OwnTVIcon.HISTORY,
+                style = if (replayOnly) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
+            )
             // Guide sort: A–Z / Provider / Live TV (mirrors Live) / Catch-up (archive first; hidden when none).
             val sortLabel = when {
                 sortGuide == SettingsRepository.GuideSort.CATCHUP && state.catchupCount == 0 -> guideSortLabel(SettingsRepository.GuideSort.LIVE_TV)
                 sortGuide == SettingsRepository.GuideSort.FAVORITES && state.favoriteCount == 0 -> guideSortLabel(SettingsRepository.GuideSort.LIVE_TV)
                 else -> guideSortLabel(sortGuide)
             }
-            // Category filter (#8): narrow the guide to one group instead of all channels at once.
-            if (guideCategories.isNotEmpty()) {
-                val catLabel = categoryFilter?.let { key -> guideCategories.firstOrNull { it.key == key }?.name } ?: stringResource(R.string.content_epg_all)
-                OwnTVButton(stringResource(R.string.content_epg_category_button, catLabel), onClick = { showCategoryPicker = true }, icon = OwnTVIcon.MENU, style = OwnTVButtonStyle.SECONDARY)
-                if (!compactLayout) Spacer(Modifier.width(12.dp))
-            }
             OwnTVButton(stringResource(R.string.content_epg_sort_button, sortLabel), onClick = vm::cycleGuideSort, icon = OwnTVIcon.SORT, style = OwnTVButtonStyle.SECONDARY)
-            if (!compactLayout) Spacer(Modifier.width(12.dp))
-            // Smart-match: auto-link channels whose tvg-id doesn't match the EPG feed, by name (#13).
-            if (matching) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OwnTVSpinner(sizeDp = 20)
-                    Text(stringResource(R.string.content_epg_matching), style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant)
-                }
-            } else {
-                OwnTVButton(stringResource(R.string.content_epg_match_button), onClick = vm::autoMatchEpg, icon = OwnTVIcon.EPG, style = OwnTVButtonStyle.SECONDARY)
-            }
-        }
-        if (state.channels.isNotEmpty()) {
-            GuideHeaderRow(compactLayout, 8.dp) {
-                OwnTVButton(stringResource(R.string.guide_previous_day), onClick = { moveTime(-1, true) }, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.guide_previous_hour), onClick = { moveTime(-1, false) }, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.guide_next_hour), onClick = { moveTime(1, false) }, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.guide_next_day), onClick = { moveTime(1, true) }, style = OwnTVButtonStyle.SECONDARY)
-            }
-        }
-        state.stats?.let { stats ->
-            Spacer(Modifier.height(4.dp))
-            Text(epgStatsText(stats), style = MaterialTheme.typography.labelLarge, color = colors.primary)
         }
         // Outcome of the last auto-match run (auto-applied count / how many need review). Dismissible.
         matchSummary?.let { summary ->
@@ -530,14 +482,14 @@ fun EpgScreen(
                 }
             }
         }
-        Spacer(Modifier.height(10.dp))
+        Spacer(Modifier.height(6.dp))
         SearchBar(
             query = query,
             onQueryChange = vm::setQuery,
             placeholder = stringResource(R.string.content_epg_search_hint),
             modifier = Modifier.fillMaxWidth().onSizeChanged { guideContentWidthPx = it.width },
         )
-        Spacer(Modifier.height(12.dp))
+        Spacer(Modifier.height(8.dp))
 
         when {
             state.loading -> CenterBox { OwnTVSpinner(sizeDp = 56) }
@@ -553,14 +505,18 @@ fun EpgScreen(
                 OwnTVButton(stringResource(R.string.content_epg_add), onClick = onAddEpg, icon = OwnTVIcon.ADD)
             }
             state.channels.isEmpty() -> CenterBox {
-                Text(state.message?.let { epgMessageText(it) } ?: stringResource(R.string.content_epg_no_guide), style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
+                Text(
+                    if (replayOnly && query.isBlank()) stringResource(R.string.guide_replay_only_empty)
+                    else state.message?.let { epgMessageText(it) } ?: stringResource(R.string.content_epg_no_guide),
+                    style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant,
+                )
             }
             else -> {
                 CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) {
                     GuideTimeAxis(state.windowStart, state.windowEnd, liveNow, guideChannelWidth, guideTimelineWidthPx, hScroll)
                     Spacer(Modifier.height(8.dp))
 
-                    LazyColumn(modifier = Modifier.weight(1f), state = rowListState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    LazyColumn(modifier = Modifier.weight(1f).testTag("owntv_epg_ready"), state = rowListState, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         itemsIndexed(
                             state.channels,
                             key = { _, ch -> ch.id },
@@ -677,7 +633,6 @@ fun EpgScreen(
             channelName = channel.name,
             isFavorite = channel.id in favoriteIds,
             onToggleFavorite = { vm.toggleFavoriteChannel(channel) },
-            onAuto = { vm.autoMatchOne(channel); matchChooser = null },
             onManual = { matchChooser = null; matchingChannel = channel },
             onOffset = { matchChooser = null; offsetChannel = channel },
             onInheritance = { matchChooser = null; inheritanceChannel = channel },
@@ -754,19 +709,6 @@ fun EpgScreen(
         )
     }
 
-    if (showCategoryPicker) {
-        tv.own.owntv.features.settings.PickerDialog(
-            title = stringResource(R.string.content_epg_guide_category),
-            options = listOf("ALL" to stringResource(R.string.content_epg_all_categories)) + guideCategories.map { it.key to it.name },
-            selected = categoryFilter ?: "ALL",
-            trailingLabels = guideCategories.mapNotNull { category ->
-                category.providerName?.let { category.key to it }
-            }.toMap(),
-            onSelect = { vm.setCategoryFilter(it.takeUnless { value -> value == "ALL" }); showCategoryPicker = false },
-            onDismiss = { showCategoryPicker = false },
-            searchable = true,
-        )
-    }
 }
 
 /**
@@ -786,14 +728,15 @@ private fun EpgMatchReviewDialog(
     val colors = OwnTVTheme.colors
     BackHandler { onDone() }
     val firstFocus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { kotlinx.coroutines.delay(60); runCatching { firstFocus.requestFocus() } }
+    val initialFocusGuard = remember { tv.own.owntv.ui.components.FocusRequestGuard() }
 
     // Popup(focusable=true) creates a hard focus boundary — clicking Accept/Skip removes an item
     // from the LazyColumn, but focus stays inside instead of escaping to the main nav bar.
     tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = onDone) {
+    LaunchedEffect(Unit) { firstFocus.requestBoundedFocus(initialFocusGuard, revision = 0L) }
     tv.own.owntv.ui.theme.PopupFontTheme(fontScale = 0.75f) {
     Box(
-        Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(),
+        Modifier.fillMaxSize().cancelPendingFocusOnInput(initialFocusGuard).modalScrim().trapAllFocusExit().focusGroup(),
         contentAlignment = Alignment.Center,
     ) {
         Column(Modifier.dialogPanel(width = 576.dp, corner = 18.dp, padding = 18.dp)) {
@@ -867,7 +810,6 @@ private fun EpgMatchChooserDialog(
     channelName: String,
     isFavorite: Boolean,
     onToggleFavorite: () -> Unit,
-    onAuto: () -> Unit,
     onManual: () -> Unit,
     onOffset: () -> Unit,
     onInheritance: () -> Unit,
@@ -876,11 +818,12 @@ private fun EpgMatchChooserDialog(
     val colors = OwnTVTheme.colors
     BackHandler { onDismiss() }
     val firstFocus = remember { FocusRequester() }
-    LaunchedEffect(Unit) { kotlinx.coroutines.delay(60); runCatching { firstFocus.requestFocus() } }
+    val initialFocusGuard = remember { tv.own.owntv.ui.components.FocusRequestGuard() }
 
     tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = onDismiss) {
+    LaunchedEffect(Unit) { firstFocus.requestBoundedFocus(initialFocusGuard, revision = 0L) }
     Box(
-        Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup()
+        Modifier.fillMaxSize().cancelPendingFocusOnInput(initialFocusGuard).modalScrim().trapAllFocusExit().focusGroup()
             .longPressMenuGuard(), // long-press OK is still held — don't auto-click the first option
         contentAlignment = Alignment.Center,
     ) {
@@ -898,8 +841,6 @@ private fun EpgMatchChooserDialog(
                 icon = OwnTVIcon.FAVORITE,
                 modifier = Modifier.fillMaxWidth().focusRequester(firstFocus),
             )
-            Spacer(Modifier.height(10.dp))
-            OwnTVButton(stringResource(R.string.content_epg_match_button), onClick = onAuto, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.EPG, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(10.dp))
             OwnTVButton(stringResource(R.string.content_epg_pick_manually), onClick = onManual, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.SEARCH, modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(10.dp))
@@ -988,6 +929,13 @@ private fun GuideChannelRow(
                     Box(Modifier.size(8.dp).clip(RoundedCornerShape(4.dp)).background(categoryColor))
                 }
                 if (!compactLayout) GuideChannelLogo(channel)
+                if (channel.catchup) {
+                    val replayDescription = stringResource(R.string.guide_replay_channel)
+                    OwnTVIcon(
+                        OwnTVIcon.HISTORY, tint = colors.primary,
+                        modifier = Modifier.size(16.dp).semantics { contentDescription = replayDescription },
+                    )
+                }
                 Text(
                     channel.number?.let { stringResource(R.string.content_epg_channel_number, it, channel.name) } ?: channel.name,
                     style = MaterialTheme.typography.titleSmall.copy(textDirection = TextDirection.Content),
@@ -1155,9 +1103,9 @@ private fun GuideInfoStrip(
         description
     }
     Row(
-        modifier = Modifier.fillMaxWidth().padding(top = 8.dp)
+        modifier = Modifier.fillMaxWidth().padding(top = 6.dp)
             .clip(RoundedCornerShape(10.dp)).background(colors.surfaceContainerHigh)
-            .padding(horizontal = 14.dp, vertical = 10.dp),
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
     ) {

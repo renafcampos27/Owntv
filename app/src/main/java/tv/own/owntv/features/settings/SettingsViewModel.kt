@@ -48,7 +48,6 @@ import tv.own.owntv.core.util.throttleLatest
 import tv.own.owntv.core.database.dao.resolveExistingProfileId
 import tv.own.owntv.core.launcher.LauncherIntegrationRepository
 import tv.own.owntv.core.settings.ChNavLimits
-import tv.own.owntv.core.settings.EpgAutoRefresh
 import tv.own.owntv.core.settings.EpgRefresh
 import tv.own.owntv.core.settings.PanelSection
 import tv.own.owntv.core.settings.PanelShares
@@ -433,6 +432,14 @@ class SettingsViewModel(
     // --- Video Player Settings ---
     val hwDecoding: StateFlow<Boolean> = settings.hwDecoding.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     fun setHwDecoding(enabled: Boolean) { viewModelScope.launch { settings.setHwDecoding(enabled) } }
+    val softwareAudio = settings.softwareAudio.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    fun setSoftwareAudio(enabled: Boolean) { viewModelScope.launch { settings.setSoftwareAudio(enabled) } }
+    val decoderQueueing = settings.decoderQueueing.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.DecoderQueueing.AUTO)
+    fun cycleDecoderQueueing() {
+        val modes = tv.own.owntv.core.settings.DecoderQueueing.entries
+        val next = modes[(decoderQueueing.value.ordinal + 1) % modes.size]
+        viewModelScope.launch { settings.setDecoderQueueing(next) }
+    }
 
     val vodEnginePreference: StateFlow<tv.own.owntv.core.player.EnginePreference> = settings.vodEnginePreference
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.player.EnginePreference.MPV_FIRST)
@@ -496,6 +503,15 @@ class SettingsViewModel(
     val measuredStreamStats: StateFlow<Boolean> = settings.measuredStreamStats.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     fun setMeasuredStreamStats(enabled: Boolean) { viewModelScope.launch { settings.setMeasuredStreamStats(enabled) } }
 
+    val channelPlaybackConfigs = settings.channelPlaybackConfigs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    fun setChannelPlaybackOptions(channel: tv.own.owntv.core.database.entity.ChannelEntity, options: tv.own.owntv.core.settings.ChannelPlaybackOptions) {
+        viewModelScope.launch { settings.setChannelPlaybackConfig(tv.own.owntv.core.settings.ManualTsChannel.of(channel), options) }
+    }
+    suspend fun searchChannelPlaybackChannels(sourceId: Long, query: String): List<tv.own.owntv.core.database.entity.ChannelEntity> {
+        val profileId = profileDao.resolveExistingProfileId(settings.activeProfileId.first()) ?: return emptyList()
+        return loadStartupChannelResults(profileId, query, sourceId)
+    }
+
     val liveHlsOnly = settings.liveHlsOnly.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     fun setLiveHlsOnly(enabled: Boolean) { viewModelScope.launch { settings.setLiveHlsOnly(enabled) } }
     val detailedDiagnostics: StateFlow<Boolean> = settings.detailedDiagnostics.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
@@ -537,16 +553,16 @@ class SettingsViewModel(
     @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
     val startupMode: StateFlow<tv.own.owntv.core.settings.StartupMode> =
         settings.activeProfileId
-            .flatMapLatest { settings.startupMode(it) }
+            .flatMapLatest { settings.startupMode(profileDao.resolveExistingProfileId(it) ?: it) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.StartupMode.HOME)
     fun setStartupMode(mode: tv.own.owntv.core.settings.StartupMode) {
-        viewModelScope.launch { settings.setStartupMode(settings.activeProfileId.first(), mode) }
+        viewModelScope.launch { settings.setStartupMode(profileDao.resolveExistingProfileId(settings.activeProfileId.first()) ?: return@launch, mode) }
     }
 
     val startupChannel: StateFlow<tv.own.owntv.core.settings.StartupChannelRef?> =
         settings.activeProfileId
             .flatMapLatest { profileId ->
-                if (profileId < 0L) flowOf(null) else settings.startupChannel(profileId)
+                profileDao.resolveExistingProfileId(profileId)?.let { settings.startupChannel(it) } ?: flowOf(null)
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
@@ -561,7 +577,7 @@ class SettingsViewModel(
             _startupChannelQuery.debounce(180),
             startupChannelRefresh,
         ) { profileId, query, _ -> profileId to query }
-            .mapLatest { (profileId, query) -> loadStartupChannelResults(profileId, query) }
+            .mapLatest { (profileId, query) -> loadStartupChannelResults(profileDao.resolveExistingProfileId(profileId) ?: -1L, query) }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
     fun setStartupChannelQuery(query: String) { _startupChannelQuery.value = query }
@@ -570,7 +586,7 @@ class SettingsViewModel(
 
     fun setStartupChannel(channel: tv.own.owntv.core.database.entity.ChannelEntity) {
         viewModelScope.launch {
-            val profileId = settings.activeProfileId.first()
+            val profileId = profileDao.resolveExistingProfileId(settings.activeProfileId.first()) ?: return@launch
             if (profileId < 0L) return@launch
             settings.setSpecificStartupChannel(
                 profileId,
@@ -587,11 +603,14 @@ class SettingsViewModel(
     private suspend fun loadStartupChannelResults(
         profileId: Long,
         query: String,
+        selectedSourceId: Long? = null,
     ): List<tv.own.owntv.core.database.entity.ChannelEntity> {
         if (profileId < 0L) return emptyList()
         val sources = sourceDao.observeForProfile(profileId).first().filter { it.syncLive }
         val defaultSourceId = settings.defaultSourceId.first()
-        val sourceIds = if (defaultSourceId > 0L && sources.any { it.id == defaultSourceId }) {
+        val sourceIds = if (selectedSourceId != null) {
+            sources.filter { it.id == selectedSourceId }.map { it.id }
+        } else if (defaultSourceId > 0L && sources.any { it.id == defaultSourceId }) {
             listOf(defaultSourceId)
         } else {
             sources.map { it.id }

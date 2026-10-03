@@ -50,6 +50,8 @@ internal class TvImeWatcher(private val hostView: View, private val allowEstimat
     )
     private val rect = Rect()
     private var baselineVisibleBottom = -1
+    private val windowBaseline = ImeWindowBaseline()
+    private val windowLocation = IntArray(2)
     private var attached = false
     private val globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener { recompute("layout") }
 
@@ -96,14 +98,15 @@ internal class TvImeWatcher(private val hostView: View, private val allowEstimat
     private fun captureBaseline() {
         if (imeRequested || hostView.height <= 0) return
         hostView.getWindowVisibleDisplayFrame(rect)
-        if (rect.bottom > 0) baselineVisibleBottom = maxOf(baselineVisibleBottom, rect.bottom)
+        if (allowEstimate && rect.bottom > 0) baselineVisibleBottom = maxOf(baselineVisibleBottom, rect.bottom)
     }
 
     private fun recompute(trigger: String) {
-        val displayHeight = maxOf(
-            hostView.resources.displayMetrics.heightPixels,
-            hostView.rootView.height,
-            hostView.height,
+        val displayHeight = imeHostHeight(
+            remote = allowEstimate,
+            displayHeight = hostView.resources.displayMetrics.heightPixels,
+            rootHeight = hostView.rootView.height,
+            hostHeight = hostView.height,
         )
         if (displayHeight <= 0) return
 
@@ -113,7 +116,15 @@ internal class TvImeWatcher(private val hostView: View, private val allowEstimat
 
         hostView.getWindowVisibleDisplayFrame(rect)
         if (!imeRequested && !imeInsetVisible) captureBaseline()
-        val frameObscured = if (baselineVisibleBottom > 0 && rect.bottom > 0) {
+        hostView.rootView.getLocationOnScreen(windowLocation)
+        val localVisibleBottom = (rect.bottom - windowLocation[1]).coerceIn(0, displayHeight)
+        windowBaseline.update(
+            hostView.rootView.width, displayHeight, windowLocation[1], localVisibleBottom,
+            imeRequested || imeInsetVisible,
+        )
+        val frameObscured = if (!allowEstimate) {
+            windowBaseline.obscured(localVisibleBottom)
+        } else if (baselineVisibleBottom > 0 && rect.bottom > 0) {
             (baselineVisibleBottom - rect.bottom).coerceAtLeast(0)
         } else 0
 

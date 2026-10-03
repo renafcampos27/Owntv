@@ -37,8 +37,6 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
-import kotlinx.coroutines.launch
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
@@ -58,7 +56,6 @@ import tv.own.owntv.ui.components.chNavPaging
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.jumpLazyListTo
 import tv.own.owntv.ui.components.OwnTVButton
-import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.dialogPanel
 import tv.own.owntv.ui.components.modalScrim
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -85,8 +82,6 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val rows by vm.rows.collectAsStateWithLifecycle()
     val hiddenChannels by vm.hiddenChannels.collectAsStateWithLifecycle()
     val hideNewCategories by vm.hideNewCategories.collectAsStateWithLifecycle()
-    val currentSort by vm.currentSort.collectAsStateWithLifecycle()
-    val visibilityFilter by vm.visibilityFilter.collectAsStateWithLifecycle()
     val rangeAnchorKey by vm.rangeAnchorKey.collectAsStateWithLifecycle()
     val rangeMode by vm.rangeMode.collectAsStateWithLifecycle()
     val rangeEndKey by vm.rangeEndKey.collectAsStateWithLifecycle()
@@ -96,8 +91,6 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val colors = OwnTVTheme.colors
     var renaming by remember { mutableStateOf<CustomizeCatRow?>(null) }
     var showNewCatPicker by remember { mutableStateOf(false) }
-    var showSortPicker by remember { mutableStateOf(false) }
-    var showFilterPicker by remember { mutableStateOf(false) }
     // The category whose Hide button was clicked to close a range — opens the Show/Hide/Cancel prompt.
     var rangeEnd by remember { mutableStateOf<CustomizeCatRow?>(null) }
     // ＋ New category (issue #87): name prompt, then the empty combined category appears in the list.
@@ -113,8 +106,6 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var confirmPinStage by remember { mutableStateOf(false) }
     var pinMismatch by remember { mutableStateOf(false) }
     val firstFocus = remember { FocusRequester() }
-    val sortFocus = remember { FocusRequester() }
-    val filterFocus = remember { FocusRequester() }
     val newCategoriesFocus = remember { FocusRequester() }
     val newCatPillFocus = remember { FocusRequester() } // "＋ New category" pill — restore target after its name prompt
     val pinFocus = remember { FocusRequester() }
@@ -123,7 +114,7 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     // Opener row for whichever dialog (new-category picker, rename) is open — restored on close so
     // focus doesn't always jump back to the Live TV section chip.
     var dialogReturn by tv.own.owntv.ui.components.rememberDialogFocusRestore(
-        anyDialogOpen = showNewCatPicker || showSortPicker || showFilterPicker || renaming != null || creatingCategory ||
+        anyDialogOpen = showNewCatPicker || renaming != null || creatingCategory ||
             deletingCategory != null || rangeEnd != null || editingPin != null,
     )
 
@@ -241,37 +232,13 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         // One compact strip, matching the agreed mockup: section tabs left, actions right.
         Row(verticalAlignment = Alignment.CenterVertically) {
-            SectionChip(stringResource(R.string.settings_live_tv), section == MediaType.LIVE, Modifier.focusRequester(firstFocus)) { vm.selectSection(MediaType.LIVE) }
-            Spacer(Modifier.width(10.dp))
-            Spacer(Modifier.width(10.dp))
+            OwnTVButton(
+                label = stringResource(R.string.settings_sort_alpha),
+                onClick = { vm.setSort(SettingsRepository.SortMode.ALPHA) },
+                style = OwnTVButtonStyle.SECONDARY,
+                modifier = Modifier.focusRequester(firstFocus),
+            )
             Spacer(Modifier.weight(1f))
-            // Sort pill — reuses the same per-section sort mode that Browse uses.
-            OwnTVButton(
-                label = stringResource(
-                    R.string.settings_customize_sort_button,
-                    stringResource(if (currentSort == SettingsRepository.SortMode.PLAYLIST) R.string.content_provider else R.string.settings_sort_alpha),
-                ),
-                onClick = { dialogReturn = sortFocus; showSortPicker = true },
-                style = OwnTVButtonStyle.SECONDARY,
-                modifier = Modifier.focusRequester(sortFocus),
-            )
-            Spacer(Modifier.width(10.dp))
-            OwnTVButton(
-                label = stringResource(
-                    R.string.settings_customize_filter_button,
-                    stringResource(
-                        when (visibilityFilter) {
-                            CustomizeVisibilityFilter.ALL -> R.string.settings_customize_filter_all
-                            CustomizeVisibilityFilter.VISIBLE -> R.string.settings_customize_filter_visible
-                            CustomizeVisibilityFilter.HIDDEN -> R.string.settings_customize_filter_hidden
-                        },
-                    ),
-                ),
-                onClick = { dialogReturn = filterFocus; showFilterPicker = true },
-                style = OwnTVButtonStyle.SECONDARY,
-                modifier = Modifier.focusRequester(filterFocus),
-            )
-            Spacer(Modifier.width(10.dp))
             // New categories pill — same setting as the old Row2, now compact.
             OwnTVButton(
                 label = stringResource(
@@ -506,41 +473,9 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
     }
 
-    if (showSortPicker) {
-        PickerDialog(
-            title = stringResource(R.string.settings_customize_sort_categories),
-            options = listOf(
-                "PLAYLIST" to stringResource(R.string.content_provider),
-                "ALPHA" to stringResource(R.string.settings_sort_alpha),
-            ),
-            selected = currentSort.name,
-            onSelect = { value ->
-                val mode = runCatching { SettingsRepository.SortMode.valueOf(value) }.getOrNull()
-                if (mode != null) vm.setSort(mode)
-                showSortPicker = false
-            },
-            onDismiss = { showSortPicker = false },
-        )
-    }
 
-    if (showFilterPicker) {
-        PickerDialog(
-            title = stringResource(R.string.settings_customize_filter_title),
-            options = listOf(
-                CustomizeVisibilityFilter.ALL.name to stringResource(R.string.settings_customize_filter_all),
-                CustomizeVisibilityFilter.VISIBLE.name to stringResource(R.string.settings_customize_filter_visible),
-                CustomizeVisibilityFilter.HIDDEN.name to stringResource(R.string.settings_customize_filter_hidden),
-            ),
-            selected = visibilityFilter.name,
-            onSelect = { value ->
-                CustomizeVisibilityFilter.entries.firstOrNull { it.name == value }
-                    ?.let(vm::setVisibilityFilter)
-                scope.launch { listState.scrollToItem(0) }
-                showFilterPicker = false
-            },
-            onDismiss = { showFilterPicker = false },
-        )
-    }
+
+
 
     // Custom category pending deletion (opened from the rename dialog's Delete) — confirmed first,
     // plan §3.5: "It must never touch content."
@@ -680,32 +615,6 @@ private fun RangeHideDialog(count: Int, onHide: () -> Unit, onShow: () -> Unit, 
             }
         }
     }
-    }
-}
-
-@Composable
-private fun SectionChip(label: String, selected: Boolean, modifier: Modifier = Modifier, onClick: () -> Unit) {
-    val colors = OwnTVTheme.colors
-    FocusableSurface(
-        onClick = onClick,
-        selected = selected,
-        modifier = modifier,
-        shape = RoundedCornerShape(50),
-        selectedContainerColor = colors.primaryContainer,
-        contentAlignment = Alignment.Center,
-        surface = GlassSurface.CARDS,
-    ) { focused ->
-        Text(
-            label,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = when {
-                selected -> colors.onPrimaryContainer
-                focused -> colors.primary
-                else -> colors.onSurface
-            },
-            modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
-        )
     }
 }
 

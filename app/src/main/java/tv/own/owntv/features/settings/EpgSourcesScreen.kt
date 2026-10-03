@@ -366,6 +366,7 @@ private fun EpgRow(
             val catchupNote = count?.third?.takeIf { it > 0 }?.let {
                 pluralStringResource(R.plurals.settings_epg_sources_catchup, it, it)
             }
+            val c = count
             val status = when {
                 activeSync != null -> when {
                     activeSync.programmes > 0 -> stringResource(
@@ -384,11 +385,11 @@ private fun EpgRow(
                     R.string.settings_epg_sources_error,
                     classifySyncFailure(source.lastError, online = true).displayText(),
                 )
-                count != null && count!!.second > 0 -> {
+                c != null && c.second > 0 -> {
                     val counts = stringResource(
                         R.string.settings_epg_sources_status_count,
-                        pluralStringResource(R.plurals.settings_epg_sources_status_count_channels, count!!.first, count!!.first),
-                        pluralStringResource(R.plurals.settings_epg_sources_status_count_programmes, count!!.second, count!!.second),
+                        pluralStringResource(R.plurals.settings_epg_sources_status_count_channels, c.first, c.first),
+                        pluralStringResource(R.plurals.settings_epg_sources_status_count_programmes, c.second, c.second),
                     )
                     if (catchupNote != null) stringResource(R.string.settings_epg_sources_status_count_with_catchup, counts, catchupNote)
                     else counts

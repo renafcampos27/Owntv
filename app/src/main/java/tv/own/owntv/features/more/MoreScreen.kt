@@ -35,33 +35,29 @@ import org.koin.androidx.compose.koinViewModel
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.BuildConfig
 import tv.own.owntv.R
 import tv.own.owntv.core.backup.BackupManager
-import tv.own.owntv.core.i18n.SupportedLocales
 import tv.own.owntv.core.model.MediaType
 import tv.own.owntv.core.settings.SettingsRepository
+import org.koin.compose.koinInject
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.features.settings.BackupScreen
 import tv.own.owntv.features.settings.LocalSyncScreen
 import tv.own.owntv.features.settings.SettingsViewModel
 import tv.own.owntv.features.settings.sectionLabelRes
 import tv.own.owntv.features.shell.components.AboutDialog
-import tv.own.owntv.features.shell.components.GITHUB_REPO
 import tv.own.owntv.features.shell.components.LocalSettingsRowTone
 import tv.own.owntv.features.shell.components.MonoText
 import tv.own.owntv.features.shell.components.PlaybackErrorLogDialog
@@ -123,8 +119,6 @@ fun MoreScreen(
     var showErrorLog by remember { mutableStateOf(false) }
     val favorites by counts.favorites.collectAsStateWithLifecycle()
     val history by counts.history.collectAsStateWithLifecycle()
-    val quickPinned by settingsVm.quickPinnedKeys.collectAsStateWithLifecycle()
-    val quickPreview = quickPreviewRows(settingsVm)
     val sync by counts.sync.collectAsStateWithLifecycle()
     val lastBackup by counts.lastBackup.collectAsStateWithLifecycle()
     val favoriteItems by counts.favoriteItems.collectAsStateWithLifecycle()
@@ -139,8 +133,13 @@ fun MoreScreen(
     // Which row the pane is describing. Focus drives it, the same way Settings' spine selects a
     // group on focus rather than on OK — so walking the list reads the list.
     var selected by rememberSaveable { mutableStateOf(MoreRow.SETTINGS) }
+    LaunchedEffect(page, selected) {
+        if (page in setOf(MorePage.FAVORITES, MorePage.HISTORY, MorePage.LOCAL_SYNC)) page = MorePage.ROOT
+        if (selected in setOf(MoreRow.FAVORITES, MoreRow.HISTORY, MoreRow.LOCAL_SYNC)) selected = MoreRow.SETTINGS
+    }
 
-    when (page) {
+
+    when (page.takeUnless { it in setOf(MorePage.FAVORITES, MorePage.HISTORY, MorePage.LOCAL_SYNC) } ?: MorePage.ROOT) {
         MorePage.FAVORITES -> {
             FavoritesScreen(
                 onFullscreen = onFullscreen,
@@ -257,7 +256,7 @@ fun MoreScreen(
                     icon = OwnTVIcon.SETTINGS,
                     title = stringResource(R.string.common_nav_settings),
                     summary = stringResource(R.string.more_spine_settings_summary),
-                    badge = quickPinned.size.toString(),
+                    badge = "",
                     selected = selected,
                     focus = rowFocus.getValue(MoreRow.SETTINGS),
                     onSelected = { selected = it },
@@ -265,28 +264,8 @@ fun MoreScreen(
                 )
 
                 SpineGroup(stringResource(R.string.settings_group_data))
-                SpineRow(
-                    row = MoreRow.FAVORITES,
-                    icon = OwnTVIcon.FAVORITE,
-                    title = stringResource(R.string.content_category_favorites),
-                    summary = stringResource(R.string.more_spine_favorites_summary),
-                    badge = favorites.total.toString(),
-                    selected = selected,
-                    focus = rowFocus.getValue(MoreRow.FAVORITES),
-                    onSelected = { selected = it },
-                    onClick = { focusRow(MoreRow.FAVORITES); page = MorePage.FAVORITES },
-                )
-                SpineRow(
-                    row = MoreRow.HISTORY,
-                    icon = OwnTVIcon.HISTORY,
-                    title = stringResource(R.string.content_category_history),
-                    summary = stringResource(R.string.more_spine_history_summary),
-                    badge = history.total.toString(),
-                    selected = selected,
-                    focus = rowFocus.getValue(MoreRow.HISTORY),
-                    onSelected = { selected = it },
-                    onClick = { focusRow(MoreRow.HISTORY); page = MorePage.HISTORY },
-                )
+
+
                 SpineRow(
                     row = MoreRow.BACKUP,
                     icon = OwnTVIcon.BACKUP,
@@ -299,17 +278,7 @@ fun MoreScreen(
                     onSelected = { selected = it },
                     onClick = { focusRow(MoreRow.BACKUP); page = MorePage.BACKUP },
                 )
-                SpineRow(
-                    row = MoreRow.LOCAL_SYNC,
-                    icon = OwnTVIcon.REFRESH,
-                    title = stringResource(R.string.local_sync_title),
-                    summary = stringResource(R.string.more_spine_local_sync_summary),
-                    badge = syncValue,
-                    selected = selected,
-                    focus = rowFocus.getValue(MoreRow.LOCAL_SYNC),
-                    onSelected = { selected = it },
-                    onClick = { focusRow(MoreRow.LOCAL_SYNC); page = MorePage.LOCAL_SYNC },
-                )
+
 
                 SpineGroup(stringResource(R.string.settings_app_group))
                 SpineRow(
@@ -326,8 +295,8 @@ fun MoreScreen(
                 SpineRow(
                     row = MoreRow.ABOUT,
                     icon = OwnTVIcon.INFO,
-                    title = stringResource(R.string.settings_about),
-                    summary = stringResource(R.string.more_spine_about_summary),
+                    title = stringResource(R.string.settings_version_updates),
+                    summary = stringResource(R.string.settings_version_updates_description),
                     badge = BuildConfig.VERSION_NAME,
                     selected = selected,
                     focus = rowFocus.getValue(MoreRow.ABOUT),
@@ -354,7 +323,7 @@ fun MoreScreen(
                     MoreRow.BACKUP -> stringResource(R.string.settings_backup_restore)
                     MoreRow.LOCAL_SYNC -> stringResource(R.string.local_sync_title)
                     MoreRow.ERROR_LOG -> stringResource(R.string.settings_playback_error_log)
-                    MoreRow.ABOUT -> stringResource(R.string.settings_about)
+                    MoreRow.ABOUT -> stringResource(R.string.settings_version_updates)
                 }
                 // Settings' own sheet header: 18 sp title, 12.5 sp summary, bordered mono tag.
                 SheetHeader(
@@ -372,8 +341,7 @@ fun MoreScreen(
                         MoreRow.ABOUT -> stringResource(R.string.settings_about_description)
                     },
                     tag = when (selected) {
-                        MoreRow.SETTINGS ->
-                            pluralStringResource(R.plurals.settings_pinned_count, quickPinned.size, quickPinned.size)
+                        MoreRow.SETTINGS -> null
                         MoreRow.FAVORITES -> favorites.total.toString()
                         MoreRow.HISTORY -> history.total.toString()
                         MoreRow.BACKUP -> backupAge ?: neverBadge
@@ -389,7 +357,7 @@ fun MoreScreen(
                         .padding(horizontal = 18.dp, vertical = 6.dp),
                 ) {
                     when (selected) {
-                        MoreRow.SETTINGS -> SettingsPane(quickPreview)
+                        MoreRow.SETTINGS -> SettingsPane()
                         MoreRow.FAVORITES -> CountsPane(favorites, favoriteItems)
                         MoreRow.HISTORY -> CountsPane(history, historyItems)
                         MoreRow.BACKUP -> BackupPane(lastBackup)
@@ -404,7 +372,7 @@ fun MoreScreen(
         }
     }
 
-    // The same two dialogs Settings used to open, unchanged — only their door moved.
+    // Version/update controls are shared with Settings; diagnostics keep their own dialog.
     if (showAbout) {
         OwnTVPopup(onDismissRequest = { showAbout = false }) {
             AboutDialog(onDismiss = { showAbout = false })
@@ -483,19 +451,7 @@ private fun SpineRow(
  * rather than a jump cut: the toggles the user pinned to Quick, and the groups behind the door.
  */
 @Composable
-private fun ColumnScope.SettingsPane(quick: List<QuickPreviewRow>) {
-    // The user's pinned Quick rows WITH their live values, resolved by `quickPreviewRows` — the six
-    // root toggles from their own flows, the Video player rows through `videoQuickBinding`, which is
-    // the same resolver the Settings root uses. That is the whole pinnable set, so this is the list,
-    // not a sample of it.
-    if (quick.isNotEmpty()) {
-        PaneLabel(stringResource(R.string.settings_group_quick))
-        // Whatever fits, cut at the bottom of the plate — never scrolled, never pushing the groups
-        // and the OK hint off the screen. A long pin list simply shows as much as there is room for.
-        Column(modifier = Modifier.weight(1f, fill = false).clipToBounds()) {
-            quick.forEach { row -> PaneValueRow(icon = row.icon, label = row.label, value = row.value) }
-        }
-    }
+private fun ColumnScope.SettingsPane() {
     PaneLabel(stringResource(R.string.more_pane_groups))
     // Settings' nine groups, by their own labels. Quick is group zero and is listed above instead.
     PaneChips(
@@ -697,20 +653,22 @@ private fun ErrorLogPane(entries: List<PlaybackErrorLog.Entry>?) {
  */
 @Composable
 private fun AboutPane() {
+    val settings: SettingsRepository = koinInject()
+    val checkAtStartup by settings.updateCheckOnStart.collectAsStateWithLifecycle(false)
     PaneValueRow(
         icon = OwnTVIcon.INFO,
-        label = stringResource(R.string.settings_about),
-        value = BuildConfig.VERSION_NAME,
+        label = stringResource(R.string.settings_installed_version, BuildConfig.VERSION_NAME),
+        value = null,
     )
     PaneValueRow(
-        icon = OwnTVIcon.LANGUAGE,
-        label = stringResource(R.string.more_pane_about_languages),
-        value = SupportedLocales.all.count { it.packaged }.toString(),
+        icon = OwnTVIcon.REFRESH,
+        label = stringResource(R.string.settings_update_startup),
+        value = stringResource(if (checkAtStartup) R.string.common_on else R.string.common_off),
     )
     PaneValueRow(
         icon = OwnTVIcon.INFO,
         label = stringResource(R.string.settings_about_license),
-        value = GITHUB_REPO,
+        value = null,
     )
 }
 

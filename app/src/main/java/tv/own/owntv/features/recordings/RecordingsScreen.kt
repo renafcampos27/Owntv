@@ -1,5 +1,7 @@
 package tv.own.owntv.features.recordings
 
+import androidx.compose.ui.platform.testTag
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -175,7 +177,7 @@ fun RecordingsScreen(
     }
 
     Column(
-        modifier = modifier
+        modifier = modifier.testTag("owntv_recordings_screen")
             .fillMaxSize()
             .then(if (embedded) Modifier else Modifier.roundedPanel(fillColor = ContentPanelFill))
             // Both of these belong to whoever owns the screen, and embedded that is Downloads. Kept
