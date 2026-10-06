@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -52,7 +54,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withTimeoutOrNull
-import tv.own.owntv.R
 import tv.own.owntv.core.i18n.HorizontalDirection
 import tv.own.owntv.core.i18n.horizontalDirection
 import tv.own.owntv.core.settings.RemoteShortcutAction
@@ -78,28 +79,28 @@ internal fun MediaSpec.displayText(): String {
     val decoderText = decoder?.let {
         when (it) {
             is DecoderSpec.Hardware -> buildList {
-                add(stringResource(R.string.player_decoder_hardware))
-                if (it.direct) add(stringResource(R.string.player_decoder_direct))
-            }.joinToString(stringResource(R.string.player_metadata_separator))
+                add(stringResource(CoreR.string.player_decoder_hardware))
+                if (it.direct) add(stringResource(CoreR.string.player_decoder_direct))
+            }.joinToString(stringResource(CoreR.string.player_metadata_separator))
             is DecoderSpec.Software -> buildList {
-                add(stringResource(R.string.player_decoder_software))
-                if (it.gpu) add(stringResource(R.string.player_decoder_gpu))
-            }.joinToString(stringResource(R.string.player_metadata_separator))
+                add(stringResource(CoreR.string.player_decoder_software))
+                if (it.gpu) add(stringResource(CoreR.string.player_decoder_gpu))
+            }.joinToString(stringResource(CoreR.string.player_metadata_separator))
             is DecoderSpec.Named -> buildList {
                 add(
                     when (it.value.lowercase()) {
-                        "exoplayer" -> stringResource(R.string.settings_player_exoplayer)
-                        "mpv" -> stringResource(R.string.settings_player_mpv)
+                        "exoplayer" -> stringResource(CoreR.string.settings_player_exoplayer)
+                        "mpv" -> stringResource(CoreR.string.settings_player_mpv)
                         else -> it.value
                     },
                 )
-                if (it.hardware) add(stringResource(R.string.player_decoder_hardware))
-                if (it.direct) add(stringResource(R.string.player_decoder_direct))
-            }.joinToString(stringResource(R.string.player_metadata_separator))
+                if (it.hardware) add(stringResource(CoreR.string.player_decoder_hardware))
+                if (it.direct) add(stringResource(CoreR.string.player_decoder_direct))
+            }.joinToString(stringResource(CoreR.string.player_metadata_separator))
         }
     }
     return listOfNotNull(codec, resolution, decoderText)
-        .joinToString(stringResource(R.string.player_metadata_separator))
+        .joinToString(stringResource(CoreR.string.player_metadata_separator))
 }
 
 @Composable
@@ -244,11 +245,11 @@ fun PlayerHud(
     val zoomMode by player.zoomMode.collectAsStateWithLifecycle()
     val speed by player.speed.collectAsStateWithLifecycle()
     val isLive = player.isLiveContent
-    val switchedToExo = stringResource(R.string.player_switch_exo)
-    val switchedToMpv = stringResource(R.string.player_switch_mpv)
-    val tuneNotFound = stringResource(R.string.player_channel_not_found)
-    val multipleChannels = stringResource(R.string.player_multiple_channels)
-    val tuneFailed = stringResource(R.string.player_tune_failed)
+    val switchedToExo = stringResource(CoreR.string.player_switch_exo)
+    val switchedToMpv = stringResource(CoreR.string.player_switch_mpv)
+    val tuneNotFound = stringResource(CoreR.string.player_channel_not_found)
+    val multipleChannels = stringResource(CoreR.string.player_multiple_channels)
+    val tuneFailed = stringResource(CoreR.string.player_tune_failed)
 
     val nextUpTitle by player.nextUpTitle.collectAsStateWithLifecycle()
 
@@ -613,7 +614,7 @@ fun PlayerHud(
                 // A fresh tune drives the card from the lookup result, not player metadata: the Stalker and
                 // mpv paths publish their metadata after an async resolve, which would show the old channel.
                 if (tuned != null) {
-                    ChannelOsdCard(title = tuned.name, subtitle = tuned.number?.let { stringResource(R.string.player_channel_number, it) }, logoUrl = tuned.logoUrl)
+                    ChannelOsdCard(title = tuned.name, subtitle = tuned.number?.let { stringResource(CoreR.string.player_channel_number, it) }, logoUrl = tuned.logoUrl)
                 } else {
                     ChannelCard(player)
                 }
@@ -676,13 +677,13 @@ fun PlayerHud(
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
                     CenterControls(player, nav, isPlaying, isLive, onRewindLive, onForwardLive, timeshiftOffset, playFocus)
                     if (compact && canZap) Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OwnTVButton(stringResource(R.string.adaptive_channel_previous), onClick = { onChannelDown.invoke() })
-                        OwnTVButton(stringResource(R.string.adaptive_channel_next), onClick = { onChannelUp.invoke() })
+                        OwnTVButton(stringResource(CoreR.string.adaptive_channel_previous), onClick = { onChannelDown.invoke() })
+                        OwnTVButton(stringResource(CoreR.string.adaptive_channel_next), onClick = { onChannelUp.invoke() })
                     }
                 }
 
                 val reportDuration = duration.takeIf { it > 0 }?.let { formatTime(it) }
-                val reportSavedMessage = stringResource(R.string.player_report_saved)
+                val reportSavedMessage = stringResource(CoreR.string.player_report_saved)
 
                 if (compact) CompactPlayerTimeline(player, isLive, { position.value }, duration, timeshiftOffset,
                     liveProgrammes, onScrubLive, directTuneContextKey, jumpBackWindowSec, Modifier.align(Alignment.BottomStart))
@@ -728,30 +729,30 @@ fun PlayerHud(
 
         if (touchLocked) {
             Box(Modifier.fillMaxSize().clickable { }, contentAlignment = Alignment.TopEnd) {
-                OwnTVButton(stringResource(R.string.adaptive_unlock_touch), onClick = { touchLocked = false; controlsVisible = true },
+                OwnTVButton(stringResource(CoreR.string.adaptive_unlock_touch), onClick = { touchLocked = false; controlsVisible = true },
                     modifier = Modifier.padding(16.dp))
             }
         }
         if (compactMenu) tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = { compactMenu = false }) {
             Column(Modifier.dialogPanel(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                onOpenChannelList?.let { OwnTVButton(stringResource(R.string.common_nav_live_tv), onClick = { compactMenu = false; it() }) }
-                onOpenGuide?.let { OwnTVButton(stringResource(R.string.common_nav_guide), onClick = { compactMenu = false; it() }) }
-                OwnTVButton(stringResource(R.string.player_tool_audio), onClick = { compactMenu = false; dialog = HudDialog.AUDIO })
-                if (!isLive) OwnTVButton(stringResource(R.string.player_tool_speed), onClick = { compactMenu = false; dialog = HudDialog.SPEED })
-                OwnTVButton(stringResource(R.string.player_tool_subtitles), onClick = { compactMenu = false; dialog = HudDialog.SUBS })
-                OwnTVButton(stringResource(R.string.player_tool_aspect), onClick = { compactMenu = false; dialog = HudDialog.ZOOM })
-                toggleCompat?.let { toggle -> OwnTVButton(stringResource(R.string.player_tool_engine), onClick = { compactMenu = false; toggle() }) }
-                toggleVod?.let { toggle -> OwnTVButton(stringResource(R.string.player_tool_engine), onClick = { compactMenu = false; toggle() }) }
-                onMultiview?.let { open -> OwnTVButton(stringResource(R.string.multiview_button), onClick = { compactMenu = false; open() }) }
-                onRecordThis?.let { record -> OwnTVButton(stringResource(if (recordingThis) R.string.recording_stop else R.string.recording_record), onClick = { compactMenu = false; record() }) }
+                onOpenChannelList?.let { OwnTVButton(stringResource(CoreR.string.common_nav_live_tv), onClick = { compactMenu = false; it() }) }
+                onOpenGuide?.let { OwnTVButton(stringResource(CoreR.string.common_nav_guide), onClick = { compactMenu = false; it() }) }
+                OwnTVButton(stringResource(CoreR.string.player_tool_audio), onClick = { compactMenu = false; dialog = HudDialog.AUDIO })
+                if (!isLive) OwnTVButton(stringResource(CoreR.string.player_tool_speed), onClick = { compactMenu = false; dialog = HudDialog.SPEED })
+                OwnTVButton(stringResource(CoreR.string.player_tool_subtitles), onClick = { compactMenu = false; dialog = HudDialog.SUBS })
+                OwnTVButton(stringResource(CoreR.string.player_tool_aspect), onClick = { compactMenu = false; dialog = HudDialog.ZOOM })
+                toggleCompat?.let { toggle -> OwnTVButton(stringResource(CoreR.string.player_tool_engine), onClick = { compactMenu = false; toggle() }) }
+                toggleVod?.let { toggle -> OwnTVButton(stringResource(CoreR.string.player_tool_engine), onClick = { compactMenu = false; toggle() }) }
+                onMultiview?.let { open -> OwnTVButton(stringResource(CoreR.string.multiview_button), onClick = { compactMenu = false; open() }) }
+                onRecordThis?.let { record -> OwnTVButton(stringResource(if (recordingThis) CoreR.string.recording_stop else CoreR.string.recording_record), onClick = { compactMenu = false; record() }) }
                 // This callback docks inside OwnTV; it does not enter Android system PiP.
-                onPip?.let { dock -> OwnTVButton(stringResource(R.string.settings_mini_player), onClick = { compactMenu = false; dock() }) }
-                onAudioMode?.let { audio -> OwnTVButton(stringResource(R.string.player_tool_audio_only), onClick = { compactMenu = false; audio() }) }
-                OwnTVButton(stringResource(R.string.player_tool_info), onClick = { compactMenu = false; showInfo = true })
-                onGoToLive?.let { OwnTVButton(stringResource(R.string.player_live), onClick = { compactMenu = false; it() }) }
-                onJumpBack?.let { OwnTVButton(stringResource(R.string.player_tool_catchup), onClick = { compactMenu = false; dialog = HudDialog.JUMP_BACK }) }
-                if (touch) OwnTVButton(stringResource(R.string.adaptive_lock_touch), onClick = { compactMenu = false; touchLocked = true; controlsVisible = false })
-                OwnTVButton(stringResource(R.string.common_back), onClick = { compactMenu = false })
+                onPip?.let { dock -> OwnTVButton(stringResource(CoreR.string.settings_mini_player), onClick = { compactMenu = false; dock() }) }
+                onAudioMode?.let { audio -> OwnTVButton(stringResource(CoreR.string.player_tool_audio_only), onClick = { compactMenu = false; audio() }) }
+                OwnTVButton(stringResource(CoreR.string.player_tool_info), onClick = { compactMenu = false; showInfo = true })
+                onGoToLive?.let { OwnTVButton(stringResource(CoreR.string.player_live), onClick = { compactMenu = false; it() }) }
+                onJumpBack?.let { OwnTVButton(stringResource(CoreR.string.player_tool_catchup), onClick = { compactMenu = false; dialog = HudDialog.JUMP_BACK }) }
+                if (touch) OwnTVButton(stringResource(CoreR.string.adaptive_lock_touch), onClick = { compactMenu = false; touchLocked = true; controlsVisible = false })
+                OwnTVButton(stringResource(CoreR.string.common_back), onClick = { compactMenu = false })
             }
         }
 
@@ -791,7 +792,7 @@ fun PlayerHud(
         // Status overlay (always shown).
         when {
             error != null -> Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(R.string.player_playback_error), style = MaterialTheme.typography.titleLarge, color = Color.White)
+                Text(stringResource(CoreR.string.player_playback_error), style = MaterialTheme.typography.titleLarge, color = Color.White)
                 Spacer(Modifier.height(8.dp))
                 error?.let {
                     Text(it.displayText(), style = MaterialTheme.typography.bodyMedium, color = Color.White.copy(alpha = 0.7f), textAlign = TextAlign.Center)
@@ -809,13 +810,13 @@ fun PlayerHud(
                     }
                     info.raw?.takeIf { it.isNotBlank() }?.let {
                         Spacer(Modifier.height(4.dp))
-                        Text(stringResource(R.string.player_raw_error, it), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(0.8f))
+                        Text(stringResource(CoreR.string.player_raw_error, it), style = MaterialTheme.typography.bodySmall, color = Color.White.copy(alpha = 0.6f), textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth(0.8f))
                     }
                 }
                 // A playback failure cannot identify which recording owns a competing provider
                 // session. Keep retry independent of recording controls until that ownership is known.
                 Spacer(Modifier.height(18.dp))
-                OwnTVButton(stringResource(R.string.common_retry), onClick = { player.retry() }, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(retryFocus))
+                OwnTVButton(stringResource(CoreR.string.common_retry), onClick = { player.retry() }, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(retryFocus))
             }
             // A provider wait looks like loading, because that is what it is: the channel is queued behind
             // the panel's own countdown and the engine re-asks by itself. The line under the spinner says
@@ -826,9 +827,9 @@ fun PlayerHud(
                     Spacer(Modifier.height(14.dp))
                     Text(
                         stringResource(
-                            R.string.player_provider_retry_after,
+                            CoreR.string.player_provider_retry_after,
                             wait.httpCode,
-                            wait.message ?: stringResource(R.string.player_provider_busy),
+                            wait.message ?: stringResource(CoreR.string.player_provider_busy),
                             wait.secondsLeft,
                         ),
                         style = MaterialTheme.typography.bodyMedium,
@@ -861,7 +862,7 @@ fun PlayerHud(
                 }
             }
             TrackDialog(
-                stringResource(R.string.player_audio_track), audioTracks,
+                stringResource(CoreR.string.player_audio_track), audioTracks,
                 onSelect = { player.selectAudio(it.mpvId); dialog = HudDialog.NONE }, onOff = null,
                 onDismiss = { dialog = HudDialog.NONE },
                 // A/V-sync nudge wherever the engine can actually shift audio: mpv, VOD *and* live (a live
@@ -882,7 +883,7 @@ fun PlayerHud(
                 }
             }
             TrackDialog(
-                stringResource(R.string.player_subtitles), subTracks,
+                stringResource(CoreR.string.player_subtitles), subTracks,
                 onSelect = { player.selectSubtitle(it.mpvId); dialog = HudDialog.NONE },
                 onOff = { player.disableSubtitles(); dialog = HudDialog.NONE },
                 onDismiss = { dialog = HudDialog.NONE },
@@ -910,7 +911,7 @@ fun PlayerHud(
                 dialog = HudDialog.NONE
             } else {
                 tv.own.owntv.features.live.CatchupJumpDialog(
-                    title = stringResource(R.string.content_catchup_jump),
+                    title = stringResource(CoreR.string.content_catchup_jump),
                     offsetsSec = options,
                     windowSec = windowSec,
                     onPick = { dialog = HudDialog.NONE; if (owner == jumpBackContextKey) confirm?.invoke(it) },

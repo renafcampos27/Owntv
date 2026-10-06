@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -107,46 +109,48 @@ internal data class VideoQuickRef(
 
 /** Every row of this screen that can be pinned to Quick, in the order the sections show them. */
 internal val VIDEO_QUICK_ROWS: List<VideoQuickRef> = listOf(
-    VideoQuickRef("vp_hw", SECTION_ENGINE, OwnTVIcon.VIDEO, R.string.settings_hardware_decoding, R.string.settings_hardware_decoding_description),
-    VideoQuickRef("vp_decoder_queueing", SECTION_ENGINE, OwnTVIcon.VIDEO, R.string.settings_decoder_queueing, R.string.settings_decoder_queueing_description),
-    VideoQuickRef("vp_deinterlace", SECTION_ENGINE, OwnTVIcon.VIDEO, R.string.settings_deinterlace, R.string.settings_deinterlace_description),
-    VideoQuickRef("vp_hdr", SECTION_ENGINE, OwnTVIcon.VIDEO, R.string.settings_quick_hdr, R.string.settings_hdr_description),
-    VideoQuickRef("vp_afr", SECTION_ENGINE, OwnTVIcon.VIDEO, R.string.settings_auto_frame_rate, R.string.settings_auto_frame_rate_description),
-    VideoQuickRef("vp_afr_pause", SECTION_ENGINE, OwnTVIcon.PAUSE, R.string.settings_afr_pause, R.string.settings_afr_pause_description),
-    VideoQuickRef("vp_afr_resolution", SECTION_ENGINE, OwnTVIcon.ASPECT, R.string.settings_afr_resolution, R.string.settings_afr_resolution_description),
-    VideoQuickRef("vp_multiview", SECTION_ENGINE, OwnTVIcon.LIST_GRID, R.string.settings_multiview, R.string.settings_multiview_description),
-    VideoQuickRef("vp_multiview_tiles", SECTION_ENGINE, OwnTVIcon.LIST_GRID, R.string.settings_multiview_tiles_max, R.string.settings_multiview_description),
-    VideoQuickRef("vp_hls_only", SECTION_ENGINE, OwnTVIcon.LIVE_TV, R.string.settings_live_hls_only, R.string.settings_live_hls_only_description),
-    VideoQuickRef("vp_live_engine", SECTION_ENGINE, OwnTVIcon.PLAY, R.string.settings_live_tv_player, R.string.settings_live_player_description),
-    VideoQuickRef("vp_live_engine_sources", SECTION_ENGINE, OwnTVIcon.PLAY, R.string.settings_live_engine_per_playlist, R.string.settings_live_engine_per_playlist_description),
+    VideoQuickRef("vp_hw", SECTION_ENGINE, OwnTVIcon.VIDEO, CoreR.string.settings_hardware_decoding, CoreR.string.settings_hardware_decoding_description),
+    VideoQuickRef("vp_decoder_queueing", SECTION_ENGINE, OwnTVIcon.VIDEO, CoreR.string.settings_decoder_queueing, CoreR.string.settings_decoder_queueing_description),
+    VideoQuickRef("vp_deinterlace", SECTION_ENGINE, OwnTVIcon.VIDEO, CoreR.string.settings_deinterlace, CoreR.string.settings_deinterlace_description),
+    VideoQuickRef("vp_hdr", SECTION_ENGINE, OwnTVIcon.VIDEO, CoreR.string.settings_quick_hdr, CoreR.string.settings_hdr_description),
+    VideoQuickRef("vp_afr", SECTION_ENGINE, OwnTVIcon.VIDEO, CoreR.string.settings_auto_frame_rate, CoreR.string.settings_auto_frame_rate_description),
+    VideoQuickRef("vp_afr_pause", SECTION_ENGINE, OwnTVIcon.PAUSE, CoreR.string.settings_afr_pause, R.string.settings_afr_pause_description),
+    VideoQuickRef("vp_afr_resolution", SECTION_ENGINE, OwnTVIcon.ASPECT, CoreR.string.settings_afr_resolution, R.string.settings_afr_resolution_description),
+    VideoQuickRef("vp_multiview", SECTION_ENGINE, OwnTVIcon.LIST_GRID, CoreR.string.settings_multiview, CoreR.string.settings_multiview_description),
+    VideoQuickRef("vp_multiview_tiles", SECTION_ENGINE, OwnTVIcon.LIST_GRID, CoreR.string.settings_multiview_tiles_max, CoreR.string.settings_multiview_description),
+    VideoQuickRef("vp_channel_playback", SECTION_ENGINE, OwnTVIcon.LIST_GRID, CoreR.string.settings_channel_playback, CoreR.string.settings_channel_playback_description),
+    VideoQuickRef("vp_hls_only", SECTION_ENGINE, OwnTVIcon.LIVE_TV, CoreR.string.settings_live_hls_only, CoreR.string.settings_live_hls_only_description),
+    VideoQuickRef("vp_live_engine", SECTION_ENGINE, OwnTVIcon.PLAY, CoreR.string.settings_live_tv_player, CoreR.string.settings_live_player_description),
+    VideoQuickRef("vp_live_engine_sources", SECTION_ENGINE, OwnTVIcon.PLAY, CoreR.string.settings_live_engine_per_playlist, CoreR.string.settings_live_engine_per_playlist_description),
     VideoQuickRef("vp_vod_engine", SECTION_ENGINE, OwnTVIcon.PLAY, R.string.settings_movies_series_player, R.string.settings_movies_player_description),
-    VideoQuickRef("vp_reset_pins", SECTION_ENGINE, OwnTVIcon.PLAY, R.string.settings_reset_player_choices, R.string.settings_reset_player_choices_description),
-    VideoQuickRef("vp_external", SECTION_ENGINE, OwnTVIcon.PLAY, R.string.settings_live_player_target, R.string.settings_live_player_target_description),
-    VideoQuickRef("vp_zoom", SECTION_ENGINE, OwnTVIcon.ASPECT, R.string.settings_default_zoom, R.string.settings_default_zoom_description),
-    VideoQuickRef("vp_reset_zoom", SECTION_ENGINE, OwnTVIcon.ASPECT, R.string.settings_reset_saved_zoom, R.string.settings_reset_saved_zoom_description),
-    VideoQuickRef("vp_seek_step", SECTION_ENGINE, OwnTVIcon.FORWARD, R.string.settings_seek_step, R.string.settings_seek_step_description),
-    VideoQuickRef("vp_rewind_step", SECTION_ENGINE, OwnTVIcon.REWIND, R.string.settings_live_rewind_step, R.string.settings_live_rewind_step_description),
-    VideoQuickRef("vp_live_preview", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_quick_live_preview, R.string.settings_live_preview_description),
-    VideoQuickRef("vp_preview_audio", SECTION_LIVE, OwnTVIcon.AUDIO, R.string.settings_preview_audio, R.string.settings_preview_audio_description),
+    VideoQuickRef("vp_reset_pins", SECTION_ENGINE, OwnTVIcon.PLAY, CoreR.string.settings_reset_player_choices, R.string.settings_reset_player_choices_description),
+    VideoQuickRef("vp_external", SECTION_ENGINE, OwnTVIcon.PLAY, CoreR.string.settings_live_player_target, CoreR.string.settings_live_player_target_description),
+    VideoQuickRef("vp_zoom", SECTION_ENGINE, OwnTVIcon.ASPECT, CoreR.string.settings_default_zoom, CoreR.string.settings_default_zoom_description),
+    VideoQuickRef("vp_reset_zoom", SECTION_ENGINE, OwnTVIcon.ASPECT, CoreR.string.settings_reset_saved_zoom, R.string.settings_reset_saved_zoom_description),
+    VideoQuickRef("vp_seek_step", SECTION_ENGINE, OwnTVIcon.FORWARD, CoreR.string.settings_seek_step, R.string.settings_seek_step_description),
+    VideoQuickRef("vp_rewind_step", SECTION_ENGINE, OwnTVIcon.REWIND, CoreR.string.settings_live_rewind_step, CoreR.string.settings_live_rewind_step_description),
+    VideoQuickRef("vp_live_preview", SECTION_LIVE, OwnTVIcon.LIVE_TV, CoreR.string.settings_quick_live_preview, CoreR.string.settings_live_preview_description),
+    VideoQuickRef("vp_local_timeshift_resume", SECTION_LIVE, OwnTVIcon.REWIND, R.string.settings_local_timeshift_resume, R.string.settings_local_timeshift_resume_description),
+    VideoQuickRef("vp_preview_audio", SECTION_LIVE, OwnTVIcon.AUDIO, CoreR.string.settings_preview_audio, CoreR.string.settings_preview_audio_description),
     VideoQuickRef("vp_live_latency", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_live_offset_title, R.string.settings_live_offset_description),
     VideoQuickRef("vp_latency_sources", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_live_offset_sources, R.string.settings_live_offset_sources_description),
     VideoQuickRef("vp_live_reserve", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_live_reserve_title, R.string.settings_live_reserve_description),
     VideoQuickRef("vp_reserve_sources", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_live_reserve_sources, R.string.settings_live_reserve_sources_description),
     VideoQuickRef("vp_preroll", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_live_initial_buffer_title, R.string.settings_live_initial_buffer_description),
-    VideoQuickRef("vp_tune_timeout", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_live_tune_timeout, R.string.settings_live_tune_timeout_description),
+    VideoQuickRef("vp_tune_timeout", SECTION_LIVE, OwnTVIcon.LIVE_TV, CoreR.string.settings_live_tune_timeout, CoreR.string.settings_live_tune_timeout_description),
     VideoQuickRef("vp_preroll_sources", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_live_initial_buffer_sources, R.string.settings_live_initial_buffer_sources_description),
-    VideoQuickRef("vp_channel_numbers", SECTION_LIVE, OwnTVIcon.LIVE_TV, R.string.settings_channel_numbers, R.string.settings_channel_numbers_description),
-    VideoQuickRef("vp_audio_lang", SECTION_SOUND, OwnTVIcon.AUDIO, R.string.settings_preferred_audio_language, R.string.settings_preferred_language_description),
-    VideoQuickRef("vp_surround", SECTION_SOUND, OwnTVIcon.AUDIO, R.string.settings_surround_sound),
-    VideoQuickRef("vp_software_audio", SECTION_SOUND, OwnTVIcon.AUDIO, R.string.settings_software_audio, R.string.settings_software_audio_description),
-    VideoQuickRef("vp_audio_sync", SECTION_SOUND, OwnTVIcon.AUDIO, R.string.settings_audio_sync, R.string.settings_audio_sync_description),
-    VideoQuickRef("vp_reset_audio_delay", SECTION_SOUND, OwnTVIcon.AUDIO, R.string.settings_reset_saved_audio_delay, R.string.settings_reset_saved_audio_delay_description),
-    VideoQuickRef("vp_sub_style", SECTION_SUBTITLES, OwnTVIcon.SUBTITLE, R.string.settings_subtitle_appearance, R.string.settings_subtitle_appearance_description),
-    VideoQuickRef("vp_sub_lang", SECTION_SUBTITLES, OwnTVIcon.SUBTITLE, R.string.settings_preferred_subtitle_language, R.string.settings_preferred_language_description),
-    VideoQuickRef("vp_resume", SECTION_EPISODES, OwnTVIcon.PLAY, R.string.settings_resume_playback, R.string.settings_resume_playback_description),
-    VideoQuickRef("vp_mini", SECTION_EPISODES, OwnTVIcon.PIP, R.string.settings_mini_player_root, R.string.settings_mini_player_root_description),
-    VideoQuickRef("vp_measured_stats", SECTION_DIAGNOSTICS, OwnTVIcon.VIDEO, R.string.settings_measured_stats, R.string.settings_measured_stats_description),
-    VideoQuickRef("vp_logging", SECTION_DIAGNOSTICS, OwnTVIcon.INFO, R.string.settings_detailed_playback_logging, R.string.settings_detailed_playback_logging_description),
+    VideoQuickRef("vp_channel_numbers", SECTION_LIVE, OwnTVIcon.LIVE_TV, CoreR.string.settings_channel_numbers, CoreR.string.settings_channel_numbers_description),
+    VideoQuickRef("vp_audio_lang", SECTION_SOUND, OwnTVIcon.AUDIO, CoreR.string.settings_preferred_audio_language, CoreR.string.settings_preferred_language_description),
+    VideoQuickRef("vp_surround", SECTION_SOUND, OwnTVIcon.AUDIO, CoreR.string.settings_surround_sound),
+    VideoQuickRef("vp_software_audio", SECTION_SOUND, OwnTVIcon.AUDIO, CoreR.string.settings_software_audio, CoreR.string.settings_software_audio_description),
+    VideoQuickRef("vp_audio_sync", SECTION_SOUND, OwnTVIcon.AUDIO, CoreR.string.settings_audio_sync, CoreR.string.settings_audio_sync_description),
+    VideoQuickRef("vp_reset_audio_delay", SECTION_SOUND, OwnTVIcon.AUDIO, CoreR.string.settings_reset_saved_audio_delay, R.string.settings_reset_saved_audio_delay_description),
+    VideoQuickRef("vp_sub_style", SECTION_SUBTITLES, OwnTVIcon.SUBTITLE, CoreR.string.settings_subtitle_appearance, CoreR.string.settings_subtitle_appearance_description),
+    VideoQuickRef("vp_sub_lang", SECTION_SUBTITLES, OwnTVIcon.SUBTITLE, CoreR.string.settings_preferred_subtitle_language, CoreR.string.settings_preferred_language_description),
+    VideoQuickRef("vp_resume", SECTION_EPISODES, OwnTVIcon.PLAY, CoreR.string.settings_resume_playback, R.string.settings_resume_playback_description),
+    VideoQuickRef("vp_mini", SECTION_EPISODES, OwnTVIcon.PIP, CoreR.string.settings_mini_player_root, CoreR.string.settings_mini_player_root_description),
+    VideoQuickRef("vp_measured_stats", SECTION_DIAGNOSTICS, OwnTVIcon.VIDEO, CoreR.string.settings_measured_stats, CoreR.string.settings_measured_stats_description),
+    VideoQuickRef("vp_logging", SECTION_DIAGNOSTICS, OwnTVIcon.INFO, CoreR.string.settings_detailed_playback_logging, CoreR.string.settings_detailed_playback_logging_description),
 )
 
 /**
@@ -170,17 +174,17 @@ internal fun videoQuickBinding(key: String, vm: SettingsViewModel): VideoQuickBi
     fun link(chip: String?, primary: Boolean = false) = VideoQuickBinding(chip, primary, null)
 
     @Composable
-    fun onOff(on: Boolean) = stringResource(if (on) R.string.common_on else R.string.common_off)
+    fun onOff(on: Boolean) = stringResource(if (on) CoreR.string.common_on else CoreR.string.common_off)
 
     @Composable
     fun overrides(count: Int) =
-        if (count == 0) stringResource(R.string.common_off)
-        else pluralStringResource(R.plurals.settings_live_preroll_overrides, count, count)
+        if (count == 0) stringResource(CoreR.string.common_off)
+        else pluralStringResource(CoreR.plurals.settings_live_preroll_overrides, count, count)
 
     @Composable
     fun saved(count: Int) =
-        if (count == 0) stringResource(R.string.settings_reset_player_choices_none)
-        else pluralStringResource(R.plurals.settings_reset_player_choices_count, count, count)
+        if (count == 0) stringResource(CoreR.string.settings_reset_player_choices_none)
+        else pluralStringResource(CoreR.plurals.settings_reset_player_choices_count, count, count)
 
     return when (key) {
         "vp_hw" -> {
@@ -193,7 +197,7 @@ internal fun videoQuickBinding(key: String, vm: SettingsViewModel): VideoQuickBi
         }
         "vp_deinterlace" -> {
             val on by vm.deinterlace.collectAsStateWithLifecycle()
-            toggle(if (on) stringResource(R.string.settings_auto) else stringResource(R.string.common_off), on) { vm.setDeinterlace(!on) }
+            toggle(if (on) stringResource(CoreR.string.settings_auto) else stringResource(CoreR.string.common_off), on) { vm.setDeinterlace(!on) }
         }
         "vp_hdr" -> {
             val on by vm.hdrEnabled.collectAsStateWithLifecycle()
@@ -208,7 +212,7 @@ internal fun videoQuickBinding(key: String, vm: SettingsViewModel): VideoQuickBi
             // cycling the number in place — [dialogForQuickKey] already routes it there.
             val tiles by vm.multiviewTiles.collectAsStateWithLifecycle()
             link(
-                stringResource(R.string.settings_multiview_tiles_max_value, tiles),
+                stringResource(CoreR.string.settings_multiview_tiles_max_value, tiles),
                 tiles > tv.own.owntv.core.live.DEFAULT_MULTIVIEW_TILES,
             )
         }
@@ -307,7 +311,7 @@ internal fun videoQuickBinding(key: String, vm: SettingsViewModel): VideoQuickBi
         }
         "vp_tune_timeout" -> {
             val secs by vm.liveTuneTimeoutSecs.collectAsStateWithLifecycle()
-            link(if (secs <= 0) stringResource(R.string.common_never) else stringResource(R.string.settings_video_seconds, secs), secs > 0)
+            link(if (secs <= 0) stringResource(CoreR.string.common_never) else stringResource(CoreR.string.settings_video_seconds, secs), secs > 0)
         }
         "vp_preroll_sources" -> {
             val sources by vm.sources.collectAsStateWithLifecycle()
@@ -328,11 +332,11 @@ internal fun videoQuickBinding(key: String, vm: SettingsViewModel): VideoQuickBi
         }
         "vp_software_audio" -> {
             val on by vm.softwareAudio.collectAsStateWithLifecycle()
-            toggle(stringResource(if (on) R.string.player_decoder_software else R.string.settings_auto), on) { vm.setSoftwareAudio(!on) }
+            toggle(stringResource(if (on) CoreR.string.player_decoder_software else CoreR.string.settings_auto), on) { vm.setSoftwareAudio(!on) }
         }
         "vp_audio_sync" -> {
             val delay by vm.audioDelayMs.collectAsStateWithLifecycle()
-            link(stringResource(R.string.settings_audio_delay_value, delay))
+            link(stringResource(CoreR.string.settings_audio_delay_value, delay))
         }
         "vp_reset_audio_delay" -> {
             val count by vm.savedAudioDelayCount.collectAsStateWithLifecycle()
@@ -348,6 +352,10 @@ internal fun videoQuickBinding(key: String, vm: SettingsViewModel): VideoQuickBi
         }
         "vp_resume" -> {
             val mode by vm.resumeMode.collectAsStateWithLifecycle()
+            link(stringResource(resumeModeLabelRes(mode)))
+        }
+        "vp_local_timeshift_resume" -> {
+            val mode by vm.localTimeshiftResumeMode.collectAsStateWithLifecycle()
             link(stringResource(resumeModeLabelRes(mode)))
         }
         "vp_autoplay" -> {
@@ -387,27 +395,27 @@ private val LANGUAGE_CODES = listOf("", "eng", "spa", "fra", "deu", "ita", "por"
 private val SUB_PREVIEW_BRUSH = androidx.compose.ui.graphics.Brush.linearGradient(
     listOf(Color(0xFF2E4A6B), Color(0xFF7A5C3E), Color(0xFF3B6B4A)),
 )
-private val SUB_SIZES = listOf(0.8f to R.string.settings_subtitle_small, 1.0f to R.string.settings_subtitle_normal, 1.3f to R.string.settings_subtitle_large, 1.6f to R.string.settings_subtitle_extra_large)
+private val SUB_SIZES = listOf(0.8f to CoreR.string.settings_subtitle_small, 1.0f to CoreR.string.settings_subtitle_normal, 1.3f to CoreR.string.settings_subtitle_large, 1.6f to CoreR.string.settings_subtitle_extra_large)
 
 @Composable
 private fun langName(code: String): String = stringResource(
     when (code) {
-        "" -> R.string.settings_none_auto
-        "eng" -> R.string.settings_language_english
-        "spa" -> R.string.settings_language_spanish
-        "fra" -> R.string.settings_language_french
-        "deu" -> R.string.settings_language_german
-        "ita" -> R.string.settings_language_italian
-        "por" -> R.string.settings_language_portuguese
-        "nld" -> R.string.settings_language_dutch
-        "rus" -> R.string.settings_language_russian
-        "ara" -> R.string.settings_language_arabic
-        "hin" -> R.string.settings_language_hindi
-        "zho" -> R.string.settings_language_chinese
-        "jpn" -> R.string.settings_language_japanese
-        "kor" -> R.string.settings_language_korean
-        "tur" -> R.string.settings_language_turkish
-        else -> R.string.settings_none_auto
+        "" -> CoreR.string.settings_none_auto
+        "eng" -> CoreR.string.settings_language_english
+        "spa" -> CoreR.string.settings_language_spanish
+        "fra" -> CoreR.string.settings_language_french
+        "deu" -> CoreR.string.settings_language_german
+        "ita" -> CoreR.string.settings_language_italian
+        "por" -> CoreR.string.settings_language_portuguese
+        "nld" -> CoreR.string.settings_language_dutch
+        "rus" -> CoreR.string.settings_language_russian
+        "ara" -> CoreR.string.settings_language_arabic
+        "hin" -> CoreR.string.settings_language_hindi
+        "zho" -> CoreR.string.settings_language_chinese
+        "jpn" -> CoreR.string.settings_language_japanese
+        "kor" -> CoreR.string.settings_language_korean
+        "tur" -> CoreR.string.settings_language_turkish
+        else -> CoreR.string.settings_none_auto
     },
 )
 
@@ -419,7 +427,7 @@ private fun nextSubSize(scale: Float): Float =
 
 @Composable
 private fun subSizeName(scale: Float): String = stringResource(
-    SUB_SIZES.minByOrNull { kotlin.math.abs(it.first - scale) }?.second ?: R.string.settings_subtitle_normal,
+    SUB_SIZES.minByOrNull { kotlin.math.abs(it.first - scale) }?.second ?: CoreR.string.settings_subtitle_normal,
 )
 
 /** Chip for the one "Subtitle size" row now that there are two values: "Normal · Large", ExoPlayer first. */
@@ -431,16 +439,16 @@ private fun subSizePairName(scaleExo: Float, scaleMpv: Float): String {
 }
 
 private fun resumeModeLabelRes(mode: tv.own.owntv.core.settings.SettingsRepository.ResumeMode): Int = when (mode) {
-    tv.own.owntv.core.settings.SettingsRepository.ResumeMode.AUTO -> R.string.settings_resume_always
-    tv.own.owntv.core.settings.SettingsRepository.ResumeMode.ASK -> R.string.settings_resume_ask
-    tv.own.owntv.core.settings.SettingsRepository.ResumeMode.NEVER -> R.string.settings_resume_never
+    tv.own.owntv.core.settings.SettingsRepository.ResumeMode.AUTO -> CoreR.string.settings_resume_always
+    tv.own.owntv.core.settings.SettingsRepository.ResumeMode.ASK -> CoreR.string.settings_resume_ask
+    tv.own.owntv.core.settings.SettingsRepository.ResumeMode.NEVER -> CoreR.string.settings_resume_never
 }
 
 private fun liveLatencyLabelRes(mode: tv.own.owntv.core.settings.LiveLatency): Int = when (mode) {
     tv.own.owntv.core.settings.LiveLatency.LOW -> R.string.settings_live_offset_low
     tv.own.owntv.core.settings.LiveLatency.BALANCED -> R.string.settings_live_offset_automatic
     tv.own.owntv.core.settings.LiveLatency.STABLE -> R.string.settings_live_offset_stable
-    tv.own.owntv.core.settings.LiveLatency.CUSTOM -> R.string.settings_live_latency_custom
+    tv.own.owntv.core.settings.LiveLatency.CUSTOM -> CoreR.string.settings_live_latency_custom
 }
 
 @Composable
@@ -506,6 +514,7 @@ fun VideoPlayerSettingsScreen(
     val audioLang by vm.preferredAudioLang.collectAsStateWithLifecycle()
     val subLang by vm.preferredSubLang.collectAsStateWithLifecycle()
     val resumeMode by vm.resumeMode.collectAsStateWithLifecycle()
+    val localResumeMode by vm.localTimeshiftResumeMode.collectAsStateWithLifecycle()
     val liveLatency by vm.liveLatencyMode.collectAsStateWithLifecycle()
     val liveCustomSecs by vm.liveLatencyCustomSecs.collectAsStateWithLifecycle()
     val liveReserve by vm.liveReserveMode.collectAsStateWithLifecycle()
@@ -663,20 +672,20 @@ fun VideoPlayerSettingsScreen(
     // the spine saying where the screen sits. Focus selects, Right enters the rows, Left comes back.
     val perPlaylist = sources.isNotEmpty()
     val sectionNames = listOf(
-        stringResource(R.string.settings_vp_section_engine),
-        stringResource(R.string.settings_live_tv),
-        stringResource(R.string.settings_vp_section_sound),
-        stringResource(R.string.settings_subtitles),
+        stringResource(CoreR.string.settings_vp_section_engine),
+        stringResource(CoreR.string.settings_live_tv),
+        stringResource(CoreR.string.settings_vp_section_sound),
+        stringResource(CoreR.string.settings_subtitles),
         stringResource(R.string.settings_vp_section_episodes),
-        stringResource(R.string.settings_diagnostics),
+        stringResource(CoreR.string.settings_diagnostics),
     )
     val sectionSummaries = listOf(
-        stringResource(R.string.settings_vp_section_engine_summary),
-        stringResource(R.string.settings_vp_section_live_summary),
-        stringResource(R.string.settings_vp_section_sound_summary),
-        stringResource(R.string.settings_vp_section_subtitles_summary),
+        stringResource(CoreR.string.settings_vp_section_engine_summary),
+        stringResource(CoreR.string.settings_vp_section_live_summary),
+        stringResource(CoreR.string.settings_vp_section_sound_summary),
+        stringResource(CoreR.string.settings_vp_section_subtitles_summary),
         stringResource(R.string.settings_vp_section_episodes_summary),
-        stringResource(R.string.settings_vp_section_diagnostics_summary),
+        stringResource(CoreR.string.settings_vp_section_diagnostics_summary),
     )
     val sectionIcons = listOf(
         OwnTVIcon.VIDEO, OwnTVIcon.LIVE_TV, OwnTVIcon.AUDIO,
@@ -744,8 +753,8 @@ fun VideoPlayerSettingsScreen(
                 .focusGroup(),
         ) {
             tv.own.owntv.features.shell.components.SpineBackRow(
-                from = stringResource(R.string.settings_playback_group),
-                title = stringResource(R.string.settings_video_player_title),
+                from = stringResource(CoreR.string.settings_playback_group),
+                title = stringResource(CoreR.string.settings_video_player_title),
                 onBack = onBack,
             )
             sectionNames.forEachIndexed { i, name ->
@@ -800,46 +809,46 @@ fun VideoPlayerSettingsScreen(
                     SECTION_ENGINE -> {
         Row2(
             quickKey = "vp_hw",
-            icon = OwnTVIcon.VIDEO, title = stringResource(R.string.settings_hardware_decoding),
-            desc = stringResource(R.string.settings_hardware_decoding_description),
-            chip = if (hw) stringResource(R.string.common_on) else stringResource(R.string.common_off), primaryChip = hw,
+            icon = OwnTVIcon.VIDEO, title = stringResource(CoreR.string.settings_hardware_decoding),
+            desc = stringResource(CoreR.string.settings_hardware_decoding_description),
+            chip = if (hw) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off), primaryChip = hw,
             onClick = { vm.setHwDecoding(!hw) },
         )
         Row2(
             quickKey = "vp_decoder_queueing",
-            icon = OwnTVIcon.VIDEO, title = stringResource(R.string.settings_decoder_queueing),
-            desc = stringResource(R.string.settings_decoder_queueing_description),
+            icon = OwnTVIcon.VIDEO, title = stringResource(CoreR.string.settings_decoder_queueing),
+            desc = stringResource(CoreR.string.settings_decoder_queueing_description),
             chip = decoderQueueingLabel(queueing), primaryChip = queueing != tv.own.owntv.core.settings.DecoderQueueing.AUTO,
             onClick = { vm.cycleDecoderQueueing() },
         )
         Row2(
             quickKey = "vp_deinterlace",
-            icon = OwnTVIcon.VIDEO, title = stringResource(R.string.settings_deinterlace),
-            desc = stringResource(R.string.settings_deinterlace_description),
-            chip = if (deinterlace) stringResource(R.string.settings_auto) else stringResource(R.string.common_off),
+            icon = OwnTVIcon.VIDEO, title = stringResource(CoreR.string.settings_deinterlace),
+            desc = stringResource(CoreR.string.settings_deinterlace_description),
+            chip = if (deinterlace) stringResource(CoreR.string.settings_auto) else stringResource(CoreR.string.common_off),
             primaryChip = deinterlace,
             onClick = { vm.setDeinterlace(!deinterlace) },
         )
         Row2(
             quickKey = "vp_hdr",
-            icon = OwnTVIcon.VIDEO, title = stringResource(R.string.settings_quick_hdr),
-            desc = stringResource(R.string.settings_hdr_description),
-            chip = stringResource(if (hdr) R.string.common_on else R.string.common_off), primaryChip = hdr,
+            icon = OwnTVIcon.VIDEO, title = stringResource(CoreR.string.settings_quick_hdr),
+            desc = stringResource(CoreR.string.settings_hdr_description),
+            chip = stringResource(if (hdr) CoreR.string.common_on else CoreR.string.common_off), primaryChip = hdr,
             onClick = { vm.setHdrEnabled(!hdr) },
         )
         Row2(
             quickKey = "vp_afr",
-            icon = OwnTVIcon.VIDEO, title = stringResource(R.string.settings_auto_frame_rate),
-            desc = stringResource(R.string.settings_auto_frame_rate_description) +
-                if (afrNeedsWarning) " " + stringResource(R.string.settings_auto_frame_rate_warning_suffix) else "",
-            chip = stringResource(if (autoFrameRate) R.string.common_on else R.string.common_off), primaryChip = autoFrameRate,
+            icon = OwnTVIcon.VIDEO, title = stringResource(CoreR.string.settings_auto_frame_rate),
+            desc = stringResource(CoreR.string.settings_auto_frame_rate_description) +
+                if (afrNeedsWarning) " " + stringResource(CoreR.string.settings_auto_frame_rate_warning_suffix) else "",
+            chip = stringResource(if (autoFrameRate) CoreR.string.common_on else CoreR.string.common_off), primaryChip = autoFrameRate,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.AFR_WARNING)),
             onClick = toggleAutoFrameRate,
         )
         // N7 — both only act for a film with Auto frame rate on; shown always, like every row here.
         Row2(
             quickKey = "vp_afr_pause",
-            icon = OwnTVIcon.PAUSE, title = stringResource(R.string.settings_afr_pause),
+            icon = OwnTVIcon.PAUSE, title = stringResource(CoreR.string.settings_afr_pause),
             desc = stringResource(R.string.settings_afr_pause_description),
             chip = afrPauseLabel(afrPauseSecs), primaryChip = afrPauseSecs > 0, chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.AFR_PAUSE)),
@@ -847,28 +856,28 @@ fun VideoPlayerSettingsScreen(
         )
         Row2(
             quickKey = "vp_afr_resolution",
-            icon = OwnTVIcon.ASPECT, title = stringResource(R.string.settings_afr_resolution),
+            icon = OwnTVIcon.ASPECT, title = stringResource(CoreR.string.settings_afr_resolution),
             desc = stringResource(R.string.settings_afr_resolution_description),
-            chip = stringResource(if (afrMatchResolution) R.string.common_on else R.string.common_off), primaryChip = afrMatchResolution,
+            chip = stringResource(if (afrMatchResolution) CoreR.string.common_on else CoreR.string.common_off), primaryChip = afrMatchResolution,
             onClick = { vm.setAfrMatchResolution(!afrMatchResolution) },
         )
         Row2(
             quickKey = "vp_multiview",
-            icon = OwnTVIcon.LIST_GRID, title = stringResource(R.string.settings_multiview),
-            desc = stringResource(R.string.settings_multiview_description),
-            chip = stringResource(if (multiviewEnabled) R.string.common_on else R.string.common_off),
+            icon = OwnTVIcon.LIST_GRID, title = stringResource(CoreR.string.settings_multiview),
+            desc = stringResource(CoreR.string.settings_multiview_description),
+            chip = stringResource(if (multiviewEnabled) CoreR.string.common_on else CoreR.string.common_off),
             primaryChip = multiviewEnabled,
             onClick = { vm.setMultiviewEnabled(!multiviewEnabled) },
         )
         if (multiviewEnabled) {
             Row2(
                 quickKey = "vp_multiview_tiles",
-                icon = OwnTVIcon.LIST_GRID, title = stringResource(R.string.settings_multiview_tiles_max),
-                desc = stringResource(R.string.settings_multiview_description),
+                icon = OwnTVIcon.LIST_GRID, title = stringResource(CoreR.string.settings_multiview_tiles_max),
+                desc = stringResource(CoreR.string.settings_multiview_description),
                 // "Max 4", not "4": the number is the ceiling, and the grid opens with two and grows
                 // only when the user asks. A bare number read as "every grid is this big", which is
                 // what it used to be and what made watching two channels impossible.
-                chip = stringResource(R.string.settings_multiview_tiles_max_value, multiviewTiles),
+                chip = stringResource(CoreR.string.settings_multiview_tiles_max_value, multiviewTiles),
                 chevron = true,
                 primaryChip = multiviewTiles > tv.own.owntv.core.live.DEFAULT_MULTIVIEW_TILES,
                 modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.MULTIVIEW_TILES)),
@@ -877,22 +886,23 @@ fun VideoPlayerSettingsScreen(
         }
         Row2(
             quickKey = "vp_hls_only",
-            icon = OwnTVIcon.LIVE_TV, title = stringResource(R.string.settings_live_hls_only),
-            desc = stringResource(R.string.settings_live_hls_only_description),
-            chip = stringResource(if (hlsOnly) R.string.common_on else R.string.common_off), primaryChip = hlsOnly,
+            icon = OwnTVIcon.LIVE_TV, title = stringResource(CoreR.string.settings_live_hls_only),
+            desc = stringResource(CoreR.string.settings_live_hls_only_description),
+            chip = stringResource(if (hlsOnly) CoreR.string.common_on else CoreR.string.common_off), primaryChip = hlsOnly,
             onClick = { vm.setLiveHlsOnly(!hlsOnly) },
         )
         Row2(
-            icon = OwnTVIcon.LIST_GRID, title = stringResource(R.string.settings_channel_playback),
-            desc = stringResource(R.string.settings_channel_playback_description),
-            chip = stringResource(R.string.settings_channel_playback_count, channelPlaybackConfigs.size), chevron = true,
+            quickKey = "vp_channel_playback",
+            icon = OwnTVIcon.LIST_GRID, title = stringResource(CoreR.string.settings_channel_playback),
+            desc = stringResource(CoreR.string.settings_channel_playback_description),
+            chip = stringResource(CoreR.string.settings_channel_playback_count, channelPlaybackConfigs.size), chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.CHANNEL_PLAYBACK)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.CHANNEL_PLAYBACK },
         )
         Row2(
             quickKey = "vp_live_engine",
-            icon = OwnTVIcon.PLAY, title = stringResource(R.string.settings_live_tv_player),
-            desc = stringResource(R.string.settings_live_player_description),
+            icon = OwnTVIcon.PLAY, title = stringResource(CoreR.string.settings_live_tv_player),
+            desc = stringResource(CoreR.string.settings_live_player_description),
             chip = engineLabel(liveEngine), chevron = true,
             primaryChip = liveEngine != EnginePreference.EXO_FIRST,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.LIVE_ENGINE)),
@@ -902,11 +912,11 @@ fun VideoPlayerSettingsScreen(
             Row2(
                 quickKey = "vp_live_engine_sources",
                 icon = OwnTVIcon.PLAY,
-                title = stringResource(R.string.settings_live_engine_per_playlist),
-                desc = stringResource(R.string.settings_live_engine_per_playlist_description),
+                title = stringResource(CoreR.string.settings_live_engine_per_playlist),
+                desc = stringResource(CoreR.string.settings_live_engine_per_playlist_description),
                 chip = sources.count { it.liveEnginePreference != null }.let { count ->
-                    if (count == 0) stringResource(R.string.common_off)
-                    else pluralStringResource(R.plurals.settings_live_preroll_overrides, count, count)
+                    if (count == 0) stringResource(CoreR.string.common_off)
+                    else pluralStringResource(CoreR.plurals.settings_live_preroll_overrides, count, count)
                 },
                 primaryChip = sources.any { it.liveEnginePreference != null },
                 chevron = true,
@@ -925,10 +935,10 @@ fun VideoPlayerSettingsScreen(
         )
         Row2(
             quickKey = "vp_reset_pins",
-            icon = OwnTVIcon.PLAY, title = stringResource(R.string.settings_reset_player_choices),
+            icon = OwnTVIcon.PLAY, title = stringResource(CoreR.string.settings_reset_player_choices),
             desc = stringResource(R.string.settings_reset_player_choices_description),
-            chip = if (enginePins == 0) stringResource(R.string.settings_reset_player_choices_none)
-            else pluralStringResource(R.plurals.settings_reset_player_choices_count, enginePins, enginePins),
+            chip = if (enginePins == 0) stringResource(CoreR.string.settings_reset_player_choices_none)
+            else pluralStringResource(CoreR.plurals.settings_reset_player_choices_count, enginePins, enginePins),
             primaryChip = enginePins > 0,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.RESET_PINS)),
             // Opens the confirmation even with nothing pinned: a settings row that swallows the OK
@@ -938,8 +948,8 @@ fun VideoPlayerSettingsScreen(
         )
         Row2(
             quickKey = "vp_external",
-            icon = OwnTVIcon.PLAY, title = stringResource(R.string.settings_live_player_target),
-            desc = stringResource(R.string.settings_live_player_target_description),
+            icon = OwnTVIcon.PLAY, title = stringResource(CoreR.string.settings_live_player_target),
+            desc = stringResource(CoreR.string.settings_live_player_target_description),
             chip = externalPlayerChip(externalLive), chevron = true,
             primaryChip = externalLive,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.EXTERNAL_PLAYER)),
@@ -947,25 +957,25 @@ fun VideoPlayerSettingsScreen(
         )
         Row2(
             quickKey = "vp_zoom",
-            icon = OwnTVIcon.ASPECT, title = stringResource(R.string.settings_default_zoom),
-            desc = stringResource(R.string.settings_default_zoom_description),
+            icon = OwnTVIcon.ASPECT, title = stringResource(CoreR.string.settings_default_zoom),
+            desc = stringResource(CoreR.string.settings_default_zoom_description),
             chip = stringResource(zoomMode.labelRes), chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.ZOOM)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.ZOOM },
         )
         Row2(
             quickKey = "vp_reset_zoom",
-            icon = OwnTVIcon.ASPECT, title = stringResource(R.string.settings_reset_saved_zoom),
+            icon = OwnTVIcon.ASPECT, title = stringResource(CoreR.string.settings_reset_saved_zoom),
             desc = stringResource(R.string.settings_reset_saved_zoom_description),
-            chip = if (savedZoom == 0) stringResource(R.string.settings_reset_player_choices_none)
-            else pluralStringResource(R.plurals.settings_reset_player_choices_count, savedZoom, savedZoom),
+            chip = if (savedZoom == 0) stringResource(CoreR.string.settings_reset_player_choices_none)
+            else pluralStringResource(CoreR.plurals.settings_reset_player_choices_count, savedZoom, savedZoom),
             primaryChip = savedZoom > 0,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.RESET_SAVED_ZOOM)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.RESET_SAVED_ZOOM },
         )
         Row2(
             quickKey = "vp_seek_step",
-            icon = OwnTVIcon.FORWARD, title = stringResource(R.string.settings_seek_step),
+            icon = OwnTVIcon.FORWARD, title = stringResource(CoreR.string.settings_seek_step),
             desc = stringResource(R.string.settings_seek_step_description),
             chip = stringResource(R.string.settings_live_buffer_seconds, seekStep), chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.SEEK_STEP)),
@@ -973,8 +983,8 @@ fun VideoPlayerSettingsScreen(
         )
         Row2(
             quickKey = "vp_rewind_step",
-            icon = OwnTVIcon.REWIND, title = stringResource(R.string.settings_live_rewind_step),
-            desc = stringResource(R.string.settings_live_rewind_step_description),
+            icon = OwnTVIcon.REWIND, title = stringResource(CoreR.string.settings_live_rewind_step),
+            desc = stringResource(CoreR.string.settings_live_rewind_step_description),
             chip = stringResource(R.string.settings_live_buffer_seconds, liveRewindStep), chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.LIVE_REWIND_STEP)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.LIVE_REWIND_STEP },
@@ -983,44 +993,44 @@ fun VideoPlayerSettingsScreen(
                     SECTION_SOUND -> {
         Row2(
             quickKey = "vp_audio_lang",
-            icon = OwnTVIcon.AUDIO, title = stringResource(R.string.settings_preferred_audio_language),
-            desc = stringResource(R.string.settings_preferred_language_description),
+            icon = OwnTVIcon.AUDIO, title = stringResource(CoreR.string.settings_preferred_audio_language),
+            desc = stringResource(CoreR.string.settings_preferred_language_description),
             chip = langName(audioLang), chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.AUDIO_LANG)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.AUDIO_LANG },
         )
         Row2(
             quickKey = "vp_software_audio",
-            icon = OwnTVIcon.AUDIO, title = stringResource(R.string.settings_software_audio),
-            desc = stringResource(R.string.settings_software_audio_description),
-            chip = stringResource(if (softwareAudio) R.string.player_decoder_software else R.string.settings_auto), primaryChip = softwareAudio,
+            icon = OwnTVIcon.AUDIO, title = stringResource(CoreR.string.settings_software_audio),
+            desc = stringResource(CoreR.string.settings_software_audio_description),
+            chip = stringResource(if (softwareAudio) CoreR.string.player_decoder_software else CoreR.string.settings_auto), primaryChip = softwareAudio,
             onClick = { vm.setSoftwareAudio(!softwareAudio) },
         )
         Row2(
             quickKey = "vp_surround",
-            icon = OwnTVIcon.AUDIO, title = stringResource(R.string.settings_surround_sound),
+            icon = OwnTVIcon.AUDIO, title = stringResource(CoreR.string.settings_surround_sound),
             desc = when (surroundMode) {
-                SurroundMode.AUTO -> stringResource(R.string.settings_surround_auto_description)
-                SurroundMode.STEREO -> stringResource(R.string.settings_surround_stereo_description)
-                SurroundMode.SURROUND -> stringResource(R.string.settings_surround_forced_description)
+                SurroundMode.AUTO -> stringResource(CoreR.string.settings_surround_auto_description)
+                SurroundMode.STEREO -> stringResource(CoreR.string.settings_surround_stereo_description)
+                SurroundMode.SURROUND -> stringResource(CoreR.string.settings_surround_forced_description)
             },
             chip = surroundModeLabel(surroundMode), primaryChip = surroundMode != SurroundMode.STEREO,
             onClick = { vm.cycleSurroundMode() },
         )
         Row2(
             quickKey = "vp_audio_sync",
-            icon = OwnTVIcon.AUDIO, title = stringResource(R.string.settings_audio_sync),
-            desc = stringResource(R.string.settings_audio_sync_description),
-            chip = stringResource(R.string.settings_audio_delay_value, audioDelay), chevron = true,
+            icon = OwnTVIcon.AUDIO, title = stringResource(CoreR.string.settings_audio_sync),
+            desc = stringResource(CoreR.string.settings_audio_sync_description),
+            chip = stringResource(CoreR.string.settings_audio_delay_value, audioDelay), chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.AUDIO_SYNC)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.AUDIO_SYNC },
         )
         Row2(
             quickKey = "vp_reset_audio_delay",
-            icon = OwnTVIcon.AUDIO, title = stringResource(R.string.settings_reset_saved_audio_delay),
+            icon = OwnTVIcon.AUDIO, title = stringResource(CoreR.string.settings_reset_saved_audio_delay),
             desc = stringResource(R.string.settings_reset_saved_audio_delay_description),
-            chip = if (savedAudioDelay == 0) stringResource(R.string.settings_reset_player_choices_none)
-            else pluralStringResource(R.plurals.settings_reset_player_choices_count, savedAudioDelay, savedAudioDelay),
+            chip = if (savedAudioDelay == 0) stringResource(CoreR.string.settings_reset_player_choices_none)
+            else pluralStringResource(CoreR.plurals.settings_reset_player_choices_count, savedAudioDelay, savedAudioDelay),
             primaryChip = savedAudioDelay > 0,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.RESET_SAVED_AUDIO_DELAY)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.RESET_SAVED_AUDIO_DELAY },
@@ -1029,7 +1039,7 @@ fun VideoPlayerSettingsScreen(
                     SECTION_EPISODES -> {
         Row2(
             quickKey = "vp_resume",
-            icon = OwnTVIcon.PLAY, title = stringResource(R.string.settings_resume_playback),
+            icon = OwnTVIcon.PLAY, title = stringResource(CoreR.string.settings_resume_playback),
             desc = stringResource(R.string.settings_resume_playback_description),
             chip = stringResource(resumeModeLabelRes(resumeMode)), chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.RESUME)),
@@ -1037,8 +1047,8 @@ fun VideoPlayerSettingsScreen(
         )
         Row2(
             quickKey = "vp_mini",
-            icon = OwnTVIcon.PIP, title = stringResource(R.string.settings_mini_player_root),
-            desc = stringResource(R.string.settings_mini_player_root_description),
+            icon = OwnTVIcon.PIP, title = stringResource(CoreR.string.settings_mini_player_root),
+            desc = stringResource(CoreR.string.settings_mini_player_root_description),
             chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.MINI_PLAYER)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.MINI_PLAYER },
@@ -1048,16 +1058,16 @@ fun VideoPlayerSettingsScreen(
                     SECTION_SUBTITLES -> {
         Row2(
             quickKey = "vp_sub_style",
-            icon = OwnTVIcon.SUBTITLE, title = stringResource(R.string.settings_subtitle_appearance),
-            desc = stringResource(R.string.settings_subtitle_appearance_description),
-            chip = stringResource(if (subStyleOn) R.string.common_on else R.string.common_off), primaryChip = subStyleOn, chevron = true,
+            icon = OwnTVIcon.SUBTITLE, title = stringResource(CoreR.string.settings_subtitle_appearance),
+            desc = stringResource(CoreR.string.settings_subtitle_appearance_description),
+            chip = stringResource(if (subStyleOn) CoreR.string.common_on else CoreR.string.common_off), primaryChip = subStyleOn, chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.SUB_STYLE)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.SUB_STYLE },
         )
         Row2(
             quickKey = "vp_sub_lang",
-            icon = OwnTVIcon.SUBTITLE, title = stringResource(R.string.settings_preferred_subtitle_language),
-            desc = stringResource(R.string.settings_preferred_language_description),
+            icon = OwnTVIcon.SUBTITLE, title = stringResource(CoreR.string.settings_preferred_subtitle_language),
+            desc = stringResource(CoreR.string.settings_preferred_language_description),
             chip = langName(subLang), chevron = true,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.SUB_LANG)),
             onClick = { savedScroll = scrollState.value; dialog = Dialog.SUB_LANG },
@@ -1066,19 +1076,27 @@ fun VideoPlayerSettingsScreen(
                     }
                     SECTION_LIVE -> {
         Row2(
+            quickKey = "vp_local_timeshift_resume",
+            icon = OwnTVIcon.REWIND, title = stringResource(R.string.settings_local_timeshift_resume),
+            desc = stringResource(R.string.settings_local_timeshift_resume_description),
+            chip = stringResource(resumeModeLabelRes(localResumeMode)), chevron = true,
+            modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.LOCAL_TIMESHIFT_RESUME)),
+            onClick = { savedScroll = scrollState.value; dialog = Dialog.LOCAL_TIMESHIFT_RESUME },
+        )
+        Row2(
             quickKey = "vp_live_preview",
-            icon = OwnTVIcon.LIVE_TV, title = stringResource(R.string.settings_quick_live_preview),
-            desc = stringResource(R.string.settings_live_preview_description),
-            chip = stringResource(if (livePreview) R.string.common_on else R.string.common_off), primaryChip = livePreview,
+            icon = OwnTVIcon.LIVE_TV, title = stringResource(CoreR.string.settings_quick_live_preview),
+            desc = stringResource(CoreR.string.settings_live_preview_description),
+            chip = stringResource(if (livePreview) CoreR.string.common_on else CoreR.string.common_off), primaryChip = livePreview,
             modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.LIVE_PREVIEW_PANEL)),
             onClick = toggleLivePreview,
         )
         if (livePreview) {
             Row2(
                 quickKey = "vp_preview_audio",
-                icon = OwnTVIcon.AUDIO, title = stringResource(R.string.settings_preview_audio),
-                desc = stringResource(R.string.settings_preview_audio_description),
-                chip = stringResource(if (previewAudio) R.string.common_on else R.string.common_off), primaryChip = previewAudio,
+                icon = OwnTVIcon.AUDIO, title = stringResource(CoreR.string.settings_preview_audio),
+                desc = stringResource(CoreR.string.settings_preview_audio_description),
+                chip = stringResource(if (previewAudio) CoreR.string.common_on else CoreR.string.common_off), primaryChip = previewAudio,
                 onClick = { vm.setLivePreviewAudio(!previewAudio) },
             )
         }
@@ -1098,8 +1116,8 @@ fun VideoPlayerSettingsScreen(
                 title = stringResource(R.string.settings_live_offset_sources),
                 desc = stringResource(R.string.settings_live_offset_sources_description),
                 chip = sources.count { it.liveLatencyMode != null }.let { count ->
-                    if (count == 0) stringResource(R.string.common_off)
-                    else pluralStringResource(R.plurals.settings_live_preroll_overrides, count, count)
+                    if (count == 0) stringResource(CoreR.string.common_off)
+                    else pluralStringResource(CoreR.plurals.settings_live_preroll_overrides, count, count)
                 },
                 primaryChip = sources.any { it.liveLatencyMode != null },
                 chevron = true,
@@ -1124,8 +1142,8 @@ fun VideoPlayerSettingsScreen(
                 title = stringResource(R.string.settings_live_reserve_sources),
                 desc = stringResource(R.string.settings_live_reserve_sources_description),
                 chip = sources.count { it.liveReserveMode != null }.let { count ->
-                    if (count == 0) stringResource(R.string.common_off)
-                    else pluralStringResource(R.plurals.settings_live_preroll_overrides, count, count)
+                    if (count == 0) stringResource(CoreR.string.common_off)
+                    else pluralStringResource(CoreR.plurals.settings_live_preroll_overrides, count, count)
                 },
                 primaryChip = sources.any { it.liveReserveMode != null },
                 chevron = true,
@@ -1157,12 +1175,12 @@ fun VideoPlayerSettingsScreen(
         Row2(
             quickKey = "vp_tune_timeout",
             icon = OwnTVIcon.LIVE_TV,
-            title = stringResource(R.string.settings_live_tune_timeout),
-            desc = stringResource(R.string.settings_live_tune_timeout_description),
+            title = stringResource(CoreR.string.settings_live_tune_timeout),
+            desc = stringResource(CoreR.string.settings_live_tune_timeout_description),
             chip = if (liveTuneTimeout <= 0) {
-                stringResource(R.string.common_never)
+                stringResource(CoreR.string.common_never)
             } else {
-                stringResource(R.string.settings_video_seconds, liveTuneTimeout)
+                stringResource(CoreR.string.settings_video_seconds, liveTuneTimeout)
             },
             primaryChip = liveTuneTimeout > 0,
             chevron = true,
@@ -1176,8 +1194,8 @@ fun VideoPlayerSettingsScreen(
                 title = stringResource(R.string.settings_live_initial_buffer_sources),
                 desc = stringResource(R.string.settings_live_initial_buffer_sources_description),
                 chip = sources.count { it.livePrerollSecs >= 0 }.let { count ->
-                    if (count == 0) stringResource(R.string.common_off)
-                    else pluralStringResource(R.plurals.settings_live_preroll_overrides, count, count)
+                    if (count == 0) stringResource(CoreR.string.common_off)
+                    else pluralStringResource(CoreR.plurals.settings_live_preroll_overrides, count, count)
                 },
                 primaryChip = sources.any { it.livePrerollSecs >= 0 },
                 chevron = true,
@@ -1187,9 +1205,9 @@ fun VideoPlayerSettingsScreen(
         }
         Row2(
             quickKey = "vp_channel_numbers",
-            icon = OwnTVIcon.LIVE_TV, title = stringResource(R.string.settings_channel_numbers),
-            desc = stringResource(R.string.settings_channel_numbers_description),
-            chip = if (directTune) stringResource(R.string.common_on) else stringResource(R.string.common_off), primaryChip = directTune,
+            icon = OwnTVIcon.LIVE_TV, title = stringResource(CoreR.string.settings_channel_numbers),
+            desc = stringResource(CoreR.string.settings_channel_numbers_description),
+            chip = if (directTune) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off), primaryChip = directTune,
             onClick = { vm.setDirectTune(!directTune) },
         )
 
@@ -1197,16 +1215,16 @@ fun VideoPlayerSettingsScreen(
                     else -> {
         Row2(
             quickKey = "vp_measured_stats",
-            icon = OwnTVIcon.VIDEO, title = stringResource(R.string.settings_measured_stats),
-            desc = stringResource(R.string.settings_measured_stats_description),
-            chip = if (measuredStats) stringResource(R.string.common_on) else stringResource(R.string.common_off), primaryChip = measuredStats,
+            icon = OwnTVIcon.VIDEO, title = stringResource(CoreR.string.settings_measured_stats),
+            desc = stringResource(CoreR.string.settings_measured_stats_description),
+            chip = if (measuredStats) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off), primaryChip = measuredStats,
             onClick = { vm.setMeasuredStreamStats(!measuredStats) },
         )
         Row2(
             quickKey = "vp_logging",
-            icon = OwnTVIcon.INFO, title = stringResource(R.string.settings_detailed_playback_logging),
-            desc = stringResource(R.string.settings_detailed_playback_logging_description),
-            chip = stringResource(if (detailedDiagnostics) R.string.common_on else R.string.common_off), primaryChip = detailedDiagnostics,
+            icon = OwnTVIcon.INFO, title = stringResource(CoreR.string.settings_detailed_playback_logging),
+            desc = stringResource(CoreR.string.settings_detailed_playback_logging_description),
+            chip = stringResource(if (detailedDiagnostics) CoreR.string.common_on else CoreR.string.common_off), primaryChip = detailedDiagnostics,
             onClick = { vm.setDetailedDiagnostics(!detailedDiagnostics) },
         )
                     }
@@ -1219,9 +1237,16 @@ fun VideoPlayerSettingsScreen(
 
 
     when (dialog) {
+        Dialog.LOCAL_TIMESHIFT_RESUME -> PickerDialog(
+            title = stringResource(R.string.settings_local_timeshift_resume),
+            options = tv.own.owntv.core.settings.SettingsRepository.ResumeMode.entries.map { it.name to stringResource(resumeModeLabelRes(it)) },
+            selected = localResumeMode.name,
+            onSelect = { vm.setLocalTimeshiftResumeMode(it); dialog = Dialog.NONE },
+            onDismiss = { dialog = Dialog.NONE },
+        )
         Dialog.CHANNEL_PLAYBACK -> ChannelPlaybackSettingsDialog(vm) { dialog = Dialog.NONE }
         Dialog.LIVE_ENGINE -> PickerDialog(
-            title = stringResource(R.string.settings_live_tv_player),
+            title = stringResource(CoreR.string.settings_live_tv_player),
             options = engineOptions(default = EnginePreference.EXO_FIRST),
             selected = liveEngine.name,
             onSelect = { vm.setLiveEnginePreference(EnginePreference.valueOf(it)); dialog = Dialog.NONE },
@@ -1235,14 +1260,14 @@ fun VideoPlayerSettingsScreen(
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.ZOOM -> PickerDialog(
-            title = stringResource(R.string.settings_default_zoom),
+            title = stringResource(CoreR.string.settings_default_zoom),
             options = ZoomMode.entries.map { it.name to stringResource(it.labelRes) },
             selected = zoomMode.name,
             onSelect = { vm.setDefaultZoom(it); dialog = Dialog.NONE },
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.RESUME -> PickerDialog(
-            title = stringResource(R.string.settings_resume_playback),
+            title = stringResource(CoreR.string.settings_resume_playback),
             options = tv.own.owntv.core.settings.SettingsRepository.ResumeMode.entries.map { it.name to stringResource(resumeModeLabelRes(it)) },
             selected = resumeMode.name,
             onSelect = { vm.setResumeMode(it); dialog = Dialog.NONE },
@@ -1266,27 +1291,27 @@ fun VideoPlayerSettingsScreen(
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.SUB_LANG -> PickerDialog(
-            title = stringResource(R.string.settings_preferred_subtitle_language),
+            title = stringResource(CoreR.string.settings_preferred_subtitle_language),
             options = LANGUAGE_CODES.map { it to langName(it) },
             selected = subLang,
             onSelect = { vm.setPreferredSubLang(it); dialog = Dialog.NONE },
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.AUDIO_LANG -> PickerDialog(
-            title = stringResource(R.string.settings_preferred_audio_language),
+            title = stringResource(CoreR.string.settings_preferred_audio_language),
             options = LANGUAGE_CODES.map { it to langName(it) },
             selected = audioLang,
             onSelect = { vm.setPreferredAudioLang(it); dialog = Dialog.NONE },
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.AUDIO_SYNC -> StepperDialog(
-            title = stringResource(R.string.settings_audio_sync),
+            title = stringResource(CoreR.string.settings_audio_sync),
             // ±5s, matching what the player itself accepts. The narrower ±2s here meant a delay set in the
             // HUD could not be reproduced — or corrected — from Settings.
             // 25 ms steps: the offset being corrected here is the TV's own picture-processing delay, which
             // lands in the tens of milliseconds — a 50 ms step could only bracket it, never hit it.
             value = audioDelay, step = 25, min = -5000, max = 5000,
-            format = { stringResource(R.string.settings_audio_delay, it) },
+            format = { stringResource(CoreR.string.settings_audio_delay, it) },
             onSet = { vm.setAudioDelayMs(it) },
             onReset = { vm.setAudioDelayMs(0) },
             onDismiss = { dialog = Dialog.NONE },
@@ -1381,22 +1406,22 @@ fun VideoPlayerSettingsScreen(
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.LIVE_TUNE_TIMEOUT -> PickerDialog(
-            title = stringResource(R.string.settings_live_tune_timeout),
+            title = stringResource(CoreR.string.settings_live_tune_timeout),
             options = tv.own.owntv.player.LiveLadder.BUDGET_CHOICES_SECS.map {
-                it.toString() to if (it <= 0) stringResource(R.string.common_never) else stringResource(R.string.settings_video_seconds, it)
+                it.toString() to if (it <= 0) stringResource(CoreR.string.common_never) else stringResource(CoreR.string.settings_video_seconds, it)
             },
             selected = liveTuneTimeout.toString(),
             onSelect = { vm.setLiveTuneTimeoutSecs(it.toIntOrNull() ?: 0); dialog = Dialog.NONE },
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.LIVE_PREROLL_SOURCES -> PickerDialog(
-            title = stringResource(R.string.settings_live_preroll_playlist_picker),
+            title = stringResource(CoreR.string.settings_live_preroll_playlist_picker),
             options = sources.map { src ->
                 val value = if (src.livePrerollSecs >= 0) {
                     if (src.livePrerollSecs == 0) stringResource(R.string.settings_live_buffer_automatic)
                     else stringResource(R.string.settings_live_buffer_seconds, src.livePrerollSecs)
                 } else {
-                    stringResource(R.string.settings_live_preroll_follow)
+                    stringResource(CoreR.string.settings_live_preroll_follow)
                 }
                 src.id.toString() to "${src.name}  ·  $value"
             },
@@ -1409,12 +1434,12 @@ fun VideoPlayerSettingsScreen(
         )
         // --- per-playlist Live TV engine: pick the playlist, then its value ---
         Dialog.LIVE_ENGINE_SOURCES -> PickerDialog(
-            title = stringResource(R.string.settings_live_preroll_playlist_picker),
+            title = stringResource(CoreR.string.settings_live_preroll_playlist_picker),
             options = sources.map { src ->
                 val value = src.liveEnginePreference
                     ?.let { name -> EnginePreference.entries.firstOrNull { it.name == name } }
                     ?.let { engineLabel(it) }
-                    ?: stringResource(R.string.settings_live_preroll_follow)
+                    ?: stringResource(CoreR.string.settings_live_preroll_follow)
                 src.id.toString() to "${src.name}  ·  $value"
             },
             selected = engineSource?.id?.toString() ?: "",
@@ -1425,8 +1450,8 @@ fun VideoPlayerSettingsScreen(
             onDismiss = { engineSource = null; dialog = Dialog.NONE },
         )
         Dialog.LIVE_ENGINE_SOURCE -> PickerDialog(
-            title = engineSource?.name ?: stringResource(R.string.settings_live_tv_player),
-            options = listOf(FOLLOW_GLOBAL to stringResource(R.string.settings_live_preroll_follow)) +
+            title = engineSource?.name ?: stringResource(CoreR.string.settings_live_tv_player),
+            options = listOf(FOLLOW_GLOBAL to stringResource(CoreR.string.settings_live_preroll_follow)) +
                 EnginePreference.entries.map { it.name to engineLabel(it) },
             selected = engineSource?.liveEnginePreference ?: FOLLOW_GLOBAL,
             onSelect = { value ->
@@ -1440,11 +1465,11 @@ fun VideoPlayerSettingsScreen(
         )
         // --- per-playlist Live latency: pick the playlist, then its value (Custom opens the stepper) ---
         Dialog.LIVE_LATENCY_SOURCES -> PickerDialog(
-            title = stringResource(R.string.settings_live_preroll_playlist_picker),
+            title = stringResource(CoreR.string.settings_live_preroll_playlist_picker),
             options = sources.map { src ->
                 val mode = src.liveLatencyMode?.let { tv.own.owntv.core.settings.LiveLatency.fromName(it) }
                 val value = when {
-                    mode == null -> stringResource(R.string.settings_live_preroll_follow)
+                    mode == null -> stringResource(CoreR.string.settings_live_preroll_follow)
                     mode == tv.own.owntv.core.settings.LiveLatency.CUSTOM ->
                         stringResource(R.string.settings_live_buffer_seconds, sourceCustomSecs(src))
                     else -> stringResource(liveLatencyLabelRes(mode))
@@ -1460,7 +1485,7 @@ fun VideoPlayerSettingsScreen(
         )
         Dialog.LIVE_LATENCY_SOURCE -> PickerDialog(
             title = latencySource?.name ?: stringResource(R.string.settings_live_offset_title),
-            options = listOf(FOLLOW_GLOBAL to stringResource(R.string.settings_live_preroll_follow)) +
+            options = listOf(FOLLOW_GLOBAL to stringResource(CoreR.string.settings_live_preroll_follow)) +
                 tv.own.owntv.core.settings.LiveLatency.entries.map { it.name to stringResource(liveLatencyLabelRes(it)) },
             selected = latencySource?.liveLatencyMode ?: FOLLOW_GLOBAL,
             onSelect = { name ->
@@ -1521,7 +1546,7 @@ fun VideoPlayerSettingsScreen(
             title = stringResource(R.string.settings_live_reserve_sources),
             options = sources.map { src ->
                 val mode = src.liveReserveMode?.let { tv.own.owntv.core.settings.LiveLatency.fromName(it) }
-                val value = if (mode == null) stringResource(R.string.settings_live_preroll_follow)
+                val value = if (mode == null) stringResource(CoreR.string.settings_live_preroll_follow)
                     else liveReserveLabel(mode, sourceReserveCustomSecs(src, globalReserve), sourceReserveExtraSecs(src, globalReserve))
                 src.id.toString() to "${src.name}  ·  $value"
             },
@@ -1536,7 +1561,7 @@ fun VideoPlayerSettingsScreen(
             val src = sources.firstOrNull { it.id == reserveSource?.id } ?: reserveSource
             PickerDialog(
                 title = src?.name ?: stringResource(R.string.settings_live_reserve_title),
-                options = listOf(FOLLOW_GLOBAL to stringResource(R.string.settings_live_preroll_follow)) +
+                options = listOf(FOLLOW_GLOBAL to stringResource(CoreR.string.settings_live_preroll_follow)) +
                     reserveModes(src?.liveReserveMode).map {
                         it.name to if (it == tv.own.owntv.core.settings.LiveLatency.CUSTOM) {
                             stringResource(R.string.settings_live_reserve_custom)
@@ -1571,8 +1596,8 @@ fun VideoPlayerSettingsScreen(
             )
         }
         Dialog.LIVE_PREROLL_SOURCE -> PickerDialog(
-            title = prerollSource?.name ?: stringResource(R.string.settings_sort_playlist),
-            options = listOf("-1" to stringResource(R.string.settings_live_preroll_follow)) +
+            title = prerollSource?.name ?: stringResource(CoreR.string.settings_sort_playlist),
+            options = listOf("-1" to stringResource(CoreR.string.settings_live_preroll_follow)) +
                 tv.own.owntv.core.settings.LiveBuffer.PREROLL_CHOICES.map {
                     it.toString() to if (it <= 0) stringResource(R.string.settings_live_buffer_automatic) else stringResource(R.string.settings_live_buffer_seconds, it)
                 },
@@ -1590,13 +1615,13 @@ fun VideoPlayerSettingsScreen(
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.RESET_PINS -> ConfirmResetDialog(
-            title = stringResource(R.string.settings_reset_player_choices_confirm),
+            title = stringResource(CoreR.string.settings_reset_player_choices_confirm),
             description = stringResource(R.string.settings_reset_player_choices_confirm_description),
             onConfirm = { vm.clearVodEnginePins(); dialog = Dialog.NONE },
             onCancel = { dialog = Dialog.NONE },
         )
         Dialog.SEEK_STEP -> PickerDialog(
-            title = stringResource(R.string.settings_seek_step),
+            title = stringResource(CoreR.string.settings_seek_step),
             options = tv.own.owntv.core.settings.SeekSteps.SEEK_CHOICES.map {
                 it.toString() to stringResource(R.string.settings_live_buffer_seconds, it)
             },
@@ -1605,7 +1630,7 @@ fun VideoPlayerSettingsScreen(
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.LIVE_REWIND_STEP -> PickerDialog(
-            title = stringResource(R.string.settings_live_rewind_step),
+            title = stringResource(CoreR.string.settings_live_rewind_step),
             options = tv.own.owntv.core.settings.SeekSteps.LIVE_REWIND_CHOICES.map {
                 it.toString() to stringResource(R.string.settings_live_buffer_seconds, it)
             },
@@ -1614,19 +1639,19 @@ fun VideoPlayerSettingsScreen(
             onDismiss = { dialog = Dialog.NONE },
         )
         Dialog.RESET_SAVED_ZOOM -> ConfirmResetDialog(
-            title = stringResource(R.string.settings_reset_saved_zoom_confirm),
+            title = stringResource(CoreR.string.settings_reset_saved_zoom_confirm),
             description = stringResource(R.string.settings_reset_saved_zoom_confirm_description),
             onConfirm = { vm.clearSavedZoom(); dialog = Dialog.NONE },
             onCancel = { dialog = Dialog.NONE },
         )
         Dialog.RESET_SAVED_AUDIO_DELAY -> ConfirmResetDialog(
-            title = stringResource(R.string.settings_reset_saved_audio_delay_confirm),
+            title = stringResource(CoreR.string.settings_reset_saved_audio_delay_confirm),
             description = stringResource(R.string.settings_reset_saved_audio_delay_confirm_description),
             onConfirm = { vm.clearSavedAudioDelay(); dialog = Dialog.NONE },
             onCancel = { dialog = Dialog.NONE },
         )
         Dialog.AFR_PAUSE -> PickerDialog(
-            title = stringResource(R.string.settings_afr_pause),
+            title = stringResource(CoreR.string.settings_afr_pause),
             options = (0..vm.afrPauseMaxSecs).map { it.toString() to afrPauseLabel(it) },
             selected = afrPauseSecs.toString(),
             onSelect = { vm.setAfrPauseSecs(it.toIntOrNull() ?: 0); dialog = Dialog.NONE },
@@ -1699,9 +1724,9 @@ private fun LiveLatencyWarningDialog(onConfirm: () -> Unit, onCancel: () -> Unit
             )
             Spacer(Modifier.height(20.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.settings_low_latency_understand), onClick = onConfirm, modifier = Modifier.focusRequester(firstFocus))
+                OwnTVButton(stringResource(CoreR.string.settings_low_latency_understand), onClick = onConfirm, modifier = Modifier.focusRequester(firstFocus))
             }
         }
     }
@@ -1729,11 +1754,11 @@ private fun ConfirmResetDialog(title: String, description: String, onConfirm: ()
             Spacer(Modifier.height(20.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OwnTVButton(
-                    stringResource(R.string.common_cancel), onClick = onCancel,
+                    stringResource(CoreR.string.common_cancel), onClick = onCancel,
                     style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.focusRequester(firstFocus),
                 )
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.common_reset), onClick = onConfirm)
+                OwnTVButton(stringResource(CoreR.string.common_reset), onClick = onConfirm)
             }
         }
     }
@@ -1742,6 +1767,8 @@ private fun ConfirmResetDialog(title: String, description: String, onConfirm: ()
 
 /** The dialog a pinned row opens when Quick jumps into this screen. Null for rows that toggle. */
 private fun dialogForQuickKey(key: String): Dialog? = when (key) {
+    "vp_local_timeshift_resume" -> Dialog.LOCAL_TIMESHIFT_RESUME
+    "vp_channel_playback" -> Dialog.CHANNEL_PLAYBACK
     "vp_afr" -> Dialog.AFR_WARNING
     "vp_afr_pause" -> Dialog.AFR_PAUSE
     "vp_multiview_tiles" -> Dialog.MULTIVIEW_TILES
@@ -1772,7 +1799,7 @@ private fun dialogForQuickKey(key: String): Dialog? = when (key) {
     else -> null
 }
 
-private enum class Dialog { NONE, CHANNEL_PLAYBACK, LIVE_ENGINE, LIVE_ENGINE_SOURCES, LIVE_ENGINE_SOURCE, LIVE_LATENCY_SOURCES, LIVE_LATENCY_SOURCE, LIVE_LATENCY_CUSTOM_SOURCE, LIVE_RESERVE, LIVE_RESERVE_CUSTOM, LIVE_RESERVE_SOURCES, LIVE_RESERVE_SOURCE, LIVE_RESERVE_CUSTOM_SOURCE, VOD_ENGINE, ZOOM, RESET_SAVED_ZOOM, RESET_SAVED_AUDIO_DELAY, SEEK_STEP, LIVE_REWIND_STEP, SUB_STYLE, SUB_LANG, AUDIO_LANG, AUDIO_SYNC, RESUME, LIVE_LATENCY, LIVE_CUSTOM, LIVE_PREROLL, LIVE_TUNE_TIMEOUT, LIVE_PREROLL_SOURCES, LIVE_PREROLL_SOURCE, EXTERNAL_PLAYER, RESET_PINS, AFR_WARNING, AFR_PAUSE, LIVE_PREVIEW_PANEL, MINI_PLAYER, MULTIVIEW_TILES, MULTIVIEW_WARNING }
+private enum class Dialog { NONE, LOCAL_TIMESHIFT_RESUME, CHANNEL_PLAYBACK, LIVE_ENGINE, LIVE_ENGINE_SOURCES, LIVE_ENGINE_SOURCE, LIVE_LATENCY_SOURCES, LIVE_LATENCY_SOURCE, LIVE_LATENCY_CUSTOM_SOURCE, LIVE_RESERVE, LIVE_RESERVE_CUSTOM, LIVE_RESERVE_SOURCES, LIVE_RESERVE_SOURCE, LIVE_RESERVE_CUSTOM_SOURCE, VOD_ENGINE, ZOOM, RESET_SAVED_ZOOM, RESET_SAVED_AUDIO_DELAY, SEEK_STEP, LIVE_REWIND_STEP, SUB_STYLE, SUB_LANG, AUDIO_LANG, AUDIO_SYNC, RESUME, LIVE_LATENCY, LIVE_CUSTOM, LIVE_PREROLL, LIVE_TUNE_TIMEOUT, LIVE_PREROLL_SOURCES, LIVE_PREROLL_SOURCE, EXTERNAL_PLAYER, RESET_PINS, AFR_WARNING, AFR_PAUSE, LIVE_PREVIEW_PANEL, MINI_PLAYER, MULTIVIEW_TILES, MULTIVIEW_WARNING }
 
 /**
  * Label for one engine preference — "ExoPlayer, then mpv", "mpv only", and so on.
@@ -1783,13 +1810,13 @@ private enum class Dialog { NONE, CHANNEL_PLAYBACK, LIVE_ENGINE, LIVE_ENGINE_SOU
  */
 @Composable
 internal fun engineLabel(preference: EnginePreference): String {
-    val exo = stringResource(R.string.settings_player_exoplayer)
-    val mpv = stringResource(R.string.settings_player_mpv)
+    val exo = stringResource(CoreR.string.settings_player_exoplayer)
+    val mpv = stringResource(CoreR.string.settings_player_mpv)
     return when (preference) {
-        EnginePreference.EXO_FIRST -> stringResource(R.string.settings_engine_order, exo, mpv)
-        EnginePreference.MPV_FIRST -> stringResource(R.string.settings_engine_order, mpv, exo)
-        EnginePreference.EXO_ONLY -> stringResource(R.string.settings_engine_only, exo)
-        EnginePreference.MPV_ONLY -> stringResource(R.string.settings_engine_only, mpv)
+        EnginePreference.EXO_FIRST -> stringResource(CoreR.string.settings_engine_order, exo, mpv)
+        EnginePreference.MPV_FIRST -> stringResource(CoreR.string.settings_engine_order, mpv, exo)
+        EnginePreference.EXO_ONLY -> stringResource(CoreR.string.settings_engine_only, exo)
+        EnginePreference.MPV_ONLY -> stringResource(CoreR.string.settings_engine_only, mpv)
     }
 }
 
@@ -1823,7 +1850,7 @@ private fun engineOptions(default: EnginePreference): List<Pair<String, String>>
     EnginePreference.entries.map { preference ->
         val label = engineLabel(preference)
         preference.name to if (preference == default) {
-            stringResource(R.string.settings_engine_default, label)
+            stringResource(CoreR.string.settings_engine_default, label)
         } else {
             label
         }
@@ -1832,7 +1859,7 @@ private fun engineOptions(default: EnginePreference): List<Pair<String, String>>
 /** Explicit destination instead of an ambiguous enabled/disabled chip. */
 @Composable
 private fun externalPlayerChip(live: Boolean): String = stringResource(
-    if (live) R.string.settings_catchup_player_external else R.string.settings_catchup_player_internal,
+    if (live) CoreR.string.settings_catchup_player_external else CoreR.string.settings_catchup_player_internal,
 )
 
 // --- Shared building blocks (kept local to the settings sub-screens) ---
@@ -2076,7 +2103,7 @@ internal fun PickerDialog(
                 tv.own.owntv.ui.components.SearchBar(
                     query = query,
                     onQueryChange = { query = it },
-                    placeholder = stringResource(R.string.common_search_hint),
+                    placeholder = stringResource(CoreR.string.common_search_hint),
                     modifier = Modifier.fillMaxWidth().focusRequester(searchFr),
                     surface = GlassSurface.DIALOGS,
                 )
@@ -2133,7 +2160,7 @@ internal fun PickerDialog(
             }
             Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
             }
                 }
             }
@@ -2161,10 +2188,10 @@ private fun ExternalPlayerDialog(
     tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = onDismiss) {
         Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
             Column(modifier = Modifier.dialogPanel(width = 300.dp, corner = 16.dp, padding = 14.dp, scroll = false)) {
-                Text(stringResource(R.string.settings_live_player_target), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_live_player_target), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.settings_live_player_target_description),
+                    stringResource(CoreR.string.settings_live_player_target_description),
                     style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(10.dp))
@@ -2184,13 +2211,13 @@ private fun ExternalPlayerDialog(
                     ) { _ ->
                         Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp, vertical = 8.dp), verticalAlignment = Alignment.CenterVertically) {
                             Text(externalPlayerChip(external), style = MaterialTheme.typography.bodyMedium, color = colors.onSurface, modifier = Modifier.weight(1f))
-                            if (selected) Text(stringResource(R.string.common_on), style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                            if (selected) Text(stringResource(CoreR.string.common_on), style = MaterialTheme.typography.labelSmall, color = colors.primary)
                         }
                     }
                 }
                 Spacer(Modifier.height(12.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                 }
             }
         }
@@ -2256,9 +2283,9 @@ private fun LiveReserveCustomDialog(
                     StepBtn("+", enabled = enabled[3], modifier = Modifier.focusRequester(controls[3]).onFocusChanged { if (it.isFocused) focusedControl = 3 }) { draft = draft.adjustMaximum(1) }
                 }
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OwnTVButton(stringResource(R.string.common_reset), onClick = { draft = LiveReserveDraft.defaults() }, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_reset), onClick = { draft = LiveReserveDraft.defaults() }, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(R.string.common_done), onClick = { onConfirm(draft.minimum, draft.maximum) })
+                    OwnTVButton(stringResource(CoreR.string.common_done), onClick = { onConfirm(draft.minimum, draft.maximum) })
                 }
             }
         }
@@ -2310,9 +2337,9 @@ internal fun StepperDialog(
             }
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OwnTVButton(stringResource(R.string.common_reset), onClick = onReset, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_reset), onClick = onReset, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.common_done), onClick = onDismiss)
+                OwnTVButton(stringResource(CoreR.string.common_done), onClick = onDismiss)
             }
         }
     }
@@ -2321,38 +2348,38 @@ internal fun StepperDialog(
 
 /** The quick text-color presets offered above the full picker (label → "#RRGGBB"). */
 private val SUB_COLOR_PRESETS: List<Pair<Int, String>> = listOf(
-    R.string.settings_subtitle_color_white to "#FFFFFF",
-    R.string.settings_subtitle_color_yellow to "#FFEB3B",
-    R.string.settings_subtitle_color_cyan to "#4FC3F7",
-    R.string.settings_subtitle_color_green to "#8BC34A",
-    R.string.settings_subtitle_color_grey to "#BDBDBD",
+    CoreR.string.settings_subtitle_color_white to "#FFFFFF",
+    CoreR.string.settings_subtitle_color_yellow to "#FFEB3B",
+    CoreR.string.settings_subtitle_color_cyan to "#4FC3F7",
+    CoreR.string.settings_subtitle_color_green to "#8BC34A",
+    CoreR.string.settings_subtitle_color_grey to "#BDBDBD",
 )
 
 @Composable
 private fun subOpacityLabel(pct: Int): String = when {
-    !SubtitleStyle.hasOpacity(pct) -> stringResource(R.string.settings_subtitle_default)
-    pct == SubtitleStyle.OPACITY_MIN -> stringResource(R.string.settings_subtitle_background_none)
-    pct == SubtitleStyle.OPACITY_MAX -> stringResource(R.string.settings_subtitle_background_solid)
-    else -> stringResource(R.string.common_percent, pct)
+    !SubtitleStyle.hasOpacity(pct) -> stringResource(CoreR.string.settings_subtitle_default)
+    pct == SubtitleStyle.OPACITY_MIN -> stringResource(CoreR.string.settings_subtitle_background_none)
+    pct == SubtitleStyle.OPACITY_MAX -> stringResource(CoreR.string.settings_subtitle_background_solid)
+    else -> stringResource(CoreR.string.common_percent, pct)
 }
 
 @Composable
 private fun subColorLabel(hex: String): String = if (SubtitleStyle.hasColor(hex)) {
     hex.uppercase()
 } else {
-    stringResource(R.string.settings_subtitle_default)
+    stringResource(CoreR.string.settings_subtitle_default)
 }
 
 @Composable
 private fun subtitlePositionName(position: SubtitleStyle.Position): String = stringResource(
     when (position) {
-        SubtitleStyle.Position.DEFAULT -> R.string.settings_subtitle_default
-        SubtitleStyle.Position.TOP_LEFT -> R.string.player_mini_top_left
-        SubtitleStyle.Position.TOP_CENTER -> R.string.player_mini_top_center
-        SubtitleStyle.Position.TOP_RIGHT -> R.string.player_mini_top_right
-        SubtitleStyle.Position.BOTTOM_LEFT -> R.string.player_mini_bottom_left
-        SubtitleStyle.Position.BOTTOM_CENTER -> R.string.player_mini_bottom_center
-        SubtitleStyle.Position.BOTTOM_RIGHT -> R.string.player_mini_bottom_right
+        SubtitleStyle.Position.DEFAULT -> CoreR.string.settings_subtitle_default
+        SubtitleStyle.Position.TOP_LEFT -> CoreR.string.player_mini_top_left
+        SubtitleStyle.Position.TOP_CENTER -> CoreR.string.player_mini_top_center
+        SubtitleStyle.Position.TOP_RIGHT -> CoreR.string.player_mini_top_right
+        SubtitleStyle.Position.BOTTOM_LEFT -> CoreR.string.player_mini_bottom_left
+        SubtitleStyle.Position.BOTTOM_CENTER -> CoreR.string.player_mini_bottom_center
+        SubtitleStyle.Position.BOTTOM_RIGHT -> CoreR.string.player_mini_bottom_right
     },
 )
 
@@ -2415,8 +2442,8 @@ private fun SubtitleAppearanceDialog(
                     bgOpacity = bgOpacity, onScaleExo = onScaleExo, onScaleMpv = onScaleMpv, onDismiss = close,
                 )
                 SubDialog.FONT -> PickerDialog(
-                    title = stringResource(R.string.settings_subtitle_font),
-                    options = listOf("" to stringResource(R.string.settings_subtitle_default)) +
+                    title = stringResource(CoreR.string.settings_subtitle_font),
+                    options = listOf("" to stringResource(CoreR.string.settings_subtitle_default)) +
                         AppFontFamily.entries.map { it.name to subtitleFontFamilyLabel(it) },
                     selected = font?.name.orEmpty(),
                     onSelect = { selected ->
@@ -2444,10 +2471,10 @@ private fun SubtitleAppearanceDialog(
             contentAlignment = Alignment.Center,
         ) {
             Column(modifier = Modifier.dialogPanel(width = 640.dp, padding = 28.dp)) {
-                Text(stringResource(R.string.settings_subtitle_appearance), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_subtitle_appearance), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    stringResource(R.string.settings_subtitle_customize_description),
+                    stringResource(CoreR.string.settings_subtitle_customize_description),
                     style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(16.dp))
@@ -2459,9 +2486,9 @@ private fun SubtitleAppearanceDialog(
 
                 Row2(
                     icon = OwnTVIcon.SUBTITLE,
-                    title = stringResource(R.string.settings_subtitle_customize),
-                    desc = stringResource(R.string.settings_subtitle_customize_off),
-                    chip = stringResource(if (enabled) R.string.common_on else R.string.common_off),
+                    title = stringResource(CoreR.string.settings_subtitle_customize),
+                    desc = stringResource(CoreR.string.settings_subtitle_customize_off),
+                    chip = stringResource(if (enabled) CoreR.string.common_on else CoreR.string.common_off),
                     primaryChip = enabled,
                     modifier = Modifier.focusRequester(toggleFocus),
                     onClick = { onToggle(!enabled) },
@@ -2472,8 +2499,8 @@ private fun SubtitleAppearanceDialog(
                     Spacer(Modifier.height(2.dp))
             Row2(
                 icon = OwnTVIcon.SUBTITLE,
-                title = stringResource(R.string.settings_subtitle_size),
-                        desc = stringResource(R.string.settings_subtitle_size_description),
+                title = stringResource(CoreR.string.settings_subtitle_size),
+                        desc = stringResource(CoreR.string.settings_subtitle_size_description),
                         chip = subSizePairName(scaleExo, scaleMpv),
                         primaryChip = SubtitleStyle.hasScale(scaleExo) || SubtitleStyle.hasScale(scaleMpv),
                         chevron = true,
@@ -2482,9 +2509,9 @@ private fun SubtitleAppearanceDialog(
             )
             Row2(
                 icon = OwnTVIcon.SUBTITLE,
-                title = stringResource(R.string.settings_subtitle_font),
-                desc = stringResource(R.string.settings_choose_font),
-                chip = font?.let { subtitleFontFamilyLabel(it) } ?: stringResource(R.string.settings_subtitle_default),
+                title = stringResource(CoreR.string.settings_subtitle_font),
+                desc = stringResource(CoreR.string.settings_choose_font),
+                chip = font?.let { subtitleFontFamilyLabel(it) } ?: stringResource(CoreR.string.settings_subtitle_default),
                 primaryChip = font != null,
                 chevron = true,
                 modifier = Modifier.focusRequester(rowFocus.getValue(SubDialog.FONT)),
@@ -2492,24 +2519,24 @@ private fun SubtitleAppearanceDialog(
             )
             Row2(
                         icon = OwnTVIcon.SUBTITLE,
-                        title = stringResource(R.string.settings_subtitle_color_short),
-                        desc = stringResource(R.string.settings_subtitle_color_description),
+                        title = stringResource(CoreR.string.settings_subtitle_color_short),
+                        desc = stringResource(CoreR.string.settings_subtitle_color_description),
                         chip = subColorLabel(color), primaryChip = SubtitleStyle.hasColor(color), chevron = true,
                         modifier = Modifier.focusRequester(rowFocus.getValue(SubDialog.COLOR)),
                         onClick = { open(SubDialog.COLOR) },
                     )
                     Row2(
                         icon = OwnTVIcon.SUBTITLE,
-                        title = stringResource(R.string.settings_subtitle_position_short),
-                        desc = stringResource(R.string.settings_subtitle_position_description),
+                        title = stringResource(CoreR.string.settings_subtitle_position_short),
+                        desc = stringResource(CoreR.string.settings_subtitle_position_description),
                         chip = subtitlePositionName(position), primaryChip = position != SubtitleStyle.Position.DEFAULT, chevron = true,
                         modifier = Modifier.focusRequester(rowFocus.getValue(SubDialog.POSITION)),
                         onClick = { open(SubDialog.POSITION) },
                     )
                     Row2(
                         icon = OwnTVIcon.SUBTITLE,
-                        title = stringResource(R.string.settings_subtitle_background_transparency),
-                        desc = stringResource(R.string.settings_subtitle_background_description),
+                        title = stringResource(CoreR.string.settings_subtitle_background_transparency),
+                        desc = stringResource(CoreR.string.settings_subtitle_background_description),
                         chip = subOpacityLabel(bgOpacity), primaryChip = SubtitleStyle.hasOpacity(bgOpacity), chevron = true,
                         modifier = Modifier.focusRequester(rowFocus.getValue(SubDialog.TRANSPARENCY)),
                         onClick = { open(SubDialog.TRANSPARENCY) },
@@ -2518,10 +2545,10 @@ private fun SubtitleAppearanceDialog(
 
                 Spacer(Modifier.height(20.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OwnTVButton(stringResource(R.string.settings_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.settings_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
                     if (enabled) {
-                        OwnTVButton(stringResource(R.string.settings_subtitle_reset_all), style = OwnTVButtonStyle.SECONDARY, onClick = {
+                        OwnTVButton(stringResource(CoreR.string.settings_subtitle_reset_all), style = OwnTVButtonStyle.SECONDARY, onClick = {
                         onScaleExo(SubtitleStyle.SCALE_DEFAULT)
                         onScaleMpv(SubtitleStyle.SCALE_DEFAULT)
                         onFont(null)
@@ -2542,12 +2569,12 @@ private enum class SubDialog { NONE, SIZE, FONT, COLOR, POSITION, TRANSPARENCY }
 @Composable
 private fun subtitleFontFamilyLabel(family: AppFontFamily): String = stringResource(
     when (family) {
-        AppFontFamily.LORA -> R.string.settings_font_lora
-        AppFontFamily.SYSTEM_SANS -> R.string.settings_font_system_sans
-        AppFontFamily.MONOSPACE -> R.string.settings_font_monospace
-        AppFontFamily.PLAYFAIR_DISPLAY -> R.string.settings_font_playfair_display
-        AppFontFamily.DANCING_SCRIPT -> R.string.settings_font_dancing_script
-        AppFontFamily.POPPINS -> R.string.settings_font_poppins
+        AppFontFamily.LORA -> CoreR.string.settings_font_lora
+        AppFontFamily.SYSTEM_SANS -> CoreR.string.settings_font_system_sans
+        AppFontFamily.MONOSPACE -> CoreR.string.settings_font_monospace
+        AppFontFamily.PLAYFAIR_DISPLAY -> CoreR.string.settings_font_playfair_display
+        AppFontFamily.DANCING_SCRIPT -> CoreR.string.settings_font_dancing_script
+        AppFontFamily.POPPINS -> CoreR.string.settings_font_poppins
     },
 )
 
@@ -2587,10 +2614,10 @@ private fun SubtitleColorDialog(color: String, onColor: (String) -> Unit, onDism
             contentAlignment = Alignment.Center,
         ) {
             Column(modifier = Modifier.dialogPanel(width = 440.dp, corner = 16.dp, padding = 18.dp)) {
-                Text(stringResource(R.string.settings_subtitle_color), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_subtitle_color), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.settings_subtitle_color_default_description),
+                    stringResource(CoreR.string.settings_subtitle_color_default_description),
                     style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(12.dp))
@@ -2617,11 +2644,11 @@ private fun SubtitleColorDialog(color: String, onColor: (String) -> Unit, onDism
                     tv.own.owntv.ui.components.OwnTVTextField(
                         value = hexInput,
                         onValueChange = { hexInput = it.take(6); hexError = false },
-                        label = stringResource(R.string.settings_subtitle_hex),
+                        label = stringResource(CoreR.string.settings_subtitle_hex),
                         placeholder = "FFFFFF",
                         modifier = Modifier.width(170.dp),
                     )
-                    OwnTVButton(stringResource(R.string.settings_apply), onClick = {
+                    OwnTVButton(stringResource(CoreR.string.settings_apply), onClick = {
                         val hex = "#" + hexInput.trim().removePrefix("#").uppercase()
                         if (tv.own.owntv.ui.theme.parseAccentHex(hex) != null) {
                             android.graphics.Color.colorToHSV(SubtitleStyle.colorArgb(hex), hsv)
@@ -2634,7 +2661,7 @@ private fun SubtitleColorDialog(color: String, onColor: (String) -> Unit, onDism
                 }
                 if (hexError) {
                     Spacer(Modifier.height(8.dp))
-                    Text(stringResource(R.string.settings_subtitle_color_hex_hint), style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                    Text(stringResource(CoreR.string.settings_subtitle_color_hex_hint), style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
                 }
 
                 Spacer(Modifier.height(14.dp))
@@ -2650,13 +2677,13 @@ private fun SubtitleColorDialog(color: String, onColor: (String) -> Unit, onDism
 
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OwnTVButton(stringResource(R.string.settings_subtitle_use_default), style = OwnTVButtonStyle.SECONDARY, onClick = {
+                    OwnTVButton(stringResource(CoreR.string.settings_subtitle_use_default), style = OwnTVButtonStyle.SECONDARY, onClick = {
                         hexInput = ""
                         hexError = false
                         onColor(SubtitleStyle.COLOR_DEFAULT)
                     })
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(R.string.common_done), onClick = onDismiss)
+                    OwnTVButton(stringResource(CoreR.string.common_done), onClick = onDismiss)
                 }
             }
         }
@@ -2684,10 +2711,10 @@ private fun SubtitlePositionDialog(
             contentAlignment = Alignment.Center,
         ) {
             Column(modifier = Modifier.dialogPanel(width = 430.dp, corner = 16.dp, padding = 18.dp, scroll = false)) {
-                Text(stringResource(R.string.settings_subtitle_position), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_subtitle_position), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.settings_subtitle_position_default_description),
+                    stringResource(CoreR.string.settings_subtitle_position_default_description),
                     style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(12.dp))
@@ -2716,7 +2743,7 @@ private fun SubtitlePositionDialog(
                 }
                 Spacer(Modifier.height(16.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    OwnTVButton(stringResource(R.string.common_done), onClick = onDismiss)
+                    OwnTVButton(stringResource(CoreR.string.common_done), onClick = onDismiss)
                 }
             }
         }
@@ -2800,10 +2827,10 @@ private fun SubtitleSizeDialog(
             contentAlignment = Alignment.Center,
         ) {
             Column(modifier = Modifier.dialogPanel(width = 520.dp, corner = 16.dp, padding = 18.dp, scroll = false)) {
-                Text(stringResource(R.string.settings_subtitle_size), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_subtitle_size), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.settings_subtitle_size_description),
+                    stringResource(CoreR.string.settings_subtitle_size_description),
                     style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(12.dp))
@@ -2813,20 +2840,20 @@ private fun SubtitleSizeDialog(
                 Spacer(Modifier.height(14.dp))
                 Row2(
                     icon = OwnTVIcon.SUBTITLE,
-                    title = stringResource(R.string.settings_player_exoplayer),
+                    title = stringResource(CoreR.string.settings_player_exoplayer),
                     chip = subSizeName(scaleExo), primaryChip = SubtitleStyle.hasScale(scaleExo),
                     modifier = Modifier.focusRequester(firstRow),
                     onClick = { onScaleExo(nextSubSize(scaleExo)) },
                 )
                 Row2(
                     icon = OwnTVIcon.SUBTITLE,
-                    title = stringResource(R.string.settings_player_mpv),
+                    title = stringResource(CoreR.string.settings_player_mpv),
                     chip = subSizeName(scaleMpv), primaryChip = SubtitleStyle.hasScale(scaleMpv),
                     onClick = { onScaleMpv(nextSubSize(scaleMpv)) },
                 )
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    OwnTVButton(stringResource(R.string.common_done), onClick = onDismiss)
+                    OwnTVButton(stringResource(CoreR.string.common_done), onClick = onDismiss)
                 }
             }
         }
@@ -2855,12 +2882,12 @@ private fun SubtitleSizePreview(
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         listOf(
-            stringResource(R.string.settings_player_exoplayer) to scaleExo,
-            stringResource(R.string.settings_player_mpv) to scaleMpv,
+            stringResource(CoreR.string.settings_player_exoplayer) to scaleExo,
+            stringResource(CoreR.string.settings_player_mpv) to scaleMpv,
         ).forEach { (engine, scale) ->
             Text(engine, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.75f))
             Text(
-                stringResource(R.string.settings_subtitle_preview_sample),
+                stringResource(CoreR.string.settings_subtitle_preview_sample),
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontSize = MaterialTheme.typography.bodyLarge.fontSize * scale,
                     fontFamily = font?.asComposeFamily() ?: MaterialTheme.typography.bodyLarge.fontFamily,
@@ -2905,10 +2932,10 @@ private fun SubtitleTransparencyDialog(
                 modifier = Modifier.dialogPanel(width = 380.dp, corner = 16.dp, padding = 18.dp, scroll = false),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text(stringResource(R.string.settings_subtitle_background_transparency), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_subtitle_background_transparency), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.settings_subtitle_background_description),
+                    stringResource(CoreR.string.settings_subtitle_background_description),
                     style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(12.dp))
@@ -2937,9 +2964,9 @@ private fun SubtitleTransparencyDialog(
                 }
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OwnTVButton(stringResource(R.string.settings_subtitle_use_default), style = OwnTVButtonStyle.SECONDARY, onClick = { onSet(SubtitleStyle.OPACITY_DEFAULT) })
+                    OwnTVButton(stringResource(CoreR.string.settings_subtitle_use_default), style = OwnTVButtonStyle.SECONDARY, onClick = { onSet(SubtitleStyle.OPACITY_DEFAULT) })
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(R.string.common_done), onClick = onDismiss)
+                    OwnTVButton(stringResource(CoreR.string.common_done), onClick = onDismiss)
                 }
             }
         }
@@ -2979,7 +3006,7 @@ private fun SubtitlePreview(
         contentAlignment = anchor.alignment(),
     ) {
         Text(
-            stringResource(R.string.settings_subtitle_preview_sample),
+            stringResource(CoreR.string.settings_subtitle_preview_sample),
             style = MaterialTheme.typography.bodyLarge.copy(
                 fontSize = MaterialTheme.typography.bodyLarge.fontSize * textScale,
                 fontFamily = if (enabled && font != null) font.asComposeFamily()
@@ -2994,7 +3021,7 @@ private fun SubtitlePreview(
         )
         if (!enabled) {
             Text(
-                stringResource(R.string.settings_subtitle_preview_stock),
+                stringResource(CoreR.string.settings_subtitle_preview_stock),
                 style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant,
                 modifier = Modifier.align(Alignment.TopStart).padding(8.dp),
             )
@@ -3017,12 +3044,12 @@ internal fun StepBtn(label: String, enabled: Boolean, modifier: Modifier = Modif
 
 @Composable
 private fun afrPauseLabel(secs: Int): String =
-    if (secs <= 0) stringResource(R.string.common_off)
+    if (secs <= 0) stringResource(CoreR.string.common_off)
     else stringResource(R.string.settings_live_buffer_seconds, secs)
 
 @Composable
 private fun decoderQueueingLabel(mode: tv.own.owntv.core.settings.DecoderQueueing): String = stringResource(when (mode) {
-    tv.own.owntv.core.settings.DecoderQueueing.AUTO -> R.string.settings_auto
-    tv.own.owntv.core.settings.DecoderQueueing.ASYNCHRONOUS -> R.string.settings_decoder_queueing_async
-    tv.own.owntv.core.settings.DecoderQueueing.SYNCHRONOUS -> R.string.settings_decoder_queueing_sync
+    tv.own.owntv.core.settings.DecoderQueueing.AUTO -> CoreR.string.settings_auto
+    tv.own.owntv.core.settings.DecoderQueueing.ASYNCHRONOUS -> CoreR.string.settings_decoder_queueing_async
+    tv.own.owntv.core.settings.DecoderQueueing.SYNCHRONOUS -> CoreR.string.settings_decoder_queueing_sync
 })

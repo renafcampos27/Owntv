@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.semantics
@@ -65,7 +67,6 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.launcher.LauncherDeepLink
 import tv.own.owntv.core.nav.MainSection
@@ -173,8 +174,8 @@ fun OwnTVShell(
     val sidebarHidden = compactWindow || (simple.hideSidebar && selectedSection == MainSection.LIVE_TV)
     val channelsOnly = simple.hideCategories && simple.hideSidebar && selectedSection == MainSection.LIVE_TV
     val colors = OwnTVTheme.colors
-    val noSourceLabel = stringResource(R.string.shell_no_source)
-    val subtitleLoadFailed = stringResource(R.string.content_subtitle_load_failed)
+    val noSourceLabel = stringResource(CoreR.string.shell_no_source)
+    val subtitleLoadFailed = stringResource(CoreR.string.content_subtitle_load_failed)
     val railSelection = remember { mutableStateMapOf<MainSection, Int>() }
     val selectedRail = railSelection[selectedSection] ?: 0
     val categories = remember(selectedSection) { railCategoriesFor(selectedSection) }
@@ -212,7 +213,7 @@ fun OwnTVShell(
     val miniPosName by settingsRepo.miniPlayerPosition.collectAsStateWithLifecycle(initialValue = tv.own.owntv.core.player.MiniPlayerPosition.DEFAULT.name)
     val ambientGlowEnabled by settingsRepo.ambientGlowEnabled.collectAsStateWithLifecycle(initialValue = false)
     val ambientGlowPulse by settingsRepo.ambientGlowPulse.collectAsStateWithLifecycle(initialValue = true)
-    val shellAnimationLevel by settingsRepo.animationLevel.collectAsStateWithLifecycle(initialValue = tv.own.owntv.core.theme.AnimationLevel.FULL)
+    val shellAnimationLevel by settingsRepo.animationLevel.collectAsStateWithLifecycle(initialValue = tv.own.owntv.core.theme.AnimationLevel.OFF)
     val miniPos = tv.own.owntv.core.player.MiniPlayerPosition.fromName(miniPosName)
     // §8 "Reaching the mini player" — the mini window floats above the content panel, so D-pad focus
     // search has no spatial path into it from most screens. These are the three deliberate ways in:
@@ -245,7 +246,7 @@ fun OwnTVShell(
     val metadataBudget = koinInject<tv.own.owntv.core.metadata.MetadataBudget>()
     val budgetRefusedAt by metadataBudget.refusedAt.collectAsStateWithLifecycle()
     var budgetNoticeShown by remember { mutableStateOf(false) }
-    val budgetNotice = androidx.compose.ui.res.stringResource(tv.own.owntv.R.string.settings_metadata_limit_reached)
+    val budgetNotice = androidx.compose.ui.res.stringResource(CoreR.string.settings_metadata_limit_reached)
     LaunchedEffect(budgetRefusedAt) {
         if (budgetRefusedAt > 0L && !budgetNoticeShown) {
             budgetNoticeShown = true
@@ -347,6 +348,14 @@ fun OwnTVShell(
     }
     // Live rewind / timeshift: whether the live channel supports catch-up, and how far behind live we are.
     val localTimeshift by liveVm.localTimeshift.collectAsStateWithLifecycle()
+    val localCopyPlayback by liveVm.localCopyPlayback.collectAsStateWithLifecycle()
+    val localResumeChannel by liveVm.localResumeChannel.collectAsStateWithLifecycle()
+    localResumeChannel?.let { channel ->
+        tv.own.owntv.ui.components.TimeshiftResumeDialog(channel.name,
+            onResume = { liveVm.resumeLocalCopy() },
+            onLive = { liveVm.goLiveFromLocalCopy() },
+            onDismiss = { liveVm.goLiveFromLocalCopy() })
+    }
     val canRewindLive by liveVm.canRewindLive.collectAsStateWithLifecycle()
     // The offset itself ticks once a second while an archive plays. Held as State and deliberately NOT
     // read here — reading it in the shell's own scope invalidated the whole shell body every second.
@@ -388,10 +397,10 @@ fun OwnTVShell(
     // Favorites and History have no provider name to show — their labels are UI strings, so the overlay
     // used to head both of them "All channels".
     val zapOverlayTitle = zapListTitle ?: when (zapListKey) {
-        LiveKey.Favorites -> stringResource(R.string.content_category_favorites)
-        LiveKey.History -> stringResource(R.string.content_category_history)
-        LiveKey.Catchup -> stringResource(R.string.content_catchup)
-        else -> stringResource(R.string.content_category_all_channels)
+        LiveKey.Favorites -> stringResource(CoreR.string.content_category_favorites)
+        LiveKey.History -> stringResource(CoreR.string.content_category_history)
+        LiveKey.Catchup -> stringResource(CoreR.string.content_catchup)
+        else -> stringResource(CoreR.string.content_category_all_channels)
     }
     val showCategoryBrowser by liveVm.showCategoryBrowser.collectAsStateWithLifecycle()
     val browserCategories by liveVm.browserCategories.collectAsStateWithLifecycle()
@@ -480,7 +489,7 @@ fun OwnTVShell(
     val profileDao = koinInject<ProfileDao>()
     val channelDao = koinInject<ChannelDao>()
     val latestStartupDeepLink by rememberUpdatedState(pendingDeepLink)
-    val startupChannelUnavailable = stringResource(R.string.settings_startup_channel_unavailable)
+    val startupChannelUnavailable = stringResource(CoreR.string.settings_startup_channel_unavailable)
     val externalPlaybackLauncher = koinInject<tv.own.owntv.core.player.ExternalPlayerLauncher>()
     LaunchedEffect(startupForegroundEpoch) {
         val externalReturn = externalPlaybackLauncher.consumeReturn()
@@ -645,6 +654,19 @@ fun OwnTVShell(
         }
         Unit
     }
+    val failedLiveTuneId by liveVm.failedLiveTuneId.collectAsStateWithLifecycle()
+    LaunchedEffect(failedLiveTuneId, playerMode) {
+        val choice = failedLiveTuneId ?: return@LaunchedEffect
+        if (playerMode != PlayerMode.NONE && liveVm.ownsFailedLiveTune(choice)) {
+            liveVm.previewEngine.stop()
+            exitPlayer()
+            onSelectSection(MainSection.LIVE_TV)
+            shellFocusGuard.invalidate()
+            shellFocusRequest = null
+            focusedLayer = ShellLayer.CONTENT
+        }
+    }
+
     /**
      * Turn the channel on screen into tile 1 of the grid, with [extra] filling the tiles after it.
      *
@@ -1039,15 +1061,15 @@ fun OwnTVShell(
                           selected = selectedSection == section, style = OwnTVButtonStyle.SECONDARY,
                           modifier = Modifier.testTag("owntv_nav_${section.name}"))
                   }
-                  OwnTVButton(stringResource(R.string.common_nav_search), onClick = {
+                  OwnTVButton(stringResource(CoreR.string.common_nav_search), onClick = {
                       searchVm.setQuery("")
                       trendingSearchActive = false
                       restoreTrendingSearchFocus = false
                       onSelectSection(MainSection.SEARCH)
                   }, style = OwnTVButtonStyle.SECONDARY)
-                  OwnTVButton(stringResource(R.string.common_nav_more), onClick = { onSelectSection(MainSection.MORE) }, style = OwnTVButtonStyle.SECONDARY)
+                  OwnTVButton(stringResource(CoreR.string.common_nav_more), onClick = { onSelectSection(MainSection.MORE) }, style = OwnTVButtonStyle.SECONDARY)
                   if (playlists.size > 1) OwnTVButton(
-                      playlists.firstOrNull { it.id == activePlaylistId }?.name ?: stringResource(R.string.content_all_playlists),
+                      playlists.firstOrNull { it.id == activePlaylistId }?.name ?: stringResource(CoreR.string.content_all_playlists),
                       onClick = { showPlaylistPicker = true }, style = OwnTVButtonStyle.SECONDARY)
                   OwnTVButton(profileName, onClick = onSwitchProfile, style = OwnTVButtonStyle.SECONDARY)
               }
@@ -1093,7 +1115,7 @@ fun OwnTVShell(
                 if (!compactWindow && (!channelsOnly || playerMode == PlayerMode.AUDIO)) TopBar(
                     playlistName = when {
                         playlists.size <= 1 -> sourceSummary ?: noSourceLabel
-                        activePlaylistId <= 0L -> stringResource(R.string.content_all_playlists)
+                        activePlaylistId <= 0L -> stringResource(CoreR.string.content_all_playlists)
                         else -> playlists.firstOrNull { it.id == activePlaylistId }?.name ?: (sourceSummary ?: noSourceLabel)
                     },
                     weatherInfo = weatherInfo,
@@ -1327,10 +1349,10 @@ fun OwnTVShell(
                             ContentPane(
                                 sectionTitle = stringResource(selectedSection.labelRes),
                                 categoryName = categories.getOrNull(selectedRail)?.let { category -> category.labelRes?.let { stringResource(it) } ?: category.fullName }
-                                    ?: stringResource(R.string.content_category_all_channels),
+                                    ?: stringResource(CoreR.string.content_category_all_channels),
                                 countLabel = placeholderCount(selectedSection),
                                 emptyIcon = selectedSection.emptyIcon,
-                                emptyMessage = stringResource(R.string.content_empty_section, stringResource(selectedSection.labelRes)),
+                                emptyMessage = stringResource(CoreR.string.content_empty_section, stringResource(selectedSection.labelRes)),
                                 onAddSource = { onSelectSection(MainSection.SETTINGS) },
                                 modifier = Modifier
                                     .weight(1.4f)
@@ -1344,7 +1366,7 @@ fun OwnTVShell(
                                     .fillMaxSize()
                                     .padding(Dimens.GapLarge),
                             ) {
-                                PreviewPane(hint = stringResource(R.string.content_preview_select_channel))
+                                PreviewPane(hint = stringResource(CoreR.string.content_preview_select_channel))
                             }
                         }
                     }
@@ -1413,8 +1435,8 @@ fun OwnTVShell(
                   // which is the whole point of the grid. Back here leaves the picker entirely.
                   tv.own.owntv.features.shell.components.CategoryBrowserOverlay(
                       categories = browserCategories,
-                      currentCategoryId = grid.tiles.getOrNull(tile)?.channel?.categoryId,
-                      onSelect = { catId -> liveVm.loadChannelsForCategory(catId) },
+                      currentKey = zapListKey ?: grid.tiles.getOrNull(tile)?.channel?.categoryId?.let { tv.own.owntv.core.live.LiveKey.Folder(it) },
+                      onSelect = liveVm::loadChannelsForCategory,
                       onDismiss = { liveVm.hideCategoryBrowser(); multiviewPickFor = null },
                       modifier = Modifier.fillMaxSize(),
                   )
@@ -1541,7 +1563,7 @@ fun OwnTVShell(
                     onAudioMode = toAudioMode,
                     // The channel-list overlay draws ABOVE the HUD; while it's open the HUD goes inert so
                     // its hide/error focus grabs can't yank D-pad focus off the overlay.
-                    inert = showMiniGuide || showChannelList || showHistoryList || showCategoryBrowser || showSubtitleSearch || showLocalSubPicker,
+                    inert = showMiniGuide || showChannelList || showHistoryList || showCategoryBrowser || showSubtitleSearch || showLocalSubPicker || localResumeChannel != null,
                     onChannelUp = zap?.let { z -> { z(-1) } },
                     onChannelDown = zap?.let { z -> { z(1) } },
                     onOpenChannelList = if (isTunedLive && liveCanZap) { { showChannelList = true } } else null,
@@ -1563,7 +1585,7 @@ fun OwnTVShell(
                     onOpenGuide = if (isLiveChannel && playingChannel != null) { { showMiniGuide = true } } else null,
                     onRewindLive = if (isTunedLive && canRewindLive) liveVm::rewindLive else null,
                     onForwardLive = if (isTunedLive) liveVm::forwardLive else null,
-                    onGoToLive = if (isTunedLive) liveVm::goToLive else null,
+                    onGoToLive = if (isTunedLive || localCopyPlayback) liveVm::goToLive else null,
                     onScrubLive = if (isTunedLive && canRewindLive) liveVm::scrubLive else null,
                     // Only collected where there is a timeline to draw them on.
                     liveProgrammes = if (isTunedLive && canRewindLive && !localTimeshift) timelineProgrammes else emptyList(),
@@ -1592,8 +1614,8 @@ fun OwnTVShell(
                     onToggleCompatMode = if (isTunedLive && !timeshifted && playingChannel?.drmConfig == null) liveVm::toggleForceMpv else null,
                     // VOD engine toggle (movies/series only — live and catch-up channels keep their own
                     // engine handling above): flip the current item between mpv and ExoPlayer.
-                    vodOnExo = if (!isLiveStream && !isTunedLive) vodExoActive else null,
-                    onToggleVodEngine = if (!isLiveStream && !isTunedLive) player::toggleVodEngine else null,
+                    vodOnExo = if (!isLiveStream && !isTunedLive && !localCopyPlayback) vodExoActive else null,
+                    onToggleVodEngine = if (!isLiveStream && !isTunedLive && !localCopyPlayback) player::toggleVodEngine else null,
                     // ADD SUBTITLES entry: movies/episodes only, and only when the play path set an
                     // item context (subtitle plan §4). Opens the OpenSubtitles search overlay below.
                     onSearchSubtitles = if (!isLiveStream && !isLiveChannel && subtitleContext != null) {
@@ -1648,7 +1670,7 @@ fun OwnTVShell(
                 // attaches it live to whichever engine is playing.
                 if (showLocalSubPicker) {
                     tv.own.owntv.ui.components.StorageBrowser(
-                        title = stringResource(R.string.content_subtitle_select_file),
+                        title = stringResource(CoreR.string.content_subtitle_select_file),
                         mode = tv.own.owntv.ui.components.BrowseMode.FILE,
                         fileExtensions = setOf("srt", "ass", "ssa", "vtt", "webvtt"),
                         onPick = { file ->
@@ -1685,8 +1707,8 @@ fun OwnTVShell(
                         // Second Left — every Live TV category.
                         tv.own.owntv.features.shell.components.CategoryBrowserOverlay(
                             categories = browserCategories,
-                            currentCategoryId = playingChannel?.categoryId,
-                            onSelect = { catId -> liveVm.loadChannelsForCategory(catId) },
+                            currentKey = zapListKey ?: playingChannel?.categoryId?.let { tv.own.owntv.core.live.LiveKey.Folder(it) },
+                            onSelect = liveVm::loadChannelsForCategory,
                             onDismiss = { liveVm.hideCategoryBrowser() },
                             modifier = Modifier.fillMaxSize(),
                         )
@@ -1713,7 +1735,7 @@ fun OwnTVShell(
                         channels = historyChannels,
                         currentId = playingChannel?.id,
                         nowPlaying = historyNowPlaying,
-                title = stringResource(R.string.content_history),
+                title = stringResource(CoreR.string.content_history),
                 providerNames = liveProviderNames,
                         showNumbers = directTuneEnabled,
                         alignEnd = true,
@@ -1779,7 +1801,7 @@ fun OwnTVShell(
     if (showAvatarFilePicker) {
         tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = { showAvatarFilePicker = false }) {
             tv.own.owntv.ui.components.StorageBrowser(
-                title = stringResource(R.string.profiles_avatar_own_picture),
+                title = stringResource(CoreR.string.profiles_avatar_own_picture),
                 mode = tv.own.owntv.ui.components.BrowseMode.FILE,
                 fileExtensions = setOf("png", "jpg", "jpeg", "webp", "bmp"),
                 onPick = { file -> onSetCustomAvatar(file); showAvatarFilePicker = false },
@@ -1886,7 +1908,7 @@ private fun OfflineBanner() {
         horizontalArrangement = Arrangement.Center,
     ) {
         Text(
-            stringResource(R.string.content_offline_banner),
+            stringResource(CoreR.string.content_offline_banner),
             style = MaterialTheme.typography.labelLarge,
             color = colors.onTertiaryContainer,
         ) }
@@ -1910,36 +1932,36 @@ private fun railCategoriesFor(section: MainSection): List<RailCategory> = when (
     MainSection.HOME -> emptyList()
     MainSection.EPG -> emptyList()
     MainSection.LIVE_TV -> listOf(
-        RailCategory("Favorites", OwnTVIcon.FAVORITE, tv.own.owntv.R.string.content_category_favorites),
-        RailCategory("History", OwnTVIcon.HISTORY, tv.own.owntv.R.string.content_category_history),
-        RailCategory("All Channels", labelRes = tv.own.owntv.R.string.content_category_all_channels, showGenreDot = false),
-        RailCategory("United Kingdom", labelRes = tv.own.owntv.R.string.content_category_united_kingdom),
-        RailCategory("United States", labelRes = tv.own.owntv.R.string.content_category_united_states),
-        RailCategory("Germany", labelRes = tv.own.owntv.R.string.content_category_germany),
-        RailCategory("Sports", labelRes = tv.own.owntv.R.string.content_category_sports),
+        RailCategory("Favorites", OwnTVIcon.FAVORITE, CoreR.string.content_category_favorites),
+        RailCategory("History", OwnTVIcon.HISTORY, CoreR.string.content_category_history),
+        RailCategory("All Channels", labelRes = CoreR.string.content_category_all_channels, showGenreDot = false),
+        RailCategory("United Kingdom", labelRes = CoreR.string.content_category_united_kingdom),
+        RailCategory("United States", labelRes = CoreR.string.content_category_united_states),
+        RailCategory("Germany", labelRes = CoreR.string.content_category_germany),
+        RailCategory("Sports", labelRes = CoreR.string.content_category_sports),
     )
     MainSection.MOVIES -> listOf(
-        RailCategory("Favorites", OwnTVIcon.FAVORITE, tv.own.owntv.R.string.content_category_favorites),
-        RailCategory("History", OwnTVIcon.HISTORY, tv.own.owntv.R.string.content_category_history),
-        RailCategory("All Movies", labelRes = tv.own.owntv.R.string.content_category_all_movies, showGenreDot = false),
-        RailCategory("Action", labelRes = tv.own.owntv.R.string.content_category_action),
-        RailCategory("Drama", labelRes = tv.own.owntv.R.string.content_category_drama),
-        RailCategory("Comedy", labelRes = tv.own.owntv.R.string.content_category_comedy),
-        RailCategory("Horror", labelRes = tv.own.owntv.R.string.content_category_horror),
+        RailCategory("Favorites", OwnTVIcon.FAVORITE, CoreR.string.content_category_favorites),
+        RailCategory("History", OwnTVIcon.HISTORY, CoreR.string.content_category_history),
+        RailCategory("All Movies", labelRes = CoreR.string.content_category_all_movies, showGenreDot = false),
+        RailCategory("Action", labelRes = CoreR.string.content_category_action),
+        RailCategory("Drama", labelRes = CoreR.string.content_category_drama),
+        RailCategory("Comedy", labelRes = CoreR.string.content_category_comedy),
+        RailCategory("Horror", labelRes = CoreR.string.content_category_horror),
     )
     MainSection.SERIES -> listOf(
-        RailCategory("Favorites", OwnTVIcon.FAVORITE, tv.own.owntv.R.string.content_category_favorites),
-        RailCategory("History", OwnTVIcon.HISTORY, tv.own.owntv.R.string.content_category_history),
-        RailCategory("All Series", labelRes = tv.own.owntv.R.string.content_category_all_series, showGenreDot = false),
-        RailCategory("Drama", labelRes = tv.own.owntv.R.string.content_category_drama),
-        RailCategory("Action", labelRes = tv.own.owntv.R.string.content_category_action),
-        RailCategory("Animation", labelRes = tv.own.owntv.R.string.content_category_animation),
-        RailCategory("Documentary", labelRes = tv.own.owntv.R.string.content_category_documentary),
+        RailCategory("Favorites", OwnTVIcon.FAVORITE, CoreR.string.content_category_favorites),
+        RailCategory("History", OwnTVIcon.HISTORY, CoreR.string.content_category_history),
+        RailCategory("All Series", labelRes = CoreR.string.content_category_all_series, showGenreDot = false),
+        RailCategory("Drama", labelRes = CoreR.string.content_category_drama),
+        RailCategory("Action", labelRes = CoreR.string.content_category_action),
+        RailCategory("Animation", labelRes = CoreR.string.content_category_animation),
+        RailCategory("Documentary", labelRes = CoreR.string.content_category_documentary),
     )
     MainSection.DOWNLOADS -> listOf(
-        RailCategory("All Downloads", labelRes = tv.own.owntv.R.string.content_category_all_downloads, showGenreDot = false),
-        RailCategory("Movies", labelRes = tv.own.owntv.R.string.content_category_movies),
-        RailCategory("Series", labelRes = tv.own.owntv.R.string.content_category_series),
+        RailCategory("All Downloads", labelRes = CoreR.string.content_category_all_downloads, showGenreDot = false),
+        RailCategory("Movies", labelRes = CoreR.string.content_category_movies),
+        RailCategory("Series", labelRes = CoreR.string.content_category_series),
     )
     MainSection.SETTINGS, MainSection.MORE -> emptyList()
 }
@@ -1947,8 +1969,8 @@ private fun railCategoriesFor(section: MainSection): List<RailCategory> = when (
 @Composable
 private fun placeholderCount(section: MainSection): String = when (section) {
     MainSection.SEARCH, MainSection.HOME, MainSection.EPG, MainSection.SETTINGS, MainSection.MORE -> ""
-    MainSection.LIVE_TV -> stringResource(R.string.content_zero_channels)
-    MainSection.MOVIES -> stringResource(R.string.content_zero_movies)
-    MainSection.SERIES -> stringResource(R.string.content_zero_series)
-    MainSection.DOWNLOADS -> stringResource(R.string.content_zero_downloads)
+    MainSection.LIVE_TV -> stringResource(CoreR.string.content_zero_channels)
+    MainSection.MOVIES -> stringResource(CoreR.string.content_zero_movies)
+    MainSection.SERIES -> stringResource(CoreR.string.content_zero_series)
+    MainSection.DOWNLOADS -> stringResource(CoreR.string.content_zero_downloads)
 }

@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +27,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.core.player.MiniPlayerPosition
 import tv.own.owntv.core.player.MiniPlayerSize
 import tv.own.owntv.player.labelRes
@@ -76,13 +77,13 @@ fun MiniPlayerSettingsDialog(onDismiss: () -> Unit) {
         ) {
             Column(Modifier.dialogPanel(width = 440.dp, padding = 18.dp)) {
                 Text(
-                    stringResource(R.string.settings_mini_player),
+                    stringResource(CoreR.string.settings_mini_player),
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.onSurface,
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.settings_mini_player_description),
+                    stringResource(CoreR.string.settings_mini_player_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
                 )
@@ -91,22 +92,22 @@ fun MiniPlayerSettingsDialog(onDismiss: () -> Unit) {
                 // --- Size ---
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Text(
-                        stringResource(R.string.settings_size),
+                        stringResource(CoreR.string.settings_size),
                         style = MaterialTheme.typography.titleSmall,
                         color = colors.onSurface,
                         modifier = Modifier.weight(1f),
                     )
-                    StepBtn(stringResource(R.string.common_stepper_minus), enabled = minusEnabled, modifier = Modifier.focusRequester(steppers.minus)) {
+                    StepBtn(stringResource(CoreR.string.common_stepper_minus), enabled = minusEnabled, modifier = Modifier.focusRequester(steppers.minus)) {
                         vm.setMiniPlayerSize((sizePct - MiniPlayerSize.STEP).coerceAtLeast(MiniPlayerSize.MIN))
                     }
                     Text(
-                        stringResource(R.string.common_percent, sizePct),
+                        stringResource(CoreR.string.common_percent, sizePct),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.primary,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 12.dp),
                     )
-                    StepBtn(stringResource(R.string.common_stepper_plus), enabled = plusEnabled, modifier = Modifier.focusRequester(steppers.plus)) {
+                    StepBtn(stringResource(CoreR.string.common_stepper_plus), enabled = plusEnabled, modifier = Modifier.focusRequester(steppers.plus)) {
                         vm.setMiniPlayerSize((sizePct + MiniPlayerSize.STEP).coerceAtMost(MiniPlayerSize.MAX))
                     }
                 }
@@ -114,7 +115,7 @@ fun MiniPlayerSettingsDialog(onDismiss: () -> Unit) {
 
                 // --- Position, laid out as the screen it describes ---
                 Text(
-                    stringResource(R.string.settings_position),
+                    stringResource(CoreR.string.settings_position),
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.onSurface,
                 )
@@ -138,7 +139,7 @@ fun MiniPlayerSettingsDialog(onDismiss: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OwnTVButton(
-                        stringResource(R.string.common_reset),
+                        stringResource(CoreR.string.common_reset),
                         onClick = {
                             vm.setMiniPlayerSize(MiniPlayerSize.DEFAULT)
                             vm.setMiniPlayerPosition(MiniPlayerPosition.DEFAULT)
@@ -146,7 +147,7 @@ fun MiniPlayerSettingsDialog(onDismiss: () -> Unit) {
                         style = OwnTVButtonStyle.SECONDARY,
                     )
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(R.string.common_done), onClick = onDismiss)
+                    OwnTVButton(stringResource(CoreR.string.common_done), onClick = onDismiss)
                 }
             }
         }

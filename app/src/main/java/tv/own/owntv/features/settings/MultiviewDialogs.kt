@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -22,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.live.MAX_MULTIVIEW_TILES
 import tv.own.owntv.core.live.MIN_MULTIVIEW_TILES
 import tv.own.owntv.ui.components.FocusableSurface
@@ -49,7 +50,7 @@ internal fun MultiviewTilesDialog(current: Int, onPick: (Int) -> Unit, onDismiss
     ) {
         Column(Modifier.dialogPanel(width = 420.dp, padding = 24.dp)) {
             Text(
-                stringResource(R.string.settings_multiview_tiles_max),
+                stringResource(CoreR.string.settings_multiview_tiles_max),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
             )
@@ -64,7 +65,7 @@ internal fun MultiviewTilesDialog(current: Int, onPick: (Int) -> Unit, onDismiss
                 ) {
                     Text(
                         // Each option is a ceiling too, so it reads the same as the row it came from.
-                        text = stringResource(R.string.settings_multiview_tiles_max_value, tiles),
+                        text = stringResource(CoreR.string.settings_multiview_tiles_max_value, tiles),
                         style = MaterialTheme.typography.bodyLarge,
                         color = colors.onSurface,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
@@ -94,26 +95,26 @@ internal fun MultiviewWarningDialog(onUseAnyway: () -> Unit, onKeepTwo: () -> Un
     ) {
         Column(Modifier.dialogPanel(width = 500.dp, padding = 28.dp)) {
             Text(
-                stringResource(R.string.settings_multiview_warning_title),
+                stringResource(CoreR.string.settings_multiview_warning_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                stringResource(R.string.settings_multiview_warning_description),
+                stringResource(CoreR.string.settings_multiview_warning_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
             Spacer(Modifier.height(22.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OwnTVButton(
-                    stringResource(R.string.settings_multiview_keep_two),
+                    stringResource(CoreR.string.settings_multiview_keep_two),
                     onClick = onKeepTwo,
                     modifier = Modifier.focusRequester(focus),
                 )
                 Spacer(Modifier.weight(1f))
                 OwnTVButton(
-                    stringResource(R.string.settings_multiview_use_anyway),
+                    stringResource(CoreR.string.settings_multiview_use_anyway),
                     onClick = onUseAnyway,
                     style = OwnTVButtonStyle.SECONDARY,
                 )

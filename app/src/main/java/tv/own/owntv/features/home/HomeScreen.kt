@@ -1,5 +1,7 @@
 package tv.own.owntv.features.home
 
+import tv.own.owntv.core.R as CoreR
+
 import android.content.Context
 import tv.own.owntv.core.home.HeroItem
 import tv.own.owntv.core.home.TrendingHomeItem
@@ -85,7 +87,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.database.entity.MetadataCacheEntity
 import tv.own.owntv.core.database.dao.TrendingDao
@@ -142,7 +143,7 @@ fun HomeScreen(
     modifier: Modifier = Modifier,
 ) {
     val state by vm.uiState.collectAsStateWithLifecycle()
-    val trendingUnavailableMessage = stringResource(R.string.home_trending_unavailable)
+    val trendingUnavailableMessage = stringResource(CoreR.string.home_trending_unavailable)
     val heroPreviewEngine = koinInject<HeroPreviewEngine>()
     val engineState by heroPreviewEngine.state.collectAsStateWithLifecycle()
     val isPreviewActive by vm.isPreviewActive.collectAsStateWithLifecycle()
@@ -625,20 +626,20 @@ private fun TrendingHeroSection(
 ) {
     val colors = OwnTVTheme.colors
     val item = items.getOrNull(activeIndex) ?: return
-    val movieLabel = stringResource(R.string.home_trending_movie)
-    val seriesLabel = stringResource(R.string.home_trending_series)
-    val sectionLabel = stringResource(R.string.home_trending_section_label)
-    val providerMatchLabel = stringResource(R.string.home_trending_provider_match)
-    val whyLabel = stringResource(R.string.home_trending_why_label)
-    val playLabel = stringResource(R.string.home_trending_play)
-    val openEpisodesLabel = stringResource(R.string.home_trending_open_episodes)
-    val trailerLabel = stringResource(R.string.home_trending_trailer)
-    val detailsLabel = stringResource(R.string.home_trending_more_details)
-    val versionsLabel = stringResource(R.string.home_trending_all_versions)
-    val previousLabel = stringResource(R.string.home_trending_previous)
-    val pauseLabel = stringResource(R.string.home_trending_pause)
-    val resumeLabel = stringResource(R.string.home_trending_resume)
-    val nextLabel = stringResource(R.string.home_trending_next)
+    val movieLabel = stringResource(CoreR.string.home_trending_movie)
+    val seriesLabel = stringResource(CoreR.string.home_trending_series)
+    val sectionLabel = stringResource(CoreR.string.home_trending_section_label)
+    val providerMatchLabel = stringResource(CoreR.string.home_trending_provider_match)
+    val whyLabel = stringResource(CoreR.string.home_trending_why_label)
+    val playLabel = stringResource(CoreR.string.home_trending_play)
+    val openEpisodesLabel = stringResource(CoreR.string.home_trending_open_episodes)
+    val trailerLabel = stringResource(CoreR.string.home_trending_trailer)
+    val detailsLabel = stringResource(CoreR.string.home_trending_more_details)
+    val versionsLabel = stringResource(CoreR.string.home_trending_all_versions)
+    val previousLabel = stringResource(CoreR.string.home_trending_previous)
+    val pauseLabel = stringResource(CoreR.string.home_trending_pause)
+    val resumeLabel = stringResource(CoreR.string.home_trending_resume)
+    val nextLabel = stringResource(CoreR.string.home_trending_next)
     var manuallyPaused by remember { mutableStateOf(false) }
     var actionButtonsFocused by remember { mutableStateOf(false) }
     var resetClock by remember { mutableIntStateOf(0) }
@@ -683,20 +684,20 @@ private fun TrendingHeroSection(
     val providerLanguage = snapshot.providerLanguage
     val languageBadge = when {
         providerLanguage == preferredLanguage ->
-            stringResource(R.string.home_trending_language_choice, preferredLanguage)
-        providerLanguage == "EN" -> stringResource(R.string.home_trending_english_fallback)
-        providerLanguage == null -> stringResource(R.string.home_trending_untagged_fallback)
-        else -> stringResource(R.string.home_trending_other_fallback, providerLanguage)
+            stringResource(CoreR.string.home_trending_language_choice, preferredLanguage)
+        providerLanguage == "EN" -> stringResource(CoreR.string.home_trending_english_fallback)
+        providerLanguage == null -> stringResource(CoreR.string.home_trending_untagged_fallback)
+        else -> stringResource(CoreR.string.home_trending_other_fallback, providerLanguage)
     }
-    val reasonTitle = stringResource(R.string.home_trending_reason_title, snapshot.trendingRank, typeLabel)
+    val reasonTitle = stringResource(CoreR.string.home_trending_reason_title, snapshot.trendingRank, typeLabel)
     val reasonCopy = when {
         snapshot.providerLanguage == preferredLanguage -> stringResource(
-            R.string.home_trending_reason_preferred,
+            CoreR.string.home_trending_reason_preferred,
             preferredLanguage,
         )
-        snapshot.providerLanguage == "EN" -> stringResource(R.string.home_trending_reason_english, preferredLanguage)
-        snapshot.providerLanguage == null -> stringResource(R.string.home_trending_reason_untagged, preferredLanguage)
-        else -> stringResource(R.string.home_trending_reason_other)
+        snapshot.providerLanguage == "EN" -> stringResource(CoreR.string.home_trending_reason_english, preferredLanguage)
+        snapshot.providerLanguage == null -> stringResource(CoreR.string.home_trending_reason_untagged, preferredLanguage)
+        else -> stringResource(CoreR.string.home_trending_reason_other)
     }
     val seasonCount = (item as? TrendingHomeItem.Series)?.let { seasonCounts[it.series.id] }
 
@@ -789,7 +790,7 @@ private fun TrendingHeroSection(
                         Text("•", style = MaterialTheme.typography.titleSmall, color = Color(0xFFD4DED9))
                         snapshot.rating?.let {
                             Text(
-                                text = stringResource(R.string.content_rating, it),
+                                text = stringResource(CoreR.string.content_rating, it),
                                 style = MaterialTheme.typography.titleSmall,
                                 color = Color(0xFFFFE071),
                                 fontWeight = FontWeight.SemiBold,
@@ -833,7 +834,7 @@ private fun TrendingHeroSection(
                         displaySignals.quality.label?.let { TrendingBadge(it) }
                         displaySignals.capabilities.forEach { TrendingBadge(it) }
                         seasonCount?.let {
-                            TrendingBadge(pluralStringResource(R.plurals.home_trending_seasons, it, it))
+                            TrendingBadge(pluralStringResource(CoreR.plurals.home_trending_seasons, it, it))
                         }
                     }
                     Spacer(Modifier.height(15.dp))
@@ -1058,14 +1059,14 @@ private fun TrendingHomeItem.toDetailsUi(meta: MetadataCacheEntity?, tmdbWins: B
     val tmdbPlot = meta?.overview?.takeIf { it.isNotBlank() } ?: snapshot.overview
     return MediaDetailsUi(
         title = providerTitle,
-        subtitle = stringResource(if (this is TrendingHomeItem.Movie) R.string.home_trending_movie else R.string.home_trending_series),
+        subtitle = stringResource(if (this is TrendingHomeItem.Movie) CoreR.string.home_trending_movie else CoreR.string.home_trending_series),
         backdropUrl = MetadataImages.backdrop(meta?.backdropPath ?: snapshot.backdropPath, size = "w1280") ?: providerBackdrop,
         posterUrl = if (tmdbWins) {
             MetadataImages.poster(meta?.posterPath ?: snapshot.posterPath, size = "w500") ?: providerPoster
         } else {
             providerPoster ?: MetadataImages.poster(meta?.posterPath ?: snapshot.posterPath, size = "w500")
         },
-        metaLine = listOfNotNull(snapshot.year?.toString(), snapshot.rating?.let { stringResource(R.string.content_rating, it) }).joinToString(" · "),
+        metaLine = listOfNotNull(snapshot.year?.toString(), snapshot.rating?.let { stringResource(CoreR.string.content_rating, it) }).joinToString(" · "),
         genres = trendingJsonList(meta?.genresJson),
         plot = if (tmdbWins) tmdbPlot ?: providerPlot else providerPlot ?: tmdbPlot,
         cast = tv.own.owntv.core.metadata.MetadataCast.parse(meta?.castJson),
@@ -1146,7 +1147,7 @@ private fun HeroRowSection(
 
     Column(modifier = modifier) {
         Text(
-            text = stringResource(R.string.home_keep_watching).uppercase(),
+            text = stringResource(CoreR.string.home_keep_watching).uppercase(),
             style = MaterialTheme.typography.titleSmall,
             color = colors.primary,
             fontWeight = FontWeight.Bold,
@@ -1517,7 +1518,7 @@ private fun HeroRowSection(
                                         ?: expandedItem.movie.year?.let { localizedInteger(it, grouping = false) }.orEmpty()
                                 is HeroItem.SeriesHero ->
                                     expandedItem.item.subtitle.orEmpty()
-                                is HeroItem.LiveHero -> stringResource(R.string.home_recent_live)
+                                is HeroItem.LiveHero -> stringResource(CoreR.string.home_recent_live)
                             }
                             if (subtitle.isNotBlank()) {
                                 Spacer(Modifier.height(4.dp))
@@ -1557,9 +1558,9 @@ private fun HeroRowSection(
                             Spacer(Modifier.height(10.dp))
                             OwnTVButton(
                                 label = when (expandedItem.watchNextType) {
-                                    LauncherWatchNextType.NEXT -> stringResource(R.string.home_play_next)
+                                    LauncherWatchNextType.NEXT -> stringResource(CoreR.string.home_play_next)
                                     LauncherWatchNextType.CONTINUE ->
-                                        if (expandedItem is HeroItem.LiveHero) stringResource(R.string.home_tune_in) else stringResource(R.string.home_resume)
+                                        if (expandedItem is HeroItem.LiveHero) stringResource(CoreR.string.home_tune_in) else stringResource(CoreR.string.home_resume)
                                 },
                                 onClick = { onPlay(expandedItem) },
                                 modifier = Modifier.focusProperties { canFocus = false },
@@ -1620,7 +1621,7 @@ private fun finishByLabel(context: Context, positionMs: Long, durationMs: Long, 
 
     val finishMs = roundUpToNextQuarterHour(nowMs + remainingMs)
     val time = formatSystemTime(context, finishMs)
-    return stringResource(R.string.home_finish_by, time)
+    return stringResource(CoreR.string.home_finish_by, time)
 }
 
 private fun roundUpToNextQuarterHour(ms: Long): Long {
@@ -1647,20 +1648,20 @@ private fun roundUpToNextQuarterHour(ms: Long): Long {
 @Composable
 private fun relativeLastWatchedLabel(lastEngagementAt: Long, nowMs: Long): String {
     val elapsedMs = nowMs - lastEngagementAt
-    if (elapsedMs < 60_000L) return stringResource(R.string.home_last_watched_now)
+    if (elapsedMs < 60_000L) return stringResource(CoreR.string.home_last_watched_now)
 
     val elapsedMinutes = elapsedMs / 60_000L
     if (elapsedMinutes < 60L) {
-        return pluralStringResource(R.plurals.home_last_watched_minutes, elapsedMinutes.toInt(), elapsedMinutes.toInt())
+        return pluralStringResource(CoreR.plurals.home_last_watched_minutes, elapsedMinutes.toInt(), elapsedMinutes.toInt())
     }
 
     val elapsedHours = elapsedMinutes / 60L
     if (elapsedHours < 24L) {
-        return pluralStringResource(R.plurals.home_last_watched_hours, elapsedHours.toInt(), elapsedHours.toInt())
+        return pluralStringResource(CoreR.plurals.home_last_watched_hours, elapsedHours.toInt(), elapsedHours.toInt())
     }
 
     val elapsedDays = elapsedHours / 24L
-    return pluralStringResource(R.plurals.home_last_watched_days, elapsedDays.toInt(), elapsedDays.toInt())
+    return pluralStringResource(CoreR.plurals.home_last_watched_days, elapsedDays.toInt(), elapsedDays.toInt())
 }
 
 @Composable
@@ -1823,9 +1824,9 @@ private fun seasonEpisodeChip(item: LauncherContinuationItem): String? {
     val season = item.seasonNumber?.takeIf { it > 0 }
     val episode = item.episodeNumber?.takeIf { it > 0 }
     return when {
-        season != null && episode != null -> stringResource(R.string.home_season_episode, season, episode)
-        season != null -> stringResource(R.string.home_season, season)
-        episode != null -> stringResource(R.string.home_episode, episode)
+        season != null && episode != null -> stringResource(CoreR.string.home_season_episode, season, episode)
+        season != null -> stringResource(CoreR.string.home_season, season)
+        episode != null -> stringResource(CoreR.string.home_episode, episode)
         else -> null
     }
 }
@@ -1943,7 +1944,7 @@ private fun HeroFallbackPane(
             BrandLockup(markSize = 72, textSize = 42)
             Spacer(Modifier.height(14.dp))
             Text(
-                text = stringResource(R.string.home_no_preview),
+                text = stringResource(CoreR.string.home_no_preview),
                 style = MaterialTheme.typography.bodyLarge,
                 color = colors.onSurfaceVariant,
                 maxLines = 3,
@@ -1951,7 +1952,7 @@ private fun HeroFallbackPane(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.home_continue_empty),
+                text = stringResource(CoreR.string.home_continue_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
                 maxLines = 3,
@@ -1976,7 +1977,7 @@ private fun EmptyHomeState(
             BrandLockup(markSize = 84, textSize = 48)
             Spacer(Modifier.height(16.dp))
             Text(
-                text = stringResource(R.string.home_start_watching),
+                text = stringResource(CoreR.string.home_start_watching),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
                 maxLines = 1,
@@ -1984,7 +1985,7 @@ private fun EmptyHomeState(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.home_continue_empty),
+                text = stringResource(CoreR.string.home_continue_empty),
                 style = MaterialTheme.typography.bodyLarge,
                 color = colors.onSurfaceVariant,
                 maxLines = 2,
@@ -2009,7 +2010,7 @@ private fun AllRowsHiddenState(
             BrandLockup(markSize = 84, textSize = 48)
             Spacer(Modifier.height(16.dp))
             Text(
-                text = stringResource(R.string.home_no_rows),
+                text = stringResource(CoreR.string.home_no_rows),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
                 maxLines = 1,
@@ -2017,7 +2018,7 @@ private fun AllRowsHiddenState(
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = stringResource(R.string.home_enable_rows),
+                text = stringResource(CoreR.string.home_enable_rows),
                 style = MaterialTheme.typography.bodyLarge,
                 color = colors.onSurfaceVariant,
                 maxLines = 2,

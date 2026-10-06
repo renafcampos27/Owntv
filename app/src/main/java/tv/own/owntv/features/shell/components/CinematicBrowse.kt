@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -43,7 +45,6 @@ import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter
 import coil3.request.ImageRequest
 import coil3.size.Precision
-import tv.own.owntv.R
 import androidx.compose.ui.res.stringResource
 import tv.own.owntv.ui.theme.OwnTVTheme
 
@@ -259,7 +260,7 @@ fun CinematicDetails(
         if (genres.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
             Text(
-                genres.joinToString(stringResource(R.string.content_genres_separator)),
+                genres.joinToString(stringResource(CoreR.string.content_genres_separator)),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.primary,
                 maxLines = 1,

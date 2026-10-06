@@ -92,7 +92,7 @@ fun OwnTVTheme(
     customAccent: String = "",
     focusHighlight: String = "",
     focusBorderWidthDp: Int = 2,
-    animationLevel: AnimationLevel = AnimationLevel.FULL,
+    animationLevel: AnimationLevel = AnimationLevel.OFF,
     mainFontFamily: AppFontFamily = AppFontFamily.SYSTEM_SANS,
     popupFontFamily: AppFontFamily = AppFontFamily.LORA,
     popupFontSizePercent: Int = PopupFontScale.DEFAULT,

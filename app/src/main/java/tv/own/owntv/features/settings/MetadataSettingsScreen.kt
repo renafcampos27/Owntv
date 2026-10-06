@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -35,7 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.metadata.MetadataConfig
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -64,49 +65,49 @@ private val TMDB_LANGUAGE_CODES = listOf(
 @Composable
 private fun tmdbLangName(code: String): String = stringResource(
     when (code) {
-        "" -> R.string.settings_language_default
-        MetadataConfig.LANGUAGE_AUTO -> R.string.settings_language_device
-        "ar" -> R.string.settings_language_arabic
-        "bg" -> R.string.settings_language_bulgarian
-        "zh" -> R.string.settings_language_chinese
-        "hr" -> R.string.settings_language_croatian
-        "cs" -> R.string.settings_language_czech
-        "da" -> R.string.settings_language_danish
-        "nl" -> R.string.settings_language_dutch
-        "en" -> R.string.settings_language_english
-        "et" -> R.string.settings_language_estonian
-        "fi" -> R.string.settings_language_finnish
-        "fr" -> R.string.settings_language_french
-        "de" -> R.string.settings_language_german
-        "el" -> R.string.settings_language_greek
-        "he" -> R.string.settings_language_hebrew
-        "hi" -> R.string.settings_language_hindi
-        "hu" -> R.string.settings_language_hungarian
-        "id" -> R.string.settings_language_indonesian
-        "it" -> R.string.settings_language_italian
-        "ja" -> R.string.settings_language_japanese
-        "ko" -> R.string.settings_language_korean
-        "lv" -> R.string.settings_language_latvian
-        "lt" -> R.string.settings_language_lithuanian
-        "ms" -> R.string.settings_language_malay
-        "no" -> R.string.settings_language_norwegian
-        "fa" -> R.string.settings_language_persian
-        "pl" -> R.string.settings_language_polish
-        "pt-BR" -> R.string.settings_language_portuguese_brazil
-        "pt-PT" -> R.string.settings_language_portuguese_portugal
-        "ro" -> R.string.settings_language_romanian
-        "ru" -> R.string.settings_language_russian
-        "sr" -> R.string.settings_language_serbian
-        "sk" -> R.string.settings_language_slovak
-        "sl" -> R.string.settings_language_slovenian
-        "es" -> R.string.settings_language_spanish
-        "es-MX" -> R.string.settings_language_spanish_latam
-        "sv" -> R.string.settings_language_swedish
-        "th" -> R.string.settings_language_thai
-        "tr" -> R.string.settings_language_turkish
-        "uk" -> R.string.settings_language_ukrainian
-        "vi" -> R.string.settings_language_vietnamese
-        else -> R.string.settings_language_default
+        "" -> CoreR.string.settings_language_default
+        MetadataConfig.LANGUAGE_AUTO -> CoreR.string.settings_language_device
+        "ar" -> CoreR.string.settings_language_arabic
+        "bg" -> CoreR.string.settings_language_bulgarian
+        "zh" -> CoreR.string.settings_language_chinese
+        "hr" -> CoreR.string.settings_language_croatian
+        "cs" -> CoreR.string.settings_language_czech
+        "da" -> CoreR.string.settings_language_danish
+        "nl" -> CoreR.string.settings_language_dutch
+        "en" -> CoreR.string.settings_language_english
+        "et" -> CoreR.string.settings_language_estonian
+        "fi" -> CoreR.string.settings_language_finnish
+        "fr" -> CoreR.string.settings_language_french
+        "de" -> CoreR.string.settings_language_german
+        "el" -> CoreR.string.settings_language_greek
+        "he" -> CoreR.string.settings_language_hebrew
+        "hi" -> CoreR.string.settings_language_hindi
+        "hu" -> CoreR.string.settings_language_hungarian
+        "id" -> CoreR.string.settings_language_indonesian
+        "it" -> CoreR.string.settings_language_italian
+        "ja" -> CoreR.string.settings_language_japanese
+        "ko" -> CoreR.string.settings_language_korean
+        "lv" -> CoreR.string.settings_language_latvian
+        "lt" -> CoreR.string.settings_language_lithuanian
+        "ms" -> CoreR.string.settings_language_malay
+        "no" -> CoreR.string.settings_language_norwegian
+        "fa" -> CoreR.string.settings_language_persian
+        "pl" -> CoreR.string.settings_language_polish
+        "pt-BR" -> CoreR.string.settings_language_portuguese_brazil
+        "pt-PT" -> CoreR.string.settings_language_portuguese_portugal
+        "ro" -> CoreR.string.settings_language_romanian
+        "ru" -> CoreR.string.settings_language_russian
+        "sr" -> CoreR.string.settings_language_serbian
+        "sk" -> CoreR.string.settings_language_slovak
+        "sl" -> CoreR.string.settings_language_slovenian
+        "es" -> CoreR.string.settings_language_spanish
+        "es-MX" -> CoreR.string.settings_language_spanish_latam
+        "sv" -> CoreR.string.settings_language_swedish
+        "th" -> CoreR.string.settings_language_thai
+        "tr" -> CoreR.string.settings_language_turkish
+        "uk" -> CoreR.string.settings_language_ukrainian
+        "vi" -> CoreR.string.settings_language_vietnamese
+        else -> CoreR.string.settings_language_default
     },
 )
 
@@ -118,15 +119,15 @@ private fun tmdbLangName(code: String): String = stringResource(
  * Precedence (plan §4): self-host URL > own key > the default caching Worker (zero setup).
  */
 private fun metadataModeLabelRes(mode: tv.own.owntv.core.metadata.MetadataMode): Int = when (mode) {
-    tv.own.owntv.core.metadata.MetadataMode.PROVIDER -> R.string.settings_metadata_provider_only
-    tv.own.owntv.core.metadata.MetadataMode.PROVIDER_PLUS_TMDB -> R.string.settings_metadata_provider_plus_tmdb
-    tv.own.owntv.core.metadata.MetadataMode.TMDB_ONLY -> R.string.settings_metadata_tmdb_only
+    tv.own.owntv.core.metadata.MetadataMode.PROVIDER -> CoreR.string.settings_metadata_provider_only
+    tv.own.owntv.core.metadata.MetadataMode.PROVIDER_PLUS_TMDB -> CoreR.string.settings_metadata_provider_plus_tmdb
+    tv.own.owntv.core.metadata.MetadataMode.TMDB_ONLY -> CoreR.string.settings_metadata_tmdb_only
 }
 
 private fun metadataTierLabelRes(tier: tv.own.owntv.core.metadata.MetadataConfig.Tier): Int = when (tier) {
-    tv.own.owntv.core.metadata.MetadataConfig.Tier.DEFAULT_WORKER -> R.string.settings_tier_default
-    tv.own.owntv.core.metadata.MetadataConfig.Tier.OWN_KEY -> R.string.settings_tier_key
-    tv.own.owntv.core.metadata.MetadataConfig.Tier.SELF_HOST -> R.string.settings_tier_self_host
+    tv.own.owntv.core.metadata.MetadataConfig.Tier.DEFAULT_WORKER -> CoreR.string.settings_tier_default
+    tv.own.owntv.core.metadata.MetadataConfig.Tier.OWN_KEY -> CoreR.string.settings_tier_key
+    tv.own.owntv.core.metadata.MetadataConfig.Tier.SELF_HOST -> CoreR.string.settings_tier_self_host
 }
 
 @Composable
@@ -153,7 +154,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var seeded by remember { mutableStateOf(false) }
     var key by remember { mutableStateOf("") }
     var url by remember { mutableStateOf("") }
-    val defaultTestTitle = stringResource(R.string.settings_metadata_test_title)
+    val defaultTestTitle = stringResource(CoreR.string.settings_metadata_test_title)
     var testTitle by remember(defaultTestTitle) { mutableStateOf(defaultTestTitle) }
     // Advanced options are hidden by default. Auto-expand if the user already has a key/URL saved, so the
     // fields aren't silently hidden when they're actually in use.
@@ -172,7 +173,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     // A key handed over from the remote device lands straight in the field. Saving stays a deliberate act:
     // the user still presses Save, so an accidental send cannot silently replace a working key.
-    val keyReceivedMessage = stringResource(R.string.settings_metadata_key_received)
+    val keyReceivedMessage = stringResource(CoreR.string.settings_metadata_key_received)
     val toast = tv.own.owntv.ui.components.rememberInAppToast()
     LaunchedEffect(showRemoteHandover) {
         if (!showRemoteHandover) return@LaunchedEffect
@@ -204,9 +205,9 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             .padding(horizontal = 40.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Header(stringResource(R.string.settings_metadata), onBack)
+        Header(stringResource(CoreR.string.settings_metadata), onBack)
         Text(
-            stringResource(R.string.settings_metadata_root_description),
+            stringResource(CoreR.string.settings_metadata_root_description),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
             modifier = Modifier.padding(start = 16.dp, top = 2.dp),
@@ -216,10 +217,10 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         if (mode.enrich) {
             val b = budget
             MetadataOverview(
-                eyebrow = stringResource(R.string.settings_metadata_active_source),
+                eyebrow = stringResource(CoreR.string.settings_metadata_active_source),
                 title = stringResource(metadataTierLabelRes(tier)),
                 description = when (tier) {
-                    MetadataConfig.Tier.DEFAULT_WORKER -> stringResource(R.string.settings_metadata_shared_worker_description)
+                    MetadataConfig.Tier.DEFAULT_WORKER -> stringResource(CoreR.string.settings_metadata_shared_worker_description)
                     MetadataConfig.Tier.OWN_KEY -> maskSecret(storedKey)
                     MetadataConfig.Tier.SELF_HOST -> storedUrl
                 },
@@ -236,7 +237,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             if (tier == MetadataConfig.Tier.DEFAULT_WORKER) {
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    stringResource(R.string.settings_metadata_fair_share),
+                    stringResource(CoreR.string.settings_metadata_fair_share),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 8.dp),
@@ -251,10 +252,10 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         // never metered - showing a limit there would be a lie.
         if (false && mode.enrich) {
             ServiceSummaryCard(
-                eyebrow = stringResource(R.string.settings_metadata_active_source),
+                eyebrow = stringResource(CoreR.string.settings_metadata_active_source),
                 title = stringResource(metadataTierLabelRes(tier)),
                 description = when (tier) {
-                    MetadataConfig.Tier.DEFAULT_WORKER -> stringResource(R.string.settings_metadata_shared_worker_description)
+                    MetadataConfig.Tier.DEFAULT_WORKER -> stringResource(CoreR.string.settings_metadata_shared_worker_description)
                     MetadataConfig.Tier.OWN_KEY -> maskSecret(storedKey)
                     MetadataConfig.Tier.SELF_HOST -> storedUrl
                 },
@@ -283,7 +284,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     }
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        stringResource(R.string.settings_metadata_fair_share),
+                        stringResource(CoreR.string.settings_metadata_fair_share),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                         modifier = Modifier.padding(horizontal = 16.dp),
@@ -295,11 +296,11 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         // One row + a picker, matching Metadata language below. Stacked as three rows these read as
         // three separate settings rather than one choice, and they pushed everything else off screen.
-        GroupLabel(stringResource(R.string.settings_metadata_library_details))
+        GroupLabel(stringResource(CoreR.string.settings_metadata_library_details))
         ServiceSettingsRow(
             icon = OwnTVIcon.IMAGE,
-            title = stringResource(R.string.settings_metadata_source),
-            desc = stringResource(R.string.settings_metadata_source_description),
+            title = stringResource(CoreR.string.settings_metadata_source),
+            desc = stringResource(CoreR.string.settings_metadata_source_description),
             chip = stringResource(metadataModeLabelRes(mode)), chevron = true,
             modifier = Modifier.focusRequester(firstFocus),
             onClick = { showModePicker = true },
@@ -309,20 +310,20 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         if (mode.enrich) {
             ServiceSettingsRow(
                 icon = OwnTVIcon.LANGUAGE,
-            title = stringResource(R.string.settings_metadata_language),
-            desc = stringResource(R.string.settings_metadata_language_description),
+            title = stringResource(CoreR.string.settings_metadata_language),
+            desc = stringResource(CoreR.string.settings_metadata_language_description),
             chip = tmdbLangName(language), chevron = true,
             modifier = Modifier.focusRequester(langRowFocus),
             onClick = { showLangPicker = true },
         )
 
         Spacer(Modifier.height(4.dp))
-        GroupLabel(stringResource(R.string.settings_metadata_connection))
+        GroupLabel(stringResource(CoreR.string.settings_metadata_connection))
         ServiceSettingsRow(
             icon = OwnTVIcon.GEAR,
-            title = stringResource(R.string.settings_metadata_remote_advanced),
-            desc = stringResource(R.string.settings_metadata_remote_advanced_description),
-            chip = if (tier == MetadataConfig.Tier.DEFAULT_WORKER) stringResource(R.string.settings_shared)
+            title = stringResource(CoreR.string.settings_metadata_remote_advanced),
+            desc = stringResource(CoreR.string.settings_metadata_remote_advanced_description),
+            chip = if (tier == MetadataConfig.Tier.DEFAULT_WORKER) stringResource(CoreR.string.settings_shared)
                 else stringResource(metadataTierLabelRes(tier)),
             primaryChip = tier != MetadataConfig.Tier.DEFAULT_WORKER,
             chevron = true,
@@ -336,7 +337,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
 
         Spacer(Modifier.height(20.dp))
-        GroupLabel(stringResource(R.string.settings_metadata_test_connection))
+        GroupLabel(stringResource(CoreR.string.settings_metadata_test_connection))
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -345,12 +346,12 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             OwnTVTextField(
                 value = testTitle,
                 onValueChange = { testTitle = it },
-                label = stringResource(R.string.settings_lookup_movie),
-                placeholder = stringResource(R.string.settings_metadata_test_title),
+                label = stringResource(CoreR.string.settings_lookup_movie),
+                placeholder = stringResource(CoreR.string.settings_metadata_test_title),
                 modifier = Modifier.weight(1f),
             )
             OwnTVButton(
-                label = if (testState is SettingsViewModel.MetadataTestState.Testing) stringResource(R.string.settings_looking_up) else stringResource(R.string.settings_test_lookup),
+                label = if (testState is SettingsViewModel.MetadataTestState.Testing) stringResource(CoreR.string.settings_looking_up) else stringResource(CoreR.string.settings_test_lookup),
                 onClick = { vm.testMetadataLookup(testTitle) },
                 style = OwnTVButtonStyle.SECONDARY,
             )
@@ -364,11 +365,11 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         // TMDB attribution (plan §8) — logo + line, required by TMDB's API terms.
         androidx.compose.foundation.Image(
             painter = androidx.compose.ui.res.painterResource(tv.own.owntv.R.drawable.ic_tmdb_logo),
-            contentDescription = stringResource(R.string.settings_metadata),
+            contentDescription = stringResource(CoreR.string.settings_metadata),
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            stringResource(R.string.settings_tmdb_attribution),
+            stringResource(CoreR.string.settings_tmdb_attribution),
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
         )
@@ -403,8 +404,8 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     if (confirmClearAdvanced) {
         ConfirmDialog(
-            title = stringResource(R.string.settings_metadata_clear_advanced_title),
-            message = stringResource(R.string.settings_metadata_clear_advanced_message),
+            title = stringResource(CoreR.string.settings_metadata_clear_advanced_title),
+            message = stringResource(CoreR.string.settings_metadata_clear_advanced_message),
             onConfirm = {
                 key = ""
                 url = ""
@@ -422,7 +423,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     if (showRemoteHandover) {
         CompanionKeyDialog(
-            titleRes = R.string.settings_metadata_remote_advanced,
+            titleRes = CoreR.string.settings_metadata_remote_advanced,
             state = vm.remoteState.collectAsStateWithLifecycle().value,
             onStart = vm::startRemoteTmdbConfigListener,
             onStop = vm::stopRemoteListener,
@@ -432,7 +433,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     if (showModePicker) {
         PickerDialog(
-            title = stringResource(R.string.settings_metadata_source),
+            title = stringResource(CoreR.string.settings_metadata_source),
             options = tv.own.owntv.core.metadata.MetadataMode.entries.map {
                 it.name to stringResource(metadataModeLabelRes(it))
             },
@@ -453,7 +454,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     if (showLangPicker) {
         // searchable: the list is long enough that D-pad scrolling to e.g. Ukrainian is tedious.
         PickerDialog(
-            title = stringResource(R.string.settings_metadata_language),
+            title = stringResource(CoreR.string.settings_metadata_language),
             options = TMDB_LANGUAGE_CODES.map { it to tmdbLangName(it) },
             selected = language,
             searchable = true,
@@ -483,16 +484,16 @@ private fun MetadataTestLabel(state: SettingsViewModel.MetadataTestState) {
     val colors = OwnTVTheme.colors
     val (text, color) = when (state) {
         is SettingsViewModel.MetadataTestState.Ok -> stringResource(
-            R.string.settings_metadata_match_result,
+            CoreR.string.settings_metadata_match_result,
             state.title,
-            state.year?.let { stringResource(R.string.settings_metadata_year, it) } ?: "",
+            state.year?.let { stringResource(CoreR.string.settings_metadata_year, it) } ?: "",
             state.tmdbId,
         ) to colors.primary
         is SettingsViewModel.MetadataTestState.Fail -> when (val failure = state.failure) {
-            SettingsViewModel.MetadataFailure.EmptyTitle -> stringResource(R.string.settings_metadata_empty_title)
-            SettingsViewModel.MetadataFailure.ServerUnavailable -> stringResource(R.string.settings_metadata_server_unavailable)
-            is SettingsViewModel.MetadataFailure.NoMatch -> stringResource(R.string.settings_metadata_no_match, failure.query)
-            is SettingsViewModel.MetadataFailure.Unknown -> failure.rawMessage ?: stringResource(R.string.settings_metadata_lookup_failed)
+            SettingsViewModel.MetadataFailure.EmptyTitle -> stringResource(CoreR.string.settings_metadata_empty_title)
+            SettingsViewModel.MetadataFailure.ServerUnavailable -> stringResource(CoreR.string.settings_metadata_server_unavailable)
+            is SettingsViewModel.MetadataFailure.NoMatch -> stringResource(CoreR.string.settings_metadata_no_match, failure.query)
+            is SettingsViewModel.MetadataFailure.Unknown -> failure.rawMessage ?: stringResource(CoreR.string.settings_metadata_lookup_failed)
         } to androidx.compose.ui.graphics.Color(0xFFEF4444)
         else -> null to colors.onSurfaceVariant
     }
@@ -526,28 +527,28 @@ private fun AdvancedMetadataPopup(
     tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = onDismiss, fontScale = .50f) {
       Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
         Column(Modifier.dialogPanel(width = 560.dp, padding = 20.dp)) {
-            Text(stringResource(R.string.settings_metadata_remote_advanced), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.settings_metadata_remote_advanced), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(4.dp))
-            Text(stringResource(R.string.settings_metadata_server_description), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.settings_metadata_server_description), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             Spacer(Modifier.height(12.dp))
             Row2(
                 icon = OwnTVIcon.SHARE,
-                title = stringResource(R.string.settings_metadata_key_from_phone),
-                desc = stringResource(R.string.settings_metadata_key_from_phone_desc),
+                title = stringResource(CoreR.string.settings_metadata_key_from_phone),
+                desc = stringResource(CoreR.string.settings_metadata_key_from_phone_desc),
                 chevron = true,
                 modifier = Modifier.focusRequester(firstFocus),
                 onClick = onRemote,
             )
             Spacer(Modifier.height(8.dp))
-            OwnTVTextField(value = key, onValueChange = onKeyChange, label = stringResource(R.string.settings_tmdb_api_key), placeholder = stringResource(R.string.settings_metadata_optional), modifier = Modifier.fillMaxWidth())
+            OwnTVTextField(value = key, onValueChange = onKeyChange, label = stringResource(CoreR.string.settings_tmdb_api_key), placeholder = stringResource(CoreR.string.settings_metadata_optional), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OwnTVTextField(value = url, onValueChange = onUrlChange, label = stringResource(R.string.settings_worker_server_url), placeholder = "https://your-worker.example.workers.dev", modifier = Modifier.fillMaxWidth())
+            OwnTVTextField(value = url, onValueChange = onUrlChange, label = stringResource(CoreR.string.settings_worker_server_url), placeholder = "https://your-worker.example.workers.dev", modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.settings_metadata_clear_advanced_title), onRemove, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.settings_metadata_clear_advanced_title), onRemove, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.common_cancel), onDismiss, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.common_save), onSave)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_save), onSave)
             }
         }
       }
@@ -598,13 +599,13 @@ internal fun CompanionKeyDialog(
                 tv.own.owntv.core.companion.CompanionServerState.Idle,
                 tv.own.owntv.core.companion.CompanionServerState.Starting,
                 -> Text(
-                    stringResource(R.string.settings_opening_server),
+                    stringResource(CoreR.string.settings_opening_server),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
                 is tv.own.owntv.core.companion.CompanionServerState.Listening -> {
                     Text(
-                        stringResource(R.string.settings_enter_pin_browser),
+                        stringResource(CoreR.string.settings_enter_pin_browser),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -621,7 +622,7 @@ internal fun CompanionKeyDialog(
                     state.qr?.let { qr ->
                         androidx.compose.foundation.Image(
                             bitmap = qr.asImageBitmap(),
-                            contentDescription = stringResource(R.string.settings_companion_qr),
+                            contentDescription = stringResource(CoreR.string.settings_companion_qr),
                             modifier = Modifier
                                 .size(176.dp)
                                 .clip(androidx.compose.foundation.shape.RoundedCornerShape(14.dp))
@@ -632,7 +633,7 @@ internal fun CompanionKeyDialog(
                         Spacer(Modifier.height(10.dp))
                     }
                     Text(
-                        stringResource(R.string.settings_open_url),
+                        stringResource(CoreR.string.settings_open_url),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                     )
@@ -655,7 +656,7 @@ internal fun CompanionKeyDialog(
             }
             Spacer(Modifier.height(20.dp))
             OwnTVButton(
-                stringResource(R.string.common_cancel),
+                stringResource(CoreR.string.common_cancel),
                 onClick = onDismiss,
                 style = OwnTVButtonStyle.SECONDARY,
                 modifier = Modifier.focusRequester(closeFocus),

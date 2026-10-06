@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -60,7 +62,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.i18n.HorizontalDirection
 import tv.own.owntv.core.i18n.horizontalDirection
 import tv.own.owntv.ui.components.FocusableSurface
@@ -261,7 +262,7 @@ fun AudioNowPlayingBar(
                                 LiveRow(colors.favorite)
                             } else if (hasTime) {
                                 Text(
-                                    stringResource(R.string.player_time_progress, fmtTime(position), fmtTime(duration)),
+                                    stringResource(CoreR.string.player_time_progress, fmtTime(position), fmtTime(duration)),
                                     style = MaterialTheme.typography.labelSmall.copy(fontFamily = LocalPopupFontFamily.current),
                                     color = colors.onSurfaceVariant,
                                     maxLines = 1,
@@ -354,7 +355,7 @@ private fun LiveRow(dotColor: Color) {
     )
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         Box(Modifier.size(6.dp).clip(CircleShape).background(dotColor).alpha(a))
-        Text(stringResource(R.string.player_live), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold)
+        Text(stringResource(CoreR.string.player_live), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold)
     }
 }
 

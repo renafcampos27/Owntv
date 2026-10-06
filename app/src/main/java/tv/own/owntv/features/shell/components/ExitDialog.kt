@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.rememberScrollState
@@ -26,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
 import tv.own.owntv.ui.components.modalScrim
@@ -64,14 +65,14 @@ fun ExitDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = androidx.compose.ui.res.stringResource(R.string.content_exit_owntv),
+                text = androidx.compose.ui.res.stringResource(CoreR.string.content_exit_owntv),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.textPrimary,
                 textAlign = TextAlign.Center,
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = androidx.compose.ui.res.stringResource(R.string.content_exit_confirmation),
+                text = androidx.compose.ui.res.stringResource(CoreR.string.content_exit_confirmation),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.textSecondary,
                 textAlign = TextAlign.Center,
@@ -79,13 +80,13 @@ fun ExitDialog(
             Spacer(Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 OwnTVButton(
-                    label = androidx.compose.ui.res.stringResource(R.string.common_cancel),
+                    label = androidx.compose.ui.res.stringResource(CoreR.string.common_cancel),
                     onClick = onDismiss,
                     style = OwnTVButtonStyle.SECONDARY,
                     modifier = Modifier.focusRequester(cancelFocus),
                 )
                 OwnTVButton(
-                    label = androidx.compose.ui.res.stringResource(R.string.common_exit),
+                    label = androidx.compose.ui.res.stringResource(CoreR.string.common_exit),
                     onClick = onConfirm,
                     style = OwnTVButtonStyle.PRIMARY,
                 )

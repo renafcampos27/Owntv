@@ -1,5 +1,7 @@
 package tv.own.owntv.features.subtitles
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -78,16 +80,16 @@ fun SubtitleSearchScreen(
             contentAlignment = Alignment.Center,
         ) {
             Column(Modifier.dialogPanel(width = 620.dp, padding = 24.dp)) {
-                Text(stringResource(tv.own.owntv.R.string.player_subtitles_search_title), style = MaterialTheme.typography.titleLarge, color = OwnTVTheme.colors.onSurface)
+                Text(stringResource(CoreR.string.player_subtitles_search_title), style = MaterialTheme.typography.titleLarge, color = OwnTVTheme.colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 quotaNote?.let { quota ->
                     Text(
                         if (quota.reset != null) {
-                            pluralStringResource(tv.own.owntv.R.plurals.player_subtitles_remaining_reset, quota.remaining, quota.remaining, quota.reset)
+                            pluralStringResource(CoreR.plurals.player_subtitles_remaining_reset, quota.remaining, quota.remaining, quota.reset)
                         } else if (quota.remaining == 1) {
-                            pluralStringResource(tv.own.owntv.R.plurals.player_subtitles_remaining_count, quota.remaining, quota.remaining)
+                            pluralStringResource(CoreR.plurals.player_subtitles_remaining_count, quota.remaining, quota.remaining)
                         } else {
-                            pluralStringResource(tv.own.owntv.R.plurals.player_subtitles_remaining_count, quota.remaining, quota.remaining)
+                            pluralStringResource(CoreR.plurals.player_subtitles_remaining_count, quota.remaining, quota.remaining)
                         },
                         style = MaterialTheme.typography.bodySmall,
                         color = OwnTVTheme.colors.onSurfaceVariant,
@@ -106,33 +108,33 @@ fun SubtitleSearchScreen(
                         // Not signed in (or session expired) — sign-in lives in Settings only.
                         is SubtitleSearchViewModel.UiState.SignedOut -> Message(
                             if (s.sessionExpired) {
-                                stringResource(tv.own.owntv.R.string.player_subtitles_session_expired)
+                                stringResource(CoreR.string.player_subtitles_session_expired)
                             } else {
-                                stringResource(tv.own.owntv.R.string.player_subtitles_account_needed)
+                                stringResource(CoreR.string.player_subtitles_account_needed)
                             },
-                            primary = stringResource(tv.own.owntv.R.string.settings_close), onPrimary = onDismiss,
+                            primary = stringResource(CoreR.string.settings_close), onPrimary = onDismiss,
                         )
                         SubtitleSearchViewModel.UiState.Loading ->
-                            Centered { OwnTVSpinner(); Spacer(Modifier.height(12.dp)); Text(stringResource(tv.own.owntv.R.string.player_subtitles_working), color = OwnTVTheme.colors.onSurfaceVariant) }
+                            Centered { OwnTVSpinner(); Spacer(Modifier.height(12.dp)); Text(stringResource(CoreR.string.player_subtitles_working), color = OwnTVTheme.colors.onSurfaceVariant) }
                         is SubtitleSearchViewModel.UiState.Empty -> Message(
                             if (s.showingAllLanguages) {
-                                stringResource(tv.own.owntv.R.string.player_subtitles_no_matches_all_languages)
+                                stringResource(CoreR.string.player_subtitles_no_matches_all_languages)
                             } else {
-                                stringResource(tv.own.owntv.R.string.player_subtitles_no_matches_chosen_language)
+                                stringResource(CoreR.string.player_subtitles_no_matches_chosen_language)
                             },
-                            primary = stringResource(tv.own.owntv.R.string.player_subtitles_edit_search), onPrimary = { editing = true },
-                            secondary = stringResource(tv.own.owntv.R.string.player_subtitles_show_all_languages).takeIf { !s.showingAllLanguages },
+                            primary = stringResource(CoreR.string.player_subtitles_edit_search), onPrimary = { editing = true },
+                            secondary = stringResource(CoreR.string.player_subtitles_show_all_languages).takeIf { !s.showingAllLanguages },
                             onSecondary = vm::showAllLanguages,
-                            tertiary = stringResource(tv.own.owntv.R.string.settings_close), onTertiary = onDismiss,
+                            tertiary = stringResource(CoreR.string.settings_close), onTertiary = onDismiss,
                         )
                         is SubtitleSearchViewModel.UiState.Error -> Message(
                             if (s.kind == SubtitleSearchViewModel.UiState.ErrorKind.LIMIT_REACHED) {
-                                stringResource(tv.own.owntv.R.string.player_subtitles_limit_reached)
+                                stringResource(CoreR.string.player_subtitles_limit_reached)
                             } else {
-                                stringResource(tv.own.owntv.R.string.player_subtitles_network_error)
+                                stringResource(CoreR.string.player_subtitles_network_error)
                             },
-                            primary = stringResource(tv.own.owntv.R.string.player_subtitles_try_again), onPrimary = vm::retry,
-                            tertiary = stringResource(tv.own.owntv.R.string.settings_close), onTertiary = onDismiss,
+                            primary = stringResource(CoreR.string.player_subtitles_try_again), onPrimary = vm::retry,
+                            tertiary = stringResource(CoreR.string.settings_close), onTertiary = onDismiss,
                         )
                         is SubtitleSearchViewModel.UiState.Results -> ResultsList(
                             results = s.results,
@@ -158,12 +160,12 @@ fun SubtitleSearchScreen(
 private fun OpenSubtitlesAttribution() {
     androidx.compose.foundation.Image(
         painter = androidx.compose.ui.res.painterResource(tv.own.owntv.R.drawable.ic_opensubtitles_logo),
-        contentDescription = stringResource(tv.own.owntv.R.string.settings_open_subtitles),
+        contentDescription = stringResource(CoreR.string.settings_open_subtitles),
         modifier = Modifier.height(28.dp),
     )
     Spacer(Modifier.height(6.dp))
     Text(
-        stringResource(tv.own.owntv.R.string.player_subtitles_api_notice),
+        stringResource(CoreR.string.player_subtitles_api_notice),
         style = MaterialTheme.typography.bodySmall,
         color = OwnTVTheme.colors.onSurfaceVariant,
     )
@@ -196,18 +198,18 @@ private fun ResultsList(
                     Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp), verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text(
-                                r.languageName ?: r.language ?: stringResource(tv.own.owntv.R.string.player_subtitles_subtitle),
+                                r.languageName ?: r.language ?: stringResource(CoreR.string.player_subtitles_subtitle),
                                 style = MaterialTheme.typography.titleSmall, color = colors.onSurface, fontWeight = FontWeight.SemiBold,
                             )
-                            Text(r.releaseName ?: stringResource(tv.own.owntv.R.string.player_subtitles_subtitle), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                            Text(r.releaseName ?: stringResource(CoreR.string.player_subtitles_subtitle), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                             val tags = buildList {
-                                if (r.fromTrusted) add(stringResource(tv.own.owntv.R.string.player_subtitles_trusted))
-                                if (r.hearingImpaired) add(stringResource(tv.own.owntv.R.string.player_subtitles_sdh))
-                                if (r.aiTranslated) add(stringResource(tv.own.owntv.R.string.player_subtitles_ai))
-                                if (r.downloads > 0) add(pluralStringResource(tv.own.owntv.R.plurals.player_subtitles_download_count, r.downloads, r.downloads))
+                                if (r.fromTrusted) add(stringResource(CoreR.string.player_subtitles_trusted))
+                                if (r.hearingImpaired) add(stringResource(CoreR.string.player_subtitles_sdh))
+                                if (r.aiTranslated) add(stringResource(CoreR.string.player_subtitles_ai))
+                                if (r.downloads > 0) add(pluralStringResource(CoreR.plurals.player_subtitles_download_count, r.downloads, r.downloads))
                             }
                             if (tags.isNotEmpty()) {
-                                Text(tags.joinToString(stringResource(tv.own.owntv.R.string.player_subtitles_tags_separator)), style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                                Text(tags.joinToString(stringResource(CoreR.string.player_subtitles_tags_separator)), style = MaterialTheme.typography.labelSmall, color = colors.primary)
                             }
                         }
                         if (isApplying) OwnTVSpinner()
@@ -217,10 +219,10 @@ private fun ResultsList(
         }
         Spacer(Modifier.height(14.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OwnTVButton(stringResource(tv.own.owntv.R.string.player_subtitles_edit_search), onClick = onEdit, style = OwnTVButtonStyle.SECONDARY)
-            onShowAll?.let { OwnTVButton(stringResource(tv.own.owntv.R.string.player_subtitles_all_languages), onClick = it, style = OwnTVButtonStyle.SECONDARY) }
+            OwnTVButton(stringResource(CoreR.string.player_subtitles_edit_search), onClick = onEdit, style = OwnTVButtonStyle.SECONDARY)
+            onShowAll?.let { OwnTVButton(stringResource(CoreR.string.player_subtitles_all_languages), onClick = it, style = OwnTVButtonStyle.SECONDARY) }
             Spacer(Modifier.weight(1f))
-            OwnTVButton(stringResource(tv.own.owntv.R.string.settings_close), onClick = onClose, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.settings_close), onClick = onClose, style = OwnTVButtonStyle.SECONDARY)
         }
     }
 }
@@ -231,14 +233,14 @@ private fun EditSearchField(initial: String, onSubmit: (String) -> Unit, onCance
     val fieldFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { fieldFocus.requestFocus() } }
     Column {
-        Text(stringResource(tv.own.owntv.R.string.player_subtitles_edit_search), style = MaterialTheme.typography.titleSmall, color = OwnTVTheme.colors.onSurface)
+        Text(stringResource(CoreR.string.player_subtitles_edit_search), style = MaterialTheme.typography.titleSmall, color = OwnTVTheme.colors.onSurface)
         Spacer(Modifier.height(10.dp))
-        OwnTVTextField(value = value, onValueChange = { value = it }, label = stringResource(tv.own.owntv.R.string.player_subtitles_title_label), modifier = Modifier.fillMaxWidth(), focusRequester = fieldFocus)
+        OwnTVTextField(value = value, onValueChange = { value = it }, label = stringResource(CoreR.string.player_subtitles_title_label), modifier = Modifier.fillMaxWidth(), focusRequester = fieldFocus)
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            OwnTVButton(stringResource(tv.own.owntv.R.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
             Spacer(Modifier.weight(1f))
-            OwnTVButton(stringResource(tv.own.owntv.R.string.player_subtitles_search), onClick = { onSubmit(value.trim()) })
+            OwnTVButton(stringResource(CoreR.string.player_subtitles_search), onClick = { onSubmit(value.trim()) })
         }
     }
 }

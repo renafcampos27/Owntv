@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -28,7 +30,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.Text
 import org.koin.compose.koinInject
-import tv.own.owntv.R
 import tv.own.owntv.core.recording.RecordingActivityTracker
 import tv.own.owntv.core.settings.SettingsRepository
 import tv.own.owntv.core.theme.AnimationLevel
@@ -51,7 +52,7 @@ fun RecordingBadge(modifier: Modifier = Modifier) {
     val active by tracker.active.collectAsStateWithLifecycle()
     if (active.isEmpty()) return
 
-    val animation by settings.animationLevel.collectAsStateWithLifecycle(initialValue = AnimationLevel.FULL)
+    val animation by settings.animationLevel.collectAsStateWithLifecycle(initialValue = AnimationLevel.OFF)
 
     // The pulse is what makes a red dot read as "recording" rather than as an error marker — but with
     // Animations off there is NO transition started at all, rather than one scaled to zero.
@@ -92,7 +93,7 @@ fun RecordingBadge(modifier: Modifier = Modifier) {
                 .background(RecordingRed),
         )
         Text(
-            text = stringResource(R.string.recording_badge),
+            text = stringResource(CoreR.string.recording_badge),
             color = Color.White,
             fontSize = 11.sp,
             fontWeight = FontWeight.Bold,

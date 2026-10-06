@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -32,7 +34,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
 import tv.own.owntv.ui.components.OwnTVIcon
@@ -93,7 +94,7 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
     val searchLang by settingsVm.subSearchLanguages.collectAsStateWithLifecycle()
     val searchLanguages = subSearchLanguages()
     val searchLanguageName = searchLanguages.firstOrNull { it.first == searchLang }?.second
-        ?: searchLang.ifBlank { stringResource(R.string.player_subtitles_language_not_set) }
+        ?: searchLang.ifBlank { stringResource(CoreR.string.player_subtitles_language_not_set) }
     val storedApiKey by settingsVm.openSubtitlesApiKey.collectAsStateWithLifecycle()
     val storedServerUrl by settingsVm.openSubtitlesServerUrl.collectAsStateWithLifecycle()
 
@@ -207,14 +208,14 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) { Header(stringResource(R.string.settings_open_subtitles), onBack) }
+            Box(Modifier.weight(1f)) { Header(stringResource(CoreR.string.settings_open_subtitles), onBack) }
             if (state is OpenSubtitlesViewModel.UiState.SignedIn) {
-                OwnTVButton(stringResource(R.string.player_subtitles_refresh), onClick = { vm.refresh() }, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.player_subtitles_refresh), onClick = { vm.refresh() }, style = OwnTVButtonStyle.SECONDARY)
             }
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            stringResource(R.string.player_subtitles_free_description_full),
+            stringResource(CoreR.string.player_subtitles_free_description_full),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -223,67 +224,67 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
 
         when (val s = state) {
             is OpenSubtitlesViewModel.UiState.SignedIn -> {
-                if (false) GroupLabel(stringResource(R.string.player_subtitles_account))
+                if (false) GroupLabel(stringResource(CoreR.string.player_subtitles_account))
                 val session = s.session
                 OpenSubtitlesOverview(
-                    eyebrow = stringResource(R.string.player_subtitles_account),
-                    title = stringResource(R.string.player_subtitles_connected_user, session.username),
+                    eyebrow = stringResource(CoreR.string.player_subtitles_account),
+                    title = stringResource(CoreR.string.player_subtitles_connected_user, session.username),
                     profile = session.username,
-                    connectedLabel = stringResource(R.string.settings_open_subtitles_connected),
-                    accountLabel = stringResource(R.string.player_subtitles_account),
+                    connectedLabel = stringResource(CoreR.string.settings_open_subtitles_connected),
+                    accountLabel = stringResource(CoreR.string.player_subtitles_account),
                     accountValue = listOfNotNull(
                         session.level,
-                        stringResource(R.string.player_subtitles_vip).takeIf { session.vip },
-                    ).joinToString(stringResource(R.string.player_subtitles_tags_separator))
-                        .ifBlank { stringResource(R.string.player_subtitles_free_account) },
-                    downloadsLabel = stringResource(R.string.player_subtitles_downloads),
+                        stringResource(CoreR.string.player_subtitles_vip).takeIf { session.vip },
+                    ).joinToString(stringResource(CoreR.string.player_subtitles_tags_separator))
+                        .ifBlank { stringResource(CoreR.string.player_subtitles_free_account) },
+                    downloadsLabel = stringResource(CoreR.string.player_subtitles_downloads),
                     downloadsValue = run {
                         val remaining = session.remainingDownloads
                         val allowed = session.allowedDownloads
                         if (remaining != null && allowed != null) {
                             pluralStringResource(
-                                R.plurals.player_subtitles_remaining_short,
+                                CoreR.plurals.player_subtitles_remaining_short,
                                 remaining,
                                 remaining,
                                 allowed,
                             )
-                        } else stringResource(R.string.player_subtitles_language_not_set)
+                        } else stringResource(CoreR.string.player_subtitles_language_not_set)
                     },
-                    resetsLabel = stringResource(R.string.player_subtitles_resets),
+                    resetsLabel = stringResource(CoreR.string.player_subtitles_resets),
                     resetsValue = openSubtitlesResetLabel(session.resetTime),
-                    connectionLabel = stringResource(R.string.settings_metadata_connection),
+                    connectionLabel = stringResource(CoreR.string.settings_metadata_connection),
                     connectionValue = when {
-                        storedServerUrl.isNotBlank() -> stringResource(R.string.settings_tier_self_host)
-                        storedApiKey.isNotBlank() -> stringResource(R.string.settings_tier_key)
-                        else -> stringResource(R.string.settings_shared)
+                        storedServerUrl.isNotBlank() -> stringResource(CoreR.string.settings_tier_self_host)
+                        storedApiKey.isNotBlank() -> stringResource(CoreR.string.settings_tier_key)
+                        else -> stringResource(CoreR.string.settings_shared)
                     },
                 )
                 if (false) ServiceSummaryCard(
-                    eyebrow = stringResource(R.string.player_subtitles_account),
-                    title = stringResource(R.string.player_subtitles_connected_user, session.username),
-                    description = listOfNotNull(session.level, stringResource(R.string.player_subtitles_vip).takeIf { session.vip })
-                        .joinToString(stringResource(R.string.player_subtitles_tags_separator))
-                        .ifBlank { stringResource(R.string.player_subtitles_free_account) },
-                    trailing = stringResource(R.string.settings_open_subtitles_connected),
+                    eyebrow = stringResource(CoreR.string.player_subtitles_account),
+                    title = stringResource(CoreR.string.player_subtitles_connected_user, session.username),
+                    description = listOfNotNull(session.level, stringResource(CoreR.string.player_subtitles_vip).takeIf { session.vip })
+                        .joinToString(stringResource(CoreR.string.player_subtitles_tags_separator))
+                        .ifBlank { stringResource(CoreR.string.player_subtitles_free_account) },
+                    trailing = stringResource(CoreR.string.settings_open_subtitles_connected),
                 )
                 Spacer(Modifier.height(10.dp))
-                InfoRow(stringResource(R.string.player_subtitles_connected_as), session.username)
-                InfoRow(stringResource(R.string.player_subtitles_account), listOfNotNull(session.level, stringResource(R.string.player_subtitles_vip).takeIf { session.vip }).joinToString(stringResource(R.string.player_subtitles_tags_separator)).ifBlank { stringResource(R.string.player_subtitles_free_account) })
+                InfoRow(stringResource(CoreR.string.player_subtitles_connected_as), session.username)
+                InfoRow(stringResource(CoreR.string.player_subtitles_account), listOfNotNull(session.level, stringResource(CoreR.string.player_subtitles_vip).takeIf { session.vip }).joinToString(stringResource(CoreR.string.player_subtitles_tags_separator)).ifBlank { stringResource(CoreR.string.player_subtitles_free_account) })
                 // Provider-reported values only (§5.3): remaining-only unless a total was returned.
                 val remaining = session.remainingDownloads
                 if (remaining != null) {
                     val total = session.allowedDownloads
                     InfoRow(
-                        stringResource(R.string.player_subtitles_downloads),
-                        if (total != null) pluralStringResource(R.plurals.player_subtitles_remaining, remaining, remaining, total) else pluralStringResource(R.plurals.player_subtitles_remaining_short, remaining, remaining),
+                        stringResource(CoreR.string.player_subtitles_downloads),
+                        if (total != null) pluralStringResource(CoreR.plurals.player_subtitles_remaining, remaining, remaining, total) else pluralStringResource(CoreR.plurals.player_subtitles_remaining_short, remaining, remaining),
                     )
                 }
-                session.resetTime?.let { InfoRow(stringResource(R.string.player_subtitles_resets), stringResource(R.string.player_subtitles_in, it)) }
+                session.resetTime?.let { InfoRow(stringResource(CoreR.string.player_subtitles_resets), stringResource(CoreR.string.player_subtitles_in, it)) }
                 Spacer(Modifier.height(14.dp))
-                GroupLabel(stringResource(R.string.player_subtitles_account))
+                GroupLabel(stringResource(CoreR.string.player_subtitles_account))
                 ServiceSettingsRow(
-                    icon = OwnTVIcon.PERSON, title = stringResource(R.string.player_subtitles_sign_out),
-                    desc = stringResource(R.string.player_subtitles_delete_login_message),
+                    icon = OwnTVIcon.PERSON, title = stringResource(CoreR.string.player_subtitles_sign_out),
+                    desc = stringResource(CoreR.string.player_subtitles_delete_login_message),
                     modifier = Modifier.focusRequester(firstFocus),
                     onClick = { vm.signOut() },
                 )
@@ -291,17 +292,17 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
             OpenSubtitlesViewModel.UiState.Busy -> {
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    stringResource(R.string.player_subtitles_contacting),
+                    stringResource(CoreR.string.player_subtitles_contacting),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                     modifier = Modifier.padding(horizontal = 16.dp),
                 )
             }
             OpenSubtitlesViewModel.UiState.SignedOut -> {
-                GroupLabel(stringResource(R.string.player_subtitles_account))
+                GroupLabel(stringResource(CoreR.string.player_subtitles_account))
                 ServiceSettingsRow(
-                    icon = OwnTVIcon.PERSON, title = stringResource(R.string.player_subtitles_sign_in),
-                    desc = stringResource(R.string.player_subtitles_connect_description),
+                    icon = OwnTVIcon.PERSON, title = stringResource(CoreR.string.player_subtitles_sign_in),
+                    desc = stringResource(CoreR.string.player_subtitles_connect_description),
                     chevron = true,
                     modifier = Modifier.focusRequester(firstFocus),
                     onClick = { showSetupChooser = true },
@@ -315,11 +316,11 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
         if (state is OpenSubtitlesViewModel.UiState.SignedIn) {
             ServiceSettingsRow(
                 icon = OwnTVIcon.GEAR,
-                title = stringResource(R.string.settings_open_subtitles_advanced),
-                desc = stringResource(R.string.settings_open_subtitles_advanced_description),
-                chip = if (storedServerUrl.isNotBlank()) stringResource(R.string.settings_tier_self_host)
-                    else if (storedApiKey.isNotBlank()) stringResource(R.string.settings_tier_key)
-                    else stringResource(R.string.settings_shared),
+                title = stringResource(CoreR.string.settings_open_subtitles_advanced),
+                desc = stringResource(CoreR.string.settings_open_subtitles_advanced_description),
+                chip = if (storedServerUrl.isNotBlank()) stringResource(CoreR.string.settings_tier_self_host)
+                    else if (storedApiKey.isNotBlank()) stringResource(CoreR.string.settings_tier_key)
+                    else stringResource(CoreR.string.settings_shared),
                 primaryChip = storedApiKey.isNotBlank() || storedServerUrl.isNotBlank(),
                 chevron = true,
                 modifier = Modifier.focusRequester(apiRowFocus),
@@ -329,11 +330,11 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
 
         // Search language filter (available regardless of sign-in state — it's a search preference).
         Spacer(Modifier.height(14.dp))
-        GroupLabel(stringResource(R.string.player_subtitles_search))
+        GroupLabel(stringResource(CoreR.string.player_subtitles_search))
         ServiceSettingsRow(
-            icon = OwnTVIcon.LANGUAGE, title = stringResource(R.string.player_subtitles_filter_title),
-            desc = stringResource(R.string.player_subtitles_filter_description),
-            chip = stringResource(if (filterEnabled) R.string.common_on else R.string.common_off), primaryChip = filterEnabled,
+            icon = OwnTVIcon.LANGUAGE, title = stringResource(CoreR.string.player_subtitles_filter_title),
+            desc = stringResource(CoreR.string.player_subtitles_filter_description),
+            chip = stringResource(if (filterEnabled) CoreR.string.common_on else CoreR.string.common_off), primaryChip = filterEnabled,
             onClick = {
                 // Turning the filter on with nothing chosen yet would silently behave like "off"
                 // (no codes = no filter), so seed it from the device language, falling back to English.
@@ -344,8 +345,8 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
         if (filterEnabled) {
             Spacer(Modifier.height(6.dp))
             ServiceSettingsRow(
-                icon = OwnTVIcon.LANGUAGE, title = stringResource(R.string.player_subtitles_search_language),
-                desc = stringResource(R.string.player_subtitles_search_language_description),
+                icon = OwnTVIcon.LANGUAGE, title = stringResource(CoreR.string.player_subtitles_search_language),
+                desc = stringResource(CoreR.string.player_subtitles_search_language_description),
                 chip = searchLanguageName, chevron = true,
                 modifier = Modifier.focusRequester(langRowFocus),
                 onClick = { showLangPicker = true },
@@ -358,12 +359,12 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
         // OpenSubtitles attribution — logo + line, mirroring the TMDB credit in Metadata settings.
         androidx.compose.foundation.Image(
             painter = androidx.compose.ui.res.painterResource(tv.own.owntv.R.drawable.ic_opensubtitles_logo),
-            contentDescription = stringResource(R.string.settings_open_subtitles),
+            contentDescription = stringResource(CoreR.string.settings_open_subtitles),
             modifier = Modifier.padding(start = 16.dp),
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            stringResource(R.string.player_subtitles_api_notice),
+            stringResource(CoreR.string.player_subtitles_api_notice),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
             modifier = Modifier.padding(start = 16.dp),
@@ -428,8 +429,8 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
 
     if (showRemoteSetup) {
         CompanionKeyDialog(
-            titleRes = if (remoteForSignIn) R.string.settings_open_subtitles_setup_title
-                else R.string.settings_open_subtitles_advanced,
+            titleRes = if (remoteForSignIn) CoreR.string.settings_open_subtitles_setup_title
+                else CoreR.string.settings_open_subtitles_advanced,
             state = settingsVm.remoteState.collectAsStateWithLifecycle().value,
             onStart = settingsVm::startRemoteOpenSubtitlesConfigListener,
             onStop = settingsVm::stopRemoteListener,
@@ -440,7 +441,7 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
     if (showLangPicker) {
         // Searchable — the list is long enough that D-pad scrolling to e.g. Ukrainian is tedious.
         PickerDialog(
-            title = stringResource(R.string.player_subtitles_search_language),
+            title = stringResource(CoreR.string.player_subtitles_search_language),
             options = searchLanguages,
             selected = searchLang,
             searchable = true,
@@ -465,12 +466,12 @@ fun OpenSubtitlesAccountScreen(onBack: () -> Unit, modifier: Modifier = Modifier
 
     error?.let { err ->
         val message = when (err.kind) {
-            OpenSubtitlesViewModel.ErrorKind.EMPTY_CREDENTIALS -> stringResource(R.string.player_subtitles_enter_credentials)
-            OpenSubtitlesViewModel.ErrorKind.INVALID_CREDENTIALS -> stringResource(R.string.player_subtitles_invalid_credentials)
+            OpenSubtitlesViewModel.ErrorKind.EMPTY_CREDENTIALS -> stringResource(CoreR.string.player_subtitles_enter_credentials)
+            OpenSubtitlesViewModel.ErrorKind.INVALID_CREDENTIALS -> stringResource(CoreR.string.player_subtitles_invalid_credentials)
             // The server answered and said no — showing the code is what makes a user report usable.
-            OpenSubtitlesViewModel.ErrorKind.SERVER_ERROR -> stringResource(R.string.player_subtitles_sign_in_server_error, err.httpCode)
-            OpenSubtitlesViewModel.ErrorKind.NETWORK -> stringResource(R.string.player_subtitles_sign_in_network_error)
-            OpenSubtitlesViewModel.ErrorKind.REFRESH_NETWORK -> stringResource(R.string.player_subtitles_refresh_network_error)
+            OpenSubtitlesViewModel.ErrorKind.SERVER_ERROR -> stringResource(CoreR.string.player_subtitles_sign_in_server_error, err.httpCode)
+            OpenSubtitlesViewModel.ErrorKind.NETWORK -> stringResource(CoreR.string.player_subtitles_sign_in_network_error)
+            OpenSubtitlesViewModel.ErrorKind.REFRESH_NETWORK -> stringResource(CoreR.string.player_subtitles_refresh_network_error)
         }
         ErrorDialog(message = message, onDismiss = { vm.dismissError() })
     }
@@ -500,7 +501,7 @@ private fun openSubtitlesResetLabel(raw: String?): String {
     val resetAt = target ?: java.time.ZonedDateTime.now(java.time.ZoneOffset.UTC)
         .toLocalDate().plusDays(1).atStartOfDay(java.time.ZoneOffset.UTC).toInstant().toEpochMilli()
     val totalMinutes = ((resetAt - now).coerceAtLeast(0L) / 60_000L).toInt()
-    return stringResource(R.string.settings_open_subtitles_reset_in, totalMinutes / 60, totalMinutes % 60)
+    return stringResource(CoreR.string.settings_open_subtitles_reset_in, totalMinutes / 60, totalMinutes % 60)
 }
 
 /** Remote (a browser on the same Wi-Fi) or Enter here (type on the TV) — the one door into sign-in. */
@@ -516,17 +517,17 @@ private fun OpenSubtitlesSetupChooser(onRemote: () -> Unit, onLocal: () -> Unit,
             contentAlignment = Alignment.Center,
         ) {
             Column(Modifier.dialogPanel(width = 520.dp, padding = 28.dp)) {
-                Text(stringResource(R.string.settings_open_subtitles_setup_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_open_subtitles_setup_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    stringResource(R.string.settings_open_subtitles_setup_description),
+                    stringResource(CoreR.string.settings_open_subtitles_setup_description),
                     style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(16.dp))
                 Row2(
                     icon = OwnTVIcon.SHARE,
-                    title = stringResource(R.string.settings_open_subtitles_setup_remote),
-                    desc = stringResource(R.string.settings_open_subtitles_setup_remote_description),
+                    title = stringResource(CoreR.string.settings_open_subtitles_setup_remote),
+                    desc = stringResource(CoreR.string.settings_open_subtitles_setup_remote_description),
                     chevron = true,
                     modifier = Modifier.focusRequester(firstFocus),
                     onClick = onRemote,
@@ -534,14 +535,14 @@ private fun OpenSubtitlesSetupChooser(onRemote: () -> Unit, onLocal: () -> Unit,
                 Spacer(Modifier.height(8.dp))
                 Row2(
                     icon = OwnTVIcon.PERSON,
-                    title = stringResource(R.string.settings_open_subtitles_setup_local),
-                    desc = stringResource(R.string.settings_open_subtitles_setup_local_description),
+                    title = stringResource(CoreR.string.settings_open_subtitles_setup_local),
+                    desc = stringResource(CoreR.string.settings_open_subtitles_setup_local_description),
                     chevron = true,
                     onClick = onLocal,
                 )
                 Spacer(Modifier.height(18.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                 }
             }
         }
@@ -570,30 +571,30 @@ private fun OpenSubtitlesApiPopup(
             contentAlignment = Alignment.Center,
         ) {
         Column(Modifier.dialogPanel(width = 560.dp, padding = 20.dp)) {
-            Text(stringResource(R.string.settings_open_subtitles_advanced), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.settings_open_subtitles_advanced), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(4.dp))
-            Text(stringResource(R.string.settings_open_subtitles_advanced_description), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.settings_open_subtitles_advanced_description), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             Spacer(Modifier.height(12.dp))
             Row2(
                 icon = OwnTVIcon.SHARE,
-                title = stringResource(R.string.settings_open_subtitles_setup_remote),
-                desc = stringResource(R.string.settings_metadata_key_from_phone_desc),
+                title = stringResource(CoreR.string.settings_open_subtitles_setup_remote),
+                desc = stringResource(CoreR.string.settings_metadata_key_from_phone_desc),
                 chevron = true,
                 modifier = Modifier.focusRequester(firstFocus),
                 onClick = onRemote,
             )
             Spacer(Modifier.height(8.dp))
-            OwnTVTextField(value = key, onValueChange = onKeyChange, label = stringResource(R.string.settings_open_subtitles_api_key), placeholder = stringResource(R.string.settings_metadata_optional), modifier = Modifier.fillMaxWidth())
+            OwnTVTextField(value = key, onValueChange = onKeyChange, label = stringResource(CoreR.string.settings_open_subtitles_api_key), placeholder = stringResource(CoreR.string.settings_metadata_optional), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            OwnTVTextField(value = url, onValueChange = onUrlChange, label = stringResource(R.string.settings_worker_server_url), placeholder = stringResource(R.string.settings_metadata_optional), modifier = Modifier.fillMaxWidth())
+            OwnTVTextField(value = url, onValueChange = onUrlChange, label = stringResource(CoreR.string.settings_worker_server_url), placeholder = stringResource(CoreR.string.settings_metadata_optional), modifier = Modifier.fillMaxWidth())
             Spacer(Modifier.height(8.dp))
-            Text(stringResource(R.string.settings_open_subtitles_access_priority), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.settings_open_subtitles_access_priority), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.settings_remove_custom_access), onRemove, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.settings_remove_custom_access), onRemove, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.common_cancel), onDismiss, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.common_save), onSave)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_save), onSave)
             }
         }
         }
@@ -637,65 +638,65 @@ private fun OpenSubtitlesSignInDialog(
             // reachable once the TV keyboard covers the lower half. Adding another verticalScroll
             // here would be an illegal same-direction nest.
             Column(Modifier.dialogPanel(width = 520.dp, padding = 20.dp)) {
-                Text(stringResource(R.string.player_subtitles_sign_in_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+                Text(stringResource(CoreR.string.player_subtitles_sign_in_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.player_subtitles_sign_in_to_use),
+                    stringResource(CoreR.string.player_subtitles_sign_in_to_use),
                     style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(12.dp))
                 OwnTVTextField(
                     value = username, onValueChange = onUsernameChange,
-                    label = stringResource(R.string.player_subtitles_username), modifier = Modifier.fillMaxWidth(), focusRequester = fieldFocus,
+                    label = stringResource(CoreR.string.player_subtitles_username), modifier = Modifier.fillMaxWidth(), focusRequester = fieldFocus,
                 )
                 Spacer(Modifier.height(8.dp))
                 OwnTVTextField(
                     value = password, onValueChange = onPasswordChange,
-                    label = stringResource(R.string.player_subtitles_password), isPassword = true, modifier = Modifier.fillMaxWidth(),
+                    label = stringResource(CoreR.string.player_subtitles_password), isPassword = true, modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(10.dp))
                 Row2(
-                    icon = OwnTVIcon.SUBTITLE, title = stringResource(R.string.player_subtitles_stay_signed_in),
-                    desc = stringResource(R.string.player_subtitles_session),
-                    chip = if (staySignedIn) stringResource(R.string.common_on) else stringResource(R.string.common_off), primaryChip = staySignedIn,
+                    icon = OwnTVIcon.SUBTITLE, title = stringResource(CoreR.string.player_subtitles_stay_signed_in),
+                    desc = stringResource(CoreR.string.player_subtitles_session),
+                    chip = if (staySignedIn) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off), primaryChip = staySignedIn,
                     onClick = { onStayChange(!staySignedIn) },
                 )
                 Spacer(Modifier.height(14.dp))
                 // Optional, and labelled as such: almost nobody has their own key, and a required-looking
                 // empty field right above Sign in reads like something is missing.
                 Text(
-                    stringResource(R.string.settings_open_subtitles_advanced),
+                    stringResource(CoreR.string.settings_open_subtitles_advanced),
                     style = MaterialTheme.typography.titleSmall, color = colors.onSurface,
                 )
                 Spacer(Modifier.height(2.dp))
                 Text(
-                    stringResource(R.string.settings_open_subtitles_advanced_description),
+                    stringResource(CoreR.string.settings_open_subtitles_advanced_description),
                     style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(8.dp))
                 OwnTVTextField(
                     value = apiKey, onValueChange = onApiKeyChange,
-                    label = stringResource(R.string.settings_open_subtitles_api_key),
-                    placeholder = stringResource(R.string.settings_metadata_optional),
+                    label = stringResource(CoreR.string.settings_open_subtitles_api_key),
+                    placeholder = stringResource(CoreR.string.settings_metadata_optional),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(8.dp))
                 OwnTVTextField(
                     value = serverUrl, onValueChange = onServerUrlChange,
-                    label = stringResource(R.string.settings_worker_server_url),
-                    placeholder = stringResource(R.string.settings_metadata_optional),
+                    label = stringResource(CoreR.string.settings_worker_server_url),
+                    placeholder = stringResource(CoreR.string.settings_metadata_optional),
                     modifier = Modifier.fillMaxWidth(),
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    stringResource(R.string.settings_open_subtitles_access_priority),
+                    stringResource(CoreR.string.settings_open_subtitles_access_priority),
                     style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(R.string.player_subtitles_sign_in), onClick = onSubmit)
+                    OwnTVButton(stringResource(CoreR.string.player_subtitles_sign_in), onClick = onSubmit)
                 }
             }
         }
@@ -714,12 +715,12 @@ private fun ErrorDialog(message: String, onDismiss: () -> Unit) {
             contentAlignment = Alignment.Center,
         ) {
             Column(Modifier.dialogPanel(width = 420.dp, padding = 24.dp)) {
-                Text(stringResource(R.string.settings_open_subtitles), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_open_subtitles), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
                 Spacer(Modifier.height(10.dp))
                 Text(message, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                 Spacer(Modifier.height(18.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    OwnTVButton(stringResource(R.string.settings_close), onClick = onDismiss, modifier = Modifier.focusRequester(focus))
+                    OwnTVButton(stringResource(CoreR.string.settings_close), onClick = onDismiss, modifier = Modifier.focusRequester(focus))
                 }
             }
         }

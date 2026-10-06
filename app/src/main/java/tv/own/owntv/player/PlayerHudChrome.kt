@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -45,7 +47,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
-import tv.own.owntv.R
 import tv.own.owntv.core.player.PlayerControl
 import tv.own.owntv.core.player.ControlCluster
 import tv.own.owntv.ui.components.OwnTVButton
@@ -73,7 +74,7 @@ internal fun TopBar(
     // Reactive meta so the title row updates instantly on a channel zap (the plain vars aren't observed).
     val meta by player.currentMeta.collectAsStateWithLifecycle()
     val displayTitle = meta.title?.takeIf { it.isNotBlank() }
-        ?: meta.episodeNumber?.let { stringResource(R.string.player_episode_number, it) }
+        ?: meta.episodeNumber?.let { stringResource(CoreR.string.player_episode_number, it) }
         ?: ""
     val localizedSubtitle = meta.localizedSubtitle()
     val vodSubtitle = if (isLive) {
@@ -81,8 +82,8 @@ internal fun TopBar(
     } else {
         buildList {
             localizedSubtitle?.takeIf { it.isNotBlank() }?.let(::add)
-            meta.seasonNumber?.let { add(stringResource(R.string.player_season_number, it)) }
-        }.joinToString(stringResource(R.string.content_metadata_separator)).ifBlank { null }
+            meta.seasonNumber?.let { add(stringResource(CoreR.string.player_season_number, it)) }
+        }.joinToString(stringResource(CoreR.string.content_metadata_separator)).ifBlank { null }
     }
     Row(modifier = modifier.fillMaxWidth().padding(20.dp), verticalAlignment = Alignment.Top) {
       // Left half. Equal weight to the right half, so [centre] sits on the real midpoint of the screen
@@ -102,7 +103,7 @@ internal fun TopBar(
                     val durMin = (duration / 60000)
                     val parts = buildList {
                         meta.year?.takeIf { it.isNotBlank() }?.let { add(it) }
-                        if (!isLive && durMin > 0) add(stringResource(R.string.player_duration_minutes, durMin))
+                        if (!isLive && durMin > 0) add(stringResource(CoreR.string.player_duration_minutes, durMin))
                         addAll(chips) // aspect · resolution · fps · audio
                     }
                     parts.forEachIndexed { i, label ->
@@ -198,7 +199,7 @@ internal fun ChannelCard(player: PlaybackEngine, modifier: Modifier = Modifier) 
     // Collect the reactive meta so the card refreshes the instant a zap changes the channel.
     val meta by player.currentMeta.collectAsStateWithLifecycle()
     val displayTitle = meta.title?.takeIf { it.isNotBlank() }
-        ?: meta.episodeNumber?.let { stringResource(R.string.player_episode_number, it) }
+        ?: meta.episodeNumber?.let { stringResource(CoreR.string.player_episode_number, it) }
         ?: ""
     ChannelOsdCard(title = displayTitle, subtitle = meta.localizedSubtitle(), logoUrl = meta.logoUrl, modifier = modifier)
 }
@@ -237,7 +238,7 @@ internal fun ChannelNumberCard(digits: String, error: String? = null, modifier: 
     ) {
         Column(Modifier.padding(start = 16.dp, end = 20.dp, top = 12.dp, bottom = 12.dp)) {
             Text(
-                stringResource(R.string.player_channel_label),
+                stringResource(CoreR.string.player_channel_label),
                 style = MaterialTheme.typography.labelSmall, color = accent, fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp,
             )
@@ -277,7 +278,7 @@ internal fun CenterControls(
         if (timeshiftOffsetSec != null) {
             // Counts down as the archive catches up to the live edge; grows if you pause.
             Text(
-                if (timeshiftOffsetSec <= 1) stringResource(R.string.player_at_live_edge) else stringResource(R.string.player_behind_live, mmss(timeshiftOffsetSec)),
+                if (timeshiftOffsetSec <= 1) stringResource(CoreR.string.player_at_live_edge) else stringResource(CoreR.string.player_behind_live, mmss(timeshiftOffsetSec)),
                 style = MaterialTheme.typography.labelLarge,
                 color = OwnTVTheme.colors.accentOnVideo,
             )
@@ -377,14 +378,14 @@ internal fun BottomBar(
                         // Favorite the current channel/movie/series without leaving the stream (coral
                         // heart = on, the same colour the marker has on posters and in browse rows).
                         PlayerControl.FAVOURITE -> if (onToggleFavorite != null) {
-                            CtrlButton(OwnTVIcon.FAVORITE, active = favorite, activeTint = OwnTVTheme.colors.favorite, label = stringResource(R.string.player_tool_favorite)) { onToggleFavorite() }
+                            CtrlButton(OwnTVIcon.FAVORITE, active = favorite, activeTint = OwnTVTheme.colors.favorite, label = stringResource(CoreR.string.player_tool_favorite)) { onToggleFavorite() }
                         }
                         // "Go back to…" — jump straight to a time in this channel's archive. Only on
                         // catch-up channels. CATCHUP (a TV with a replay loop): REWIND is already the
                         // transport button beside it, and a plain clock would not say which of the
                         // two time controls this is.
                         PlayerControl.CATCH_UP -> if (onOpenJumpBack != null) {
-                            CtrlButton(OwnTVIcon.CATCHUP, label = stringResource(R.string.player_tool_catchup)) { onOpenJumpBack() }
+                            CtrlButton(OwnTVIcon.CATCHUP, label = stringResource(CoreR.string.player_tool_catchup)) { onOpenJumpBack() }
                         }
                         // Removed from TV player: VOLUME, SPEED, SUBTITLES, AUDIO.
                         PlayerControl.VOLUME, PlayerControl.SPEED, PlayerControl.SUBTITLES, PlayerControl.AUDIO,
@@ -408,24 +409,24 @@ internal fun BottomBar(
                             // pin this channel to mpv. The pill shows the active engine and flips on
                             // click (teal while pinned to mpv).
                             if (onToggleCompatMode != null) {
-                                EngineToggle(label = stringResource(if (compatMode == true) R.string.player_engine_mpv else R.string.player_engine_exo), active = compatMode == true, toolLabel = stringResource(R.string.player_tool_engine)) { onToggleCompatMode() }
+                                EngineToggle(label = stringResource(if (compatMode == true) CoreR.string.player_engine_mpv else CoreR.string.player_engine_exo), active = compatMode == true, toolLabel = stringResource(CoreR.string.player_tool_engine)) { onToggleCompatMode() }
                             }
                             // VOD engine toggle (Movies/Series): flip THIS movie/episode between mpv
                             // and ExoPlayer. The pill shows the active engine (teal while ExoPlayer
                             // owns playback).
                             if (onToggleVodEngine != null) {
-                                EngineToggle(label = stringResource(if (vodOnExo == true) R.string.player_engine_exo else R.string.player_engine_mpv), active = vodOnExo == true, toolLabel = stringResource(R.string.player_tool_engine)) { onToggleVodEngine() }
+                                EngineToggle(label = stringResource(if (vodOnExo == true) CoreR.string.player_engine_exo else CoreR.string.player_engine_mpv), active = vodOnExo == true, toolLabel = stringResource(CoreR.string.player_tool_engine)) { onToggleVodEngine() }
                             }
                         }
                         // Aspect/zoom works in every mode now — direct mode resizes the surface view
                         // itself (see MpvVideoSurface), GL mode scales internally.
                         PlayerControl.ASPECT ->
-                            CtrlButton(OwnTVIcon.ASPECT, active = zoomMode != ZoomMode.FIT, label = stringResource(R.string.player_tool_aspect)) { onOpenDialog(HudDialog.ZOOM) }
+                            CtrlButton(OwnTVIcon.ASPECT, active = zoomMode != ZoomMode.FIT, label = stringResource(CoreR.string.player_tool_aspect)) { onOpenDialog(HudDialog.ZOOM) }
                         // Live only, and only once the user has switched Multiview on: four tiles
                         // from the channel already playing. Next to the mini-player button, which is
                         // its nearest relative.
                         PlayerControl.MULTIVIEW -> if (onMultiview != null) {
-                            CtrlButton(OwnTVIcon.LIST_GRID, label = stringResource(R.string.multiview_button)) { onMultiview() }
+                            CtrlButton(OwnTVIcon.LIST_GRID, label = stringResource(CoreR.string.multiview_button)) { onMultiview() }
                         }
                         // Record what is already on screen. Present only when the setting is on, so
                         // it never needs to explain itself here — the trade-off was accepted when it
@@ -438,7 +439,7 @@ internal fun BottomBar(
                                 active = recordingThis,
                                 activeTint = androidx.compose.ui.graphics.Color(0xFFEF4444),
                                 label = stringResource(
-                                    if (recordingThis) R.string.recording_stop else R.string.recording_record,
+                                    if (recordingThis) CoreR.string.recording_stop else CoreR.string.recording_record,
                                 ),
                             ) { onRecordThis() }
                         }
@@ -447,7 +448,7 @@ internal fun BottomBar(
                         // exit-fullscreen button used to sit (Back already leaves the player, so
                         // that button never did anything the remote couldn't).
                         PlayerControl.INFO -> if (onInfo != null) {
-                            CtrlButton(OwnTVIcon.INFO, active = infoOn, label = stringResource(R.string.player_tool_info)) { onInfo() }
+                            CtrlButton(OwnTVIcon.INFO, active = infoOn, label = stringResource(CoreR.string.player_tool_info)) { onInfo() }
                         }
                         // "Report this stream": copies the readout the user is looking at into the
                         // playback log, so a "this channel judders" complaint carries the
@@ -456,7 +457,7 @@ internal fun BottomBar(
                         // as it was for everyone who never needs this. H1 made that the rule on both
                         // apps.
                         PlayerControl.REPORT -> if (infoOn && onReport != null) {
-                            CtrlButton(OwnTVIcon.SHARE, label = stringResource(R.string.player_tool_report)) { onReport() }
+                            CtrlButton(OwnTVIcon.SHARE, label = stringResource(CoreR.string.player_tool_report)) { onReport() }
                         }
                         // Removed from TV player: MINI_PLAYER, AUDIO_ONLY.
                         PlayerControl.MINI_PLAYER, PlayerControl.AUDIO_ONLY,
@@ -515,7 +516,7 @@ private fun VodTimeline(player: PlaybackEngine, position: () -> Long, duration: 
             SeekBar(positionMs = pos, durationMs = duration, bufferedMs = buffered, stepMs = seekStep, onSeek = { player.seekBy(it) }, contextKey = meta)
         }
         Spacer(Modifier.width(12.dp))
-        TimeCap(stringResource(R.string.player_time_remaining, formatTime((duration - pos).coerceAtLeast(0))), Alignment.End)
+        TimeCap(stringResource(CoreR.string.player_time_remaining, formatTime((duration - pos).coerceAtLeast(0))), Alignment.End)
     }
 }
 
@@ -540,7 +541,7 @@ internal fun NextEpisodeCard(
             .padding(horizontal = 18.dp, vertical = 14.dp),
     ) {
         Text(
-            stringResource(R.string.player_next_episode, seconds()),
+            stringResource(CoreR.string.player_next_episode, seconds()),
             style = MaterialTheme.typography.labelLarge,
             color = colors.accentOnVideo,
             fontWeight = FontWeight.Bold,
@@ -556,13 +557,13 @@ internal fun NextEpisodeCard(
         Spacer(Modifier.height(12.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OwnTVButton(
-                stringResource(R.string.player_play_now),
+                stringResource(CoreR.string.player_play_now),
                 onClick = onPlayNow,
                 icon = OwnTVIcon.PLAY,
                 modifier = Modifier.focusRequester(playFocus),
             )
             OwnTVButton(
-                stringResource(R.string.common_cancel),
+                stringResource(CoreR.string.common_cancel),
                 onClick = onCancel,
                 icon = OwnTVIcon.CLOSE,
                 style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY,

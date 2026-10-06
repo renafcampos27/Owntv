@@ -1,5 +1,7 @@
 package tv.own.owntv.features.setup
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -48,7 +50,6 @@ import androidx.tv.material3.Text
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
-import tv.own.owntv.R
 import tv.own.owntv.core.i18n.HorizontalDirection
 import tv.own.owntv.core.i18n.horizontalDirection
 import tv.own.owntv.core.companion.CompanionPayload
@@ -401,10 +402,10 @@ fun AddSourceScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Column(modifier = Modifier.widthIn(max = 560.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(if (editing) stringResource(R.string.setup_edit_source) else stringResource(R.string.setup_add_your_source), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+            Text(if (editing) stringResource(CoreR.string.setup_edit_source) else stringResource(CoreR.string.setup_add_your_source), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
             Spacer(Modifier.height(6.dp))
             Text(
-                if (editing) stringResource(R.string.setup_edit_source_description) else stringResource(R.string.setup_byo_source_description),
+                if (editing) stringResource(CoreR.string.setup_edit_source_description) else stringResource(CoreR.string.setup_byo_source_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -415,62 +416,62 @@ fun AddSourceScreen(
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 // While editing, the type is fixed — show only the matching chip.
                 if (!editing || kind == SourceKind.XTREAM) {
-                    KindChip(stringResource(R.string.setup_xtream), kind == SourceKind.XTREAM, Modifier.weight(1f).then(if (!editing) Modifier.focusRequester(firstFocus) else Modifier)) { if (!editing) kind = SourceKind.XTREAM }
+                    KindChip(stringResource(CoreR.string.setup_xtream), kind == SourceKind.XTREAM, Modifier.weight(1f).then(if (!editing) Modifier.focusRequester(firstFocus) else Modifier)) { if (!editing) kind = SourceKind.XTREAM }
                 }
                 if (!editing || kind == SourceKind.M3U) {
-                    KindChip(stringResource(R.string.setup_m3u), kind == SourceKind.M3U, Modifier.weight(1f)) { if (!editing) kind = SourceKind.M3U }
+                    KindChip(stringResource(CoreR.string.setup_m3u), kind == SourceKind.M3U, Modifier.weight(1f)) { if (!editing) kind = SourceKind.M3U }
                 }
                 if (onStartStalker != null && (!editing || kind == SourceKind.STALKER)) {
-                    KindChip(stringResource(R.string.setup_stalker_mac), kind == SourceKind.STALKER, Modifier.weight(1f)) { if (!editing) kind = SourceKind.STALKER }
+                    KindChip(stringResource(CoreR.string.setup_stalker_mac), kind == SourceKind.STALKER, Modifier.weight(1f)) { if (!editing) kind = SourceKind.STALKER }
                 }
             }
             Spacer(Modifier.height(20.dp))
 
-            OwnTVTextField(name, { name = it }, label = stringResource(R.string.setup_source_name_optional), placeholder = stringResource(R.string.setup_default_iptv), modifier = Modifier.fillMaxWidth(), focusRequester = if (editing) firstFocus else null)
+            OwnTVTextField(name, { name = it }, label = stringResource(CoreR.string.setup_source_name_optional), placeholder = stringResource(CoreR.string.setup_default_iptv), modifier = Modifier.fillMaxWidth(), focusRequester = if (editing) firstFocus else null)
             Spacer(Modifier.height(14.dp))
 
             when (kind) {
                 SourceKind.XTREAM -> {
-                    OwnTVTextField(server, { server = it }, label = stringResource(R.string.setup_server_url), placeholder = stringResource(R.string.setup_server_example), keyboardType = KeyboardType.Uri, modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(server, { server = it }, label = stringResource(CoreR.string.setup_server_url), placeholder = stringResource(CoreR.string.setup_server_example), keyboardType = KeyboardType.Uri, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(14.dp))
-                    OwnTVTextField(username, { username = it }, label = stringResource(R.string.setup_username), modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(username, { username = it }, label = stringResource(CoreR.string.setup_username), modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(14.dp))
-                    OwnTVTextField(password, { password = it }, label = if (editing) stringResource(R.string.setup_password_keep) else stringResource(R.string.setup_password), isPassword = true, modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(password, { password = it }, label = if (editing) stringResource(CoreR.string.setup_password_keep) else stringResource(CoreR.string.setup_password), isPassword = true, modifier = Modifier.fillMaxWidth())
                 }
                 SourceKind.M3U -> {
                     val pickedName = remember(m3uUrl) {
                         if (m3uUrl.startsWith("/")) java.io.File(m3uUrl).name else null
                     }
-                    OwnTVTextField(m3uUrl, { m3uUrl = it }, label = stringResource(R.string.setup_playlist_url_local_file), placeholder = stringResource(R.string.setup_playlist_example), keyboardType = KeyboardType.Uri, modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(m3uUrl, { m3uUrl = it }, label = stringResource(CoreR.string.setup_playlist_url_local_file), placeholder = stringResource(CoreR.string.setup_playlist_example), keyboardType = KeyboardType.Uri, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(10.dp))
                     OwnTVButton(
-                        label = if (pickedName != null) stringResource(R.string.setup_local_file_prefix, pickedName) else stringResource(R.string.setup_local_file_choose),
+                        label = if (pickedName != null) stringResource(CoreR.string.setup_local_file_prefix, pickedName) else stringResource(CoreR.string.setup_local_file_choose),
                         onClick = { showFileBrowser = true },
                         style = OwnTVButtonStyle.SECONDARY,
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 SourceKind.STALKER -> {
-                    OwnTVTextField(portalUrl, { portalUrl = it }, label = stringResource(R.string.setup_portal_url), placeholder = stringResource(R.string.setup_portal_example), keyboardType = KeyboardType.Uri, modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(portalUrl, { portalUrl = it }, label = stringResource(CoreR.string.setup_portal_url), placeholder = stringResource(CoreR.string.setup_portal_example), keyboardType = KeyboardType.Uri, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(14.dp))
-                    OwnTVTextField(mac, { mac = it }, label = stringResource(R.string.setup_mac_address), placeholder = stringResource(R.string.setup_mac_example), modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(mac, { mac = it }, label = stringResource(CoreR.string.setup_mac_address), placeholder = stringResource(CoreR.string.setup_mac_example), modifier = Modifier.fillMaxWidth())
                     if (mac.isNotBlank() && !macValid) {
                         Spacer(Modifier.height(6.dp))
-                        Text(stringResource(R.string.setup_mac_invalid), style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
+                        Text(stringResource(CoreR.string.setup_mac_invalid), style = MaterialTheme.typography.bodySmall, color = Color(0xFFEF4444))
                     }
                     Spacer(Modifier.height(18.dp))
-                    Text(stringResource(R.string.setup_stalker_advanced_identity), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                    Text(stringResource(CoreR.string.setup_stalker_advanced_identity), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                     Spacer(Modifier.height(10.dp))
-                    OwnTVTextField(stalkerSerialNumber, { stalkerSerialNumber = it }, label = stringResource(R.string.setup_stalker_serial_number_optional), modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(stalkerSerialNumber, { stalkerSerialNumber = it }, label = stringResource(CoreR.string.setup_stalker_serial_number_optional), modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(10.dp))
-                    OwnTVTextField(stalkerDeviceId, { stalkerDeviceId = it }, label = stringResource(R.string.setup_stalker_device_id_optional), modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(stalkerDeviceId, { stalkerDeviceId = it }, label = stringResource(CoreR.string.setup_stalker_device_id_optional), modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(10.dp))
-                    OwnTVTextField(stalkerDeviceId2, { stalkerDeviceId2 = it }, label = stringResource(R.string.setup_stalker_device_id2_optional), modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(stalkerDeviceId2, { stalkerDeviceId2 = it }, label = stringResource(CoreR.string.setup_stalker_device_id2_optional), modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(10.dp))
-                    OwnTVTextField(stalkerSignature, { stalkerSignature = it }, label = stringResource(R.string.setup_stalker_signature_optional), modifier = Modifier.fillMaxWidth())
+                    OwnTVTextField(stalkerSignature, { stalkerSignature = it }, label = stringResource(CoreR.string.setup_stalker_signature_optional), modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(10.dp))
                     OwnTVButton(
-                        label = stringResource(R.string.setup_device_model_preset),
+                        label = stringResource(CoreR.string.setup_device_model_preset),
                         onClick = { showUaPresetPicker = true },
                         style = OwnTVButtonStyle.SECONDARY,
                         modifier = Modifier.fillMaxWidth(),
@@ -481,11 +482,11 @@ fun AddSourceScreen(
             // EPG is managed separately now (Settings → EPG Sources), so no EPG field here. For an
             // Xtream server the guide URL is still derived automatically; M3U EPG can be added there.
             Spacer(Modifier.height(14.dp))
-            OwnTVTextField(userAgent, { userAgent = it }, label = stringResource(R.string.setup_user_agent_optional), placeholder = stringResource(R.string.setup_user_agent_example), modifier = Modifier.fillMaxWidth())
+            OwnTVTextField(userAgent, { userAgent = it }, label = stringResource(CoreR.string.setup_user_agent_optional), placeholder = stringResource(CoreR.string.setup_user_agent_example), modifier = Modifier.fillMaxWidth())
 
             Spacer(Modifier.height(10.dp))
             OwnTVButton(
-                label = stringResource(if (sourceTest is SourceTestUi.Running) R.string.setup_testing else R.string.setup_test_connection),
+                label = stringResource(if (sourceTest is SourceTestUi.Running) CoreR.string.setup_testing else CoreR.string.setup_test_connection),
                 onClick = { if (sourceTest == null) runSourceTest() },
                 style = OwnTVButtonStyle.SECONDARY,
                 enabled = canTest,
@@ -500,8 +501,8 @@ fun AddSourceScreen(
             if (showDefaultToggle) {
                 Spacer(Modifier.height(16.dp))
                 ToggleRow(
-                    label = stringResource(R.string.setup_default_playlist),
-                    desc = stringResource(R.string.setup_default_playlist_description),
+                    label = stringResource(CoreR.string.setup_default_playlist),
+                    desc = stringResource(CoreR.string.setup_default_playlist_description),
                     checked = isDefault,
                 ) { isDefault = it }
             }
@@ -515,7 +516,7 @@ fun AddSourceScreen(
                 Spacer(Modifier.height(16.dp))
                 OwnTVButton(
                     label = stringResource(
-                        if (hlsTest is HlsTestUi.Testing) R.string.setup_hls_testing else R.string.setup_hls_test_support,
+                        if (hlsTest is HlsTestUi.Testing) CoreR.string.setup_hls_testing else CoreR.string.setup_hls_test_support,
                     ),
                     // Re-entry is blocked HERE rather than through `enabled`: a disabled FocusableSurface
                     // is not a focus target, so flipping it off under the user's cursor would drop D-pad
@@ -539,7 +540,7 @@ fun AddSourceScreen(
                     is HlsTestUi.Failed -> {
                         Spacer(Modifier.height(6.dp))
                         Text(
-                            stringResource(R.string.setup_hls_test_failed, t.rawMessage),
+                            stringResource(CoreR.string.setup_hls_test_failed, t.rawMessage),
                             style = MaterialTheme.typography.bodySmall,
                             color = Color(0xFFEF4444),
                         )
@@ -548,12 +549,12 @@ fun AddSourceScreen(
                 }
                 Spacer(Modifier.height(16.dp))
                 ToggleRow(
-                    label = stringResource(R.string.setup_prefer_hls_live_tv),
+                    label = stringResource(CoreR.string.setup_prefer_hls_live_tv),
                     desc = stringResource(
                         when (testedSupport ?: initial?.hlsSupported ?: HlsSupport.UNKNOWN) {
-                            HlsSupport.SUPPORTED -> R.string.setup_prefer_hls_description_supported
-                            HlsSupport.UNSUPPORTED -> R.string.setup_prefer_hls_description_unsupported
-                            HlsSupport.UNKNOWN -> R.string.setup_prefer_hls_description
+                            HlsSupport.SUPPORTED -> CoreR.string.setup_prefer_hls_description_supported
+                            HlsSupport.UNSUPPORTED -> CoreR.string.setup_prefer_hls_description_unsupported
+                            HlsSupport.UNKNOWN -> CoreR.string.setup_prefer_hls_description
                         },
                     ),
                     checked = preferHls,
@@ -562,19 +563,19 @@ fun AddSourceScreen(
 
             if (showContentToggles) {
                 Spacer(Modifier.height(20.dp))
-                Text(stringResource(R.string.setup_what_to_sync), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.setup_what_to_sync), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
                     if (editing) {
-                        stringResource(R.string.setup_sync_off_editing)
+                        stringResource(CoreR.string.setup_sync_off_editing)
                     } else {
-                        stringResource(R.string.setup_sync_choices)
+                        stringResource(CoreR.string.setup_sync_choices)
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
                 Spacer(Modifier.height(10.dp))
-                SyncScopeRow(label = stringResource(R.string.setup_live_tv), desc = stringResource(R.string.setup_channels_categories), value = syncLive, editing = editing) { syncLive = it }
+                SyncScopeRow(label = stringResource(CoreR.string.setup_live_tv), desc = stringResource(CoreR.string.setup_channels_categories), value = syncLive, editing = editing) { syncLive = it }
                 Spacer(Modifier.height(8.dp))
                 Spacer(Modifier.height(8.dp))
             }
@@ -582,18 +583,18 @@ fun AddSourceScreen(
             if (!editing && hideNewCatsProfile >= 0) {
                 Spacer(Modifier.height(16.dp))
                 ToggleRow(
-                    label = stringResource(R.string.setup_hide_new_categories),
-                    desc = stringResource(R.string.setup_hide_new_categories_description),
+                    label = stringResource(CoreR.string.setup_hide_new_categories),
+                    desc = stringResource(CoreR.string.setup_hide_new_categories_description),
                     checked = hideNewCats,
                 ) { hidden -> scope.launch { settings.setHideNewCategoriesDefault(hideNewCatsProfile, hidden) } }
             }
 
             Spacer(Modifier.height(28.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
                 OwnTVButton(
-                    label = if (editing) stringResource(R.string.setup_update_source_save) else stringResource(R.string.setup_start_import),
+                    label = if (editing) stringResource(CoreR.string.setup_update_source_save) else stringResource(CoreR.string.setup_start_import),
                     onClick = {
                         when (kind) {
                             SourceKind.XTREAM -> onStartXtream(name, server, username, password, userAgent, epgUrl, autoRefresh, syncLive, SyncScopeChoice.Off, SyncScopeChoice.Off, isDefault, preferHls)
@@ -613,7 +614,7 @@ fun AddSourceScreen(
       // In-app, TV-safe file picker (SAF / system file picker is missing on many TVs).
       if (showFileBrowser) {
           StorageBrowser(
-              title = stringResource(R.string.setup_pick_playlist_file),
+              title = stringResource(CoreR.string.setup_pick_playlist_file),
               mode = BrowseMode.FILE,
               fileExtensions = setOf("m3u", "m3u8"),
               onPick = { file ->
@@ -626,7 +627,7 @@ fun AddSourceScreen(
       }
       if (showUaPresetPicker) {
           PickerDialog(
-              title = stringResource(R.string.setup_device_model_preset_title),
+              title = stringResource(CoreR.string.setup_device_model_preset_title),
               options = MAG_USER_AGENTS.map { it.labelRes.toString() to stringResource(it.labelRes) },
               selected = MAG_USER_AGENTS.firstOrNull { it.userAgent == userAgent }?.labelRes?.toString()
                   ?: MAG_USER_AGENTS.first().labelRes.toString(),
@@ -639,7 +640,7 @@ fun AddSourceScreen(
       }
       if (showAutoRefreshPicker) {
           PickerDialog(
-              title = stringResource(R.string.setup_auto_refresh_title),
+              title = stringResource(CoreR.string.setup_auto_refresh_title),
               options = PlaylistAutoRefresh.entries.map { it.name to refreshModeLabel(it) },
               selected = autoRefresh.mode.name,
               onSelect = { value ->
@@ -665,11 +666,11 @@ fun AddSourceScreen(
       }
       if (confirmMeasure) {
           tv.own.owntv.features.settings.ConfirmDialog(
-              title = stringResource(R.string.settings_sources_probe_title),
-              message = stringResource(R.string.settings_sources_probe_warning),
+              title = stringResource(CoreR.string.settings_sources_probe_title),
+              message = stringResource(CoreR.string.settings_sources_probe_warning),
               onConfirm = { confirmMeasure = false; runConnectionMeasurement() },
               onDismiss = { confirmMeasure = false },
-              confirmLabel = R.string.settings_sources_retest,
+              confirmLabel = CoreR.string.settings_sources_retest,
           )
       }
       sourceTest?.let { state ->
@@ -688,11 +689,11 @@ fun AddSourceScreen(
 @Composable
 private fun refreshModeLabel(mode: PlaylistAutoRefresh): String = stringResource(
     when (mode) {
-        PlaylistAutoRefresh.OFF -> R.string.settings_sources_refresh_off
-        PlaylistAutoRefresh.STARTUP -> R.string.settings_sources_refresh_startup
-        PlaylistAutoRefresh.HOURS_6 -> R.string.settings_sources_refresh_6h
-        PlaylistAutoRefresh.HOURS_12 -> R.string.settings_sources_refresh_12h
-        PlaylistAutoRefresh.MANUAL -> R.string.settings_sources_refresh_manual
+        PlaylistAutoRefresh.OFF -> CoreR.string.settings_sources_refresh_off
+        PlaylistAutoRefresh.STARTUP -> CoreR.string.settings_sources_refresh_startup
+        PlaylistAutoRefresh.HOURS_6 -> CoreR.string.settings_sources_refresh_6h
+        PlaylistAutoRefresh.HOURS_12 -> CoreR.string.settings_sources_refresh_12h
+        PlaylistAutoRefresh.MANUAL -> CoreR.string.settings_sources_refresh_manual
     },
 )
 
@@ -700,7 +701,7 @@ private fun refreshModeLabel(mode: PlaylistAutoRefresh): String = stringResource
 @Composable
 internal fun playlistAutoRefreshLabel(refresh: PlaylistRefresh): String =
     if (refresh.mode == PlaylistAutoRefresh.MANUAL) {
-        pluralStringResource(R.plurals.settings_sources_refresh_days, refresh.manualDays, refresh.manualDays)
+        pluralStringResource(CoreR.plurals.settings_sources_refresh_days, refresh.manualDays, refresh.manualDays)
     } else {
         refreshModeLabel(refresh.mode)
     }
@@ -712,12 +713,12 @@ internal fun playlistAutoRefreshLabel(refresh: PlaylistRefresh): String =
 @Composable
 private fun ManualDaysDialog(initialDays: Int, onConfirm: (Int) -> Unit, onDismiss: () -> Unit) {
     DayStepperDialog(
-        title = stringResource(R.string.settings_sources_refresh_days_title),
-        hint = stringResource(R.string.settings_sources_refresh_days_hint),
+        title = stringResource(CoreR.string.settings_sources_refresh_days_title),
+        hint = stringResource(CoreR.string.settings_sources_refresh_days_hint),
         initialDays = initialDays,
         minDays = PlaylistRefresh.MIN_MANUAL_DAYS,
         maxDays = PlaylistRefresh.MAX_MANUAL_DAYS,
-        label = { days -> pluralStringResource(R.plurals.settings_sources_refresh_days, days, days) },
+        label = { days -> pluralStringResource(CoreR.plurals.settings_sources_refresh_days, days, days) },
         onConfirm = onConfirm,
         onDismiss = onDismiss,
     )
@@ -736,9 +737,9 @@ private fun AutoRefreshRow(selected: PlaylistRefresh, onClick: () -> Unit) {
     ) { _ ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.setup_auto_refresh), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.setup_auto_refresh), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Text(
-                    stringResource(R.string.setup_auto_refresh_description),
+                    stringResource(CoreR.string.setup_auto_refresh_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
@@ -799,9 +800,9 @@ private fun SyncScopeRow(
     }
     @Composable
     fun optionLabel(choice: SyncScopeChoice): String = when (choice) {
-        SyncScopeChoice.Now -> if (editing) stringResource(R.string.setup_on) else stringResource(R.string.setup_now)
-        SyncScopeChoice.Later -> stringResource(R.string.setup_later)
-        SyncScopeChoice.Off -> stringResource(R.string.setup_off)
+        SyncScopeChoice.Now -> if (editing) stringResource(CoreR.string.setup_on) else stringResource(CoreR.string.setup_now)
+        SyncScopeChoice.Later -> stringResource(CoreR.string.setup_later)
+        SyncScopeChoice.Off -> stringResource(CoreR.string.setup_off)
     }
     FocusableSurface(
         onClick = { cycle(+1) },
@@ -825,7 +826,7 @@ private fun SyncScopeRow(
                 Text(desc, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             }
             Text(
-                stringResource(R.string.setup_scope_value, optionLabel(value)),
+                stringResource(CoreR.string.setup_scope_value, optionLabel(value)),
                 style = MaterialTheme.typography.titleMedium,
                 color = if (value == SyncScopeChoice.Off) colors.onSurfaceVariant else colors.primary,
             )

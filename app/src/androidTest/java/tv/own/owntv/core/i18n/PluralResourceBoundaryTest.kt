@@ -1,11 +1,12 @@
 package tv.own.owntv.core.i18n
 
+import tv.own.owntv.core.R as CoreR
+
 import android.content.Context
 import android.content.res.Configuration
 import androidx.test.core.app.ApplicationProvider
 import org.junit.Assert.assertTrue
 import org.junit.Test
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.compactCount
 import java.util.Locale
 
@@ -16,9 +17,9 @@ class PluralResourceBoundaryTest {
     @Test
     fun english_zero_one_two_use_plural_resources() {
         val context = localized("en-US")
-        val zero = context.resources.getQuantityString(R.plurals.content_count_movies, 0, "Library", 0)
-        val one = context.resources.getQuantityString(R.plurals.content_count_movies, 1, "Library", 1)
-        val two = context.resources.getQuantityString(R.plurals.content_count_movies, 2, "Library", 2)
+        val zero = context.resources.getQuantityString(CoreR.plurals.content_count_movies, 0, "Library", 0)
+        val one = context.resources.getQuantityString(CoreR.plurals.content_count_movies, 1, "Library", 1)
+        val two = context.resources.getQuantityString(CoreR.plurals.content_count_movies, 2, "Library", 2)
         assertTrue(zero.contains("movies"))
         assertTrue(one.contains("movie)"))
         assertTrue(two.contains("movies"))
@@ -39,7 +40,7 @@ class PluralResourceBoundaryTest {
             val context = localized(tag)
             listOf(0, 1, 2, 5, 21, 102).forEach { count ->
                 val text = context.resources.getQuantityString(
-                    R.plurals.settings_epg_sources_catchup,
+                    CoreR.plurals.settings_epg_sources_catchup,
                     count,
                     count,
                 )

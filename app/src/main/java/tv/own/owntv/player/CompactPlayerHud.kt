@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.layout.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -11,7 +13,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.theme.OwnTVTheme
@@ -24,7 +25,7 @@ internal fun CompactPlayerHeader(player: PlaybackEngine, onBack: () -> Unit, onM
         Text(meta.title.orEmpty(), Modifier.weight(1f).padding(horizontal = 8.dp),
             style = MaterialTheme.typography.titleMedium, color = OwnTVTheme.colors.onSurface,
             maxLines = 1, overflow = TextOverflow.Ellipsis)
-        OwnTVButton(stringResource(R.string.common_nav_more), onClick = onMore)
+        OwnTVButton(stringResource(CoreR.string.common_nav_more), onClick = onMore)
     }
 }
 

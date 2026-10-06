@@ -1,5 +1,7 @@
 package tv.own.owntv.features.profiles
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -32,7 +34,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.ProfileEntity
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVAvatar
@@ -72,7 +73,7 @@ fun ProfileGate(onEnter: (Long) -> Unit, onAddProfile: () -> Unit, modifier: Mod
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.profiles_gate_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.profiles_gate_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
             Spacer(Modifier.height(36.dp))
             LazyRow(
                 horizontalArrangement = Arrangement.spacedBy(28.dp),
@@ -92,7 +93,7 @@ fun ProfileGate(onEnter: (Long) -> Unit, onAddProfile: () -> Unit, modifier: Mod
 
     pinFor?.let { p ->
         PinDialog(
-            title = if (pinError) stringResource(R.string.profiles_wrong_pin) else stringResource(R.string.profiles_enter_pin, p.name),
+            title = if (pinError) stringResource(CoreR.string.profiles_wrong_pin) else stringResource(CoreR.string.profiles_enter_pin, p.name),
             onSubmit = { pin ->
                 if (vm.verifyPin(p, pin)) {
                     vm.switchTo(p) { onEnter(p.id) }
@@ -125,7 +126,7 @@ private fun ProfileTile(profile: ProfileEntity, modifier: Modifier = Modifier, o
         Spacer(Modifier.height(10.dp))
         Text(profile.name, style = MaterialTheme.typography.titleMedium, color = colors.onSurface, textAlign = TextAlign.Center)
         if (profile.isKids) {
-            Text(stringResource(R.string.profiles_kids_badge), style = MaterialTheme.typography.labelSmall, color = colors.primary)
+            Text(stringResource(CoreR.string.profiles_kids_badge), style = MaterialTheme.typography.labelSmall, color = colors.primary)
         }
     }
 }
@@ -148,6 +149,6 @@ private fun AddTile(onClick: () -> Unit) {
             }
         }
         Spacer(Modifier.height(10.dp))
-        Text(stringResource(R.string.profiles_add), style = MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant)
+        Text(stringResource(CoreR.string.profiles_add), style = MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant)
     }
 }

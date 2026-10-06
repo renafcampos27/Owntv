@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -13,7 +15,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.EmptyState
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.theme.Dimens
@@ -43,7 +44,7 @@ fun ContentPane(
             .padding(horizontal = Dimens.ScreenPaddingH, vertical = Dimens.ScreenPaddingV),
     ) {
         Text(
-            text = stringResource(R.string.content_section_category, sectionTitle, categoryName),
+            text = stringResource(CoreR.string.content_section_category, sectionTitle, categoryName),
             style = MaterialTheme.typography.headlineLarge,
             color = colors.textPrimary,
         )
@@ -61,9 +62,9 @@ fun ContentPane(
         ) {
             EmptyState(
                 icon = emptyIcon,
-                title = stringResource(R.string.content_nothing_here),
+                title = stringResource(CoreR.string.content_nothing_here),
                 message = emptyMessage,
-                actionLabel = stringResource(R.string.content_add_source),
+                actionLabel = stringResource(CoreR.string.content_add_source),
                 onAction = onAddSource,
             )
         }

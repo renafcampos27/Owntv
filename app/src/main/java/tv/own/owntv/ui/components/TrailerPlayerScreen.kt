@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
@@ -51,7 +53,6 @@ import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.listeners.Abs
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.options.IFramePlayerOptions
 import com.pierfrancescosoffritti.androidyoutubeplayer.core.player.views.YouTubePlayerView
 import tv.own.owntv.BuildConfig
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
@@ -202,7 +203,7 @@ fun TrailerPlayerScreen(videoKey: String, onExit: () -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(18.dp),
             ) {
                 OwnTVButton(
-                    stringResource(R.string.player_trailer_exit),
+                    stringResource(CoreR.string.player_trailer_exit),
                     onClick = onExit,
                     style = OwnTVButtonStyle.SECONDARY,
                     modifier = Modifier.focusRequester(exitFocus),
@@ -226,7 +227,7 @@ fun TrailerPlayerScreen(videoKey: String, onExit: () -> Unit) {
                     }
                 }
                 Text(
-                    text = stringResource(R.string.player_trailer_progress, formatSec(currentSec), formatSec(durationSec)),
+                    text = stringResource(CoreR.string.player_trailer_progress, formatSec(currentSec), formatSec(durationSec)),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White,
                     modifier = Modifier.width(120.dp),
@@ -258,5 +259,5 @@ private fun formatSec(s: Float): String {
     val total = s.toInt().coerceAtLeast(0)
     val m = total / 60
     val sec = total % 60
-    return stringResource(R.string.common_timestamp_minutes, m, sec)
+    return stringResource(CoreR.string.common_timestamp_minutes, m, sec)
 }

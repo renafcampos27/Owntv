@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -73,10 +75,10 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             .focusGroup()
             .padding(horizontal = 40.dp, vertical = 28.dp),
     ) {
-        Text(stringResource(R.string.settings_home_screen), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+        Text(stringResource(CoreR.string.settings_home_screen), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
         Spacer(Modifier.height(4.dp))
         Text(
-            stringResource(R.string.settings_home_description),
+            stringResource(CoreR.string.settings_home_description),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
         )
@@ -90,10 +92,10 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         ) {
             item {
                 Spacer(Modifier.height(14.dp))
-                Text(stringResource(R.string.settings_sections), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_sections), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    stringResource(R.string.settings_hidden_sections),
+                    stringResource(CoreR.string.settings_hidden_sections),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
@@ -122,15 +124,15 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
             item {
                 Spacer(Modifier.height(14.dp))
-                GroupLabel(stringResource(R.string.settings_keep_watching))
+                GroupLabel(stringResource(CoreR.string.settings_keep_watching))
             }
 
             item {
                 Row2(
                     icon = OwnTVIcon.LIVE_TV,
-                    title = stringResource(R.string.settings_live_keep_watching),
-                    desc = stringResource(R.string.settings_live_keep_watching_description),
-                    chip = if (config.heroIncludeLive) stringResource(R.string.common_on) else stringResource(R.string.common_off),
+                    title = stringResource(CoreR.string.settings_live_keep_watching),
+                    desc = stringResource(CoreR.string.settings_live_keep_watching_description),
+                    chip = if (config.heroIncludeLive) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off),
                     primaryChip = config.heroIncludeLive,
                     modifier = Modifier.focusRequester(firstFocus),
                     onClick = { vm.setHeroInclude(HeroKind.LIVE, !config.heroIncludeLive) },
@@ -139,9 +141,9 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             item {
                 Row2(
                     icon = OwnTVIcon.PLAY,
-                    title = stringResource(R.string.settings_hero_preview),
-                    desc = stringResource(R.string.settings_hero_preview_description),
-                    chip = if (heroPreviewEnabled) stringResource(R.string.common_on) else stringResource(R.string.common_off),
+                    title = stringResource(CoreR.string.settings_hero_preview),
+                    desc = stringResource(CoreR.string.settings_hero_preview_description),
+                    chip = if (heroPreviewEnabled) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off),
                     primaryChip = heroPreviewEnabled,
                     onClick = { vm.setHeroPreviewEnabled(!heroPreviewEnabled) },
                 )
@@ -149,14 +151,14 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
             item {
                 Spacer(Modifier.height(6.dp))
-                GroupLabel(stringResource(R.string.settings_android_tv_home))
+                GroupLabel(stringResource(CoreR.string.settings_android_tv_home))
             }
             item {
                 Row2(
                     icon = OwnTVIcon.HISTORY,
-                    title = stringResource(R.string.settings_android_tv_home),
+                    title = stringResource(CoreR.string.settings_android_tv_home),
                     desc = stringResource(R.string.settings_android_tv_home_description),
-                    chip = if (androidTvHomeEnabled) stringResource(R.string.common_on) else stringResource(R.string.common_off),
+                    chip = if (androidTvHomeEnabled) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off),
                     primaryChip = androidTvHomeEnabled,
                     onClick = { settingsVm.setAndroidTvHomeEnabled(!androidTvHomeEnabled) },
                 )
@@ -165,11 +167,11 @@ fun HomeSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 item {
                     Row2(
                         icon = OwnTVIcon.REFRESH,
-                        title = stringResource(R.string.settings_refresh_now),
-                        desc = stringResource(R.string.settings_refresh_description),
+                        title = stringResource(CoreR.string.settings_refresh_now),
+                        desc = stringResource(CoreR.string.settings_refresh_description),
                         chip = when (tvHomeRefresh) {
-                            SettingsViewModel.TvHomeRefresh.REFRESHING -> stringResource(R.string.settings_rebuilding)
-                            SettingsViewModel.TvHomeRefresh.DONE -> stringResource(R.string.settings_done_check)
+                            SettingsViewModel.TvHomeRefresh.REFRESHING -> stringResource(CoreR.string.settings_rebuilding)
+                            SettingsViewModel.TvHomeRefresh.DONE -> stringResource(CoreR.string.settings_done_check)
                             else -> null
                         },
                         onClick = {
@@ -218,7 +220,7 @@ private fun HomeRowCard(
             )
             if (hidden) {
                 Text(
-                    stringResource(R.string.settings_hidden),
+                    stringResource(CoreR.string.settings_hidden),
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.onSurfaceVariant,
                     maxLines = 1,
@@ -229,7 +231,7 @@ private fun HomeRowCard(
         Spacer(Modifier.width(10.dp))
         if (liveMode != null) {
             OwnTVButton(
-                label = stringResource(R.string.settings_mode, liveMode.displayLabel()),
+                label = stringResource(CoreR.string.settings_mode, liveMode.displayLabel()),
                 onClick = { onToggleLiveMode(liveMode) },
                 style = OwnTVButtonStyle.SECONDARY,
             )
@@ -244,7 +246,7 @@ private fun HomeRowCard(
         OwnTVButton("⤓", onClick = onMoveBottom, style = OwnTVButtonStyle.SECONDARY, enabled = canMoveDown)
         Spacer(Modifier.width(6.dp))
         OwnTVButton(
-            label = stringResource(if (hidden) R.string.common_show else R.string.common_hide),
+            label = stringResource(if (hidden) CoreR.string.common_show else CoreR.string.common_hide),
             onClick = onToggleHidden,
             style = OwnTVButtonStyle.SECONDARY,
         )

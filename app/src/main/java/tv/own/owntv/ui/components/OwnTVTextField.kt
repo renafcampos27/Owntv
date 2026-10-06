@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -48,7 +50,6 @@ import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.LocalGlass
 import tv.own.owntv.ui.theme.OwnTVTheme
@@ -228,7 +229,7 @@ fun OwnTVTextField(
                         },
                 ) {
                     Text(
-                        text = if (showPassword) stringResource(R.string.common_hide) else stringResource(R.string.common_show),
+                        text = if (showPassword) stringResource(CoreR.string.common_hide) else stringResource(CoreR.string.common_show),
                         style = MaterialTheme.typography.labelMedium,
                         color = if (eyeFocused) colors.primary else colors.onSurfaceVariant,
                     )

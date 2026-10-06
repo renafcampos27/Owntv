@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -28,7 +30,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
-import tv.own.owntv.R
 import tv.own.owntv.ui.format.rememberBestDateFormatter
 import tv.own.owntv.ui.format.rememberSystemTimeFormatter
 import tv.own.owntv.ui.theme.OwnTVTheme
@@ -73,7 +74,7 @@ internal fun PlayerClock(watchingMs: Long?, modifier: Modifier = Modifier) {
     ) {
         if (watchingMs != null) {
             ClockColumn(
-                label = stringResource(R.string.content_clock_programme),
+                label = stringResource(CoreR.string.content_clock_programme),
                 time = formatTime(watchingMs),
                 date = formatDate(watchingMs),
                 labelColor = colors.primary,
@@ -84,7 +85,7 @@ internal fun PlayerClock(watchingMs: Long?, modifier: Modifier = Modifier) {
             Box(Modifier.height(38.dp).width(1.dp).background(Color.White.copy(alpha = 0.18f)))
         }
         ClockColumn(
-            label = stringResource(R.string.content_clock_current),
+            label = stringResource(CoreR.string.content_clock_current),
             time = formatTime(nowMs),
             date = formatDate(nowMs),
             labelColor = Color.White.copy(alpha = 0.45f),

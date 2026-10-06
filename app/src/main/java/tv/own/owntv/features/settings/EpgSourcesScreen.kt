@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -43,7 +45,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.epg.EpgSource
 import tv.own.owntv.core.settings.GuideRetention
 import tv.own.owntv.ui.components.DayStepperDialog
@@ -138,7 +139,7 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
     if (adding || editing != null) {
         EpgSourceForm(
             initial = editing,
-            initialAutoRefresh = editing?.let { autoRefreshMap[it.id] } ?: EpgRefresh.OFF,
+            initialAutoRefresh = editing?.let { autoRefreshMap[it.id] } ?: EpgRefresh.DEFAULT,
             initialUseLogos = editing?.let { it.id in useLogosIds } ?: false,
             loadPlaylistOptions = { vm.playlistEpgOptions() },
             onSave = { name, url, ua, autoRefresh, useLogos ->
@@ -173,13 +174,13 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
             .padding(horizontal = 40.dp, vertical = 28.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.settings_epg_sources_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.settings_epg_sources_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
             Spacer(Modifier.weight(1f))
-            OwnTVButton(stringResource(R.string.content_epg_add), onClick = { adding = true }, icon = OwnTVIcon.ADD, modifier = Modifier.focusRequester(addFocus))
+            OwnTVButton(stringResource(CoreR.string.content_epg_add), onClick = { adding = true }, icon = OwnTVIcon.ADD, modifier = Modifier.focusRequester(addFocus))
         }
         Spacer(Modifier.height(8.dp))
         Text(
-            stringResource(R.string.settings_epg_sources_description),
+            stringResource(CoreR.string.settings_epg_sources_description),
             style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, modifier = Modifier.widthIn(max = 700.dp),
         )
         Spacer(Modifier.height(16.dp))
@@ -193,12 +194,12 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
         ) { _ ->
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    stringResource(R.string.settings_epg_guide_days),
+                    stringResource(CoreR.string.settings_epg_guide_days),
                     style = MaterialTheme.typography.bodyLarge, color = colors.onSurface,
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    pluralStringResource(R.plurals.settings_epg_guide_days_value, guideDays, guideDays),
+                    pluralStringResource(CoreR.plurals.settings_epg_guide_days_value, guideDays, guideDays),
                     style = MaterialTheme.typography.bodyLarge, color = colors.primary,
                 )
             }
@@ -208,7 +209,7 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
 
         if (sources.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.settings_epg_sources_empty), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
+                Text(stringResource(CoreR.string.settings_epg_sources_empty), color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodyLarge)
             }
         } else {
             LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -217,7 +218,7 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
                         .collectAsStateWithLifecycle(EpgSyncState.Idle)
                     EpgRow(
                         source = source,
-                        autoRefresh = autoRefreshMap[source.id] ?: EpgRefresh.OFF,
+                        autoRefresh = autoRefreshMap[source.id] ?: EpgRefresh.DEFAULT,
                         counts = { vm.counts(source.id) },
                         syncState = syncState,
                         deleting = source.id in deletingIds,
@@ -239,16 +240,16 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
 
     if (editingGuideDays) {
         DayStepperDialog(
-            title = stringResource(R.string.settings_epg_guide_days),
+            title = stringResource(CoreR.string.settings_epg_guide_days),
             hint = stringResource(
-                R.string.settings_epg_guide_days_hint,
+                CoreR.string.settings_epg_guide_days_hint,
                 GuideRetention.MIN_DAYS,
                 GuideRetention.MAX_DAYS,
             ),
             initialDays = guideDays,
             minDays = GuideRetention.MIN_DAYS,
             maxDays = GuideRetention.MAX_DAYS,
-            label = { days -> pluralStringResource(R.plurals.settings_epg_guide_days_value, days, days) },
+            label = { days -> pluralStringResource(CoreR.plurals.settings_epg_guide_days_value, days, days) },
             onConfirm = { vm.setGuideDaysToKeep(it); editingGuideDays = false },
             onDismiss = { editingGuideDays = false },
         )
@@ -256,8 +257,8 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
 
     confirmDelete?.let { s ->
         ConfirmDialog(
-            title = stringResource(R.string.settings_epg_sources_delete_title, s.name),
-            message = stringResource(R.string.settings_epg_sources_delete_message),
+            title = stringResource(CoreR.string.settings_epg_sources_delete_title, s.name),
+            message = stringResource(CoreR.string.settings_epg_sources_delete_message),
             onConfirm = { vm.delete(s); confirmDelete = null },
             onDismiss = { confirmDelete = null },
         )
@@ -267,7 +268,7 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
 @Composable
 private fun epgRefreshLabel(refresh: EpgRefresh): String =
     if (refresh.mode == EpgAutoRefresh.MANUAL) {
-        pluralStringResource(R.plurals.settings_sources_refresh_days, refresh.manualDays, refresh.manualDays)
+        pluralStringResource(CoreR.plurals.settings_sources_refresh_days, refresh.manualDays, refresh.manualDays)
     } else {
         epgAutoRefreshLabel(refresh.mode)
     }
@@ -275,15 +276,15 @@ private fun epgRefreshLabel(refresh: EpgRefresh): String =
 @Composable
 private fun epgAutoRefreshLabel(mode: EpgAutoRefresh): String = stringResource(
     when (mode) {
-        EpgAutoRefresh.OFF -> R.string.settings_sources_refresh_off
-        EpgAutoRefresh.STARTUP -> R.string.settings_sources_refresh_startup
-        EpgAutoRefresh.HOURS_1 -> R.string.settings_epg_refresh_1h
-        EpgAutoRefresh.HOURS_3 -> R.string.settings_epg_refresh_3h
-        EpgAutoRefresh.HOURS_6 -> R.string.settings_epg_refresh_6h
-        EpgAutoRefresh.HOURS_12 -> R.string.settings_epg_refresh_12h
-        EpgAutoRefresh.HOURS_24 -> R.string.settings_epg_refresh_24h
-        EpgAutoRefresh.HOURS_48 -> R.string.settings_epg_refresh_48h
-        EpgAutoRefresh.MANUAL -> R.string.settings_sources_refresh_manual
+        EpgAutoRefresh.OFF -> CoreR.string.settings_sources_refresh_off
+        EpgAutoRefresh.STARTUP -> CoreR.string.settings_sources_refresh_startup
+        EpgAutoRefresh.HOURS_1 -> CoreR.string.settings_epg_refresh_1h
+        EpgAutoRefresh.HOURS_3 -> CoreR.string.settings_epg_refresh_3h
+        EpgAutoRefresh.HOURS_6 -> CoreR.string.settings_epg_refresh_6h
+        EpgAutoRefresh.HOURS_12 -> CoreR.string.settings_epg_refresh_12h
+        EpgAutoRefresh.HOURS_24 -> CoreR.string.settings_epg_refresh_24h
+        EpgAutoRefresh.HOURS_48 -> CoreR.string.settings_epg_refresh_48h
+        EpgAutoRefresh.MANUAL -> CoreR.string.settings_sources_refresh_manual
     },
 )
 
@@ -322,7 +323,7 @@ private fun EpgRow(
                 if (deleting) {
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        stringResource(R.string.settings_epg_sources_deleting),
+                        stringResource(CoreR.string.settings_epg_sources_deleting),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onPrimaryContainer,
                         modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(colors.primaryContainer).padding(horizontal = 8.dp, vertical = 2.dp),
@@ -333,7 +334,7 @@ private fun EpgRow(
                 if (activeSync != null) {
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        syncPercent?.let { stringResource(R.string.settings_epg_sources_syncing_percent, it) } ?: stringResource(R.string.settings_epg_sources_syncing_label),
+                        syncPercent?.let { stringResource(CoreR.string.settings_epg_sources_syncing_percent, it) } ?: stringResource(CoreR.string.settings_epg_sources_syncing_label),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onPrimaryContainer,
                         modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(colors.primaryContainer).padding(horizontal = 8.dp, vertical = 2.dp),
@@ -344,7 +345,7 @@ private fun EpgRow(
                 if (autoRefresh.mode != EpgAutoRefresh.OFF) {
                     Spacer(Modifier.width(8.dp))
                     Text(
-                        stringResource(R.string.settings_sources_auto_refresh, epgRefreshLabel(autoRefresh)),
+                        stringResource(CoreR.string.settings_sources_auto_refresh, epgRefreshLabel(autoRefresh)),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onPrimaryContainer,
                         modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(colors.surfaceContainerHighest).padding(horizontal = 8.dp, vertical = 2.dp),
@@ -357,47 +358,47 @@ private fun EpgRow(
             // session rather than being downloaded — so the row says what it is instead of printing
             // the internal marker that stands in for its URL.
             val subtitle = if (tv.own.owntv.core.repository.EpgRepository.stalkerSourceIdOf(source.url) != null) {
-                stringResource(R.string.settings_epg_sources_portal_guide)
+                stringResource(CoreR.string.settings_epg_sources_portal_guide)
             } else {
                 source.url
             }
             Text(subtitle, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(4.dp))
             val catchupNote = count?.third?.takeIf { it > 0 }?.let {
-                pluralStringResource(R.plurals.settings_epg_sources_catchup, it, it)
+                pluralStringResource(CoreR.plurals.settings_epg_sources_catchup, it, it)
             }
             val c = count
             val status = when {
                 activeSync != null -> when {
                     activeSync.programmes > 0 -> stringResource(
-                        R.string.settings_epg_sources_status_count,
-                        pluralStringResource(R.plurals.settings_epg_sources_status_count_channels, activeSync.channels, activeSync.channels),
-                        pluralStringResource(R.plurals.settings_epg_sources_status_count_programmes, activeSync.programmes, activeSync.programmes),
+                        CoreR.string.settings_epg_sources_status_count,
+                        pluralStringResource(CoreR.plurals.settings_epg_sources_status_count_channels, activeSync.channels, activeSync.channels),
+                        pluralStringResource(CoreR.plurals.settings_epg_sources_status_count_programmes, activeSync.programmes, activeSync.programmes),
                     )
                     activeSync.channels > 0 -> pluralStringResource(
-                        R.plurals.settings_epg_sources_status_count_channels,
+                        CoreR.plurals.settings_epg_sources_status_count_channels,
                         activeSync.channels,
                         activeSync.channels,
                     )
-                    else -> stringResource(R.string.settings_epg_sources_connecting)
+                    else -> stringResource(CoreR.string.settings_epg_sources_connecting)
                 }
                 source.lastError != null -> stringResource(
-                    R.string.settings_epg_sources_error,
+                    CoreR.string.settings_epg_sources_error,
                     classifySyncFailure(source.lastError, online = true).displayText(),
                 )
                 c != null && c.second > 0 -> {
                     val counts = stringResource(
-                        R.string.settings_epg_sources_status_count,
-                        pluralStringResource(R.plurals.settings_epg_sources_status_count_channels, c.first, c.first),
-                        pluralStringResource(R.plurals.settings_epg_sources_status_count_programmes, c.second, c.second),
+                        CoreR.string.settings_epg_sources_status_count,
+                        pluralStringResource(CoreR.plurals.settings_epg_sources_status_count_channels, c.first, c.first),
+                        pluralStringResource(CoreR.plurals.settings_epg_sources_status_count_programmes, c.second, c.second),
                     )
-                    if (catchupNote != null) stringResource(R.string.settings_epg_sources_status_count_with_catchup, counts, catchupNote)
+                    if (catchupNote != null) stringResource(CoreR.string.settings_epg_sources_status_count_with_catchup, counts, catchupNote)
                     else counts
                 }
                 source.lastSyncAt != null -> catchupNote?.let {
-                    stringResource(R.string.settings_epg_sources_status_synced_with_catchup, it)
-                } ?: stringResource(R.string.settings_epg_sources_status_synced)
-                else -> stringResource(R.string.settings_epg_sources_not_synced)
+                    stringResource(CoreR.string.settings_epg_sources_status_synced_with_catchup, it)
+                } ?: stringResource(CoreR.string.settings_epg_sources_status_synced)
+                else -> stringResource(CoreR.string.settings_epg_sources_not_synced)
             }
             Text(status, style = MaterialTheme.typography.labelMedium, color = if (source.lastError != null && activeSync == null) Color(0xFFEF4444) else colors.primary)
         }
@@ -409,12 +410,12 @@ private fun EpgRow(
                 // One stable button whose label/action flips with syncState — same composable stays in
                 // the tree across the swap, so focus survives instead of escaping the row.
                 OwnTVButton(
-                    label = stringResource(if (syncState.isActive) R.string.common_cancel else R.string.settings_sources_resync),
+                    label = stringResource(if (syncState.isActive) CoreR.string.common_cancel else CoreR.string.settings_sources_resync),
                     onClick = if (syncState.isActive) onCancelSync else onResync,
                     style = OwnTVButtonStyle.SECONDARY,
                 )
-                OwnTVButton(stringResource(R.string.common_edit), onClick = onEdit, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.common_delete), onClick = onDelete, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_edit), onClick = onEdit, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_delete), onClick = onDelete, style = OwnTVButtonStyle.SECONDARY)
             }
         }
     }
@@ -454,16 +455,16 @@ internal fun EpgSourceForm(
             .verticalScroll(scrollState) // scroll so lower fields/buttons stay reachable on small screens / large zoom
             .padding(horizontal = 40.dp, vertical = 28.dp),
     ) {
-        Text(stringResource(if (initial == null) R.string.settings_epg_sources_add else R.string.settings_epg_sources_edit), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+        Text(stringResource(if (initial == null) CoreR.string.settings_epg_sources_add else CoreR.string.settings_epg_sources_edit), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
         Spacer(Modifier.height(20.dp))
-        OwnTVTextField(name, { name = it }, label = stringResource(R.string.settings_epg_sources_name), placeholder = stringResource(R.string.settings_epg_sources_name_hint), modifier = Modifier.fillMaxWidth().widthIn(max = 680.dp).focusRequester(firstFocus))
+        OwnTVTextField(name, { name = it }, label = stringResource(CoreR.string.settings_epg_sources_name), placeholder = stringResource(CoreR.string.settings_epg_sources_name_hint), modifier = Modifier.fillMaxWidth().widthIn(max = 680.dp).focusRequester(firstFocus))
         Spacer(Modifier.height(14.dp))
         val fillButtonFocus = remember { FocusRequester() }
-        OwnTVTextField(url, { url = it }, label = stringResource(R.string.settings_epg_sources_url), placeholder = stringResource(R.string.settings_epg_sources_url_hint), modifier = Modifier.fillMaxWidth().widthIn(max = 680.dp).focusProperties { down = fillButtonFocus })
+        OwnTVTextField(url, { url = it }, label = stringResource(CoreR.string.settings_epg_sources_url), placeholder = stringResource(CoreR.string.settings_epg_sources_url_hint), modifier = Modifier.fillMaxWidth().widthIn(max = 680.dp).focusProperties { down = fillButtonFocus })
         Spacer(Modifier.height(8.dp))
-        OwnTVButton(stringResource(R.string.settings_epg_sources_fill_playlist), onClick = { dialogFocus.value = fillButtonFocus; showPlaylistPicker = true }, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.PLAYLIST, modifier = Modifier.focusRequester(fillButtonFocus))
+        OwnTVButton(stringResource(CoreR.string.settings_epg_sources_fill_playlist), onClick = { dialogFocus.value = fillButtonFocus; showPlaylistPicker = true }, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.PLAYLIST, modifier = Modifier.focusRequester(fillButtonFocus))
         Spacer(Modifier.height(14.dp))
-        OwnTVTextField(ua, { ua = it }, label = stringResource(R.string.settings_epg_sources_user_agent), placeholder = stringResource(R.string.settings_epg_sources_user_agent_hint), modifier = Modifier.fillMaxWidth().widthIn(max = 680.dp))
+        OwnTVTextField(ua, { ua = it }, label = stringResource(CoreR.string.settings_epg_sources_user_agent), placeholder = stringResource(CoreR.string.settings_epg_sources_user_agent_hint), modifier = Modifier.fillMaxWidth().widthIn(max = 680.dp))
 
         Spacer(Modifier.height(14.dp))
         // Auto-refresh dropdown — same Off/Startup/staleness-threshold semantics as playlist sources.
@@ -478,8 +479,8 @@ internal fun EpgSourceForm(
 
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            OwnTVButton(stringResource(R.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
-            OwnTVButton(stringResource(if (initial == null) R.string.settings_epg_sources_add_sync else R.string.settings_epg_sources_save_sync), onClick = { onSave(name, url, ua, autoRefresh, useLogos) }, enabled = url.isNotBlank())
+            OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(if (initial == null) CoreR.string.settings_epg_sources_add_sync else CoreR.string.settings_epg_sources_save_sync), onClick = { onSave(name, url, ua, autoRefresh, useLogos) }, enabled = url.isNotBlank())
         }
     }
 
@@ -502,7 +503,7 @@ internal fun EpgSourceForm(
     }
     if (showAutoRefreshPicker) {
         PickerDialog(
-            title = stringResource(R.string.settings_epg_sources_auto_refresh_title),
+            title = stringResource(CoreR.string.settings_epg_sources_auto_refresh_title),
             options = EpgAutoRefresh.entries.map { it.name to epgAutoRefreshLabel(it) },
             selected = autoRefresh.mode.name,
             onSelect = { value ->
@@ -516,12 +517,12 @@ internal fun EpgSourceForm(
     }
     if (showManualDays) {
         DayStepperDialog(
-            title = stringResource(R.string.settings_sources_refresh_days_title),
-            hint = stringResource(R.string.settings_sources_refresh_days_hint),
+            title = stringResource(CoreR.string.settings_sources_refresh_days_title),
+            hint = stringResource(CoreR.string.settings_sources_refresh_days_hint),
             initialDays = autoRefresh.manualDays,
             minDays = PlaylistRefresh.MIN_MANUAL_DAYS,
             maxDays = PlaylistRefresh.MAX_MANUAL_DAYS,
-            label = { days -> pluralStringResource(R.plurals.settings_sources_refresh_days, days, days) },
+            label = { days -> pluralStringResource(CoreR.plurals.settings_sources_refresh_days, days, days) },
             onConfirm = { autoRefresh = EpgRefresh(EpgAutoRefresh.MANUAL, it); showManualDays = false },
             onDismiss = { showManualDays = false },
         )
@@ -541,14 +542,14 @@ private fun EpgUseLogosRow(enabled: Boolean, onClick: () -> Unit) {
     ) { _ ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.settings_epg_sources_use_logos), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_epg_sources_use_logos), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Text(
-                    stringResource(R.string.settings_epg_sources_logos_description),
+                    stringResource(CoreR.string.settings_epg_sources_logos_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
             }
-            Text(stringResource(if (enabled) R.string.settings_epg_sources_on else R.string.settings_epg_sources_off), style = MaterialTheme.typography.titleMedium, color = if (enabled) colors.primary else colors.onSurfaceVariant)
+            Text(stringResource(if (enabled) CoreR.string.settings_epg_sources_on else CoreR.string.settings_epg_sources_off), style = MaterialTheme.typography.titleMedium, color = if (enabled) colors.primary else colors.onSurfaceVariant)
         }
     }
 }
@@ -566,9 +567,9 @@ private fun EpgAutoRefreshRow(selected: EpgRefresh, modifier: Modifier = Modifie
     ) { _ ->
         Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 14.dp), verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
-                Text(stringResource(R.string.settings_epg_sources_auto_refresh_title), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_epg_sources_auto_refresh_title), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Text(
-                    stringResource(R.string.settings_epg_sources_auto_refresh_description),
+                    stringResource(CoreR.string.settings_epg_sources_auto_refresh_description),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
@@ -597,12 +598,12 @@ private fun PlaylistEpgPicker(
 
     Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
         Column(Modifier.dialogPanel(width = 560.dp, corner = 20.dp, padding = 24.dp, scroll = false)) {
-            Text(stringResource(R.string.settings_epg_sources_fill_playlist), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.settings_epg_sources_fill_playlist), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(14.dp))
             val opts = options
             when {
                 opts == null -> Box(Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) { OwnTVSpinner(sizeDp = 28) }
-                opts.isEmpty() -> Text(stringResource(R.string.settings_epg_sources_none_playlist), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                opts.isEmpty() -> Text(stringResource(CoreR.string.settings_epg_sources_none_playlist), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                 else -> LazyColumn(Modifier.fillMaxWidth().height(280.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(opts) { opt ->
                         FocusableSurface(
@@ -616,7 +617,7 @@ private fun PlaylistEpgPicker(
                                 Text(opt.name, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                                 // A portal guide has no address to show — say what it is instead.
                                 val subtitle = if (tv.own.owntv.core.repository.EpgRepository.stalkerSourceIdOf(opt.url) != null) {
-                                    stringResource(R.string.settings_epg_sources_portal_guide)
+                                    stringResource(CoreR.string.settings_epg_sources_portal_guide)
                                 } else {
                                     opt.url
                                 }
@@ -628,7 +629,7 @@ private fun PlaylistEpgPicker(
             }
             Spacer(Modifier.height(16.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                OwnTVButton(stringResource(R.string.settings_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.settings_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
             }
         }
     }

@@ -1,5 +1,7 @@
 package tv.own.owntv.features.movies
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -148,9 +150,9 @@ fun MoviesScreen(
             onDispose { vm.unlock() }
         }
     }
-    val alreadyDownloadedMessage = stringResource(R.string.content_already_downloaded)
-    val refetchingTmdbMessage = stringResource(R.string.content_refetching_tmdb)
-    val researchingTmdbMessage = stringResource(R.string.content_researching_tmdb)
+    val alreadyDownloadedMessage = stringResource(CoreR.string.content_already_downloaded)
+    val refetchingTmdbMessage = stringResource(CoreR.string.content_refetching_tmdb)
+    val researchingTmdbMessage = stringResource(CoreR.string.content_researching_tmdb)
     val railItems by vm.railItems.collectAsStateWithLifecycle()
     val providerNames by vm.providerNames.collectAsStateWithLifecycle()
     val selectedKey by vm.selectedKey.collectAsStateWithLifecycle()
@@ -208,7 +210,7 @@ fun MoviesScreen(
 
     val selectedIndex = railItems.indexOfFirst { it.key == selectedKey }.coerceAtLeast(0)
     val selectedItem = railItems.getOrNull(selectedIndex)
-    val selectedLabel = selectedItem?.displayLabel(R.string.content_category_all_movies) ?: stringResource(R.string.content_category_all_movies)
+    val selectedLabel = selectedItem?.displayLabel(CoreR.string.content_category_all_movies) ?: stringResource(CoreR.string.content_category_all_movies)
 
     // Resume flow: AUTO continues silently, ASK prompts (≥10s saved), NEVER starts from zero.
     val scope = rememberCoroutineScope()
@@ -429,7 +431,7 @@ fun MoviesScreen(
             width = cine?.category ?: panels?.category ?: Dimens.RailWidthFixed,
             categories = railItems.map {
                 RailCategory(
-                    it.displayLabel(R.string.content_category_all_movies),
+                    it.displayLabel(CoreR.string.content_category_all_movies),
                     it.icon,
                     showGenreDot = it.key is LiveKey.Folder,
                     providerName = it.providerName,
@@ -603,7 +605,7 @@ fun MoviesScreen(
                         qualityBadges = cineQuality,
                         resumeLabel = selectedProgress
                             ?.takeIf { selectedMovie?.id == m.id && !vm.isMovieCompleted(it) && it.positionMs > 0 }
-                            ?.let { stringResource(R.string.content_resume_at, tv.own.owntv.ui.components.formatTimestamp(it.positionMs)) },
+                            ?.let { stringResource(CoreR.string.content_resume_at, tv.own.owntv.ui.components.formatTimestamp(it.positionMs)) },
                         genres = cineGenres,
                         plot = if (metadataMode.tmdbWins) meta?.overview ?: providerPlot else providerPlot ?: meta?.overview,
                         cast = cineCast,
@@ -612,17 +614,17 @@ fun MoviesScreen(
                     Spacer(Modifier.height(14.dp))
                 }
                 Text(
-                    pluralStringResource(R.plurals.content_count_movies, count, selectedLabel, count),
+                    pluralStringResource(CoreR.plurals.content_count_movies, count, selectedLabel, count),
                     style = MaterialTheme.typography.titleSmall,
                     color = OwnTVTheme.colors.onSurface,
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(Modifier.height(8.dp))
             } else {
-                Text(stringResource(R.string.content_section_category, stringResource(R.string.common_nav_movies), selectedLabel), style = MaterialTheme.typography.headlineLarge, color = OwnTVTheme.colors.onSurface)
+                Text(stringResource(CoreR.string.content_section_category, stringResource(CoreR.string.common_nav_movies), selectedLabel), style = MaterialTheme.typography.headlineLarge, color = OwnTVTheme.colors.onSurface)
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    pluralStringResource(R.plurals.content_count_movies, count, selectedLabel, count),
+                    pluralStringResource(CoreR.plurals.content_count_movies, count, selectedLabel, count),
                     style = MaterialTheme.typography.titleMedium,
                     color = OwnTVTheme.colors.primary,
                     fontWeight = FontWeight.Bold,
@@ -633,17 +635,17 @@ fun MoviesScreen(
                 SearchBar(
                     query = searchQuery,
                     onQueryChange = vm::setSearchQuery,
-                    placeholder = stringResource(R.string.content_search_movies, selectedLabel),
+                    placeholder = stringResource(CoreR.string.content_search_movies, selectedLabel),
                     modifier = Modifier.weight(1f).focusRequester(listSearchFocus),
                 )
                 Spacer(Modifier.width(10.dp))
-                SortChip(mode = sortMode, onToggle = vm::toggleSort, playlistLabel = stringResource(R.string.content_provider))
+                SortChip(mode = sortMode, onToggle = vm::toggleSort, playlistLabel = stringResource(CoreR.string.content_provider))
                 // View mode (#10): poster wall vs a compact list (more titles at once). Cinematic is
                 // grid-only, so the toggle would be a button that cannot change anything.
                 if (!cinematic) {
                     Spacer(Modifier.width(10.dp))
                     tv.own.owntv.ui.components.OwnTVButton(
-                        label = stringResource(if (viewMode == SettingsRepository.VodViewMode.GRID) R.string.settings_view_grid else R.string.settings_view_list),
+                        label = stringResource(if (viewMode == SettingsRepository.VodViewMode.GRID) CoreR.string.settings_view_grid else CoreR.string.settings_view_list),
                         onClick = vm::toggleViewMode,
                         icon = if (viewMode == SettingsRepository.VodViewMode.GRID) OwnTVIcon.MENU else OwnTVIcon.MOVIES,
                         style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY,
@@ -655,7 +657,7 @@ fun MoviesScreen(
             if (movies.itemCount == 0) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        if (searchQuery.isNotBlank()) stringResource(R.string.content_no_movies_found, searchQuery.trim()) else stringResource(R.string.content_no_movies_here),
+                        if (searchQuery.isNotBlank()) stringResource(CoreR.string.content_no_movies_found, searchQuery.trim()) else stringResource(CoreR.string.content_no_movies_here),
                         style = MaterialTheme.typography.bodyLarge, color = OwnTVTheme.colors.onSurfaceVariant,
                     )
                 }
@@ -855,9 +857,9 @@ fun MoviesScreen(
     val moveTargets by vm.moveTargets.collectAsStateWithLifecycle()
     if (creatingCategory) {
         TextInputDialog(
-            title = stringResource(R.string.settings_customize_new_category_title),
+            title = stringResource(CoreR.string.settings_customize_new_category_title),
             hint = stringResource(R.string.settings_customize_new_category_description),
-            confirmLabel = stringResource(R.string.common_create),
+            confirmLabel = stringResource(CoreR.string.common_create),
             allowBlank = false,
             onConfirm = { vm.createCustomCategory(it); creatingCategory = false },
             onDismiss = { creatingCategory = false },
@@ -868,7 +870,7 @@ fun MoviesScreen(
             if (originKey != null) {
                 MoveToCategoryDialog(
                     moveTargets = moveTargets.filterNot { it.id == originKey },
-                    originName = moveOriginName ?: stringResource(R.string.settings_customize_this_category),
+                    originName = moveOriginName ?: stringResource(CoreR.string.settings_customize_this_category),
                     onNewCategory = { creatingCategory = true },
                     onMove = { targetId, keepInOrigin ->
                         vm.moveToCategory(CustomizeKeys.movie(m), m.id, originKey, targetId, keepInOrigin)
@@ -963,7 +965,7 @@ fun MoviesScreen(
     // Move mode overlay.
     moveState?.let { ms ->
         MoveOrderOverlay(
-            title = stringResource(R.string.content_reorder_movie),
+            title = stringResource(CoreR.string.content_reorder_movie),
             itemNames = ms.items.map { it.name },
             activeIndex = ms.activeIndex,
             onMoveUp = vm::moveUp,
@@ -976,7 +978,7 @@ fun MoviesScreen(
     // Category Move mode overlay — intercepts D-pad Up/Down/OK/Back while reordering.
     categoryMoveState?.let { ms ->
         MoveOrderOverlay(
-            title = stringResource(R.string.content_move),
+            title = stringResource(CoreR.string.content_move),
             itemNames = ms.items,
             activeIndex = ms.activeIndex,
             onMoveUp = vm::moveCategoryUp,
@@ -988,7 +990,7 @@ fun MoviesScreen(
 
     contextCategory?.let { item ->
         CategoryContextMenu(
-            categoryName = item.displayLabel(R.string.content_category_all_movies),
+            categoryName = item.displayLabel(CoreR.string.content_category_all_movies),
             canHide = item.key is LiveKey.Folder || item.key is LiveKey.Custom,
             canMove = item.key is LiveKey.Folder || item.key is LiveKey.Custom,
             onHide = { vm.hideCategory(item.key); contextCategory = null },
@@ -1073,27 +1075,27 @@ private fun MovieContextMenu(
             // The menu as data: same actions, same gating, same order as the buttons that used to be
             // written out here one by one. Close is not in the list — it stays pinned last.
             val actions = buildList {
-                add(MenuAction("favourite", if (isFavorite) stringResource(R.string.content_remove_favourite) else stringResource(R.string.content_add_favourite), OwnTVIcon.FAVORITE, onClick = onToggleFavorite))
-                add(MenuAction("mark_watched", if (watched) stringResource(R.string.content_mark_unwatched) else stringResource(R.string.content_mark_watched), onClick = onToggleWatched))
-                if (canMove) add(MenuAction("move", stringResource(R.string.content_move), onClick = onMove))
-                if (canMove) add(MenuAction("move_to_category", stringResource(R.string.content_move_to_category), onClick = onMoveToCategory))
-                if (isHistory) add(MenuAction("remove_history", stringResource(R.string.content_remove_history), onClick = onRemoveFromHistory))
-                add(MenuAction("hide", stringResource(R.string.common_hide), onClick = onHide))
-                add(MenuAction("download", stringResource(R.string.content_download), OwnTVIcon.DOWNLOADS, onClick = onDownload))
+                add(MenuAction("favourite", if (isFavorite) stringResource(CoreR.string.content_remove_favourite) else stringResource(CoreR.string.content_add_favourite), OwnTVIcon.FAVORITE, onClick = onToggleFavorite))
+                add(MenuAction("mark_watched", if (watched) stringResource(CoreR.string.content_mark_unwatched) else stringResource(CoreR.string.content_mark_watched), onClick = onToggleWatched))
+                if (canMove) add(MenuAction("move", stringResource(CoreR.string.content_move), onClick = onMove))
+                if (canMove) add(MenuAction("move_to_category", stringResource(CoreR.string.content_move_to_category), onClick = onMoveToCategory))
+                if (isHistory) add(MenuAction("remove_history", stringResource(CoreR.string.content_remove_history), onClick = onRemoveFromHistory))
+                add(MenuAction("hide", stringResource(CoreR.string.common_hide), onClick = onHide))
+                add(MenuAction("download", stringResource(CoreR.string.content_download), OwnTVIcon.DOWNLOADS, onClick = onDownload))
                 // Delete subtitles — only when this movie has downloaded OpenSubtitles subs (§11).
-                onDeleteSubtitles?.let { add(MenuAction("delete_subtitles", stringResource(R.string.content_delete_subtitles), OwnTVIcon.SUBTITLE, onClick = it)) }
+                onDeleteSubtitles?.let { add(MenuAction("delete_subtitles", stringResource(CoreR.string.content_delete_subtitles), OwnTVIcon.SUBTITLE, onClick = it)) }
                 // Phase B: one-off external playback, independent of the global "External player" toggle.
-                add(MenuAction("play_external", stringResource(R.string.content_play_external), OwnTVIcon.PLAY, onClick = onPlayExternal))
+                add(MenuAction("play_external", stringResource(CoreR.string.content_play_external), OwnTVIcon.PLAY, onClick = onPlayExternal))
                 // TMDB Details — only when a confident match resolved (§11.1).
-                if (hasTmdbDetails) add(MenuAction("tmdb_details", stringResource(R.string.content_tmdb_details), OwnTVIcon.MENU, group = 1, onClick = onShowDetails))
+                if (hasTmdbDetails) add(MenuAction("tmdb_details", stringResource(CoreR.string.content_tmdb_details), OwnTVIcon.MENU, group = 1, onClick = onShowDetails))
                 // Play Trailer (§7.3 U4) — only when TMDB actually has a trailer for this title (§11.1 gating).
-                trailerKey?.let { key -> add(MenuAction("play_trailer", stringResource(R.string.content_play_trailer), group = 1) { onPlayTrailer(key) }) }
+                trailerKey?.let { key -> add(MenuAction("play_trailer", stringResource(CoreR.string.content_play_trailer), group = 1) { onPlayTrailer(key) }) }
                 // Refetch TMDB details (§11.2 U5a) — always available when enrichment is on, so a "no match"
                 // (7-day negative cache) or a stale match can be cleared and re-searched immediately.
                 if (canRefetchTmdb) {
-                    add(MenuAction("refetch_tmdb", stringResource(R.string.content_refetch_tmdb), group = 1, onClick = onRefetch))
+                    add(MenuAction("refetch_tmdb", stringResource(CoreR.string.content_refetch_tmdb), group = 1, onClick = onRefetch))
                     // Set TMDB name (§11.2 U5b) — hand-type the exact title to override the auto-match.
-                    add(MenuAction("set_tmdb_name", stringResource(R.string.content_set_tmdb_name), group = 1, onClick = onSetTmdbName))
+                    add(MenuAction("set_tmdb_name", stringResource(CoreR.string.content_set_tmdb_name), group = 1, onClick = onSetTmdbName))
                 }
             }
             var previousGroup: Int? = null
@@ -1109,7 +1111,7 @@ private fun MovieContextMenu(
                 )
             }
             Spacer(Modifier.height(4.dp))
-            OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, modifier = Modifier.fillMaxWidth())
+            OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -1124,7 +1126,7 @@ private fun MovieDetailsPane(
 ) {
     val colors = OwnTVTheme.colors
     if (movie == null) {
-        PreviewPane(hint = stringResource(R.string.content_focus_movie))
+        PreviewPane(hint = stringResource(CoreR.string.content_focus_movie))
         return
     }
     // Merge (§7.1 / §4.1). Provider+TMDB → provider wins (provider ?: tmdb); TMDB-only → tmdb wins
@@ -1171,7 +1173,7 @@ private fun MovieDetailsPane(
         // pane, since movie metadata below can push a lower placement out of view once it scrolls long).
         if (resumePositionMs != null) {
             Text(
-                stringResource(R.string.content_resume_at, tv.own.owntv.ui.components.formatTimestamp(resumePositionMs)),
+                stringResource(CoreR.string.content_resume_at, tv.own.owntv.ui.components.formatTimestamp(resumePositionMs)),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.primary,
             )
@@ -1184,7 +1186,7 @@ private fun MovieDetailsPane(
         val genres = jsonList(meta?.genresJson)
         if (genres.isNotEmpty()) {
             Spacer(Modifier.height(8.dp))
-            Text(genres.joinToString(stringResource(R.string.content_genres_separator)), style = MaterialTheme.typography.labelMedium, color = colors.primary)
+            Text(genres.joinToString(stringResource(CoreR.string.content_genres_separator)), style = MaterialTheme.typography.labelMedium, color = colors.primary)
         }
         if (!plot.isNullOrBlank()) {
             Spacer(Modifier.height(12.dp))
@@ -1193,7 +1195,7 @@ private fun MovieDetailsPane(
         val cast = tv.own.owntv.core.metadata.MetadataCast.names(meta?.castJson)
         if (cast.isNotEmpty()) {
             Spacer(Modifier.height(12.dp))
-            Text(stringResource(R.string.content_media_cast), style = MaterialTheme.typography.labelMedium, color = colors.onSurface)
+            Text(stringResource(CoreR.string.content_media_cast), style = MaterialTheme.typography.labelMedium, color = colors.onSurface)
             Spacer(Modifier.height(2.dp))
             Text(cast.take(6).joinToString(", "), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
         }
@@ -1201,7 +1203,7 @@ private fun MovieDetailsPane(
         // Display-only pane (§11.1): actions live on the poster — OK plays, long-press opens the menu
         // (Favorite / Download / TMDB Details). Keeping the pane non-focusable fixes grid→pane navigation.
         Text(
-            stringResource(R.string.content_ok_play_options),
+            stringResource(CoreR.string.content_ok_play_options),
             style = MaterialTheme.typography.labelMedium,
             color = colors.onSurfaceVariant,
         )
@@ -1216,13 +1218,13 @@ private fun metaLine(movie: MovieEntity, meta: tv.own.owntv.core.database.entity
     val rating = if (tmdbWins) meta?.rating?.takeIf { it > 0 } ?: movie.rating?.takeIf { it > 0 }
         else movie.rating?.takeIf { it > 0 } ?: meta?.rating?.takeIf { it > 0 }
     year?.let { parts.add(localizedInteger(it, grouping = false)) }
-    rating?.let { parts.add(stringResource(R.string.content_rating, it)) }
+    rating?.let { parts.add(stringResource(CoreR.string.content_rating, it)) }
     movie.durationSecs?.takeIf { it > 0 }?.let { secs ->
         val h = secs / 3600
         val m = (secs % 3600) / 60
-        parts.add(if (h > 0) stringResource(R.string.content_duration_hours, h, m) else stringResource(R.string.content_duration_minutes, m))
+        parts.add(if (h > 0) stringResource(CoreR.string.content_duration_hours, h, m) else stringResource(CoreR.string.content_duration_minutes, m))
     }
-    return parts.joinToString(stringResource(R.string.content_metadata_separator))
+    return parts.joinToString(stringResource(CoreR.string.content_metadata_separator))
 }
 
 /** Build the fullscreen TMDB-details payload for a movie, applying the §7.1/§4.1 merge precedence. */

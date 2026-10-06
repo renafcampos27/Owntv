@@ -11,6 +11,27 @@ class ChannelVersionPolicyTest {
         sourceId = source, remoteId = id.toString(), name = name, streamUrl = "https://example.invalid/$id")
     private val automatic = SectionCustomizations(prioritizeChannelVersions = true, groupChannelVersions = true)
 
+    @Test fun explicitHevcOnlyFallsForwardAndHqFollowsHd() {
+        val rows = listOf(row(1, "SIC Low"), row(2, "SIC"), row(3, "SIC HQ"),
+            row(4, "SIC HD"), row(5, "SIC HEVC"), row(6, "SIC Full HD"))
+        assertEquals(listOf(4L, 3L, 2L, 1L), ChannelVersionPolicy.alternativesAfter(rows[4], rows, automatic).map { it.id })
+        assertTrue(ChannelVersionPolicy.alternativesAfter(rows[0], rows, automatic).isEmpty())
+        assertEquals(listOf(3L, 2L, 1L), ChannelVersionPolicy.alternativesAfter(rows[3], rows,
+            automatic.copy(prioritizeChannelVersions = false)).map { it.id })
+    }
+
+    @Test fun explicitSelectionRespectsManualOrderAndExcludesHiddenForeignAndDuplicateStreams() {
+        val selected = row(1, "SIC HEVC")
+        val hd = row(2, "SIC HD")
+        val low = row(3, "SIC Low")
+        val settings = automatic.copy(channelVersionOrders = mapOf(ChannelVersionPolicy.groupKey(selected) to "[\"3\",\"1\",\"2\"]"))
+        val rows = listOf(selected, hd, low, row(4, "SIC" ).copy(streamUrl = selected.streamUrl),
+            row(5, "SIC Low", 2), row(6, "RTP 1 Low"))
+        assertEquals(listOf(hd), ChannelVersionPolicy.alternativesAfter(selected, rows, settings))
+        assertTrue(ChannelVersionPolicy.alternativesAfter(selected, rows,
+            settings.copy(hiddenItems = mapOf("1:2" to hd.name))).isEmpty())
+    }
+
     @Test fun hiddenVersionsLeaveBothPriorityAndGroupedRowsButKeepTheirSavedPosition() {
         val rows = listOf(row(1, "SIC Full HD"), row(2, "SIC HD"))
         val settings = automatic.copy(hiddenItems = mapOf("1:1" to "SIC Full HD"),

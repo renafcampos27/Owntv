@@ -289,7 +289,7 @@ class SettingsViewModel(
     }
 
     val hdrEnabled: StateFlow<Boolean> = settings.hdrEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     fun setHdrEnabled(enabled: Boolean) {
         viewModelScope.launch { settings.setHdrEnabled(enabled) }
@@ -336,7 +336,7 @@ class SettingsViewModel(
     // to it. The legacy key itself still lives in SettingsRepository, which reads it so an upgrading
     // user's old choice carries into the three-state setting.
     val surroundMode: StateFlow<SurroundMode> = settings.surroundMode
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SurroundMode.AUTO)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SurroundMode.STEREO)
 
     /** Cycle Auto → Stereo only → Surround → Auto. Any change clears the session's stereo latch: the
      *  user touching this control is explicitly asking the audio output for another chance. */
@@ -366,6 +366,17 @@ class SettingsViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, 0)
 
     val catchupOffsetRangeMinutes: IntRange = settings.catchupOffsetRangeMinutes
+
+    val catchupRequestShiftMinutes: StateFlow<Int> = settings.catchupRequestShiftMinutes
+        .stateIn(viewModelScope, SharingStarted.Eagerly, 60)
+
+    fun adjustCatchupRequestShift(deltaMinutes: Int) {
+        viewModelScope.launch { settings.setCatchupRequestShiftMinutes(catchupRequestShiftMinutes.value + deltaMinutes) }
+    }
+
+    fun resetCatchupRequestShift() {
+        viewModelScope.launch { settings.setCatchupRequestShiftMinutes(0) }
+    }
 
     val catchupPlayer: StateFlow<SettingsRepository.CatchupPlayer> = settings.catchupPlayer
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.CatchupPlayer.INTERNAL)
@@ -633,6 +644,13 @@ class SettingsViewModel(
 
     val resumeMode: StateFlow<SettingsRepository.ResumeMode> =
         settings.resumeMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.ResumeMode.ASK)
+    val localTimeshiftResumeMode = settings.localTimeshiftResumeMode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.ResumeMode.ASK)
+    fun setLocalTimeshiftResumeMode(name: String) {
+        viewModelScope.launch {
+            settings.setLocalTimeshiftResumeMode(SettingsRepository.ResumeMode.valueOf(name))
+        }
+    }
     fun setResumeMode(name: String) {
         viewModelScope.launch {
             settings.setResumeMode(runCatching { SettingsRepository.ResumeMode.valueOf(name) }.getOrDefault(SettingsRepository.ResumeMode.ASK))
@@ -919,13 +937,20 @@ class SettingsViewModel(
         viewModelScope.launch { sourceDao.updateLiveLatency(sourceId, mode, customSecs) }
     }
 
+    fun setSourceCatchupClock(sourceId: Long, mode: String?, offsetMinutes: Int?) {
+        if (mode != null && mode !in setOf(SettingsRepository.CatchupTimezone.DEVICE.name, SettingsRepository.CatchupTimezone.MANUAL.name)) return
+        viewModelScope.launch {
+            sourceDao.updateCatchupClock(sourceId, mode, if (mode == SettingsRepository.CatchupTimezone.MANUAL.name) (offsetMinutes ?: 0).coerceIn(-720, 840) else null)
+        }
+    }
+
     val visualProfile = settings.visualProfile.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.theme.VisualProfile.AUTO)
     fun setVisualProfile(profile: tv.own.owntv.core.theme.VisualProfile) { viewModelScope.launch { settings.setVisualProfile(profile) } }
     val uiDiagnostics = settings.uiDiagnostics.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
     fun setUiDiagnostics(enabled: Boolean) { viewModelScope.launch { settings.setUiDiagnostics(enabled) } }
 
     val animationLevel: StateFlow<tv.own.owntv.core.theme.AnimationLevel> =
-        settings.requestedAnimationLevel.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.theme.AnimationLevel.FULL)
+        settings.requestedAnimationLevel.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.theme.AnimationLevel.OFF)
     fun setAnimationLevel(level: tv.own.owntv.core.theme.AnimationLevel) { viewModelScope.launch { settings.setAnimationLevel(level) } }
 
     /** Separate panels (the default) or the Cinematic frame, shared by Movies and Series. */
@@ -943,7 +968,7 @@ class SettingsViewModel(
 
     // Weather chip: visibility toggle + manual location override (for VPN users).
     val weatherEnabled: StateFlow<Boolean> =
-        settings.weatherEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
+        settings.weatherEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
     fun setWeatherEnabled(enabled: Boolean) { viewModelScope.launch { settings.setWeatherEnabled(enabled) } }
     val weatherLocation: StateFlow<String> =
         settings.weatherLocation.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")

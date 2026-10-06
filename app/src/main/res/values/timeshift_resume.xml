@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_local_timeshift_resume">Resume local timeshift</string>
+    <string name="settings_local_timeshift_resume_description">When returning to a channel with a retained local copy, ask, resume automatically or watch live. One copy is kept for up to 30 minutes during this app session; recording stops when you leave.</string>
+    <string name="local_timeshift_resume_title">Resume the local copy?</string>
+    <string name="local_timeshift_resume_description">Continue from where you left the recorded copy, or open the current live broadcast. Resuming the copy does not connect to your provider.</string>
+</resources>

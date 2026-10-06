@@ -18,16 +18,17 @@ internal object ChannelVersionPolicy {
 
     fun rank(name: String): Int {
         var value = name.trim()
-        var rank = 3
+        var rank = 4
         while (true) {
             val match = suffix.find(value) ?: break
             val token = match.groupValues[1].lowercase(java.util.Locale.ROOT).replace(" ", "").replace(".", "")
             val candidate = when (token) {
                 "fullhd", "fhd", "1080p", "4k", "uhd" -> 0
                 "hevc", "hvec", "h265" -> 1
-                "hd", "720p", "hq" -> 2
-                "low", "sd" -> 4
-                else -> 3
+                "hd", "720p" -> 2
+                "hq" -> 3
+                "low", "sd" -> 5
+                else -> 4
             }
             // Low is a real suffix; an absent suffix alone means normal.
             rank = if (value == name.trim()) candidate else minOf(rank, candidate)
@@ -51,4 +52,17 @@ internal object ChannelVersionPolicy {
 
     fun grouped(rows: List<ChannelEntity>, settings: SectionCustomizations): List<ChannelEntity> =
         if (!settings.groupChannelVersions) rows else rows.filter { CustomizeKeys.channel(it) !in settings.hiddenItems }.groupBy { groupKey(it, settings) }.values.map { ordered(it, settings).first() }
+
+    /** An explicit version selection never wraps back to earlier entries in its priority order. */
+    fun alternativesAfter(selected: ChannelEntity, rows: List<ChannelEntity>, settings: SectionCustomizations): List<ChannelEntity> {
+        val group = groupKey(selected, settings)
+        val ordering = if (settings.prioritizeChannelVersions) settings else
+            settings.copy(prioritizeChannelVersions = true, channelVersionOrders = emptyMap())
+        val candidates = ordered((rows + selected).filter {
+            it.sourceId == selected.sourceId && groupKey(it, settings) == group
+        }.distinctBy(::versionKey), ordering)
+        val index = candidates.indexOfFirst { versionKey(it) == versionKey(selected) }
+        if (index < 0) return emptyList()
+        return candidates.drop(index + 1).filter { it.streamUrl != selected.streamUrl }.distinctBy { it.streamUrl }
+    }
 }

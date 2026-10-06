@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
@@ -33,7 +35,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.SourceEntity
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.dialogPanel
@@ -69,10 +70,10 @@ fun PlaylistPickerDialog(
         Column(
             Modifier.dialogPanel(width = 280.dp, corner = 16.dp, padding = 14.dp, scroll = false),
         ) {
-            Text(stringResource(R.string.content_playlist_picker_title), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+            Text(stringResource(CoreR.string.content_playlist_picker_title), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             Spacer(Modifier.height(4.dp))
             Text(
-                stringResource(R.string.content_playlist_picker_description),
+                stringResource(CoreR.string.content_playlist_picker_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -83,7 +84,7 @@ fun PlaylistPickerDialog(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 PlaylistRow(
-                    label = stringResource(R.string.content_all_playlists),
+                    label = stringResource(CoreR.string.content_all_playlists),
                     selected = activeId <= 0,
                     modifier = if (activeId <= 0) Modifier.focusRequester(selectedFocus) else Modifier,
                     onClick = { onSelect(-1L); onDismiss() },

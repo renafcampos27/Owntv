@@ -42,6 +42,59 @@ class LiveZapListTest {
         } finally { scope.cancel() }
     }
 
+    @Test fun customCategoryPublishesItsContextAndSupportsZapping() = runBlocking {
+        val h = Harness()
+        try {
+            val key = LiveKey.Custom("custom:mine")
+            var opened = false
+            h.zap.armForCustom(key, "My channels", { list }) { opened = true }
+            h.await("custom category") { opened }
+            assertEquals(key, h.zap.key.value)
+            assertEquals("My channels", h.zap.title.value)
+            h.playing = list[0].id
+            assertEquals(list[1], h.zap.next(1))
+        } finally { h.stop() }
+    }
+
+    @Test fun emptyCustomCategoryKeepsThePreviousContext() = runBlocking {
+        val h = Harness()
+        val done = kotlinx.coroutines.CompletableDeferred<Unit>()
+        try {
+            h.zap.armFromBrowse(list, "Original", LiveKey.All, null)
+            var opened = false
+            h.zap.armForCustom(LiveKey.Custom("custom:empty"), "Empty", {
+                done.complete(Unit); emptyList()
+            }) { opened = true }
+            done.await()
+            delay(20)
+            assertFalse(opened)
+            assertEquals(LiveKey.All, h.zap.key.value)
+            assertEquals(list, h.zap.channels.value)
+        } finally { h.stop() }
+    }
+
+    @Test fun cancelledCustomLoadCannotReplaceNewBrowseContext() = runBlocking {
+        val h = Harness()
+        val entered = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val finish = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val exited = kotlinx.coroutines.CompletableDeferred<Unit>()
+        try {
+            h.zap.armForCustom(LiveKey.Custom("custom:old"), "Old", {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    entered.complete(Unit); finish.await(); exited.complete(Unit)
+                    list
+                }
+            }) { }
+            entered.await()
+            h.zap.armFromBrowse(list.take(2), "New", LiveKey.All, null)
+            finish.complete(Unit)
+            exited.await()
+            delay(20)
+            assertEquals("New", h.zap.title.value)
+            assertEquals(list.take(2), h.zap.channels.value)
+        } finally { finish.complete(Unit); h.stop() }
+    }
+
     private fun channel(id: Long) = ChannelEntity(
         id = id, sourceId = 1, categoryId = 10, name = "Ch $id",
         streamUrl = "http://x/$id.ts", remoteId = "$id",

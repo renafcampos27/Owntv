@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -47,7 +49,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.LocalGlass
 import tv.own.owntv.ui.theme.OwnTVTheme
@@ -76,7 +77,7 @@ fun SearchBar(
     val colors = OwnTVTheme.colors
     val remote = rememberRemoteTextInput()
     val focusManager = LocalFocusManager.current
-    val resolvedPlaceholder = placeholder ?: stringResource(R.string.common_search_hint)
+    val resolvedPlaceholder = placeholder ?: stringResource(CoreR.string.common_search_hint)
     val interaction = remember { MutableInteractionSource() }
     val pillFocused by interaction.collectIsFocusedAsState()
     var editing by remember { mutableStateOf(false) }

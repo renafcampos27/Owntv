@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -30,7 +32,6 @@ import coil3.request.ImageRequest
 import coil3.size.Precision
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
@@ -104,7 +105,7 @@ fun PosterCard(
                     ) {
                         OwnTVIcon(OwnTVIcon.STAR, tint = colors.accent, filled = true, modifier = Modifier.size(12.dp))
                         Spacer(Modifier.size(4.dp))
-                        Text(stringResource(R.string.common_rating, rating), style = MaterialTheme.typography.labelMedium, color = Color.White)
+                        Text(stringResource(CoreR.string.common_rating, rating), style = MaterialTheme.typography.labelMedium, color = Color.White)
                     }
                 }
 

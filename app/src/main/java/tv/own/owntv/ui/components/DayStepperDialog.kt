@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Box
@@ -32,7 +34,6 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import tv.own.owntv.R
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.core.i18n.HorizontalDirection
@@ -109,9 +110,9 @@ internal fun DayStepperDialog(
                 Text(hint, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                 Spacer(Modifier.height(22.dp))
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(R.string.common_ok), onClick = { onConfirm(days) })
+                    OwnTVButton(stringResource(CoreR.string.common_ok), onClick = { onConfirm(days) })
                 }
             }
         }

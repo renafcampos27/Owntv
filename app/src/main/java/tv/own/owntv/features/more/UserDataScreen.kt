@@ -1,5 +1,7 @@
 package tv.own.owntv.features.more
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +29,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.live.LiveKey
 import tv.own.owntv.features.live.LiveScreen
 import tv.own.owntv.features.movies.MoviesScreen
@@ -70,7 +71,7 @@ fun FavoritesScreen(
     modifier: Modifier = Modifier,
 ) = UserDataScreen(
     key = LiveKey.Favorites,
-    titleRes = R.string.content_category_favorites,
+    titleRes = CoreR.string.content_category_favorites,
     onFullscreen = onFullscreen,
     onChildFocused = onChildFocused,
     onBack = onBack,
@@ -90,7 +91,7 @@ fun HistoryScreen(
     modifier: Modifier = Modifier,
 ) = UserDataScreen(
     key = LiveKey.History,
-    titleRes = R.string.content_category_history,
+    titleRes = CoreR.string.content_category_history,
     onFullscreen = onFullscreen,
     onChildFocused = onChildFocused,
     onBack = onBack,
@@ -176,7 +177,7 @@ private fun UserDataScreen(
             if (history) {
                 Spacer(Modifier.weight(1f))
                 OwnTVButton(
-                    label = stringResource(R.string.settings_clear_history),
+                    label = stringResource(CoreR.string.settings_clear_history),
                     onClick = { showClear = true },
                     style = OwnTVButtonStyle.SECONDARY,
                     compact = true,
@@ -222,9 +223,9 @@ private fun UserDataScreen(
 private fun UserDataTab.label(counts: TypeCounts): String {
     val name = stringResource(
         when (this) {
-            UserDataTab.LIVE -> R.string.common_nav_live_tv
-            UserDataTab.MOVIES -> R.string.common_nav_movies
-            UserDataTab.SERIES -> R.string.common_nav_series
+            UserDataTab.LIVE -> CoreR.string.common_nav_live_tv
+            UserDataTab.MOVIES -> CoreR.string.common_nav_movies
+            UserDataTab.SERIES -> CoreR.string.common_nav_series
         },
     )
     val count = when (this) {
@@ -233,5 +234,5 @@ private fun UserDataTab.label(counts: TypeCounts): String {
         UserDataTab.SERIES -> counts.series
     }
     // The app's own "a · b" joiner, so one separator serves every screen and cannot drift.
-    return name + stringResource(R.string.content_epg_bits_separator) + count
+    return name + stringResource(CoreR.string.content_epg_bits_separator) + count
 }

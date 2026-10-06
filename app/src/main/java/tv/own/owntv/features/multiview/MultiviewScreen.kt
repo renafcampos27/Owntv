@@ -1,5 +1,7 @@
 package tv.own.owntv.features.multiview
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -45,7 +47,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.live.displayText
 import tv.own.owntv.player.ExoPreviewSurface
@@ -219,7 +220,7 @@ private fun Tile(
                 }
                 when {
                     index in state.soundOnly -> Text(
-                        text = stringResource(R.string.multiview_sound_only_note),
+                        text = stringResource(CoreR.string.multiview_sound_only_note),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                         textAlign = TextAlign.Center,
@@ -248,7 +249,7 @@ private fun Tile(
             }
             // The television, not the provider: it had already allowed this stream.
             tile.deviceLimit -> Text(
-                text = stringResource(R.string.multiview_decoder_exhausted),
+                text = stringResource(CoreR.string.multiview_decoder_exhausted),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center,
@@ -277,7 +278,7 @@ private fun Tile(
                         modifier = Modifier.size(28.dp),
                     )
                     Text(
-                        text = stringResource(R.string.multiview_add_channel),
+                        text = stringResource(CoreR.string.multiview_add_channel),
                         style = MaterialTheme.typography.titleSmall,
                         color = colors.onSurfaceVariant,
                     )
@@ -298,20 +299,20 @@ private fun Tile(
  */
 @Composable
 private fun tileFailureText(failure: PlaybackFailure?): String = when {
-    failure == PlaybackFailure.DecoderExhausted -> stringResource(R.string.multiview_decoder_exhausted)
+    failure == PlaybackFailure.DecoderExhausted -> stringResource(CoreR.string.multiview_decoder_exhausted)
     failure != null -> {
         LocalConfiguration.current // so a language change recomposes this, as stringResource would
         val resources = LocalContext.current.resources
         failure.describe { id, args -> resources.getString(id, *args.toTypedArray()) }
     }
-    else -> stringResource(R.string.player_error_channel)
+    else -> stringResource(CoreR.string.player_error_channel)
 }
 
 /** The channel's name, and the speaker badge on whichever tile the sound is coming from. */
 @Composable
 private fun androidx.compose.foundation.layout.BoxScope.TileCaption(name: String, audible: Boolean) {
     val colors = OwnTVTheme.colors
-    val audioTileLabel = stringResource(R.string.multiview_audio_tile)
+    val audioTileLabel = stringResource(CoreR.string.multiview_audio_tile)
     Row(
         Modifier
             .align(Alignment.BottomStart)

@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -11,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 import java.text.NumberFormat
 
@@ -29,7 +30,7 @@ fun CountBadge(
     val bg = if (accent) colors.accent.copy(alpha = 0.16f) else colors.card
     val fg = if (accent) colors.accent else colors.textSecondary
     Text(
-        text = stringResource(R.string.common_number_grouped, count),
+        text = stringResource(CoreR.string.common_number_grouped, count),
         style = MaterialTheme.typography.labelMedium,
         color = fg,
         fontWeight = FontWeight.Bold,

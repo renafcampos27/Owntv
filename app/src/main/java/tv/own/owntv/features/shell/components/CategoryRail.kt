@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import tv.own.owntv.ui.components.ContextMenuDivider
 
 import androidx.compose.runtime.Immutable
@@ -138,13 +140,18 @@ fun CategoryRail(
     /** Direct programmatic navigation to the adjacent content pane when pressing D-pad Right,
      *  bypassing Compose's 2D spatial search so focus never lands on the search bar or an arbitrary row. */
     onNavigateRight: (() -> Unit)? = null,
+    searchQuery: String? = null,
+    onSearchQueryChange: ((String) -> Unit)? = null,
 ) {
     val colors = OwnTVTheme.colors
     var hasFocus by remember { mutableStateOf(false) }
     // Folder search (for big libraries). Filters the rail by name but keeps each folder's ORIGINAL
-    // index, so selection highlighting and onSelect still map correctly. Reset when the rail loses
-    // focus, so it's fresh every time you open it.
-    var query by remember { mutableStateOf("") }
+    // index. Live supplies retained state; legacy callers keep their local search behavior.
+    var localQuery by remember { mutableStateOf("") }
+    val query = searchQuery ?: localQuery
+    val changeQuery: (String) -> Unit = { value ->
+        if (onSearchQueryChange != null) onSearchQueryChange(value) else localQuery = value
+    }
     val visible = remember(categories, query) {
         val q = query.trim()
         if (q.isEmpty()) categories.indices.toList()
@@ -226,7 +233,7 @@ fun CategoryRail(
                 // shows through, keeping panel 1 the same colour as panels 2/3/4 (Phase 6).
                 .onFocusChanged {
                     hasFocus = it.hasFocus
-                    if (it.hasFocus) onFocused() else query = "" // reset the search on leaving
+                    if (it.hasFocus) onFocused() else if (searchQuery == null) changeQuery("")
                 }
                 .focusProperties {
                     // Every entry (from the sidebar OR back from the content) lands on the category
@@ -265,8 +272,8 @@ fun CategoryRail(
             item(key = "__rail_search__") {
                 SearchBar(
                     query = query,
-                    onQueryChange = { query = it },
-                    placeholder = stringResource(tv.own.owntv.R.string.content_search_categories),
+                    onQueryChange = changeQuery,
+                    placeholder = stringResource(CoreR.string.content_search_categories),
                     modifier = Modifier
                         .focusRequester(searchFocus)
                         .fillMaxWidth()
@@ -316,7 +323,7 @@ fun CategoryRail(
             if (visible.isEmpty()) {
                 item {
                     Text(
-                        stringResource(tv.own.owntv.R.string.content_no_categories_match),
+                        stringResource(CoreR.string.content_no_categories_match),
                         color = colors.textSecondary,
                         style = MaterialTheme.typography.labelMedium,
                         modifier = Modifier.padding(
@@ -511,7 +518,7 @@ fun CategoryContextMenu(
 
                 if (canMove) {
                     RailMenuAction(
-                        label = stringResource(tv.own.owntv.R.string.content_move),
+                        label = stringResource(CoreR.string.content_move),
                         onClick = onMove,
                         modifier = Modifier.fillMaxWidth().focusRequester(focus),
                     )
@@ -520,7 +527,7 @@ fun CategoryContextMenu(
                 if (canHide) {
                     ContextMenuDivider()
                     RailMenuAction(
-                        label = stringResource(tv.own.owntv.R.string.common_hide),
+                        label = stringResource(CoreR.string.common_hide),
                         onClick = onHide,
                         modifier = if (!canMove) Modifier.fillMaxWidth().focusRequester(focus) else Modifier.fillMaxWidth(),
                         destructive = true,
@@ -529,7 +536,7 @@ fun CategoryContextMenu(
 
                 ContextMenuDivider()
                 RailMenuAction(
-                    label = stringResource(tv.own.owntv.R.string.common_cancel),
+                    label = stringResource(CoreR.string.common_cancel),
                     onClick = onDismiss,
                     icon = OwnTVIcon.CLOSE,
                     modifier = Modifier.fillMaxWidth(),

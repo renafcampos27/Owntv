@@ -59,10 +59,11 @@ internal suspend fun <T> tryChannelAlternatives(
     backoffRemainingMs: (() -> Long)? = null,
     shouldSkipAlternative: ((T) -> Boolean)? = null,
     startupProgress: (() -> LiveStartupProgress?)? = null,
+    isWaitingForHandover: (() -> Boolean)? = null,
 ): Boolean {
     suspend fun tryOne(item: T): Boolean {
-        val result = if (isBackingOff != null || backoffRemainingMs != null || startupProgress != null) {
-            runWithBackoffAwareTimeout(timeoutMs, isBackingOff, backoffRemainingMs, startupProgress = startupProgress) { attempt(item) }
+        val result = if (isBackingOff != null || backoffRemainingMs != null || startupProgress != null || isWaitingForHandover != null) {
+            runWithBackoffAwareTimeout(timeoutMs, isBackingOff, backoffRemainingMs, startupProgress = startupProgress, isWaitingForHandover = isWaitingForHandover) { attempt(item) }
         } else {
             withTimeoutOrNull(timeoutMs) { attempt(item) } == true
         }
@@ -93,6 +94,7 @@ internal suspend fun runWithBackoffAwareTimeout(
     backoffRemainingMs: (() -> Long)?,
     maxWaitCeilingMs: Long = 60_000L,
     startupProgress: (() -> LiveStartupProgress?)? = null,
+    isWaitingForHandover: (() -> Boolean)? = null,
     block: suspend () -> Boolean,
 ): Boolean = kotlinx.coroutines.coroutineScope {
     val attemptJob = async { block() }
@@ -108,7 +110,7 @@ internal suspend fun runWithBackoffAwareTimeout(
         previousTickNs = tickNs
         grantedGraceMs += startupGrace.observe(startupProgress?.invoke())
         val backingOff = isBackingOff?.invoke() == true || (backoffRemainingMs?.invoke() ?: 0L) > 0L
-        if (!backingOff) {
+        if (!backingOff && isWaitingForHandover?.invoke() != true) {
             elapsedActiveMs += elapsedMs
             if (elapsedActiveMs >= timeoutMs + grantedGraceMs) {
                 attemptJob.cancel()

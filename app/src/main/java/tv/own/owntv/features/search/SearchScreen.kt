@@ -1,5 +1,7 @@
 package tv.own.owntv.features.search
 
+import tv.own.owntv.core.R as CoreR
+
 import tv.own.owntv.core.epg.displayLogoUrl
 import tv.own.owntv.core.content.SearchIntent
 import tv.own.owntv.core.content.SearchResults
@@ -60,9 +62,9 @@ import tv.own.owntv.ui.format.localizedInteger
 @Composable
 private fun SearchIntent.displayLabel(): String = stringResource(
     when (this) {
-        SearchIntent.CONTINUE -> R.string.search_continue
-        SearchIntent.UNWATCHED -> R.string.search_unwatched
-        SearchIntent.CHANNELS -> R.string.search_channels
+        SearchIntent.CONTINUE -> CoreR.string.search_continue
+        SearchIntent.UNWATCHED -> CoreR.string.search_unwatched
+        SearchIntent.CHANNELS -> CoreR.string.search_channels
     },
 )
 
@@ -124,7 +126,7 @@ fun SearchScreen(
             .onFocusChanged { if (it.hasFocus) onChildFocused() }
             .padding(horizontal = Dimens.ScreenPaddingH, vertical = Dimens.ScreenPaddingV),
     ) {
-        Text(stringResource(R.string.search_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+        Text(stringResource(CoreR.string.search_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
         Spacer(Modifier.height(14.dp))
         SearchBar(
             query = query,
@@ -143,11 +145,11 @@ fun SearchScreen(
                     onIntent = { vm.setIntent(it) },
                 )
             searching && query.trim().length < 2 ->
-                CenterHint(stringResource(R.string.search_minimum_query))
+                CenterHint(stringResource(CoreR.string.search_minimum_query))
             shown.isEmpty ->
                 CenterHint(
-                    if (searching) stringResource(R.string.search_no_results, query.trim())
-                    else stringResource(R.string.search_nothing_in_list, intent?.displayLabel() ?: stringResource(R.string.search_title)),
+                    if (searching) stringResource(CoreR.string.search_no_results, query.trim())
+                    else stringResource(CoreR.string.search_nothing_in_list, intent?.displayLabel() ?: stringResource(CoreR.string.search_title)),
                 )
             else -> ResultsWithDetail(
                 results = shown,
@@ -184,7 +186,7 @@ private fun LauncherEmptyState(
         verticalArrangement = Arrangement.spacedBy(18.dp),
     ) {
         // Intent launcher chips
-        SectionLabel(stringResource(R.string.search_jump_to))
+        SectionLabel(stringResource(CoreR.string.search_jump_to))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             listOf(SearchIntent.CHANNELS).forEach { i ->
                 PillChip(label = i.displayLabel(), tonal = true) { onIntent(i) }
@@ -194,8 +196,8 @@ private fun LauncherEmptyState(
         // Recent searches
         if (recent.isNotEmpty()) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                SectionLabel(stringResource(R.string.search_recent))
-                PillChip(label = stringResource(R.string.search_clear), tonal = false, onClick = onClearRecent)
+                SectionLabel(stringResource(CoreR.string.search_recent))
+                PillChip(label = stringResource(CoreR.string.search_clear), tonal = false, onClick = onClearRecent)
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                 recent.chunked(4).forEach { rowTerms ->
@@ -208,7 +210,7 @@ private fun LauncherEmptyState(
             }
         } else {
             Text(
-                stringResource(R.string.search_recent_empty),
+                stringResource(CoreR.string.search_recent_empty),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -272,7 +274,7 @@ private fun ResultsWithDetail(
                             thumbUrl = item.movie.posterUrl,
                             fallbackIcon = OwnTVIcon.MOVIES,
                             title = item.movie.name,
-                            subtitle = metaLine(item.movie.year, item.movie.rating, stringResource(R.string.search_movie)),
+                            subtitle = metaLine(item.movie.year, item.movie.rating, stringResource(CoreR.string.search_movie)),
                             isFavorite = false,
                             focusRequester = if (item == firstItem) firstRowFocus else null,
                             onFocused = { selected = item },
@@ -285,7 +287,7 @@ private fun ResultsWithDetail(
                             thumbUrl = item.series.posterUrl,
                             fallbackIcon = OwnTVIcon.SERIES,
                             title = item.series.name,
-                            subtitle = metaLine(item.series.year, item.series.rating, stringResource(R.string.search_series)),
+                            subtitle = metaLine(item.series.year, item.series.rating, stringResource(CoreR.string.search_series)),
                             isFavorite = false,
                             focusRequester = if (item == firstItem) firstRowFocus else null,
                             onFocused = { selected = item },
@@ -331,17 +333,17 @@ private fun DetailPane(
         is SearchItem.ChannelItem -> {
             posterUrl = item.row.channel.displayLogoUrl; icon = OwnTVIcon.LIVE_TV
             title = item.row.channel.name; subtitle = channelDetail(item.row); plot = null
-            actionLabel = stringResource(R.string.search_watch_live); action = { onPlayChannel(item.row.channel) }
+            actionLabel = stringResource(CoreR.string.search_watch_live); action = { onPlayChannel(item.row.channel) }
         }
         is SearchItem.MovieItem -> {
             posterUrl = item.movie.posterUrl; icon = OwnTVIcon.MOVIES
-            title = item.movie.name; subtitle = metaLine(item.movie.year, item.movie.rating, stringResource(R.string.search_movie)); plot = item.movie.plot
-            actionLabel = stringResource(R.string.search_play); action = { onPlayMovie(item.movie) }
+            title = item.movie.name; subtitle = metaLine(item.movie.year, item.movie.rating, stringResource(CoreR.string.search_movie)); plot = item.movie.plot
+            actionLabel = stringResource(CoreR.string.search_play); action = { onPlayMovie(item.movie) }
         }
         is SearchItem.SeriesItem -> {
             posterUrl = item.series.posterUrl; icon = OwnTVIcon.SERIES
-            title = item.series.name; subtitle = metaLine(item.series.year, item.series.rating, stringResource(R.string.search_series)); plot = item.series.plot
-            actionLabel = stringResource(R.string.search_open_series); action = { onOpenSeries(item.series) }
+            title = item.series.name; subtitle = metaLine(item.series.year, item.series.rating, stringResource(CoreR.string.search_series)); plot = item.series.plot
+            actionLabel = stringResource(CoreR.string.search_open_series); action = { onOpenSeries(item.series) }
         }
     }
 
@@ -519,10 +521,10 @@ private fun CenterHint(text: String) {
 private fun channelDetail(row: ChannelSearchResult): String? =
     listOfNotNull(
         row.categoryName?.takeIf { it.isNotBlank() },
-        row.channel.number?.let { stringResource(R.string.search_channel_number, it) },
-    ).joinToString(stringResource(R.string.content_genres_separator)).takeIf { it.isNotBlank() }
+        row.channel.number?.let { stringResource(CoreR.string.search_channel_number, it) },
+    ).joinToString(stringResource(CoreR.string.content_genres_separator)).takeIf { it.isNotBlank() }
 
 @Composable
 private fun metaLine(year: Int?, rating: Double?, type: String): String =
-    listOfNotNull(type, year?.let { localizedInteger(it, grouping = false) }, rating?.let { stringResource(R.string.content_rating, it) })
-        .joinToString(stringResource(R.string.content_genres_separator))
+    listOfNotNull(type, year?.let { localizedInteger(it, grouping = false) }, rating?.let { stringResource(CoreR.string.content_rating, it) })
+        .joinToString(stringResource(CoreR.string.content_genres_separator))

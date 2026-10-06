@@ -2,6 +2,8 @@
 
 package tv.own.owntv.features.epg
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.FlowPreview
@@ -188,10 +190,10 @@ class EpgViewModel(
                     xtream = xtream,
                 )
                 if (currentProfileId() == pid) _recordMessages.emit(when {
-                    saved == null -> tv.own.owntv.R.string.media_save_unavailable
-                    saved.failure == tv.own.owntv.core.model.RecordingFailure.STORAGE_UNAVAILABLE -> tv.own.owntv.R.string.media_failed_destination
-                    saved.status == tv.own.owntv.core.model.RecordingStatus.FAILED -> tv.own.owntv.R.string.media_save_unavailable
-                    else -> tv.own.owntv.R.string.media_save_started
+                    saved == null -> CoreR.string.media_save_unavailable
+                    saved.failure == tv.own.owntv.core.model.RecordingFailure.STORAGE_UNAVAILABLE -> CoreR.string.media_failed_destination
+                    saved.status == tv.own.owntv.core.model.RecordingStatus.FAILED -> CoreR.string.media_save_unavailable
+                    else -> CoreR.string.media_save_started
                 })
                 return@launch
             }
@@ -574,7 +576,8 @@ class EpgViewModel(
     }
 
     /** Build the catch-up URL for a [programme] on [channel], or null if the provider can't serve it. */
-    private suspend fun catchupUrlFor(channel: ChannelEntity, programme: EpgProgrammeEntity): String? {
+    private suspend fun catchupUrlFor(channel: ChannelEntity, displayProgramme: EpgProgrammeEntity): String? {
+        val programme = settings.correctCatchupProgramme(displayProgramme)
         val source = sourceDao.getById(channel.sourceId) ?: return null
         // Stalker archive URLs are minted per-play via create_link (Phase E §5.6); the others are
         // pure string templates handled by CatchupUrl.

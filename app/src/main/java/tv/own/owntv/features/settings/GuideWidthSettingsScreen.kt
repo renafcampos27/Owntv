@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -35,7 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.core.settings.GuideWidthLimits
 import tv.own.owntv.core.settings.GuideWidthShares
 import tv.own.owntv.ui.components.OwnTVButton
@@ -71,24 +72,24 @@ fun GuideWidthSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) 
             .padding(horizontal = 40.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Header(title = stringResource(R.string.settings_guide_width), onBack = onBack)
+        Header(title = stringResource(CoreR.string.settings_guide_width), onBack = onBack)
         Spacer(Modifier.height(4.dp))
         Text(
-            stringResource(R.string.settings_guide_width_description),
+            stringResource(CoreR.string.settings_guide_width_description),
             style = MaterialTheme.typography.bodyMedium,
             color = OwnTVTheme.colors.onSurfaceVariant,
         )
         Spacer(Modifier.height(16.dp))
         Row2(
             icon = OwnTVIcon.EPG,
-            title = stringResource(R.string.content_epg_title),
+            title = stringResource(CoreR.string.content_epg_title),
             desc = stringResource(
-                R.string.settings_guide_width_summary,
+                CoreR.string.settings_guide_width_summary,
                 current.channels,
                 current.epg,
             ),
             chip = stringResource(
-                if (enabled) R.string.settings_live_latency_custom else R.string.settings_subtitle_default,
+                if (enabled) CoreR.string.settings_live_latency_custom else CoreR.string.settings_subtitle_default,
             ),
             primaryChip = enabled,
             chevron = true,
@@ -96,9 +97,9 @@ fun GuideWidthSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) 
             onClick = { showDialog = true },
         )
         Spacer(Modifier.height(12.dp))
-        GroupLabel(stringResource(R.string.settings_how_it_works))
+        GroupLabel(stringResource(CoreR.string.settings_how_it_works))
         Text(
-            stringResource(R.string.settings_guide_width_help),
+            stringResource(CoreR.string.settings_guide_width_help),
             style = MaterialTheme.typography.bodyMedium,
             color = OwnTVTheme.colors.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -142,15 +143,15 @@ private fun GuideWidthDialog(
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
                     Text(
-                        stringResource(R.string.settings_guide_width),
+                        stringResource(CoreR.string.settings_guide_width),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.onSurface,
                     )
                     Row2(
                         icon = OwnTVIcon.EPG,
-                        title = stringResource(R.string.settings_panel_width_customize),
-                        desc = stringResource(R.string.settings_guide_width_description),
-                        chip = stringResource(if (enabled) R.string.common_on else R.string.common_off),
+                        title = stringResource(CoreR.string.settings_panel_width_customize),
+                        desc = stringResource(CoreR.string.settings_guide_width_description),
+                        chip = stringResource(if (enabled) CoreR.string.common_on else CoreR.string.common_off),
                         primaryChip = enabled,
                         modifier = Modifier.focusRequester(firstFocus),
                         onClick = { enabled = !enabled },
@@ -158,7 +159,7 @@ private fun GuideWidthDialog(
 
                     GuideWidthDiagram(draft)
                     StepRow(
-                        label = stringResource(R.string.settings_guide_width_channels),
+                        label = stringResource(CoreR.string.settings_guide_width_channels),
                         value = draft.channels,
                         minimum = GuideWidthLimits.MIN,
                         maximum = GuideWidthLimits.MAX,
@@ -166,7 +167,7 @@ private fun GuideWidthDialog(
                         onSet = { draft = draft.copy(channels = it); showError = false },
                     )
                     StepRow(
-                        label = stringResource(R.string.settings_guide_width_epg),
+                        label = stringResource(CoreR.string.settings_guide_width_epg),
                         value = draft.epg,
                         minimum = GuideWidthLimits.MIN,
                         maximum = GuideWidthLimits.MAX,
@@ -176,14 +177,14 @@ private fun GuideWidthDialog(
 
                     Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                         Text(
-                            stringResource(R.string.settings_panel_width_total),
+                            stringResource(CoreR.string.settings_panel_width_total),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = colors.onSurface,
                         )
                         Spacer(Modifier.weight(1f))
                         Text(
-                            stringResource(R.string.common_percent, draft.total),
+                            stringResource(CoreR.string.common_percent, draft.total),
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.SemiBold,
                             color = if (draft.isValid) colors.primary else colors.favorite,
@@ -191,7 +192,7 @@ private fun GuideWidthDialog(
                     }
                     if (showError && !draft.isValid) {
                         Text(
-                            stringResource(R.string.settings_panel_width_invalid_total, draft.total),
+                            stringResource(CoreR.string.settings_panel_width_invalid_total, draft.total),
                             style = MaterialTheme.typography.bodySmall,
                             color = colors.favorite,
                         )
@@ -203,18 +204,18 @@ private fun GuideWidthDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         OwnTVButton(
-                            stringResource(R.string.common_reset),
+                            stringResource(CoreR.string.common_reset),
                             onClick = { draft = GuideWidthLimits.defaults; showError = false },
                             style = OwnTVButtonStyle.SECONDARY,
                         )
                         Spacer(Modifier.weight(1f))
                         OwnTVButton(
-                            stringResource(R.string.common_cancel),
+                            stringResource(CoreR.string.common_cancel),
                             onClick = onDismiss,
                             style = OwnTVButtonStyle.SECONDARY,
                         )
                         OwnTVButton(
-                            stringResource(R.string.common_ok),
+                            stringResource(CoreR.string.common_ok),
                             onClick = {
                                 if (!draft.isValid) showError = true
                                 else {
@@ -246,7 +247,7 @@ private fun GuideWidthDiagram(shares: GuideWidthShares) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                stringResource(R.string.common_percent, shares.channels),
+                stringResource(CoreR.string.common_percent, shares.channels),
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onPrimaryContainer,
                 maxLines = 1,
@@ -262,7 +263,7 @@ private fun GuideWidthDiagram(shares: GuideWidthShares) {
             contentAlignment = Alignment.Center,
         ) {
             Text(
-                stringResource(R.string.common_percent, shares.epg),
+                stringResource(CoreR.string.common_percent, shares.epg),
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSecondaryContainer,
                 maxLines = 1,

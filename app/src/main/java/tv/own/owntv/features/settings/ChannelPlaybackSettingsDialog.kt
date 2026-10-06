@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.*
@@ -17,7 +19,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import kotlinx.coroutines.delay
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.player.EnginePreference
 import tv.own.owntv.core.settings.ChannelPlaybackOptions
@@ -53,8 +54,8 @@ internal fun ChannelPlaybackSettingsDialog(vm: SettingsViewModel, onDismiss: () 
     }
     OwnTVPopup(onDismissRequest = onDismiss) {
         Column(Modifier.dialogPanel(width = 680.dp).trapAllFocusExit().focusGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.settings_channel_playback), color = colors.onSurface, style = MaterialTheme.typography.titleLarge)
-            Text(stringResource(R.string.settings_channel_apply_hint), color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.settings_channel_playback), color = colors.onSurface, style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(CoreR.string.settings_channel_apply_hint), color = colors.onSurfaceVariant)
             if (sourceId == null) {
                 LazyColumn(Modifier.fillMaxWidth().heightIn(max = 330.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     itemsIndexed(sources.filter { it.syncLive }, key = { _, it -> it.id }) { index, source ->
@@ -63,25 +64,25 @@ internal fun ChannelPlaybackSettingsDialog(vm: SettingsViewModel, onDismiss: () 
                         }
                     }
                 }
-                OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss,
+                OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss,
                     modifier = if (sources.none { it.syncLive }) Modifier.focusRequester(focus) else Modifier)
             } else {
                 Text(sources.firstOrNull { it.id == sourceId }?.name.orEmpty(), color = colors.onSurface)
                 SearchBar(query, { query = it }, modifier = Modifier.fillMaxWidth().focusRequester(focus), surface = null)
-                if (candidates == null) Text(stringResource(R.string.channel_versions_loading), color = colors.onSurfaceVariant)
+                if (candidates == null) Text(stringResource(CoreR.string.channel_versions_loading), color = colors.onSurfaceVariant)
                 LazyColumn(Modifier.fillMaxWidth().heightIn(max = 330.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     items(candidates.orEmpty(), key = { it.id }) { item ->
                         val customized = configs.any { it.channel.matches(item) }
                         FocusableSurface(onClick = { channel = item }, modifier = Modifier.fillMaxWidth()) {
                             Column(Modifier.padding(12.dp)) {
                                 Text(item.name, color = colors.onSurface)
-                                if (customized) Text(stringResource(R.string.settings_channel_customized), color = colors.primary)
+                                if (customized) Text(stringResource(CoreR.string.settings_channel_customized), color = colors.primary)
                             }
                         }
                     }
                 }
-                if (candidates != null && candidates.orEmpty().isEmpty()) Text(stringResource(R.string.content_no_channels_here), color = colors.onSurfaceVariant)
-                OwnTVButton(stringResource(R.string.common_back), onClick = { sourceId = null })
+                if (candidates != null && candidates.orEmpty().isEmpty()) Text(stringResource(CoreR.string.content_no_channels_here), color = colors.onSurfaceVariant)
+                OwnTVButton(stringResource(CoreR.string.common_back), onClick = { sourceId = null })
             }
         }
     }
@@ -101,30 +102,30 @@ private fun ChannelPlaybackEditor(channel: ChannelEntity, initial: ChannelPlayba
     val focus = remember { ChannelField.entries.associateWith { FocusRequester() } }
     val listState = rememberLazyListState()
     val colors = OwnTVTheme.colors
-    val inherit = stringResource(R.string.settings_channel_inherit)
+    val inherit = stringResource(CoreR.string.settings_channel_inherit)
     val labels = mapOf(
-        ChannelField.ENGINE to stringResource(R.string.settings_live_tv_player),
-        ChannelField.FORMAT to stringResource(R.string.settings_channel_format),
-        ChannelField.RESERVE to stringResource(R.string.settings_channel_reserve),
-        ChannelField.EXTRA to stringResource(R.string.settings_channel_extra),
-        ChannelField.PREROLL to stringResource(R.string.settings_channel_preroll),
-        ChannelField.LATENCY to stringResource(R.string.settings_channel_latency),
-        ChannelField.SOFTWARE_AUDIO to stringResource(R.string.settings_channel_software_audio),
-        ChannelField.AUDIO_DELAY to stringResource(R.string.settings_channel_audio_sync),
-        ChannelField.HLS_BOUNDARIES to stringResource(R.string.settings_channel_hls_boundaries),
-        ChannelField.HLS_KEYFRAMES to stringResource(R.string.settings_channel_hls_keyframes),
-        ChannelField.HLS_SEGMENTS to stringResource(R.string.settings_channel_hls_segments),
+        ChannelField.ENGINE to stringResource(CoreR.string.settings_live_tv_player),
+        ChannelField.FORMAT to stringResource(CoreR.string.settings_channel_format),
+        ChannelField.RESERVE to stringResource(CoreR.string.settings_channel_reserve),
+        ChannelField.EXTRA to stringResource(CoreR.string.settings_channel_extra),
+        ChannelField.PREROLL to stringResource(CoreR.string.settings_channel_preroll),
+        ChannelField.LATENCY to stringResource(CoreR.string.settings_channel_latency),
+        ChannelField.SOFTWARE_AUDIO to stringResource(CoreR.string.settings_channel_software_audio),
+        ChannelField.AUDIO_DELAY to stringResource(CoreR.string.settings_channel_audio_sync),
+        ChannelField.HLS_BOUNDARIES to stringResource(CoreR.string.settings_channel_hls_boundaries),
+        ChannelField.HLS_KEYFRAMES to stringResource(CoreR.string.settings_channel_hls_keyframes),
+        ChannelField.HLS_SEGMENTS to stringResource(CoreR.string.settings_channel_hls_segments),
     )
     val hints = mapOf(
-        ChannelField.ENGINE to stringResource(R.string.settings_channel_hls_hint),
-        ChannelField.RESERVE to stringResource(R.string.settings_channel_reserve_hint),
-        ChannelField.EXTRA to stringResource(R.string.settings_channel_extra_hint),
-        ChannelField.PREROLL to stringResource(R.string.settings_channel_preroll_hint),
-        ChannelField.LATENCY to stringResource(R.string.settings_channel_latency_hint),
-        ChannelField.AUDIO_DELAY to stringResource(R.string.settings_channel_audio_hint),
-        ChannelField.HLS_BOUNDARIES to stringResource(R.string.settings_channel_hls_boundaries_hint),
-        ChannelField.HLS_KEYFRAMES to stringResource(R.string.settings_channel_hls_keyframes_hint),
-        ChannelField.HLS_SEGMENTS to stringResource(R.string.settings_channel_hls_segments_hint),
+        ChannelField.ENGINE to stringResource(CoreR.string.settings_channel_hls_hint),
+        ChannelField.RESERVE to stringResource(CoreR.string.settings_channel_reserve_hint),
+        ChannelField.EXTRA to stringResource(CoreR.string.settings_channel_extra_hint),
+        ChannelField.PREROLL to stringResource(CoreR.string.settings_channel_preroll_hint),
+        ChannelField.LATENCY to stringResource(CoreR.string.settings_channel_latency_hint),
+        ChannelField.AUDIO_DELAY to stringResource(CoreR.string.settings_channel_audio_hint),
+        ChannelField.HLS_BOUNDARIES to stringResource(CoreR.string.settings_channel_hls_boundaries_hint),
+        ChannelField.HLS_KEYFRAMES to stringResource(CoreR.string.settings_channel_hls_keyframes_hint),
+        ChannelField.HLS_SEGMENTS to stringResource(CoreR.string.settings_channel_hls_segments_hint),
     )
     val numbers = mapOf(ChannelField.RESERVE to (1..60).toList(), ChannelField.EXTRA to (0..10).toList(),
         ChannelField.PREROLL to (0..10).toList(), ChannelField.LATENCY to (1..60).toList(), ChannelField.AUDIO_DELAY to (-5000..5000 step 50).toList())
@@ -132,16 +133,16 @@ private fun ChannelPlaybackEditor(channel: ChannelEntity, initial: ChannelPlayba
         (if (field.isHlsCompatibility()) emptyList() else listOf("inherit" to inherit)) + when (field) {
             ChannelField.ENGINE -> listOf(EnginePreference.EXO_ONLY.name to engineLabel(EnginePreference.EXO_ONLY),
                 EnginePreference.MPV_ONLY.name to engineLabel(EnginePreference.MPV_ONLY))
-            ChannelField.FORMAT -> listOf(ChannelStreamFormat.HLS.name to stringResource(R.string.settings_channel_hls),
-                ChannelStreamFormat.TS.name to stringResource(R.string.settings_channel_ts),
-                ChannelStreamFormat.AUTO.name to stringResource(R.string.settings_channel_auto_format))
+            ChannelField.FORMAT -> listOf(ChannelStreamFormat.HLS.name to stringResource(CoreR.string.settings_channel_hls),
+                ChannelStreamFormat.TS.name to stringResource(CoreR.string.settings_channel_ts),
+                ChannelStreamFormat.AUTO.name to stringResource(CoreR.string.settings_channel_auto_format))
             ChannelField.HLS_BOUNDARIES, ChannelField.HLS_KEYFRAMES, ChannelField.HLS_SEGMENTS -> listOf(
-                "false" to stringResource(R.string.settings_channel_hls_standard),
-                "true" to stringResource(R.string.settings_channel_hls_enabled))
-            ChannelField.SOFTWARE_AUDIO -> listOf("false" to stringResource(R.string.settings_channel_audio_auto), "true" to stringResource(R.string.settings_channel_audio_software))
+                "false" to stringResource(CoreR.string.settings_channel_hls_standard),
+                "true" to stringResource(CoreR.string.settings_channel_hls_enabled))
+            ChannelField.SOFTWARE_AUDIO -> listOf("false" to stringResource(CoreR.string.settings_channel_audio_auto), "true" to stringResource(CoreR.string.settings_channel_audio_software))
             else -> numbers.getValue(field).map { value -> value.toString() to
-                if (field == ChannelField.PREROLL && value == 0) stringResource(R.string.settings_auto)
-                else stringResource(if (field == ChannelField.AUDIO_DELAY) R.string.settings_channel_ms else R.string.settings_channel_seconds, value) }
+                if (field == ChannelField.PREROLL && value == 0) stringResource(CoreR.string.settings_auto)
+                else stringResource(if (field == ChannelField.AUDIO_DELAY) CoreR.string.settings_channel_ms else CoreR.string.settings_channel_seconds, value) }
         }
     }
     fun selected(field: ChannelField): String = when (field) {
@@ -196,7 +197,7 @@ private fun ChannelPlaybackEditor(channel: ChannelEntity, initial: ChannelPlayba
     OwnTVPopup(onDismissRequest = onDismiss) {
         Column(Modifier.dialogPanel(width = 720.dp).trapAllFocusExit().focusGroup(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(channel.name, color = colors.onSurface, style = MaterialTheme.typography.titleLarge)
-            Text(stringResource(R.string.settings_channel_apply_hint), color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.settings_channel_apply_hint), color = colors.onSurfaceVariant)
             val maxHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 250.dp).coerceIn(140.dp, 390.dp)
             LazyColumn(Modifier.fillMaxWidth().heightIn(max = maxHeight), state = listState, verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 items(ChannelField.entries, key = { it.name }) { item ->
@@ -206,10 +207,10 @@ private fun ChannelPlaybackEditor(channel: ChannelEntity, initial: ChannelPlayba
                         onClick = { returnField = item; picker = item })
                 }
             }
-            OwnTVButton(stringResource(R.string.settings_channel_reset), onClick = { draft = ChannelPlaybackOptions() }, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.settings_channel_reset), onClick = { draft = ChannelPlaybackOptions() }, style = OwnTVButtonStyle.SECONDARY)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.common_save), onClick = { onSave(draft.normalized()) })
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_save), onClick = { onSave(draft.normalized()) })
             }
         }
     }

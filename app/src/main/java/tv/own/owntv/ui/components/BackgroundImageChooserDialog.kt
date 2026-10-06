@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -28,7 +30,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 import java.io.File
 
@@ -66,22 +67,22 @@ fun BackgroundImageChooserDialog(
         contentAlignment = Alignment.Center,
     ) {
         Column(Modifier.dialogPanel(width = 560.dp, padding = 28.dp)) {
-            Text(stringResource(R.string.setup_background_image), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.setup_background_image), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(R.string.setup_background_image_description),
+                stringResource(CoreR.string.setup_background_image_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
             Spacer(Modifier.height(20.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
                 if (hasImage) {
-                    OwnTVButton(stringResource(R.string.common_clear), onClick = onClear, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_clear), onClick = onClear, style = OwnTVButtonStyle.SECONDARY)
                 }
-                OwnTVButton(stringResource(R.string.setup_from_phone), onClick = onPickRemote, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.setup_from_device), onClick = onPickLocal, modifier = Modifier.focusRequester(firstFocus))
+                OwnTVButton(stringResource(CoreR.string.setup_from_phone), onClick = onPickRemote, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.setup_from_device), onClick = onPickLocal, modifier = Modifier.focusRequester(firstFocus))
             }
         }
     }
@@ -120,10 +121,10 @@ fun RemoteBackgroundDialog(
         contentAlignment = Alignment.Center,
     ) {
         Column(Modifier.dialogPanel(width = 560.dp, padding = 28.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.setup_send_from_phone), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.setup_send_from_phone), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(R.string.setup_phone_background_description),
+                stringResource(CoreR.string.setup_phone_background_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -132,9 +133,9 @@ fun RemoteBackgroundDialog(
             when (state) {
                 tv.own.owntv.core.companion.CompanionServerState.Idle,
                 tv.own.owntv.core.companion.CompanionServerState.Starting,
-                -> Text(stringResource(R.string.setup_opening_server), style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
+                -> Text(stringResource(CoreR.string.setup_opening_server), style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
                 is tv.own.owntv.core.companion.CompanionServerState.Listening -> {
-                    Text(stringResource(R.string.setup_enter_pin_browser), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    Text(stringResource(CoreR.string.setup_enter_pin_browser), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                     Spacer(Modifier.height(4.dp))
                     Text(
                         state.pin,
@@ -147,14 +148,14 @@ fun RemoteBackgroundDialog(
                     state.qr?.let { qr ->
                         androidx.compose.foundation.Image(
                             bitmap = qr.asImageBitmap(),
-                            contentDescription = stringResource(R.string.common_qr_code_companion_url),
+                            contentDescription = stringResource(CoreR.string.common_qr_code_companion_url),
                             // White backing panel like the backup screens — a QR on a dark/glass panel may not scan.
                             modifier = Modifier.size(160.dp).clip(RoundedCornerShape(12.dp)).background(Color.White).padding(8.dp),
                             contentScale = androidx.compose.ui.layout.ContentScale.Fit,
                         )
                         Spacer(Modifier.height(10.dp))
                     }
-                    Text(stringResource(R.string.setup_open_url), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Text(stringResource(CoreR.string.setup_open_url), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                     Spacer(Modifier.height(2.dp))
                     state.urls.forEach { url ->
                         Text(url, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
@@ -163,7 +164,7 @@ fun RemoteBackgroundDialog(
                 is tv.own.owntv.core.companion.CompanionServerState.Failed -> {
                     Text(state.failure.displayText(), style = MaterialTheme.typography.bodyMedium, color = Color(0xFFEF4444), textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                     Spacer(Modifier.height(12.dp))
-                    OwnTVButton(stringResource(R.string.setup_try_again), onClick = { onStart(tv.own.owntv.core.companion.CompanionLink.DEFAULT_PORT) })
+                    OwnTVButton(stringResource(CoreR.string.setup_try_again), onClick = { onStart(tv.own.owntv.core.companion.CompanionLink.DEFAULT_PORT) })
                 }
                 tv.own.owntv.core.companion.CompanionServerState.Locked -> {
                     Text(
@@ -174,11 +175,11 @@ fun RemoteBackgroundDialog(
                     )
                     Spacer(Modifier.height(12.dp))
                     // Restarting mints a fresh PIN, so this is the recovery path — not a retry of a failure.
-                    OwnTVButton(stringResource(R.string.setup_start_again_new_pin), onClick = { onStart(tv.own.owntv.core.companion.CompanionLink.DEFAULT_PORT) })
+                    OwnTVButton(stringResource(CoreR.string.setup_start_again_new_pin), onClick = { onStart(tv.own.owntv.core.companion.CompanionLink.DEFAULT_PORT) })
                 }
             }
             Spacer(Modifier.height(20.dp))
-            OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.focusRequester(firstFocus))
+            OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.focusRequester(firstFocus))
         }
     }
 }

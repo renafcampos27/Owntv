@@ -1,5 +1,7 @@
 package tv.own.owntv.features.home
 
+import tv.own.owntv.core.R as CoreR
+
 import tv.own.owntv.core.epg.displayLogoUrl
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -47,7 +49,6 @@ import androidx.tv.material3.Text
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.database.entity.EpgProgrammeEntity
 import tv.own.owntv.core.home.GuideSliceState
-import tv.own.owntv.R
 import tv.own.owntv.core.model.HomeLiveRowMode
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.ui.components.FocusableSurface
@@ -265,7 +266,7 @@ private fun OnNowRow(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = stringResource(R.string.home_on_now_title, title.uppercase()),
+                    text = stringResource(CoreR.string.home_on_now_title, title.uppercase()),
                     style = MaterialTheme.typography.titleSmall,
                     color = colors.primary,
                     fontWeight = FontWeight.Bold,
@@ -275,9 +276,9 @@ private fun OnNowRow(
                 Spacer(Modifier.weight(1f))
                 Text(
                     text = when {
-                        focused && activeRowIndex >= 0 -> stringResource(R.string.home_ok_to_watch)
-                        focused -> stringResource(R.string.home_ok_to_browse)
-                        else -> pluralStringResource(R.plurals.home_channel_count, rows.size, rows.size)
+                        focused && activeRowIndex >= 0 -> stringResource(CoreR.string.home_ok_to_watch)
+                        focused -> stringResource(CoreR.string.home_ok_to_browse)
+                        else -> pluralStringResource(CoreR.plurals.home_channel_count, rows.size, rows.size)
                     },
                     style = MaterialTheme.typography.labelMedium,
                     color = colors.onSurfaceVariant,
@@ -316,12 +317,12 @@ private fun OnNowChannelItem(
     val colors = OwnTVTheme.colors
     val rowShape = RoundedCornerShape(8.dp)
     val formatTime = rememberSystemTimeFormatter()
-    val noProgrammeDetails = stringResource(R.string.home_no_programme_details)
-    val guideUnavailable = stringResource(R.string.home_guide_unavailable)
-    val timeRangeTemplate = stringResource(R.string.home_time_range)
-    val nowTemplate = stringResource(R.string.home_now_time)
-    val upNextTemplate = stringResource(R.string.home_up_next_time)
-    val upcomingTemplate = stringResource(R.string.home_upcoming_item)
+    val noProgrammeDetails = stringResource(CoreR.string.home_no_programme_details)
+    val guideUnavailable = stringResource(CoreR.string.home_guide_unavailable)
+    val timeRangeTemplate = stringResource(CoreR.string.home_time_range)
+    val nowTemplate = stringResource(CoreR.string.home_now_time)
+    val upNextTemplate = stringResource(CoreR.string.home_up_next_time)
+    val upcomingTemplate = stringResource(CoreR.string.home_upcoming_item)
     val info = remember(
         programmes,
         now,
@@ -372,7 +373,7 @@ private fun OnNowChannelItem(
                 verticalArrangement = Arrangement.Center,
             ) {
                 Text(
-                    text = channel.number?.let { stringResource(R.string.home_channel_number, it, channel.name) } ?: channel.name,
+                    text = channel.number?.let { stringResource(CoreR.string.home_channel_number, it, channel.name) } ?: channel.name,
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.onSurfaceVariant.copy(alpha = if (focused) 0.88f else 0.70f),
                     maxLines = 1,
@@ -409,13 +410,13 @@ private fun OnNowChannelItem(
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Text(
-                        text = stringResource(R.string.home_next),
+                        text = stringResource(CoreR.string.home_next),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onSurfaceVariant.copy(alpha = 0.52f),
                         fontWeight = FontWeight.SemiBold,
                     )
                     Text(
-                        text = info.upcoming.joinToString(stringResource(R.string.content_metadata_separator)),
+                        text = info.upcoming.joinToString(stringResource(CoreR.string.content_metadata_separator)),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant.copy(alpha = 0.44f),
                         maxLines = 1,
@@ -569,8 +570,8 @@ private fun programmeTimeLabel(
     val time = String.format(
         Locale.ROOT,
         timeRangeTemplate,
-        formatTime(programme.startMs),
-        formatTime(programme.stopMs),
+        formatTime(programme.displayStartMs),
+        formatTime(programme.displayStopMs),
     )
     return if (now in programme.startMs until programme.stopMs) {
         String.format(Locale.ROOT, nowTemplate, time)
@@ -584,5 +585,5 @@ private fun programmeUpcomingLabel(
     formatTime: (Long) -> String,
     upcomingTemplate: String,
 ): String {
-    return String.format(Locale.ROOT, upcomingTemplate, formatTime(programme.startMs), programme.title)
+    return String.format(Locale.ROOT, upcomingTemplate, formatTime(programme.displayStartMs), programme.title)
 }

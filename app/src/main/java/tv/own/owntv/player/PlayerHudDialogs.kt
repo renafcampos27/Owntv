@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import kotlinx.coroutines.delay
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVIcon
@@ -108,12 +109,12 @@ internal fun TrackDialog(
     }
     DialogScaffold(title = title, onDismiss = onDismiss, state = listState) {
         if (tracks.isEmpty() && onOff == null) {
-            item { Text(stringResource(R.string.player_no_tracks), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, modifier = Modifier.padding(16.dp)) }
+            item { Text(stringResource(CoreR.string.player_no_tracks), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, modifier = Modifier.padding(16.dp)) }
         }
         if (onOff != null) {
             item {
                 if (focusOff) LaunchedEffect(Unit) { androidx.compose.runtime.withFrameNanos {}; runCatching { focus.requestFocus() } }
-                OptionRow(label = stringResource(R.string.common_off), selected = selectedIndex < 0, modifier = if (focusOff) Modifier.focusRequester(focus) else Modifier, onClick = onOff)
+                OptionRow(label = stringResource(CoreR.string.common_off), selected = selectedIndex < 0, modifier = if (focusOff) Modifier.focusRequester(focus) else Modifier, onClick = onOff)
             }
         }
         items(tracks.size) { index ->
@@ -123,7 +124,7 @@ internal fun TrackDialog(
             OptionRow(
                 // Image-based subs (PGS/VOBSUB/DVB) play via the ExoPlayer handoff on VOD — mark them so
                 // it's clear they're a different kind of track, but they're fully selectable.
-                label = if (!track.image) track.displayLabel() else stringResource(R.string.player_image_track, track.displayLabel()),
+                label = if (!track.image) track.displayLabel() else stringResource(CoreR.string.player_image_track, track.displayLabel()),
                 selected = track.selected,
                 modifier = if (focusThis) Modifier.focusRequester(focus) else Modifier,
                 onClick = { onSelect(track) },
@@ -133,30 +134,30 @@ internal fun TrackDialog(
         if (onSearchSubtitles != null || onSelectLocalSubtitle != null) {
             item {
                 Text(
-                    stringResource(R.string.player_add_subtitles),
+                    stringResource(CoreR.string.player_add_subtitles),
                     style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(start = 16.dp, top = 10.dp, bottom = 2.dp),
                 )
             }
             if (onSearchSubtitles != null) {
-                item { OptionRow(label = stringResource(R.string.player_search_subtitles), selected = false, onClick = onSearchSubtitles) }
+                item { OptionRow(label = stringResource(CoreR.string.player_search_subtitles), selected = false, onClick = onSearchSubtitles) }
             }
             if (onSelectLocalSubtitle != null) {
-                item { OptionRow(label = stringResource(R.string.player_select_local_subtitle), selected = false, onClick = onSelectLocalSubtitle) }
+                item { OptionRow(label = stringResource(CoreR.string.player_select_local_subtitle), selected = false, onClick = onSelectLocalSubtitle) }
             }
         }
         // ADJUST (subtitles dialog): timing panel for the active subtitle (plan §8).
         if (onSubtitleTiming != null) {
             item {
                 Text(
-                    stringResource(R.string.player_adjust),
+                    stringResource(CoreR.string.player_adjust),
                     style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.padding(start = 16.dp, top = 10.dp, bottom = 2.dp),
                 )
             }
-            item { OptionRow(label = stringResource(R.string.player_subtitle_timing), selected = false, onClick = onSubtitleTiming) }
+            item { OptionRow(label = stringResource(CoreR.string.player_subtitle_timing), selected = false, onClick = onSubtitleTiming) }
         }
         // A/V-sync nudge (audio dialog, VOD only) — fixes a badly-muxed file where audio leads/lags the video.
         if (onAdjustAudioDelay != null) {
@@ -166,10 +167,10 @@ internal fun TrackDialog(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(stringResource(R.string.player_av_sync), style = MaterialTheme.typography.titleSmall, color = colors.onSurface, modifier = Modifier.weight(1f))
+                    Text(stringResource(CoreR.string.player_av_sync), style = MaterialTheme.typography.titleSmall, color = colors.onSurface, modifier = Modifier.weight(1f))
                     // 25 ms steps, matching Settings: what this corrects is the display's own picture-processing
                     // delay, which lands in the tens of milliseconds — 50 ms could bracket it but not hit it.
-                    StepButton(stringResource(R.string.common_minus), enabled = (audioDelayMs ?: 0) > -5_000) { onAdjustAudioDelay(-AV_SYNC_STEP_MS) }
+                    StepButton(stringResource(CoreR.string.common_minus), enabled = (audioDelayMs ?: 0) > -5_000) { onAdjustAudioDelay(-AV_SYNC_STEP_MS) }
                     Text(
                         formatDelay(audioDelayMs ?: 0),
                         style = MaterialTheme.typography.bodyMedium, color = colors.primary,
@@ -178,7 +179,7 @@ internal fun TrackDialog(
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
-                    StepButton(stringResource(R.string.common_plus), enabled = (audioDelayMs ?: 0) < 5_000) { onAdjustAudioDelay(AV_SYNC_STEP_MS) }
+                    StepButton(stringResource(CoreR.string.common_plus), enabled = (audioDelayMs ?: 0) < 5_000) { onAdjustAudioDelay(AV_SYNC_STEP_MS) }
                 }
             }
             // Lip-sync error belongs to the stream, not to the user: this keeps the offset for THIS
@@ -186,7 +187,7 @@ internal fun TrackDialog(
             if (onToggleRememberAudioDelay != null) {
                 item {
                     OptionRow(
-                        label = stringResource(R.string.player_av_sync_remember),
+                        label = stringResource(CoreR.string.player_av_sync_remember),
                         selected = audioDelayRemembered,
                         onClick = onToggleRememberAudioDelay,
                     )
@@ -210,9 +211,9 @@ private suspend fun requestFocusRetrying(focus: FocusRequester) {
 
 @Composable
 private fun formatDelay(ms: Int): String = when {
-    ms == 0 -> stringResource(R.string.player_delay_zero)
-    ms > 0 -> stringResource(R.string.player_delay_positive, ms)
-    else -> stringResource(R.string.player_delay_negative, ms)
+    ms == 0 -> stringResource(CoreR.string.player_delay_zero)
+    ms > 0 -> stringResource(CoreR.string.player_delay_positive, ms)
+    else -> stringResource(CoreR.string.player_delay_negative, ms)
 }
 
 @Composable
@@ -221,11 +222,11 @@ internal fun SpeedDialog(current: Double, onSelect: (Double) -> Unit, onDismiss:
     LaunchedEffect(Unit) { requestFocusRetrying(focus) }
     BackHandler { onDismiss() }
     val selectedIndex = SPEEDS.indexOfFirst { kotlin.math.abs(it - current) < 0.01 }.coerceAtLeast(0)
-    DialogScaffold(title = stringResource(R.string.settings_playback_speed), onDismiss = onDismiss) {
+    DialogScaffold(title = stringResource(CoreR.string.settings_playback_speed), onDismiss = onDismiss) {
         items(SPEEDS.size) { index ->
             val speed = SPEEDS[index]
             OptionRow(
-                label = if (speed == 1.0) stringResource(R.string.player_speed_normal) else stringResource(R.string.player_speed, localizedDecimal(speed)),
+                label = if (speed == 1.0) stringResource(CoreR.string.player_speed_normal) else stringResource(CoreR.string.player_speed, localizedDecimal(speed)),
                 selected = kotlin.math.abs(speed - current) < 0.01,
                 modifier = if (index == selectedIndex) Modifier.focusRequester(focus) else Modifier,
                 onClick = { onSelect(speed) },
@@ -241,7 +242,7 @@ internal fun ZoomDialog(current: ZoomMode, onSelect: (ZoomMode) -> Unit, onDismi
     BackHandler { onDismiss() }
     // Land focus on the current mode (not always the first row) so re-opening starts on your selection.
     val selectedIndex = ZoomMode.entries.indexOf(current).coerceAtLeast(0)
-    DialogScaffold(title = stringResource(R.string.settings_player_zoom), onDismiss = onDismiss) {
+    DialogScaffold(title = stringResource(CoreR.string.settings_player_zoom), onDismiss = onDismiss) {
         items(ZoomMode.entries.size) { index ->
             val mode = ZoomMode.entries[index]
             OptionRow(label = stringResource(mode.labelRes), selected = mode == current, modifier = if (index == selectedIndex) Modifier.focusRequester(focus) else Modifier, onClick = { onSelect(mode) })
@@ -269,25 +270,25 @@ internal fun SubtitleTimingDialog(player: PlaybackEngine, onDismiss: () -> Unit)
                 contentAlignment = Alignment.BottomCenter,
             ) {
                 Column(Modifier.dialogPanel(width = 560.dp, padding = 24.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.player_subtitle_timing), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+                    Text(stringResource(CoreR.string.player_subtitle_timing), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
                     Spacer(Modifier.height(10.dp))
                     Text(formatSubDelay(delay), style = MaterialTheme.typography.headlineLarge, color = colors.accent)
                     Spacer(Modifier.height(4.dp))
                     Text(
                         when {
-                            delay > 0 -> stringResource(R.string.player_subtitles_later)
-                            delay < 0 -> stringResource(R.string.player_subtitles_earlier)
-                            else -> stringResource(R.string.player_no_offset)
+                            delay > 0 -> stringResource(CoreR.string.player_subtitles_later)
+                            delay < 0 -> stringResource(CoreR.string.player_subtitles_earlier)
+                            else -> stringResource(CoreR.string.player_no_offset)
                         },
                         style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(18.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        OwnTVButton(stringResource(R.string.player_subtitle_delay_negative, 0.5), onClick = { player.adjustSubtitleDelay(-500) }, style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY)
-                        OwnTVButton(stringResource(R.string.player_subtitle_delay_negative, 0.1), onClick = { player.adjustSubtitleDelay(-100) }, style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY)
-                        OwnTVButton(stringResource(R.string.common_reset), onClick = { player.resetSubtitleDelay() }, modifier = Modifier.focusRequester(focus))
-                        OwnTVButton(stringResource(R.string.player_subtitle_delay_positive, 0.1), onClick = { player.adjustSubtitleDelay(100) }, style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY)
-                        OwnTVButton(stringResource(R.string.player_subtitle_delay_positive, 0.5), onClick = { player.adjustSubtitleDelay(500) }, style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY)
+                        OwnTVButton(stringResource(CoreR.string.player_subtitle_delay_negative, 0.5), onClick = { player.adjustSubtitleDelay(-500) }, style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY)
+                        OwnTVButton(stringResource(CoreR.string.player_subtitle_delay_negative, 0.1), onClick = { player.adjustSubtitleDelay(-100) }, style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY)
+                        OwnTVButton(stringResource(CoreR.string.common_reset), onClick = { player.resetSubtitleDelay() }, modifier = Modifier.focusRequester(focus))
+                        OwnTVButton(stringResource(CoreR.string.player_subtitle_delay_positive, 0.1), onClick = { player.adjustSubtitleDelay(100) }, style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY)
+                        OwnTVButton(stringResource(CoreR.string.player_subtitle_delay_positive, 0.5), onClick = { player.adjustSubtitleDelay(500) }, style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY)
                     }
                 }
             }
@@ -297,9 +298,9 @@ internal fun SubtitleTimingDialog(player: PlaybackEngine, onDismiss: () -> Unit)
 
 @Composable
 private fun formatSubDelay(ms: Int): String = when {
-    ms == 0 -> stringResource(R.string.player_subtitle_delay_zero)
-    ms > 0 -> stringResource(R.string.player_subtitle_delay_positive, ms / 1000.0)
-    else -> stringResource(R.string.player_subtitle_delay_negative, -ms / 1000.0)
+    ms == 0 -> stringResource(CoreR.string.player_subtitle_delay_zero)
+    ms > 0 -> stringResource(CoreR.string.player_subtitle_delay_positive, ms / 1000.0)
+    else -> stringResource(CoreR.string.player_subtitle_delay_negative, -ms / 1000.0)
 }
 
 @Composable
@@ -374,14 +375,14 @@ internal fun PlayerContextDialog(
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { requestFocusRetrying(focus) }
     val actions = listOfNotNull(
-        onGuide?.let { R.string.player_context_guide to it },
-        onChannels?.let { R.string.player_context_channels to it },
-        onGoLive?.let { R.string.player_go_live to it },
-        R.string.player_audio_track to onAudio,
-        R.string.player_subtitles to onSubtitles,
-        R.string.player_stream_info to onInfo,
+        onGuide?.let { CoreR.string.player_context_guide to it },
+        onChannels?.let { CoreR.string.player_context_channels to it },
+        onGoLive?.let { CoreR.string.player_go_live to it },
+        CoreR.string.player_audio_track to onAudio,
+        CoreR.string.player_subtitles to onSubtitles,
+        CoreR.string.player_stream_info to onInfo,
     )
-    DialogScaffold(title = stringResource(R.string.player_context_title), onDismiss = onDismiss) {
+    DialogScaffold(title = stringResource(CoreR.string.player_context_title), onDismiss = onDismiss) {
         items(actions.size) { index ->
             val (label, action) = actions[index]
             OptionRow(

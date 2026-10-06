@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -41,7 +43,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.core.settings.PanelSection
 import tv.own.owntv.core.settings.PanelShares
 import tv.own.owntv.core.settings.PanelWidthLimits
@@ -110,10 +111,10 @@ fun PanelWidthSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) 
                 .padding(horizontal = 40.dp, vertical = 28.dp),
             verticalArrangement = Arrangement.spacedBy(2.dp),
         ) {
-            Header(title = stringResource(R.string.settings_panel_width), onBack = onBack)
+            Header(title = stringResource(CoreR.string.settings_panel_width), onBack = onBack)
             Spacer(Modifier.height(4.dp))
             Text(
-                stringResource(R.string.settings_panel_width_screen_description),
+                stringResource(CoreR.string.settings_panel_width_screen_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -136,19 +137,19 @@ fun PanelWidthSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) 
                     },
                     title = sectionTitle(section),
                     desc = stringResource(
-                        R.string.settings_panel_width_summary,
+                        CoreR.string.settings_panel_width_summary,
                         current.category,
                         current.list,
                         // In Cinematic the third number is a height held separately, so the summary
                         // must show THAT value — not the preview share, which is always 0 there.
                         if (cinematic && section != PanelSection.LIVE) {
-                            stringResource(R.string.settings_panel_width_details_height)
+                            stringResource(CoreR.string.settings_panel_width_details_height)
                         } else {
                             previewLabel(section)
                         },
                         if (cinematic && section != PanelSection.LIVE) detailsHeights.getValue(section) else current.preview,
                     ),
-                    chip = stringResource(if (enabled) R.string.settings_live_latency_custom else R.string.settings_subtitle_default),
+                    chip = stringResource(if (enabled) CoreR.string.settings_live_latency_custom else CoreR.string.settings_subtitle_default),
                     primaryChip = enabled,
                     chevron = true,
                     onClick = { dialogReturn = rowFocus.getValue(section); open = section },
@@ -157,9 +158,9 @@ fun PanelWidthSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) 
             }
 
             Spacer(Modifier.height(12.dp))
-            GroupLabel(stringResource(R.string.settings_how_it_works))
+            GroupLabel(stringResource(CoreR.string.settings_how_it_works))
             Text(
-                stringResource(R.string.settings_panel_width_help),
+                stringResource(CoreR.string.settings_panel_width_help),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
                 modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
@@ -174,14 +175,14 @@ fun PanelWidthSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) 
 
 @Composable
 private fun sectionTitle(section: PanelSection): String = when (section) {
-    PanelSection.LIVE -> stringResource(R.string.settings_live_tv)
-    PanelSection.MOVIES -> stringResource(R.string.settings_movies)
-    PanelSection.SERIES -> stringResource(R.string.settings_series)
+    PanelSection.LIVE -> stringResource(CoreR.string.settings_live_tv)
+    PanelSection.MOVIES -> stringResource(CoreR.string.settings_movies)
+    PanelSection.SERIES -> stringResource(CoreR.string.settings_series)
 }
 
 @Composable
 private fun previewLabel(section: PanelSection): String =
-    stringResource(if (section == PanelSection.LIVE) R.string.settings_panel_width_preview else R.string.settings_panel_width_poster)
+    stringResource(if (section == PanelSection.LIVE) CoreR.string.settings_panel_width_preview else CoreR.string.settings_panel_width_poster)
 
 /**
  * The second and third slider labels, which change with the layout.
@@ -192,13 +193,13 @@ private fun previewLabel(section: PanelSection): String =
  */
 @Composable
 private fun listLabel(section: PanelSection, cinematic: Boolean): String =
-    if (cinematic && section != PanelSection.LIVE) stringResource(R.string.settings_panel_width_content_area)
-    else stringResource(R.string.settings_panel_width_list)
+    if (cinematic && section != PanelSection.LIVE) stringResource(CoreR.string.settings_panel_width_content_area)
+    else stringResource(CoreR.string.settings_panel_width_list)
 
 @Composable
 private fun thirdSliderLabel(section: PanelSection, cinematic: Boolean): String =
-    if (cinematic && section != PanelSection.LIVE) stringResource(R.string.settings_panel_width_details_height)
-    else stringResource(R.string.settings_panel_width_preview_panel, previewLabel(section))
+    if (cinematic && section != PanelSection.LIVE) stringResource(CoreR.string.settings_panel_width_details_height)
+    else stringResource(CoreR.string.settings_panel_width_preview_panel, previewLabel(section))
 
 /**
  * The per-section popup: master toggle, then one −/+ stepper per panel, a running total, and
@@ -266,26 +267,26 @@ private fun PanelWidthDialog(
             if (showPreviewDisableConfirmation) {
                 Column(modifier = Modifier.dialogPanel(width = 500.dp, corner = 16.dp, padding = 24.dp)) {
                     Text(
-                        stringResource(R.string.settings_panel_width_disable_preview_title),
+                        stringResource(CoreR.string.settings_panel_width_disable_preview_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = colors.onSurface,
                     )
                     Spacer(Modifier.height(10.dp))
                     Text(
-                        stringResource(R.string.settings_panel_width_disable_preview_description),
+                        stringResource(CoreR.string.settings_panel_width_disable_preview_description),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(22.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                         OwnTVButton(
-                            stringResource(R.string.common_cancel),
+                            stringResource(CoreR.string.common_cancel),
                             onClick = { showPreviewDisableConfirmation = false },
                             modifier = Modifier.focusRequester(confirmationFocus),
                         )
                         Spacer(Modifier.weight(1f))
                         OwnTVButton(
-                            stringResource(R.string.common_ok),
+                            stringResource(CoreR.string.common_ok),
                             onClick = {
                                 // This branch is Live TV only, which is never Cinematic — the
                                 // details height is saved by the main Okay button below.
@@ -299,7 +300,7 @@ private fun PanelWidthDialog(
             } else {
             Column(modifier = Modifier.dialogPanel(width = 440.dp, corner = 16.dp, padding = 16.dp)) {
                 Text(
-                    stringResource(R.string.settings_panel_width_dialog_title, sectionTitle(section)),
+                    stringResource(CoreR.string.settings_panel_width_dialog_title, sectionTitle(section)),
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.onSurface,
                 )
@@ -317,13 +318,13 @@ private fun PanelWidthDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            stringResource(R.string.settings_panel_width_customize),
+                            stringResource(CoreR.string.settings_panel_width_customize),
                             style = MaterialTheme.typography.titleMedium,
                             color = colors.onSurface,
                             modifier = Modifier.weight(1f),
                         )
                         Text(
-                            stringResource(if (enabled) R.string.common_on else R.string.common_off),
+                            stringResource(if (enabled) CoreR.string.common_on else CoreR.string.common_off),
                             style = MaterialTheme.typography.labelMedium,
                             color = if (enabled) colors.onPrimaryContainer else colors.onSecondaryContainer,
                             fontWeight = FontWeight.SemiBold,
@@ -346,7 +347,7 @@ private fun PanelWidthDialog(
                         // list up to the two-panel ceiling (90), so the category can reach 10%.
                         val listMax = PanelWidthLimits.listMax(preview = 0)
                         StepRow(
-                            stringResource(R.string.settings_panel_width_category),
+                            stringResource(CoreR.string.settings_panel_width_category),
                             draft.category,
                             minimum = PanelWidthLimits.TOTAL - listMax,
                             maximum = PanelWidthLimits.MAX,
@@ -359,7 +360,7 @@ private fun PanelWidthDialog(
                             maximum = listMax,
                         ) { draft = PanelShares(PanelWidthLimits.TOTAL - it, it, 0) }
                     } else {
-                    StepRow(stringResource(R.string.settings_panel_width_category), draft.category) { draft = draft.copy(category = it) }
+                    StepRow(stringResource(CoreR.string.settings_panel_width_category), draft.category) { draft = draft.copy(category = it) }
                     Spacer(Modifier.height(6.dp))
                     StepRow(listLabel(section, cinematic), draft.list, maximum = PanelWidthLimits.listMax(draft.preview)) { draft = draft.copy(list = it) }
                     }
@@ -388,14 +389,14 @@ private fun PanelWidthDialog(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            stringResource(R.string.settings_panel_width_total),
+                            stringResource(CoreR.string.settings_panel_width_total),
                             style = MaterialTheme.typography.titleMedium,
                             color = colors.onSurface,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.weight(1f),
                         )
                         Text(
-                            stringResource(R.string.common_percent, draft.total),
+                            stringResource(CoreR.string.common_percent, draft.total),
                             style = MaterialTheme.typography.titleMedium,
                             // `favorite` is the theme's red — the same one MaterialTheme maps to `error`.
                             color = if (valid) colors.primary else colors.favorite,
@@ -418,14 +419,14 @@ private fun PanelWidthDialog(
                         )
                         Spacer(Modifier.height(12.dp))
                         StepRow(
-                            stringResource(R.string.settings_panel_width_details_height),
+                            stringResource(CoreR.string.settings_panel_width_details_height),
                             detailsHeight,
                             minimum = 0,
                             maximum = CINEMATIC_DETAILS_MAX,
                         ) { detailsHeight = it }
                         Spacer(Modifier.height(8.dp))
                         Text(
-                            stringResource(R.string.settings_panel_width_details_hint),
+                            stringResource(CoreR.string.settings_panel_width_details_hint),
                             style = MaterialTheme.typography.labelMedium,
                             color = colors.onSurfaceVariant,
                             modifier = Modifier.padding(horizontal = 2.dp),
@@ -442,7 +443,7 @@ private fun PanelWidthDialog(
                                 .padding(horizontal = 12.dp, vertical = 8.dp),
                         ) {
                             Text(
-                                stringResource(R.string.settings_panel_width_invalid_total, draft.total),
+                                stringResource(CoreR.string.settings_panel_width_invalid_total, draft.total),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = colors.favorite,
                                 textAlign = TextAlign.Center,
@@ -454,7 +455,7 @@ private fun PanelWidthDialog(
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OwnTVButton(
-                        stringResource(R.string.common_reset),
+                        stringResource(CoreR.string.common_reset),
                         onClick = {
                             draft = stock
                             detailsHeight = CINEMATIC_DETAILS_DEFAULT
@@ -464,7 +465,7 @@ private fun PanelWidthDialog(
                     )
                     Spacer(Modifier.weight(1f))
                     OwnTVButton(
-                        stringResource(R.string.common_ok),
+                        stringResource(CoreR.string.common_ok),
                         onClick = {
                             // An unbalanced total is only a problem for a section that's actually on.
                             if (enabled && !valid) {
@@ -602,7 +603,7 @@ internal fun StepRow(
             onSet((value - step).coerceAtLeast(minimum))
         }
         Text(
-            stringResource(R.string.common_percent, value),
+            stringResource(CoreR.string.common_percent, value),
             style = MaterialTheme.typography.titleMedium,
             color = colors.primary,
             textAlign = TextAlign.Center,

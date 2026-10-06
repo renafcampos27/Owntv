@@ -1,5 +1,7 @@
 package tv.own.owntv.features.live
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,7 +21,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.customize.CustomizeKeys
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.ui.components.*
@@ -50,20 +51,20 @@ internal fun ChannelVersionsDialog(
             }
         }
         Column(Modifier.dialogPanel(width = 680.dp).background(Color(0xFF141D29), RoundedCornerShape(20.dp)).longPressMenuGuard().trapAllFocusExit().focusGroup()) {
-            Text(stringResource(R.string.channel_versions_title), color = Color.White, style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(CoreR.string.channel_versions_title), color = Color.White, style = MaterialTheme.typography.titleLarge)
             Text(channel.name, color = Color.White, style = MaterialTheme.typography.bodyMedium)
-            if (!playOnly) Text(stringResource(if (settings.prioritizeChannelVersions) R.string.channel_versions_active else R.string.channel_versions_inactive),
+            if (!playOnly) Text(stringResource(if (settings.prioritizeChannelVersions) CoreR.string.channel_versions_active else CoreR.string.channel_versions_inactive),
                 color = Color.White, style = MaterialTheme.typography.bodySmall)
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                VersionButton(stringResource(R.string.content_close), onClick = onDismiss, modifier = Modifier.focusRequester(closeFocus))
-                VersionButton(stringResource(R.string.channel_versions_add), onClick = { adding = true })
-                if (!playOnly) VersionButton(stringResource(R.string.channel_versions_reset), onClick = { onSaveOrder(null) })
+                VersionButton(stringResource(CoreR.string.content_close), onClick = onDismiss, modifier = Modifier.focusRequester(closeFocus))
+                VersionButton(stringResource(CoreR.string.channel_versions_add), onClick = { adding = true })
+                if (!playOnly) VersionButton(stringResource(CoreR.string.channel_versions_reset), onClick = { onSaveOrder(null) })
             }
             Spacer(Modifier.height(12.dp))
             val versions = rows
-            if (versions == null) Text(stringResource(R.string.channel_versions_loading), color = Color.White)
-            else if (versions.isEmpty()) Text(stringResource(R.string.channel_versions_empty), color = Color.White)
+            if (versions == null) Text(stringResource(CoreR.string.channel_versions_loading), color = Color.White)
+            else if (versions.isEmpty()) Text(stringResource(CoreR.string.channel_versions_empty), color = Color.White)
             else LazyColumn(Modifier.heightIn(max = 340.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 itemsIndexed(versions, key = { _, item -> item.id }) { index, item ->
                     if (playOnly) {
@@ -73,16 +74,16 @@ internal fun ChannelVersionsDialog(
                     }
                     val hidden = CustomizeKeys.channel(item) in settings.hiddenItems
                     Column {
-                        Text(stringResource(R.string.channel_versions_position, index + 1, item.name), color = Color.White, style = MaterialTheme.typography.bodyMedium)
-                        if (hidden) Text(stringResource(R.string.channel_versions_hidden), color = Color.White, style = MaterialTheme.typography.bodySmall)
+                        Text(stringResource(CoreR.string.channel_versions_position, index + 1, item.name), color = Color.White, style = MaterialTheme.typography.bodyMedium)
+                        if (hidden) Text(stringResource(CoreR.string.channel_versions_hidden), color = Color.White, style = MaterialTheme.typography.bodySmall)
                         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            VersionButton(stringResource(R.string.content_downloads_play), onClick = { onPlay(item) }, enabled = !hidden)
-                            VersionButton(stringResource(R.string.channel_versions_up), enabled = index > 0,
+                            VersionButton(stringResource(CoreR.string.content_downloads_play), onClick = { onPlay(item) }, enabled = !hidden)
+                            VersionButton(stringResource(CoreR.string.channel_versions_up), enabled = index > 0,
                                 onClick = { onSaveOrder(versions.toMutableList().apply { add(index - 1, removeAt(index)) }) })
-                            VersionButton(stringResource(R.string.channel_versions_down), enabled = index < versions.lastIndex,
+                            VersionButton(stringResource(CoreR.string.channel_versions_down), enabled = index < versions.lastIndex,
                                 onClick = { onSaveOrder(versions.toMutableList().apply { add(index + 1, removeAt(index)) }) })
                             if (CustomizeKeys.channel(item) in settings.channelVersionGroups) {
-                                VersionButton(stringResource(R.string.channel_versions_unlink), onClick = { vm.removeManualChannelVersion(item) })
+                                VersionButton(stringResource(CoreR.string.channel_versions_unlink), onClick = { vm.removeManualChannelVersion(item) })
                             }
                         }
                     }
@@ -124,11 +125,11 @@ private fun AddChannelVersionDialog(channel: ChannelEntity, vm: LiveViewModel, o
         }
         Column(Modifier.dialogPanel(width = 680.dp).background(Color(0xFF141D29), RoundedCornerShape(20.dp))
             .trapAllFocusExit().focusGroup(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Text(stringResource(R.string.channel_versions_add), color = Color.White, style = MaterialTheme.typography.titleLarge)
-            Text(stringResource(R.string.channel_versions_add_hint), color = Color.White, style = MaterialTheme.typography.bodyMedium)
+            Text(stringResource(CoreR.string.channel_versions_add), color = Color.White, style = MaterialTheme.typography.titleLarge)
+            Text(stringResource(CoreR.string.channel_versions_add_hint), color = Color.White, style = MaterialTheme.typography.bodyMedium)
             SearchBar(query, { query = it }, modifier = Modifier.fillMaxWidth().focusRequester(searchFocus), surface = null)
-            VersionButton(stringResource(R.string.content_close), onDismiss)
-            if (candidates == null) Text(stringResource(R.string.channel_versions_loading), color = Color.White)
+            VersionButton(stringResource(CoreR.string.content_close), onDismiss)
+            if (candidates == null) Text(stringResource(CoreR.string.channel_versions_loading), color = Color.White)
             else LazyColumn(Modifier.heightIn(max = 340.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 itemsIndexed(candidates.orEmpty(), key = { _, item -> item.id }) { _, item ->
                     VersionButton(item.name, { vm.addChannelVersion(channel, item); onDismiss() }, Modifier.fillMaxWidth())

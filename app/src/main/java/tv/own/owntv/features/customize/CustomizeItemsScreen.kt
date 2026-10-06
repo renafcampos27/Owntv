@@ -1,5 +1,7 @@
 package tv.own.owntv.features.customize
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -161,7 +163,7 @@ fun CustomizeItemsScreen(
         // Header: category name + back
         Row(verticalAlignment = Alignment.CenterVertically) {
             OwnTVButton(
-                stringResource(R.string.settings_customize_back),
+                stringResource(CoreR.string.settings_customize_back),
                 onClick = onBack,
                 style = OwnTVButtonStyle.SECONDARY,
                 modifier = Modifier.focusRequester(backFocus),
@@ -181,9 +183,9 @@ fun CustomizeItemsScreen(
         Spacer(Modifier.height(4.dp))
         Text(
             when (section) {
-                MediaType.LIVE -> stringResource(R.string.settings_customize_channels_description)
-                MediaType.MOVIE -> stringResource(R.string.settings_customize_movies_description)
-                else -> stringResource(R.string.settings_customize_series_description)
+                MediaType.LIVE -> stringResource(CoreR.string.settings_customize_channels_description)
+                MediaType.MOVIE -> stringResource(CoreR.string.settings_customize_movies_description)
+                else -> stringResource(CoreR.string.settings_customize_series_description)
             },
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
@@ -195,13 +197,13 @@ fun CustomizeItemsScreen(
         if (!isLive) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 OwnTVButton(
-                    stringResource(R.string.settings_customize_rename_items),
+                    stringResource(CoreR.string.settings_customize_rename_items),
                     onClick = { dialogReturn = renameItemsFocus; vm.bulkRenameAll(autocleanup = false) },
                     style = OwnTVButtonStyle.SECONDARY,
                     modifier = Modifier.focusRequester(renameItemsFocus),
                 )
                 OwnTVButton(
-                    stringResource(R.string.settings_bulk_rename_auto_cleanup),
+                    stringResource(CoreR.string.settings_bulk_rename_auto_cleanup),
                     onClick = { dialogReturn = autoCleanupFocus; vm.bulkRenameAll(autocleanup = true) },
                     style = OwnTVButtonStyle.SECONDARY,
                     modifier = Modifier.focusRequester(autoCleanupFocus),
@@ -224,14 +226,14 @@ fun CustomizeItemsScreen(
                 Text(
                     when {
                         rangeMode == SpanSelector.Mode.HIDE ->
-                            stringResource(R.string.settings_customize_range_hide_start)
+                            stringResource(CoreR.string.settings_customize_range_hide_start)
                         rangeMode == SpanSelector.Mode.RENAME ->
-                            stringResource(R.string.settings_customize_range_rename_start)
+                            stringResource(CoreR.string.settings_customize_range_rename_start)
                         rangeEndKey == null ->
-                            stringResource(R.string.settings_customize_range_move_start)
+                            stringResource(CoreR.string.settings_customize_range_move_start)
                         else ->
                             pluralStringResource(
-                                R.plurals.settings_customize_move_items_selected,
+                                CoreR.plurals.settings_customize_move_items_selected,
                                 rangeSelectedKeys.size,
                                 rangeSelectedKeys.size,
                             )
@@ -241,7 +243,7 @@ fun CustomizeItemsScreen(
                     modifier = Modifier.weight(1f),
                 )
                 Spacer(Modifier.width(10.dp))
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = { vm.cancelRange() }, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = { vm.cancelRange() }, style = OwnTVButtonStyle.SECONDARY)
             }
             Spacer(Modifier.height(12.dp))
         }
@@ -307,6 +309,9 @@ fun CustomizeItemsScreen(
                         }
                     },
                     onMove = { dialogReturn = rowFocusers[row.key]; movingItem = row },
+                    onRemoveFromCategory = if (ctx?.categoryId == null && selectedCategory?.key?.let(tv.own.owntv.core.customize.CustomizeKeys::isCustom) == true) {
+                        { vm.removeFromCategory(row) }
+                    } else null,
                     onToggleHidden = { vm.setItemHidden(row, !row.hidden) },
                     onHideLongPress = { dialogReturn = rowFocusers[row.key]; vm.beginRange(row) },
                     onPickRangeEnd = {
@@ -325,9 +330,9 @@ fun CustomizeItemsScreen(
 
     renaming?.let { row ->
         TextInputDialog(
-            title = stringResource(R.string.content_rename_channel),
+            title = stringResource(CoreR.string.content_rename_channel),
             initial = row.displayName,
-            hint = stringResource(R.string.settings_customize_rename_item_hint, row.originalName),
+            hint = stringResource(CoreR.string.settings_customize_rename_item_hint, row.originalName),
             onConfirm = { vm.renameItem(row, it.takeIf { t -> t.isNotBlank() }); renaming = null },
             onDismiss = { renaming = null },
         )
@@ -352,9 +357,9 @@ fun CustomizeItemsScreen(
     val moveTargets by vm.moveTargets.collectAsStateWithLifecycle()
     if (creatingCategory) {
         TextInputDialog(
-            title = stringResource(R.string.settings_customize_new_category_title),
+            title = stringResource(CoreR.string.settings_customize_new_category_title),
             hint = stringResource(R.string.settings_customize_new_category_description),
-            confirmLabel = stringResource(R.string.common_create),
+            confirmLabel = stringResource(CoreR.string.common_create),
             allowBlank = false,
             onConfirm = { vm.createCustomCategory(it); creatingCategory = false },
             onDismiss = { creatingCategory = false },
@@ -363,7 +368,7 @@ fun CustomizeItemsScreen(
         movingItem?.let { row ->
             MoveToCategoryDialog(
                 moveTargets = moveTargets,
-                originName = selectedCategory?.displayName ?: stringResource(R.string.settings_customize_this_category),
+                originName = selectedCategory?.displayName ?: stringResource(CoreR.string.settings_customize_this_category),
                 onNewCategory = { creatingCategory = true },
                 onMove = { targetId, keepInOrigin ->
                     vm.moveTo(row, targetId, keepInOrigin)
@@ -391,19 +396,19 @@ private fun ItemsRangeHideDialog(count: Int, onHide: () -> Unit, onShow: () -> U
         Column(
             Modifier.dialogPanel(width = 480.dp, padding = 28.dp),
         ) {
-            Text(stringResource(R.string.settings_customize_hide_show_items), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.settings_customize_hide_show_items), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(6.dp))
             Text(
-                pluralStringResource(R.plurals.settings_customize_selected_items, count, count),
+                pluralStringResource(CoreR.plurals.settings_customize_selected_items, count, count),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
             Spacer(Modifier.height(22.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.common_show), onClick = onShow, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.common_hide), onClick = onHide, modifier = Modifier.focusRequester(hideFocus))
+                OwnTVButton(stringResource(CoreR.string.common_show), onClick = onShow, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_hide), onClick = onHide, modifier = Modifier.focusRequester(hideFocus))
             }
         }
     }
@@ -430,6 +435,7 @@ private fun ItemRow(
     onPickRenameEnd: () -> Unit,
     // "Move to…" (issue #87): send this item into a user's combined category.
     onMove: () -> Unit,
+    onRemoveFromCategory: (() -> Unit)?,
     onToggleHidden: () -> Unit,
     onHideLongPress: () -> Unit,
     onPickRangeEnd: () -> Unit,
@@ -478,11 +484,11 @@ private fun ItemRow(
                 if (row.hidden || row.renamed) {
                     Text(
                         listOfNotNull(
-                            row.hidden.takeIf { it }?.let { stringResource(R.string.settings_customize_hidden) },
+                            row.hidden.takeIf { it }?.let { stringResource(CoreR.string.settings_customize_hidden) },
                             row.renamed.takeIf { it }?.let {
-                                stringResource(R.string.settings_customize_item_was, row.originalName)
+                                stringResource(CoreR.string.settings_customize_item_was, row.originalName)
                             },
-                        ).joinToString(stringResource(R.string.settings_customize_metadata_separator)),
+                        ).joinToString(stringResource(CoreR.string.settings_customize_metadata_separator)),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onSurfaceVariant,
                         maxLines = 1,
@@ -507,7 +513,7 @@ private fun ItemRow(
             // Long-press anchors a rename span; a normal press picks the span end while one is
             // active, otherwise it opens the single-row rename dialog.
             OwnTVButton(
-                stringResource(R.string.settings_customize_rename),
+                stringResource(CoreR.string.settings_customize_rename),
                 onClick = { if (inRenameRange) onPickRenameEnd() else onRename() },
                 onLongClick = onRenameLongPress,
                 style = OwnTVButtonStyle.SECONDARY,
@@ -517,10 +523,14 @@ private fun ItemRow(
         Spacer(Modifier.width(6.dp))
         // Move to… a user's combined category (issue #87). Always available — Live and non-Live rows
         // alike can join a custom category.
-        OwnTVButton(stringResource(R.string.settings_customize_move_to), onClick = onMove, style = OwnTVButtonStyle.SECONDARY, selected = isInSpan)
+        OwnTVButton(stringResource(CoreR.string.settings_customize_move_to), onClick = onMove, style = OwnTVButtonStyle.SECONDARY, selected = isInSpan)
+        onRemoveFromCategory?.let { remove ->
+            Spacer(Modifier.width(6.dp))
+            OwnTVButton(stringResource(R.string.channel_remove_from_category), onClick = remove, style = OwnTVButtonStyle.SECONDARY)
+        }
         Spacer(Modifier.width(6.dp))
         OwnTVButton(
-            label = stringResource(if (row.hidden) R.string.common_show else R.string.common_hide),
+            label = stringResource(if (row.hidden) CoreR.string.common_show else CoreR.string.common_hide),
             // Long-press anchors a range; a normal press picks the span end while a range is active,
             // otherwise it toggles just this item.
             onClick = { if (inRangeMode) onPickRangeEnd() else onToggleHidden() },

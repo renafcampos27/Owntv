@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.background
@@ -47,6 +49,8 @@ import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
 
+enum class NavSettingsEntry { VERSIONS, PRIORITY, RECOVERY_TIMEOUT, HIDE_CATEGORIES, HIDE_SIDEBAR }
+
 /**
  * v4.3.0 — Nav menu customization. Two modes:
  * - **STATIC** (default): the user toggles which of the six browse icons show in the side rail.
@@ -55,7 +59,7 @@ import tv.own.owntv.ui.theme.OwnTVTheme
  *   show). The per-icon list is hidden in this mode — there's nothing to toggle.
  */
 @Composable
-fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
+fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier, initialEntry: NavSettingsEntry? = null) {
     val settingsVm: SettingsViewModel = koinViewModel()
     val context = androidx.compose.ui.platform.LocalContext.current.applicationContext
     val simpleFlow = remember(context) { SimpleModePreferences.observe(context) }
@@ -69,11 +73,29 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val colors = OwnTVTheme.colors
 
     val firstFocus = remember { FocusRequester() }
+    val entryFocus = remember { NavSettingsEntry.entries.associateWith { FocusRequester() } }
+    var entryHandled by remember(initialEntry) { mutableStateOf(false) }
     var showModePicker by remember { mutableStateOf(false) }
     var showRecoveryTimeout by remember { mutableStateOf(false) }
 
     // Grab focus on the first row the moment the screen opens (mirrors VideoPlayerSettingsScreen).
-    LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
+    LaunchedEffect(initialEntry, simple != null) {
+        if (entryHandled) return@LaunchedEffect
+        if (initialEntry == null) {
+            runCatching { firstFocus.requestFocus() }
+        } else {
+            if (initialEntry in listOf(NavSettingsEntry.RECOVERY_TIMEOUT, NavSettingsEntry.HIDE_CATEGORIES, NavSettingsEntry.HIDE_SIDEBAR) && simple == null) return@LaunchedEffect
+            repeat(10) {
+                androidx.compose.runtime.withFrameNanos { }
+                if (runCatching { entryFocus.getValue(initialEntry).requestFocus() }.getOrDefault(false)) {
+                    entryHandled = true
+                    if (initialEntry == NavSettingsEntry.RECOVERY_TIMEOUT) showRecoveryTimeout = true
+                    return@LaunchedEffect
+                }
+            }
+        }
+        entryHandled = true
+    }
     BackHandler { onBack() }
 
     Column(
@@ -86,10 +108,10 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             .padding(horizontal = 40.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Header(title = stringResource(R.string.settings_sidebar_customization), onBack = onBack)
+        Header(title = stringResource(CoreR.string.settings_sidebar_customization), onBack = onBack)
         Spacer(Modifier.height(4.dp))
         Text(
-            stringResource(R.string.settings_sidebar_description),
+            stringResource(CoreR.string.settings_sidebar_description),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
         )
@@ -97,30 +119,32 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         Row2(
             icon = OwnTVIcon.MENU,
-            title = stringResource(R.string.settings_behavior),
+            title = stringResource(CoreR.string.settings_behavior),
             desc = when (mode) {
                 SettingsRepository.NavMenuMode.DYNAMIC ->
-                    stringResource(R.string.settings_nav_dynamic_description)
+                    stringResource(CoreR.string.settings_nav_dynamic_description)
                 SettingsRepository.NavMenuMode.STATIC ->
-                    stringResource(R.string.settings_nav_static_description)
+                    stringResource(CoreR.string.settings_nav_static_description)
             },
-            chip = stringResource(if (mode == SettingsRepository.NavMenuMode.DYNAMIC) R.string.settings_dynamic else R.string.settings_static),
+            chip = stringResource(if (mode == SettingsRepository.NavMenuMode.DYNAMIC) CoreR.string.settings_dynamic else CoreR.string.settings_static),
             primaryChip = mode == SettingsRepository.NavMenuMode.DYNAMIC,
             chevron = true,
             onClick = { showModePicker = true },
             modifier = Modifier.focusRequester(firstFocus),
         )
 
-        Row2(icon = OwnTVIcon.MENU, title = stringResource(R.string.channel_versions_group),
-            desc = stringResource(R.string.channel_versions_group_description),
+        Row2(icon = OwnTVIcon.MENU, title = stringResource(CoreR.string.channel_versions_group),
+            desc = stringResource(CoreR.string.channel_versions_group_description),
             chip = stringResource(if (versions.groupChannelVersions) R.string.simple_mode_on else R.string.simple_mode_off),
             primaryChip = versions.groupChannelVersions,
-            onClick = { settingsVm.setGroupChannelVersions(!versions.groupChannelVersions) })
-        Row2(icon = OwnTVIcon.MENU, title = stringResource(R.string.channel_versions_priority),
-            desc = stringResource(R.string.channel_versions_priority_description),
+            onClick = { settingsVm.setGroupChannelVersions(!versions.groupChannelVersions) },
+            modifier = Modifier.focusRequester(entryFocus.getValue(NavSettingsEntry.VERSIONS)))
+        Row2(icon = OwnTVIcon.MENU, title = stringResource(CoreR.string.channel_versions_priority),
+            desc = stringResource(CoreR.string.channel_versions_priority_description),
             chip = stringResource(if (versions.prioritizeChannelVersions) R.string.simple_mode_on else R.string.simple_mode_off),
             primaryChip = versions.prioritizeChannelVersions,
-            onClick = { settingsVm.setPrioritizeChannelVersions(!versions.prioritizeChannelVersions) })
+            onClick = { settingsVm.setPrioritizeChannelVersions(!versions.prioritizeChannelVersions) },
+            modifier = Modifier.focusRequester(entryFocus.getValue(NavSettingsEntry.PRIORITY)))
 
         simple?.let { options ->
             Row2(
@@ -139,6 +163,7 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 chip = stringResource(R.string.channel_recovery_seconds, options.recoveryTimeoutSeconds),
                 chevron = true,
                 onClick = { showRecoveryTimeout = true },
+                modifier = Modifier.focusRequester(entryFocus.getValue(NavSettingsEntry.RECOVERY_TIMEOUT)),
             )
 
             Row2(
@@ -191,6 +216,7 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             Row2(
                 icon = OwnTVIcon.MENU,
                 title = stringResource(R.string.simple_mode_categories),
+                modifier = Modifier.focusRequester(entryFocus.getValue(NavSettingsEntry.HIDE_CATEGORIES)),
                 desc = stringResource(R.string.simple_mode_categories_description),
                 chip = stringResource(if (options.hideCategories) R.string.simple_mode_on else R.string.simple_mode_off),
                 primaryChip = options.hideCategories,
@@ -199,6 +225,7 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             Row2(
                 icon = OwnTVIcon.MENU,
                 title = stringResource(R.string.simple_mode_sidebar),
+                modifier = Modifier.focusRequester(entryFocus.getValue(NavSettingsEntry.HIDE_SIDEBAR)),
                 desc = stringResource(R.string.simple_mode_sidebar_description),
                 chip = stringResource(if (options.hideSidebar) R.string.simple_mode_on else R.string.simple_mode_off),
                 primaryChip = options.hideSidebar,
@@ -210,7 +237,7 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         // the icons are decided by the playlist's content, so the list is hidden entirely.
         if (mode == SettingsRepository.NavMenuMode.STATIC) {
             Spacer(Modifier.height(10.dp))
-            GroupLabel(stringResource(R.string.settings_icons))
+            GroupLabel(stringResource(CoreR.string.settings_icons))
             MainSection.browseOrder.forEach { section ->
                 NavMenuRow(
                     section = section,
@@ -236,10 +263,10 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     if (showModePicker) {
         PickerDialog(
-            title = stringResource(R.string.settings_nav_behavior),
+            title = stringResource(CoreR.string.settings_nav_behavior),
             options = listOf(
-                SettingsRepository.NavMenuMode.STATIC.name to stringResource(R.string.settings_static),
-                SettingsRepository.NavMenuMode.DYNAMIC.name to stringResource(R.string.settings_dynamic),
+                SettingsRepository.NavMenuMode.STATIC.name to stringResource(CoreR.string.settings_static),
+                SettingsRepository.NavMenuMode.DYNAMIC.name to stringResource(CoreR.string.settings_dynamic),
             ),
             selected = mode.name,
             onSelect = { value ->
@@ -288,7 +315,7 @@ private fun NavMenuRow(
             Column(modifier = Modifier.weight(1f)) {
                 Text(stringResource(section.labelRes), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Text(
-                    if (shown) stringResource(R.string.settings_shown_in_menu) else stringResource(R.string.settings_hidden_from_menu),
+                    if (shown) stringResource(CoreR.string.settings_shown_in_menu) else stringResource(CoreR.string.settings_hidden_from_menu),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
@@ -296,7 +323,7 @@ private fun NavMenuRow(
             val bg = if (shown) colors.primaryContainer else colors.secondaryContainer
             val fg = if (shown) colors.onPrimaryContainer else colors.onSecondaryContainer
             Text(
-                if (shown) stringResource(R.string.settings_shown) else stringResource(R.string.settings_hidden),
+                if (shown) stringResource(CoreR.string.settings_shown) else stringResource(CoreR.string.settings_hidden),
                 style = MaterialTheme.typography.labelMedium,
                 color = fg,
                 fontWeight = FontWeight.SemiBold,

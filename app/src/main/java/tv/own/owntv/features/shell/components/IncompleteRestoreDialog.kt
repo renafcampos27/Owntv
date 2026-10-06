@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
 import tv.own.owntv.ui.components.modalScrim
@@ -69,7 +70,7 @@ fun IncompleteRestoreDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = androidx.compose.ui.res.stringResource(R.string.content_restore_incomplete_title),
+                text = androidx.compose.ui.res.stringResource(CoreR.string.content_restore_incomplete_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.textPrimary,
                 textAlign = TextAlign.Center,
@@ -77,7 +78,7 @@ fun IncompleteRestoreDialog(
             Spacer(Modifier.height(8.dp))
             Text(
                 text = androidx.compose.ui.res.stringResource(
-                    R.string.content_restore_incomplete_message,
+                    CoreR.string.content_restore_incomplete_message,
                     description,
                 ),
                 style = MaterialTheme.typography.bodyMedium,
@@ -87,7 +88,7 @@ fun IncompleteRestoreDialog(
             Spacer(Modifier.height(24.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 OwnTVButton(
-                    label = androidx.compose.ui.res.stringResource(R.string.common_ok),
+                    label = androidx.compose.ui.res.stringResource(CoreR.string.common_ok),
                     onClick = onDismiss,
                     style = OwnTVButtonStyle.PRIMARY,
                     modifier = Modifier.focusRequester(okFocus),

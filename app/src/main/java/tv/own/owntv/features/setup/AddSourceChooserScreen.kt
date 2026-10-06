@@ -1,5 +1,7 @@
 package tv.own.owntv.features.setup
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +28,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -57,10 +58,10 @@ fun AddSourceChooserScreen(
             modifier = Modifier.verticalScroll(rememberScrollState()).padding(40.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(stringResource(R.string.setup_add_source), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.setup_add_source), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
             Spacer(Modifier.height(6.dp))
             Text(
-                stringResource(R.string.setup_add_source_description),
+                stringResource(CoreR.string.setup_add_source_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -68,20 +69,20 @@ fun AddSourceChooserScreen(
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 ChooserCard(
                     icon = OwnTVIcon.PLAYLIST,
-                    title = stringResource(R.string.setup_from_phone),
-                    subtitle = stringResource(R.string.setup_use_phone_same_wifi),
+                    title = stringResource(CoreR.string.setup_from_phone),
+                    subtitle = stringResource(CoreR.string.setup_use_phone_same_wifi),
                     onClick = onRemote,
                     modifier = Modifier.focusRequester(firstFocus),
                 )
                 ChooserCard(
                     icon = OwnTVIcon.ADD,
-                    title = stringResource(R.string.setup_manual),
-                    subtitle = stringResource(R.string.setup_type_source_here),
+                    title = stringResource(CoreR.string.setup_manual),
+                    subtitle = stringResource(CoreR.string.setup_type_source_here),
                     onClick = onManual,
                 )
             }
             Spacer(Modifier.height(24.dp))
-            OwnTVButton(stringResource(R.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
         }
     }
 }

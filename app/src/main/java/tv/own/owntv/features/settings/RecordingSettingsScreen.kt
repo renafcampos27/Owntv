@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -38,7 +40,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.features.recordings.RecordingsViewModel
 import tv.own.owntv.ui.components.NumberInputDialog
 import tv.own.owntv.ui.components.StorageBrowser
@@ -51,12 +52,15 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 private enum class RecordingDialog { NONE, PRE_ROLL, POST_ROLL, INTERNAL_QUOTA, EXTERNAL_QUOTA }
 
 /** Destination and quotas apply to new captures; existing content is preserved. */
+enum class RecordingSettingsEntry { DESTINATION, INTERNAL_QUOTA, EXTERNAL_QUOTA }
+
 @Composable
 fun RecordingSettingsScreen(
     onBack: () -> Unit,
     modifier: Modifier = Modifier,
     vm: SettingsViewModel = koinViewModel(),
     recordingsVm: RecordingsViewModel = koinViewModel(),
+    initialEntry: RecordingSettingsEntry? = null,
 ) {
     val reserve by vm.recordingReserveConnection.collectAsStateWithLifecycle()
     val preRoll by vm.recordingPreRollMinutes.collectAsStateWithLifecycle()
@@ -80,7 +84,17 @@ fun RecordingSettingsScreen(
     var dialogReturn by remember { mutableStateOf<FocusRequester?>(null) }
     var showWatchingWarning by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
+    LaunchedEffect(initialEntry) {
+        if (initialEntry == null) runCatching { firstFocus.requestFocus() }
+        else {
+            androidx.compose.runtime.withFrameNanos { }
+            when (initialEntry) {
+                RecordingSettingsEntry.DESTINATION -> { dialogReturn = destinationFocus; showStorageBrowser = true }
+                RecordingSettingsEntry.INTERNAL_QUOTA -> { dialogReturn = internalQuotaFocus; dialog = RecordingDialog.INTERNAL_QUOTA }
+                RecordingSettingsEntry.EXTERNAL_QUOTA -> { dialogReturn = externalQuotaFocus; dialog = RecordingDialog.EXTERNAL_QUOTA }
+            }
+        }
+    }
     val scrollState = rememberScrollState()
     var savedScroll by remember { mutableIntStateOf(0) }
     LaunchedEffect(dialog) {
@@ -103,10 +117,10 @@ fun RecordingSettingsScreen(
             .padding(horizontal = 40.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Header(title = stringResource(R.string.recording_settings_group), onBack = onBack)
+        Header(title = stringResource(CoreR.string.recording_settings_group), onBack = onBack)
         Spacer(Modifier.height(4.dp))
         Text(
-            stringResource(R.string.recording_description),
+            stringResource(CoreR.string.recording_description),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
         )
@@ -117,7 +131,7 @@ fun RecordingSettingsScreen(
         if (!recordingsVm.timersAreExact) {
             Spacer(Modifier.height(12.dp))
             Text(
-                stringResource(R.string.settings_recording_timers_inexact),
+                stringResource(CoreR.string.settings_recording_timers_inexact),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color(0xFFEF4444),
             )
@@ -126,38 +140,38 @@ fun RecordingSettingsScreen(
 
         Row2(
             icon = OwnTVIcon.LIVE_TV,
-            title = stringResource(R.string.settings_recording_reserve),
-            desc = stringResource(R.string.settings_recording_reserve_description),
-            chip = stringResource(if (reserve) R.string.common_on else R.string.common_off),
+            title = stringResource(CoreR.string.settings_recording_reserve),
+            desc = stringResource(CoreR.string.settings_recording_reserve_description),
+            chip = stringResource(if (reserve) CoreR.string.common_on else CoreR.string.common_off),
             primaryChip = reserve,
             onClick = { vm.setRecordingReserveConnection(!reserve) },
             modifier = Modifier.focusRequester(firstFocus),
         )
         Row2(
             icon = OwnTVIcon.FOLDER,
-            title = stringResource(R.string.media_destination),
-            desc = stringResource(R.string.media_destination_description),
-            chip = tv.own.owntv.core.storage.StorageAccess.folderLabel(root) ?: stringResource(R.string.media_internal),
+            title = stringResource(CoreR.string.media_destination),
+            desc = stringResource(CoreR.string.media_destination_description),
+            chip = tv.own.owntv.core.storage.StorageAccess.folderLabel(root) ?: stringResource(CoreR.string.media_internal),
             chevron = true,
             onClick = { showStorageBrowser = true },
             modifier = Modifier.focusRequester(destinationFocus),
         )
         if (root.isNotBlank()) {
-            Row2(icon = OwnTVIcon.FOLDER, title = stringResource(R.string.media_use_internal),
+            Row2(icon = OwnTVIcon.FOLDER, title = stringResource(CoreR.string.media_use_internal),
                 onClick = { vm.setDownloadRoot("") })
         }
-        Row2(icon = OwnTVIcon.FOLDER, title = stringResource(R.string.media_internal_quota),
-            desc = stringResource(R.string.media_quota_description),
-            chip = internalQuota.toString() + " " + stringResource(R.string.media_gib), chevron = true,
+        Row2(icon = OwnTVIcon.FOLDER, title = stringResource(CoreR.string.media_internal_quota),
+            desc = stringResource(CoreR.string.media_quota_description),
+            chip = internalQuota.toString() + " " + stringResource(CoreR.string.media_gib), chevron = true,
             onClick = { dialogReturn = internalQuotaFocus; dialog = RecordingDialog.INTERNAL_QUOTA },
             modifier = Modifier.focusRequester(internalQuotaFocus))
-        Row2(icon = OwnTVIcon.FOLDER, title = stringResource(R.string.media_external_quota),
-            chip = externalQuota.toString() + " " + stringResource(R.string.media_gib), chevron = true,
+        Row2(icon = OwnTVIcon.FOLDER, title = stringResource(CoreR.string.media_external_quota),
+            chip = externalQuota.toString() + " " + stringResource(CoreR.string.media_gib), chevron = true,
             onClick = { dialogReturn = externalQuotaFocus; dialog = RecordingDialog.EXTERNAL_QUOTA },
             modifier = Modifier.focusRequester(externalQuotaFocus))
         storage?.let { info ->
-            val label = if (!info.known) stringResource(R.string.media_space_unknown) else
-                stringResource(R.string.media_usage,
+            val label = if (!info.known) stringResource(CoreR.string.media_space_unknown) else
+                stringResource(CoreR.string.media_usage,
                     formatGiB(info.mediaBytes), formatGiB(info.quotaBytes),
                     formatGiB(info.freeBytes), formatGiB(info.reserveBytes))
             Text(label, color = colors.onSurfaceVariant, style = MaterialTheme.typography.bodySmall,
@@ -168,9 +182,9 @@ fun RecordingSettingsScreen(
         // dialog: nothing is being traded away.
         Row2(
             icon = OwnTVIcon.PLAY,
-            title = stringResource(R.string.settings_record_watching),
-            desc = stringResource(R.string.settings_record_watching_description),
-            chip = stringResource(if (recordWatching) R.string.common_on else R.string.common_off),
+            title = stringResource(CoreR.string.settings_record_watching),
+            desc = stringResource(CoreR.string.settings_record_watching_description),
+            chip = stringResource(if (recordWatching) CoreR.string.common_on else CoreR.string.common_off),
             primaryChip = recordWatching,
             onClick = {
                 if (recordWatching) vm.setRecordWhatImWatching(false) else showWatchingWarning = true
@@ -178,18 +192,18 @@ fun RecordingSettingsScreen(
         )
         Row2(
             icon = OwnTVIcon.HISTORY,
-            title = stringResource(R.string.settings_recording_pre_roll),
-            desc = stringResource(R.string.settings_recording_pre_roll_description),
-            chip = pluralStringResource(R.plurals.recording_minutes, preRoll, preRoll),
+            title = stringResource(CoreR.string.settings_recording_pre_roll),
+            desc = stringResource(CoreR.string.settings_recording_pre_roll_description),
+            chip = pluralStringResource(CoreR.plurals.recording_minutes, preRoll, preRoll),
             chevron = true,
             onClick = { dialogReturn = preRollFocus; dialog = RecordingDialog.PRE_ROLL },
             modifier = Modifier.focusRequester(preRollFocus),
         )
         Row2(
             icon = OwnTVIcon.HISTORY,
-            title = stringResource(R.string.settings_recording_post_roll),
-            desc = stringResource(R.string.settings_recording_post_roll_description),
-            chip = pluralStringResource(R.plurals.recording_minutes, postRoll, postRoll),
+            title = stringResource(CoreR.string.settings_recording_post_roll),
+            desc = stringResource(CoreR.string.settings_recording_post_roll_description),
+            chip = pluralStringResource(CoreR.plurals.recording_minutes, postRoll, postRoll),
             chevron = true,
             onClick = { dialogReturn = postRollFocus; dialog = RecordingDialog.POST_ROLL },
             modifier = Modifier.focusRequester(postRollFocus),
@@ -206,7 +220,7 @@ fun RecordingSettingsScreen(
     }
 
     if (showStorageBrowser) {
-        StorageBrowser(title = stringResource(R.string.media_destination), mode = BrowseMode.FOLDER,
+        StorageBrowser(title = stringResource(CoreR.string.media_destination), mode = BrowseMode.FOLDER,
             onPick = { folder -> vm.setDownloadRoot(folder.absolutePath); showStorageBrowser = false },
             onDismiss = { showStorageBrowser = false })
     }
@@ -222,11 +236,11 @@ fun RecordingSettingsScreen(
         // min = 0 on both: "no padding at all" is a legitimate choice for a provider whose guide
         // times are exact, and the dialog's usual min of 1 would quietly refuse it.
         RecordingDialog.PRE_ROLL -> NumberInputDialog(
-            title = stringResource(R.string.settings_recording_pre_roll),
+            title = stringResource(CoreR.string.settings_recording_pre_roll),
             value = preRoll,
             min = 0,
             max = MAX_ROLL_MINUTES,
-            fieldLabel = stringResource(R.string.common_minutes),
+            fieldLabel = stringResource(CoreR.string.common_minutes),
             // Persist only — never close here. [NumberInputDialog] fires onSet live on every − / +
             // press, so closing in it shuts the dialog on the first nudge; Save and Back are what
             // dismiss it, exactly as on the channel-navigation dialogs.
@@ -237,11 +251,11 @@ fun RecordingSettingsScreen(
             onDismiss = { dialog = RecordingDialog.NONE },
         )
         RecordingDialog.POST_ROLL -> NumberInputDialog(
-            title = stringResource(R.string.settings_recording_post_roll),
+            title = stringResource(CoreR.string.settings_recording_post_roll),
             value = postRoll,
             min = 0,
             max = MAX_ROLL_MINUTES,
-            fieldLabel = stringResource(R.string.common_minutes),
+            fieldLabel = stringResource(CoreR.string.common_minutes),
             onSet = vm::setRecordingPostRollMinutes,
             onReset = {
                 vm.setRecordingPostRollMinutes(tv.own.owntv.core.recording.RecordingSchedule.DEFAULT_POST_ROLL_MINUTES)
@@ -251,10 +265,10 @@ fun RecordingSettingsScreen(
         RecordingDialog.INTERNAL_QUOTA, RecordingDialog.EXTERNAL_QUOTA -> {
             val internal = dialog == RecordingDialog.INTERNAL_QUOTA
             NumberInputDialog(
-                title = stringResource(if (internal) R.string.media_internal_quota else R.string.media_external_quota),
+                title = stringResource(if (internal) CoreR.string.media_internal_quota else CoreR.string.media_external_quota),
                 value = if (internal) internalQuota else externalQuota,
                 min = 1, max = if (internal) 32 else 256,
-                fieldLabel = stringResource(R.string.media_gib),
+                fieldLabel = stringResource(CoreR.string.media_gib),
                 onSet = { if (internal) vm.setInternalMediaQuotaGiB(it) else vm.setExternalMediaQuotaGiB(it) },
                 onReset = { if (internal) vm.setInternalMediaQuotaGiB(4) else vm.setExternalMediaQuotaGiB(16) },
                 onDismiss = { dialog = RecordingDialog.NONE })
@@ -290,13 +304,13 @@ private fun RecordWatchingWarningDialog(onKeepOff: () -> Unit, onTurnOn: () -> U
     ) {
         Column(Modifier.dialogPanel(width = 520.dp, padding = 28.dp)) {
             Text(
-                stringResource(R.string.settings_record_watching_warning_title),
+                stringResource(CoreR.string.settings_record_watching_warning_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
             )
             Spacer(Modifier.height(10.dp))
             Text(
-                stringResource(R.string.settings_record_watching_warning_description),
+                stringResource(CoreR.string.settings_record_watching_warning_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -306,13 +320,13 @@ private fun RecordWatchingWarningDialog(onKeepOff: () -> Unit, onTurnOn: () -> U
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 OwnTVButton(
-                    stringResource(R.string.settings_record_watching_keep_off),
+                    stringResource(CoreR.string.settings_record_watching_keep_off),
                     onClick = onKeepOff,
                     modifier = Modifier.focusRequester(focus),
                 )
                 Spacer(Modifier.weight(1f))
                 OwnTVButton(
-                    stringResource(R.string.settings_record_watching_turn_on),
+                    stringResource(CoreR.string.settings_record_watching_turn_on),
                     onClick = onTurnOn,
                     style = OwnTVButtonStyle.SECONDARY,
                 )

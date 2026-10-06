@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.focusGroup
@@ -42,7 +44,6 @@ import androidx.tv.material3.MaterialTheme
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.storage.StorageAccess
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
@@ -124,7 +125,7 @@ private fun StorageBrowserContent(
         Column(Modifier.dialogPanel(width = 270.dp, corner = 16.dp, padding = 14.dp, scroll = false)) {
             Text(title, style = MaterialTheme.typography.titleSmall, color = colors.onSurface)
             Spacer(Modifier.height(4.dp))
-            Text(current?.absolutePath ?: stringResource(R.string.setup_pick_location), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(current?.absolutePath ?: stringResource(CoreR.string.setup_pick_location), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
             Spacer(Modifier.height(12.dp))
 
             val dir = current
@@ -154,7 +155,7 @@ private fun StorageBrowserContent(
             // matter how long the listing is, and the list still opens focused so navigating first
             // costs nothing.
             if (mode == BrowseMode.FOLDER && current != null) {
-                OwnTVButton(stringResource(R.string.setup_use_folder), onClick = { current?.let(onPick) }, modifier = Modifier.fillMaxWidth(), compact = true)
+                OwnTVButton(stringResource(CoreR.string.setup_use_folder), onClick = { current?.let(onPick) }, modifier = Modifier.fillMaxWidth(), compact = true)
                 Spacer(Modifier.height(8.dp))
             }
 
@@ -164,7 +165,7 @@ private fun StorageBrowserContent(
                 if (dir == null) {
                     if (!hasAccess) {
                         item {
-                            BrowserRow(OwnTVIcon.SETTINGS, stringResource(R.string.setup_grant_storage_access), Modifier.focusRequester(firstFocus)) {
+                            BrowserRow(OwnTVIcon.SETTINGS, stringResource(CoreR.string.setup_grant_storage_access), Modifier.focusRequester(firstFocus)) {
                                 StorageAccess.openStoragePermissionSettings(context)
                             }
                         }
@@ -174,7 +175,7 @@ private fun StorageBrowserContent(
                         BrowserRow(OwnTVIcon.DOWNLOADS, root.displayLabel(), m) { current = root.file }
                     }
                 } else {
-                    item { BrowserRow(OwnTVIcon.BACK, stringResource(R.string.setup_from_current_folder), Modifier.focusRequester(firstFocus)) { current = dir.parentFile } }
+                    item { BrowserRow(OwnTVIcon.BACK, stringResource(CoreR.string.setup_from_current_folder), Modifier.focusRequester(firstFocus)) { current = dir.parentFile } }
                     itemsIndexed(folders) { _, f -> BrowserRow(OwnTVIcon.DOWNLOADS, f.name) { current = f } }
                     itemsIndexed(files) { _, f -> BrowserRow(OwnTVIcon.PLAYLIST, f.name) { onPick(f) } }
                 }
@@ -182,9 +183,9 @@ private fun StorageBrowserContent(
 
             Spacer(Modifier.height(12.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, compact = true)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, compact = true)
                 Spacer(Modifier.weight(1f))
-                if (current != null) OwnTVButton(stringResource(R.string.setup_new_folder), onClick = { showNewFolder = true }, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.ADD, compact = true)
+                if (current != null) OwnTVButton(stringResource(CoreR.string.setup_new_folder), onClick = { showNewFolder = true }, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.ADD, compact = true)
             }
         }
     }
@@ -210,14 +211,14 @@ private fun NewFolderDialog(onCreate: (String) -> Unit, onDismiss: () -> Unit) {
     BackHandler { onDismiss() }
     Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
         Column(Modifier.dialogPanel(width = 420.dp, corner = 18.dp, fill = colors.surfaceContainerHighest)) {
-            Text(stringResource(R.string.setup_new_folder), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.setup_new_folder), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(14.dp))
-            OwnTVTextField(name, { name = it }, label = stringResource(R.string.setup_folder_name), placeholder = stringResource(R.string.setup_folder_example), modifier = Modifier.fillMaxWidth().focusRequester(focus), surface = GlassSurface.DIALOGS)
+            OwnTVTextField(name, { name = it }, label = stringResource(CoreR.string.setup_folder_name), placeholder = stringResource(CoreR.string.setup_folder_example), modifier = Modifier.fillMaxWidth().focusRequester(focus), surface = GlassSurface.DIALOGS)
             Spacer(Modifier.height(18.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.common_create), onClick = { onCreate(name) }, enabled = name.isNotBlank())
+                OwnTVButton(stringResource(CoreR.string.common_create), onClick = { onCreate(name) }, enabled = name.isNotBlank())
             }
         }
     }
@@ -225,9 +226,9 @@ private fun NewFolderDialog(onCreate: (String) -> Unit, onDismiss: () -> Unit) {
 
 @Composable
 private fun StorageAccess.StorageRoot.displayLabel(): String = when (kind) {
-    StorageAccess.RootKind.INTERNAL -> stringResource(R.string.content_storage_internal)
-    StorageAccess.RootKind.REMOVABLE -> volumeName ?: stringResource(R.string.content_storage_removable)
-    StorageAccess.RootKind.APP -> stringResource(R.string.content_storage_app)
+    StorageAccess.RootKind.INTERNAL -> stringResource(CoreR.string.content_storage_internal)
+    StorageAccess.RootKind.REMOVABLE -> volumeName ?: stringResource(CoreR.string.content_storage_removable)
+    StorageAccess.RootKind.APP -> stringResource(CoreR.string.content_storage_app)
 }
 
 @Composable

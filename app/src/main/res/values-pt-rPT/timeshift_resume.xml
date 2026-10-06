@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_local_timeshift_resume">Retomar timeshift local</string>
+    <string name="settings_local_timeshift_resume_description">Ao voltar a um canal com cópia local, perguntar, retomar automaticamente ou ver o direto. Uma cópia é conservada até 30 minutos durante esta sessão da app; a captura para quando sais.</string>
+    <string name="local_timeshift_resume_title">Retomar a cópia local?</string>
+    <string name="local_timeshift_resume_description">Continua no ponto onde deixaste a cópia gravada ou abre a emissão atual em direto. Retomar a cópia não cria uma ligação ao fornecedor.</string>
+</resources>

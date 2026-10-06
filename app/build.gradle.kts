@@ -47,9 +47,9 @@ android {
         applicationId = "tv.own.owntv"
         minSdk = 26
         targetSdk = 36
-        // Release version 105.1 (versionCode 10510000) so it installs directly over legacy builds.
-        versionCode = (System.getenv("VERSION_CODE") ?: "10510000").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "105.1"
+        // Release version 105.1.0.1 (versionCode 10510001) so it installs directly over legacy builds.
+        versionCode = (System.getenv("VERSION_CODE") ?: "10510001").toInt()
+        versionName = System.getenv("VERSION_NAME") ?: "105.1.0.1"
 
         // Opt-in local diagnostic APKs keep the rolling playback trace enabled even when they are
         // release-signed (so they can update an installed production build without changing its data).

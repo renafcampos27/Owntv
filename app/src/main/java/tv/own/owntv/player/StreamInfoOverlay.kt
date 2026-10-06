@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.rememberScrollState
@@ -39,7 +41,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 import kotlinx.coroutines.launch
 
@@ -77,7 +78,7 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Text(
-            stringResource(R.string.player_stream_info),
+            stringResource(CoreR.string.player_stream_info),
             style = MaterialTheme.typography.labelMedium,
             color = colors.primary,
             fontWeight = FontWeight.Bold,

@@ -1,5 +1,7 @@
 package tv.own.owntv.features.epg
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusGroup
@@ -113,8 +115,8 @@ internal fun ProgrammeStripCanvas(
     val formatTime = rememberSystemTimeFormatter()
     // Time labels built once (string formatting kept out of the per-frame draw loop).
     // Resolve the templates through Compose so a live locale change invalidates the labels.
-    val timeRangeTemplate = stringResource(R.string.content_epg_time_range)
-    val nowTemplate = stringResource(R.string.content_epg_now)
+    val timeRangeTemplate = stringResource(CoreR.string.content_epg_time_range)
+    val nowTemplate = stringResource(CoreR.string.content_epg_now)
     var viewportWidth by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     val scrollPx = hScroll.value.toFloat()
     val cells = remember(programmes, windowStart, windowEnd) { GuideProgrammeCells.layout(programmes, windowStart, windowEnd) }
@@ -124,7 +126,7 @@ internal fun ProgrammeStripCanvas(
     val labels = remember(programmes, cells, visible, now, formatTime, timeRangeTemplate, nowTemplate) {
         visible.associateWith { index ->
             val p = programmes[cells[index].programmeIndex]
-            val t = String.format(java.util.Locale.ROOT, timeRangeTemplate, formatTime(p.startMs), formatTime(p.stopMs))
+            val t = String.format(java.util.Locale.ROOT, timeRangeTemplate, formatTime(p.displayStartMs), formatTime(p.displayStopMs))
             if (now in p.startMs until p.stopMs) String.format(java.util.Locale.ROOT, nowTemplate, t) else t
         }
     }
@@ -282,7 +284,11 @@ internal fun ProgrammeDetailDialog(
                 Spacer(Modifier.height(6.dp))
                 Text(programme.title, style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.headlineSmall, color = colors.onSurface)
                 Spacer(Modifier.height(if (compact) 4.dp else 8.dp))
-                Text(stringResource(R.string.content_epg_time_range, formatTime(programme.startMs), formatTime(programme.stopMs)), style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant)
+                Text(stringResource(CoreR.string.content_epg_time_range, formatTime(programme.displayStartMs), formatTime(programme.displayStopMs)), style = if (compact) MaterialTheme.typography.bodyMedium else MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant)
+                if (programme.guideShiftMs != 0L) {
+                    Text(stringResource(R.string.epg_grid_corrected_clock, formatTime(programme.startMs), formatTime(programme.stopMs)),
+                        style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                }
                 if (!description.isNullOrBlank()) {
                     Spacer(Modifier.height(if (compact) 10.dp else 14.dp))
                     Text(description.orEmpty(), style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
@@ -293,7 +299,7 @@ internal fun ProgrammeDetailDialog(
                 if (canRecord && clashWith != null && recording == null) {
                     Spacer(Modifier.height(if (compact) 10.dp else 14.dp))
                     Text(
-                        stringResource(R.string.recording_clash_with, clashWith),
+                        stringResource(CoreR.string.recording_clash_with, clashWith),
                         style = if (compact) MaterialTheme.typography.bodySmall else MaterialTheme.typography.bodyMedium,
                         // The app's warning red, the same one a failed download and a failed
                         // restore already use. There is no named error role in OwnTVTheme.
@@ -303,18 +309,18 @@ internal fun ProgrammeDetailDialog(
                 Spacer(Modifier.height(if (compact) 16.dp else 24.dp))
                 if (canCatchup && replayEvidence != null) {
                     Text(
-                        stringResource(if (replayEvidence == ReplayEvidenceStore.Outcome.STARTED) R.string.epg_replay_started else R.string.epg_replay_attempt_failed),
+                        stringResource(if (replayEvidence == ReplayEvidenceStore.Outcome.STARTED) CoreR.string.epg_replay_started else CoreR.string.epg_replay_attempt_failed),
                         style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(8.dp))
                 } else if (replayUnconfirmed) {
-                    Text(stringResource(R.string.epg_replay_unconfirmed), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Text(stringResource(CoreR.string.epg_replay_unconfirmed), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                 } else if (canCatchup) {
-                    Text(stringResource(R.string.epg_replay_advertised), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Text(stringResource(CoreR.string.epg_replay_advertised), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                 } else if (!canCatchup && programme.stopMs <= System.currentTimeMillis()) {
-                    Text(stringResource(R.string.content_epg_catchup_unavailable), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Text(stringResource(CoreR.string.content_epg_catchup_unavailable), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                     Spacer(Modifier.height(8.dp))
                 }
                 // FlowRow so the actions wrap to a second line on narrower screens instead of the last
@@ -334,7 +340,7 @@ internal fun ProgrammeDetailDialog(
                                 SettingsRepository.CatchupPlayer.EXTERNAL -> onPlayCatchupExternal()
                             }
                         }
-                        OwnTVButton(stringResource(if (replayUnconfirmed) R.string.epg_try_replay else R.string.content_epg_watch_start), onClick = startCatchup, icon = OwnTVIcon.PLAY, compact = compact, modifier = Modifier.focusRequester(fr))
+                        OwnTVButton(stringResource(if (replayUnconfirmed) CoreR.string.epg_try_replay else CoreR.string.content_epg_watch_start), onClick = startCatchup, icon = OwnTVIcon.PLAY, compact = compact, modifier = Modifier.focusRequester(fr))
                     }
                     // Record. What it offers depends on what is already true of this programme, so
                     // the button never lies: nothing yet → Record (or "from catch-up" when the
@@ -342,13 +348,13 @@ internal fun ProgrammeDetailDialog(
                     if (canRecord) {
                         when (recording?.status) {
                             RecordingStatus.RECORDING -> OwnTVButton(
-                                stringResource(R.string.recording_stop),
+                                stringResource(CoreR.string.recording_stop),
                                 onClick = onStopRecording,
                                 style = OwnTVButtonStyle.SECONDARY,
                                 compact = compact,
                             )
                             RecordingStatus.SCHEDULED -> OwnTVButton(
-                                stringResource(R.string.common_cancel),
+                                stringResource(CoreR.string.common_cancel),
                                 onClick = onCancelRecording,
                                 style = OwnTVButtonStyle.SECONDARY,
                                 compact = compact,
@@ -358,9 +364,9 @@ internal fun ProgrammeDetailDialog(
                             else -> OwnTVButton(
                                 stringResource(
                                     if (programme.stopMs <= System.currentTimeMillis()) {
-                                        R.string.media_save_programme
+                                        CoreR.string.media_save_programme
                                     } else {
-                                        R.string.recording_record
+                                        CoreR.string.recording_record
                                     },
                                 ),
                                 onClick = onRecord,
@@ -375,8 +381,8 @@ internal fun ProgrammeDetailDialog(
                     if (canRecord && programme.stopMs > System.currentTimeMillis()) {
                         OwnTVButton(
                             stringResource(
-                                if (seriesRuleActive) R.string.recording_stop_series
-                                else R.string.recording_record_series,
+                                if (seriesRuleActive) CoreR.string.recording_stop_series
+                                else CoreR.string.recording_record_series,
                             ),
                             onClick = if (seriesRuleActive) onStopSeries else onRecordSeries,
                             style = OwnTVButtonStyle.SECONDARY,
@@ -385,13 +391,13 @@ internal fun ProgrammeDetailDialog(
                     }
                     // Favourite the channel without leaving the guide; the label flips in place.
                     OwnTVButton(
-                        stringResource(if (isFavorite) R.string.content_epg_unfavourite else R.string.content_epg_favourite),
+                        stringResource(if (isFavorite) CoreR.string.content_epg_unfavourite else CoreR.string.content_epg_favourite),
                         onClick = onToggleFavorite,
                         style = OwnTVButtonStyle.SECONDARY,
                         icon = OwnTVIcon.FAVORITE,
                         compact = compact,
                     )
-                    OwnTVButton(stringResource(R.string.settings_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, compact = compact, modifier = if (!canCatchup) Modifier.focusRequester(fr) else Modifier)
+                    OwnTVButton(stringResource(CoreR.string.settings_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, compact = compact, modifier = if (!canCatchup) Modifier.focusRequester(fr) else Modifier)
                 }
             }
         }
@@ -419,18 +425,18 @@ private fun CatchupPlayerChooser(
                 contentAlignment = Alignment.Center,
             ) {
                 Column(Modifier.dialogPanel(width = 340.dp, corner = 16.dp, padding = 18.dp, scroll = false)) {
-                    Text(stringResource(R.string.settings_catchup_player), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                    Text(stringResource(CoreR.string.settings_catchup_player), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                     Spacer(Modifier.height(4.dp))
                     Text(
-                        stringResource(R.string.content_epg_player_choice_description),
+                        stringResource(CoreR.string.content_epg_player_choice_description),
                         style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                     )
                     Spacer(Modifier.height(14.dp))
-                    OwnTVButton(stringResource(R.string.content_epg_own_player), onClick = onInternal, icon = OwnTVIcon.PLAY, compact = true, modifier = Modifier.fillMaxWidth().focusRequester(fr))
+                    OwnTVButton(stringResource(CoreR.string.content_epg_own_player), onClick = onInternal, icon = OwnTVIcon.PLAY, compact = true, modifier = Modifier.fillMaxWidth().focusRequester(fr))
                     Spacer(Modifier.height(8.dp))
-                    OwnTVButton(stringResource(R.string.content_epg_external_player), onClick = onExternal, style = OwnTVButtonStyle.SECONDARY, compact = true, modifier = Modifier.fillMaxWidth())
+                    OwnTVButton(stringResource(CoreR.string.content_epg_external_player), onClick = onExternal, style = OwnTVButtonStyle.SECONDARY, compact = true, modifier = Modifier.fillMaxWidth())
                     Spacer(Modifier.height(8.dp))
-                    OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, compact = true, modifier = Modifier.fillMaxWidth())
+                    OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, compact = true, modifier = Modifier.fillMaxWidth())
                 }
             }
         }

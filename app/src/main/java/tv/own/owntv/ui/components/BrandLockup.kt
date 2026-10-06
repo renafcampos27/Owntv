@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -18,7 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.AccentCyan
 import tv.own.owntv.ui.theme.OwnTVTheme
 
@@ -34,8 +35,8 @@ fun BrandLockup(
     textSize: Int = 26,
 ) {
     val colors = OwnTVTheme.colors
-    val own = stringResource(R.string.brand_own)
-    val tv = stringResource(R.string.brand_tv)
+    val own = stringResource(CoreR.string.brand_own)
+    val tv = stringResource(CoreR.string.brand_tv)
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,

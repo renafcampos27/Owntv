@@ -1,5 +1,7 @@
 package tv.own.owntv.features.epg
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.*
@@ -15,7 +17,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ensureActive
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.database.entity.EpgProgrammeEntity
 import tv.own.owntv.features.live.CatchupOwner
@@ -104,27 +105,27 @@ fun MiniGuideOverlay(
                     true
                 }.focusable().trapAllFocusExit()) {
                 Text(channel.name, style = MaterialTheme.typography.titleLarge, color = colours.onSurface)
-                Text(stringResource(R.string.guide_browse_time, formatDate(cursor), formatTime(cursor)), color = colours.onSurfaceVariant)
+                Text(stringResource(CoreR.string.guide_browse_time, formatDate(cursor), formatTime(cursor)), color = colours.onSurfaceVariant)
                 Spacer(Modifier.height(12.dp))
                 when {
-                    failed -> Text(stringResource(R.string.mini_guide_failed), color = colours.onSurfaceVariant)
+                    failed -> Text(stringResource(CoreR.string.mini_guide_failed), color = colours.onSurfaceVariant)
                     rows == null -> OwnTVSpinner(sizeDp = 28)
-                    programme == null -> Text(stringResource(R.string.content_epg_no_programme), color = colours.onSurfaceVariant)
+                    programme == null -> Text(stringResource(CoreR.string.content_epg_no_programme), color = colours.onSurfaceVariant)
                     else -> {
-                        if (liveVm.usesSharedGuide(channel, programme)) Text(stringResource(R.string.guide_shared_origin), color = colours.onSurfaceVariant)
+                        if (liveVm.usesSharedGuide(channel, programme)) Text(stringResource(CoreR.string.guide_shared_origin), color = colours.onSurfaceVariant)
                         Text(programme.title, style = MaterialTheme.typography.titleMedium, color = colours.onSurface)
-                        Text(stringResource(R.string.content_epg_time_range, formatTime(programme.startMs), formatTime(programme.stopMs)), color = colours.onSurfaceVariant)
+                        Text(stringResource(CoreR.string.content_epg_time_range, formatTime(programme.displayStartMs), formatTime(programme.displayStopMs)), color = colours.onSurfaceVariant)
                         when {
-                            programme.startMs > now -> Text(stringResource(R.string.mini_guide_future), color = colours.onSurfaceVariant)
-                            programme.stopMs <= now && !channel.catchup -> Text(stringResource(R.string.mini_guide_no_archive), color = colours.onSurfaceVariant)
+                            programme.startMs > now -> Text(stringResource(CoreR.string.mini_guide_future), color = colours.onSurfaceVariant)
+                            programme.stopMs <= now && !channel.catchup -> Text(stringResource(CoreR.string.mini_guide_no_archive), color = colours.onSurfaceVariant)
                             programme.stopMs <= now && (channel.catchupDays <= 0 || programme.startMs < now - channel.catchupDays * 86_400_000L) ->
-                                Text(stringResource(R.string.mini_guide_attempt), color = colours.onSurfaceVariant)
+                                Text(stringResource(CoreR.string.mini_guide_attempt), color = colours.onSurfaceVariant)
                         }
 
                     }
                 }
                 Spacer(Modifier.height(12.dp))
-                Text(stringResource(R.string.mini_guide_navigation), style = MaterialTheme.typography.bodySmall, color = colours.onSurfaceVariant)
+                Text(stringResource(CoreR.string.mini_guide_navigation), style = MaterialTheme.typography.bodySmall, color = colours.onSurfaceVariant)
             }
         }
     }

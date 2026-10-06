@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.theme
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.annotation.StringRes
 import androidx.compose.animation.core.Easing
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -8,18 +10,17 @@ import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ReadOnlyComposable
 import androidx.compose.runtime.staticCompositionLocalOf
-import tv.own.owntv.R
 import tv.own.owntv.core.theme.AnimationLevel
 
 /** The user-facing label for each animation level. */
 val AnimationLevel.labelRes: Int
     @StringRes get() = when (this) {
-        AnimationLevel.FULL -> R.string.common_on
-        AnimationLevel.OFF -> R.string.common_off
+        AnimationLevel.FULL -> CoreR.string.common_on
+        AnimationLevel.OFF -> CoreR.string.common_off
     }
 
 /** Current animation level, provided at the theme root from the user's setting. */
-val LocalAnimationLevel = staticCompositionLocalOf { AnimationLevel.FULL }
+val LocalAnimationLevel = staticCompositionLocalOf { AnimationLevel.OFF }
 
 /** True unless the user has turned animations fully Off — for spots that gate a transition entirely. */
 val animationsOn: Boolean

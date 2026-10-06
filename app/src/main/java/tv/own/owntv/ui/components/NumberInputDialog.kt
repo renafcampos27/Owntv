@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -34,7 +36,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
 
@@ -116,7 +117,7 @@ fun NumberInputDialog(
                 // Bottom-align: the text field carries a label above its input box, so it's taller than
                 // the − / + buttons. Aligning to the bottom lines the buttons up with the input box row.
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StepBtn(stringResource(R.string.common_minus), enabled = value > min, modifier = Modifier.focusRequester(minusFocus)) {
+                    StepBtn(stringResource(CoreR.string.common_minus), enabled = value > min, modifier = Modifier.focusRequester(minusFocus)) {
                         commit(value - step)
                     }
                     // The numeric text field. Numeric keyboard; Done commits + moves focus back to −.
@@ -126,13 +127,13 @@ fun NumberInputDialog(
                             // Digits only; never let a non-numeric char into the field.
                             text = raw.filter { it.isDigit() }.take(7) // take(7) guards against paste bombs
                         },
-                        label = fieldLabel ?: stringResource(R.string.common_items_per_skip),
+                        label = fieldLabel ?: stringResource(CoreR.string.common_items_per_skip),
                         modifier = Modifier.width(130.dp),
                         focusRequester = fieldFocus,
                         placeholder = value.toString(),
                         keyboardType = KeyboardType.Number,
                     )
-                    StepBtn(stringResource(R.string.common_plus), enabled = value < max, modifier = Modifier.focusRequester(plusFocus)) {
+                    StepBtn(stringResource(CoreR.string.common_plus), enabled = value < max, modifier = Modifier.focusRequester(plusFocus)) {
                         commit(value + step)
                     }
                 }
@@ -163,9 +164,9 @@ fun NumberInputDialog(
 
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OwnTVButton(stringResource(R.string.common_reset), onClick = onReset, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_reset), onClick = onReset, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(R.string.common_save), onClick = {
+                    OwnTVButton(stringResource(CoreR.string.common_save), onClick = {
                         commitText()
                         keyboard?.hide()
                         onDismiss()

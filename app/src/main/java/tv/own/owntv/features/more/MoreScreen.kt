@@ -1,5 +1,7 @@
 package tv.own.owntv.features.more
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -47,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Text
 import tv.own.owntv.BuildConfig
-import tv.own.owntv.R
 import tv.own.owntv.core.backup.BackupManager
 import tv.own.owntv.core.model.MediaType
 import tv.own.owntv.core.settings.SettingsRepository
@@ -191,8 +192,8 @@ fun MoreScreen(
     val colors = OwnTVTheme.colors
     val paneShape = SettingsSkin.PaneShape
     val backupAge = lastBackup?.let { relativeShort(it.at) }
-    val syncValue = stringResource(if (sync.listening) R.string.common_on else R.string.common_off)
-    val neverBadge = stringResource(R.string.common_never)
+    val syncValue = stringResource(if (sync.listening) CoreR.string.common_on else CoreR.string.common_off)
+    val neverBadge = stringResource(CoreR.string.common_never)
 
     // Settings' own outer shell: ONE content panel holding a head that spans both columns and the
     // two plates below it. Without this the plates float on the wallpaper and the screen reads as a
@@ -216,13 +217,13 @@ fun MoreScreen(
                 .padding(start = 4.dp, end = 4.dp, top = 2.dp, bottom = 12.dp),
         ) {
             Text(
-                text = stringResource(R.string.common_nav_more),
+                text = stringResource(CoreR.string.common_nav_more),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = colors.onSurface,
             )
             Text(
-                text = stringResource(R.string.more_spine_header_summary),
+                text = stringResource(CoreR.string.more_spine_header_summary),
                 fontSize = 12.sp,
                 color = colors.onSurfaceVariant,
                 maxLines = 1,
@@ -254,8 +255,8 @@ fun MoreScreen(
                 SpineRow(
                     row = MoreRow.SETTINGS,
                     icon = OwnTVIcon.SETTINGS,
-                    title = stringResource(R.string.common_nav_settings),
-                    summary = stringResource(R.string.more_spine_settings_summary),
+                    title = stringResource(CoreR.string.common_nav_settings),
+                    summary = stringResource(CoreR.string.more_spine_settings_summary),
                     badge = "",
                     selected = selected,
                     focus = rowFocus.getValue(MoreRow.SETTINGS),
@@ -263,14 +264,14 @@ fun MoreScreen(
                     onClick = { focusRow(MoreRow.SETTINGS); onOpenSettings() },
                 )
 
-                SpineGroup(stringResource(R.string.settings_group_data))
+                SpineGroup(stringResource(CoreR.string.settings_group_data))
 
 
                 SpineRow(
                     row = MoreRow.BACKUP,
                     icon = OwnTVIcon.BACKUP,
-                    title = stringResource(R.string.settings_backup_restore),
-                    summary = stringResource(R.string.more_spine_backup_summary),
+                    title = stringResource(CoreR.string.settings_backup_restore),
+                    summary = stringResource(CoreR.string.more_spine_backup_summary),
                     // How long ago, or a dash while no backup has ever been taken.
                     badge = backupAge ?: neverBadge,
                     selected = selected,
@@ -280,12 +281,12 @@ fun MoreScreen(
                 )
 
 
-                SpineGroup(stringResource(R.string.settings_app_group))
+                SpineGroup(stringResource(CoreR.string.settings_app_group))
                 SpineRow(
                     row = MoreRow.ERROR_LOG,
                     icon = OwnTVIcon.WARNING,
-                    title = stringResource(R.string.settings_playback_error_log),
-                    summary = stringResource(R.string.more_spine_error_log_summary),
+                    title = stringResource(CoreR.string.settings_playback_error_log),
+                    summary = stringResource(CoreR.string.more_spine_error_log_summary),
                     badge = (logEntries?.size ?: 0).toString(),
                     selected = selected,
                     focus = rowFocus.getValue(MoreRow.ERROR_LOG),
@@ -295,8 +296,8 @@ fun MoreScreen(
                 SpineRow(
                     row = MoreRow.ABOUT,
                     icon = OwnTVIcon.INFO,
-                    title = stringResource(R.string.settings_version_updates),
-                    summary = stringResource(R.string.settings_version_updates_description),
+                    title = stringResource(CoreR.string.settings_version_updates),
+                    summary = stringResource(CoreR.string.settings_version_updates_description),
                     badge = BuildConfig.VERSION_NAME,
                     selected = selected,
                     focus = rowFocus.getValue(MoreRow.ABOUT),
@@ -317,13 +318,13 @@ fun MoreScreen(
                     .border(1.dp, colors.outlineVariant, paneShape),
             ) {
                 val destination = when (selected) {
-                    MoreRow.SETTINGS -> stringResource(R.string.common_nav_settings)
-                    MoreRow.FAVORITES -> stringResource(R.string.content_category_favorites)
-                    MoreRow.HISTORY -> stringResource(R.string.content_category_history)
-                    MoreRow.BACKUP -> stringResource(R.string.settings_backup_restore)
-                    MoreRow.LOCAL_SYNC -> stringResource(R.string.local_sync_title)
-                    MoreRow.ERROR_LOG -> stringResource(R.string.settings_playback_error_log)
-                    MoreRow.ABOUT -> stringResource(R.string.settings_version_updates)
+                    MoreRow.SETTINGS -> stringResource(CoreR.string.common_nav_settings)
+                    MoreRow.FAVORITES -> stringResource(CoreR.string.content_category_favorites)
+                    MoreRow.HISTORY -> stringResource(CoreR.string.content_category_history)
+                    MoreRow.BACKUP -> stringResource(CoreR.string.settings_backup_restore)
+                    MoreRow.LOCAL_SYNC -> stringResource(CoreR.string.local_sync_title)
+                    MoreRow.ERROR_LOG -> stringResource(CoreR.string.settings_playback_error_log)
+                    MoreRow.ABOUT -> stringResource(CoreR.string.settings_version_updates)
                 }
                 // Settings' own sheet header: 18 sp title, 12.5 sp summary, bordered mono tag.
                 SheetHeader(
@@ -332,13 +333,13 @@ fun MoreScreen(
                     // summary is short because the spine is 294 dp, not because the app has nothing
                     // more to say.
                     summary = when (selected) {
-                        MoreRow.SETTINGS -> stringResource(R.string.more_spine_settings_summary)
-                        MoreRow.FAVORITES -> stringResource(R.string.more_pane_favorites_summary)
-                        MoreRow.HISTORY -> stringResource(R.string.more_pane_history_summary)
-                        MoreRow.BACKUP -> stringResource(R.string.settings_backup_restore_description)
-                        MoreRow.LOCAL_SYNC -> stringResource(R.string.local_sync_description)
-                        MoreRow.ERROR_LOG -> stringResource(R.string.settings_playback_error_description)
-                        MoreRow.ABOUT -> stringResource(R.string.settings_about_description)
+                        MoreRow.SETTINGS -> stringResource(CoreR.string.more_spine_settings_summary)
+                        MoreRow.FAVORITES -> stringResource(CoreR.string.more_pane_favorites_summary)
+                        MoreRow.HISTORY -> stringResource(CoreR.string.more_pane_history_summary)
+                        MoreRow.BACKUP -> stringResource(CoreR.string.settings_backup_restore_description)
+                        MoreRow.LOCAL_SYNC -> stringResource(CoreR.string.local_sync_description)
+                        MoreRow.ERROR_LOG -> stringResource(CoreR.string.settings_playback_error_description)
+                        MoreRow.ABOUT -> stringResource(CoreR.string.settings_about_description)
                     },
                     tag = when (selected) {
                         MoreRow.SETTINGS -> null
@@ -396,7 +397,7 @@ private fun SpineFooter() {
     ) {
         Box(Modifier.width(5.dp).heightIn(min = 5.dp).clip(RoundedCornerShape(3.dp)).background(colors.primary))
         Text(
-            text = stringResource(R.string.settings_spine_foot),
+            text = stringResource(CoreR.string.settings_spine_foot),
             fontSize = 10.sp,
             color = colors.outline,
             maxLines = 1,
@@ -452,18 +453,18 @@ private fun SpineRow(
  */
 @Composable
 private fun ColumnScope.SettingsPane() {
-    PaneLabel(stringResource(R.string.more_pane_groups))
+    PaneLabel(stringResource(CoreR.string.more_pane_groups))
     // Settings' nine groups, by their own labels. Quick is group zero and is listed above instead.
     PaneChips(
         listOf(
-            stringResource(R.string.settings_group_profile),
-            stringResource(R.string.settings_group_sources),
-            stringResource(R.string.settings_group_appearance),
-            stringResource(R.string.settings_group_layout),
-            stringResource(R.string.settings_group_content_metadata),
-            stringResource(R.string.settings_group_playback),
-            stringResource(R.string.settings_group_network),
-            stringResource(R.string.settings_group_app),
+            stringResource(CoreR.string.settings_group_profile),
+            stringResource(CoreR.string.settings_group_sources),
+            stringResource(CoreR.string.settings_group_appearance),
+            stringResource(CoreR.string.settings_group_layout),
+            stringResource(CoreR.string.settings_group_content_metadata),
+            stringResource(CoreR.string.settings_group_playback),
+            stringResource(CoreR.string.settings_group_network),
+            stringResource(CoreR.string.settings_group_app),
         ),
     )
 }
@@ -487,7 +488,7 @@ private fun ColumnScope.CountsPane(counts: TypeCounts, items: List<PaneItem>) {
         horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         listOf(
-            stringResource(R.string.common_nav_live_tv) to counts.live,
+            stringResource(CoreR.string.common_nav_live_tv) to counts.live,
         ).forEach { (label, n) ->
             Column(
                 modifier = Modifier
@@ -537,9 +538,9 @@ private fun ColumnScope.CountsPane(counts: TypeCounts, items: List<PaneItem>) {
                     MonoText(
                         stringResource(
                             when (item.type) {
-                                MediaType.LIVE -> R.string.common_nav_live_tv
-                                MediaType.MOVIE -> R.string.common_nav_movies
-                                else -> R.string.common_nav_series
+                                MediaType.LIVE -> CoreR.string.common_nav_live_tv
+                                MediaType.MOVIE -> CoreR.string.common_nav_movies
+                                else -> CoreR.string.common_nav_series
                             },
                         ),
                         10.sp,
@@ -561,16 +562,16 @@ private fun BackupPane(last: SettingsRepository.LastBackup?) {
     if (last != null) {
         PaneValueRow(
             icon = OwnTVIcon.BACKUP,
-            label = stringResource(R.string.more_pane_last_backup),
+            label = stringResource(CoreR.string.more_pane_last_backup),
             value = formatBestDateTime(context, "dMMMyyyy", last.at),
         )
         PaneValueRow(
             icon = OwnTVIcon.INFO,
-            label = stringResource(R.string.settings_size),
+            label = stringResource(CoreR.string.settings_size),
             value = android.text.format.Formatter.formatShortFileSize(context, last.bytes) +
                 if (last.encrypted) {
-                    stringResource(R.string.content_epg_bits_separator) +
-                        stringResource(R.string.more_pane_encrypted)
+                    stringResource(CoreR.string.content_epg_bits_separator) +
+                        stringResource(CoreR.string.more_pane_encrypted)
                 } else {
                     ""
                 },
@@ -578,12 +579,12 @@ private fun BackupPane(last: SettingsRepository.LastBackup?) {
         if (last.path.isNotBlank()) {
             PaneValueRow(
                 icon = OwnTVIcon.DOWNLOADS,
-                label = stringResource(R.string.settings_backup_location),
+                label = stringResource(CoreR.string.settings_backup_location),
                 value = last.path,
             )
         }
     }
-    PaneLabel(stringResource(R.string.more_pane_backup_contents))
+    PaneLabel(stringResource(CoreR.string.more_pane_backup_contents))
     PaneChips(BackupManager.Section.entries.map { stringResource(sectionLabelRes(it)) })
 }
 
@@ -599,13 +600,13 @@ private fun LocalSyncPane(sync: SyncSnapshot) {
     PaneValueRow(
         icon = OwnTVIcon.REFRESH,
         label = stringResource(
-            if (sync.listening) R.string.more_pane_sync_listening else R.string.more_pane_sync_not_listening,
+            if (sync.listening) CoreR.string.more_pane_sync_listening else CoreR.string.more_pane_sync_not_listening,
         ),
-        value = stringResource(if (sync.listening) R.string.common_on else R.string.common_off),
+        value = stringResource(if (sync.listening) CoreR.string.common_on else CoreR.string.common_off),
         hot = sync.listening,
     )
     if (sync.devices.isNotEmpty()) {
-        PaneLabel(stringResource(R.string.local_sync_paired_devices))
+        PaneLabel(stringResource(CoreR.string.local_sync_paired_devices))
         sync.devices.forEach { device ->
             PaneValueRow(
                 icon = OwnTVIcon.NETWORK,
@@ -614,7 +615,7 @@ private fun LocalSyncPane(sync: SyncSnapshot) {
                 // The same two branches Local sync's own rows use, so one device cannot read
                 // "Not synced yet" on one screen and "1 Jan 1970" on the other.
                 value = if (device.lastSyncAt <= 0) {
-                    stringResource(R.string.settings_epg_sources_not_synced)
+                    stringResource(CoreR.string.settings_epg_sources_not_synced)
                 } else {
                     relativeShort(device.lastSyncAt)
                 },
@@ -632,8 +633,8 @@ private fun LocalSyncPane(sync: SyncSnapshot) {
 private fun ErrorLogPane(entries: List<PlaybackErrorLog.Entry>?) {
     val context = LocalContext.current
     when {
-        entries == null -> PaneNote(stringResource(R.string.settings_loading))
-        entries.isEmpty() -> PaneNote(stringResource(R.string.settings_no_playback_errors))
+        entries == null -> PaneNote(stringResource(CoreR.string.settings_loading))
+        entries.isEmpty() -> PaneNote(stringResource(CoreR.string.settings_no_playback_errors))
         else -> entries.take(PANE_LOG_ROWS).forEach { e ->
             PaneValueRow(
                 icon = OwnTVIcon.WARNING,
@@ -657,17 +658,17 @@ private fun AboutPane() {
     val checkAtStartup by settings.updateCheckOnStart.collectAsStateWithLifecycle(false)
     PaneValueRow(
         icon = OwnTVIcon.INFO,
-        label = stringResource(R.string.settings_installed_version, BuildConfig.VERSION_NAME),
+        label = stringResource(CoreR.string.settings_installed_version, BuildConfig.VERSION_NAME),
         value = null,
     )
     PaneValueRow(
         icon = OwnTVIcon.REFRESH,
-        label = stringResource(R.string.settings_update_startup),
-        value = stringResource(if (checkAtStartup) R.string.common_on else R.string.common_off),
+        label = stringResource(CoreR.string.settings_update_startup),
+        value = stringResource(if (checkAtStartup) CoreR.string.common_on else CoreR.string.common_off),
     )
     PaneValueRow(
         icon = OwnTVIcon.INFO,
-        label = stringResource(R.string.settings_about_license),
+        label = stringResource(CoreR.string.settings_about_license),
         value = null,
     )
 }
@@ -798,10 +799,10 @@ private fun PaneHint(destination: String) {
                 .border(1.dp, colors.outlineVariant, shape)
                 .padding(horizontal = 7.dp, vertical = 2.dp),
         ) {
-            MonoText(stringResource(R.string.common_ok), 10.sp, colors.onSurfaceVariant)
+            MonoText(stringResource(CoreR.string.common_ok), 10.sp, colors.onSurfaceVariant)
         }
         Text(
-            text = stringResource(R.string.more_pane_hint_open, destination),
+            text = stringResource(CoreR.string.more_pane_hint_open, destination),
             fontSize = 11.5.sp,
             color = colors.outline,
             maxLines = 1,

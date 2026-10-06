@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -58,10 +60,10 @@ import tv.own.owntv.ui.theme.PopupFontTheme
 @Composable
 private fun menuTitle(menu: ContentMenu) = stringResource(
     when (menu) {
-        ContentMenu.LIVE -> R.string.common_nav_live_tv
-        ContentMenu.MOVIE -> R.string.common_nav_movies
-        ContentMenu.SERIES -> R.string.common_nav_series
-        ContentMenu.EPISODE -> R.string.content_episodes
+        ContentMenu.LIVE -> CoreR.string.common_nav_live_tv
+        ContentMenu.MOVIE -> CoreR.string.common_nav_movies
+        ContentMenu.SERIES -> CoreR.string.common_nav_series
+        ContentMenu.EPISODE -> CoreR.string.content_episodes
     },
 )
 
@@ -100,7 +102,7 @@ fun ContentMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier)
             .padding(horizontal = 40.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Header(title = stringResource(R.string.settings_content_menus_title), onBack = onBack)
+        Header(title = stringResource(CoreR.string.settings_content_menus_title), onBack = onBack)
         Spacer(Modifier.height(4.dp))
         Text(
             stringResource(R.string.settings_content_menus_description),
@@ -115,7 +117,7 @@ fun ContentMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier)
                 icon = menuIcon(menu),
                 title = menuTitle(menu),
                 chip = stringResource(
-                    if (saved.isEmpty()) R.string.settings_subtitle_default else R.string.settings_live_latency_custom,
+                    if (saved.isEmpty()) CoreR.string.settings_subtitle_default else CoreR.string.settings_live_latency_custom,
                 ),
                 primaryChip = saved.isNotEmpty(),
                 chevron = true,
@@ -126,7 +128,7 @@ fun ContentMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier)
         Spacer(Modifier.height(10.dp))
         Row2(
             icon = OwnTVIcon.REFRESH,
-            title = stringResource(R.string.common_reset),
+            title = stringResource(CoreR.string.common_reset),
             onClick = { listOf(ContentMenu.LIVE).forEach { vm.setMenuOrder(it, emptyList()) } },
         )
     }
@@ -208,7 +210,7 @@ private fun ArrangeMenuOverlay(
                 ) {
                     Text(menuTitle(menu), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                     Text(
-                        stringResource(R.string.settings_content_menus_hint),
+                        stringResource(CoreR.string.settings_content_menus_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                     )
@@ -232,8 +234,8 @@ private fun ArrangeMenuOverlay(
                     }
                     Spacer(Modifier.height(4.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        OwnTVButton(stringResource(R.string.common_save), onClick = { onSave(keys) }, modifier = Modifier.weight(1f))
-                        OwnTVButton(stringResource(R.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.weight(1f))
+                        OwnTVButton(stringResource(CoreR.string.common_save), onClick = { onSave(keys) }, modifier = Modifier.weight(1f))
+                        OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -274,7 +276,7 @@ private fun ArrangeMenuRow(
         ) {
             if (picked) {
                 Text(
-                    stringResource(R.string.setup_move_indicator),
+                    stringResource(CoreR.string.setup_move_indicator),
                     style = MaterialTheme.typography.bodyMedium,
                     color = foreground,
                     modifier = Modifier.padding(end = 6.dp),

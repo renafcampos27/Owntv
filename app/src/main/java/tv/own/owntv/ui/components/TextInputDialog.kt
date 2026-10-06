@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +27,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
 
@@ -48,8 +49,8 @@ fun TextInputDialog(
     allowBlank: Boolean = true,
 ) {
     val colors = OwnTVTheme.colors
-    val resolvedLabel = label ?: stringResource(R.string.common_name)
-    val resolvedConfirmLabel = confirmLabel ?: stringResource(R.string.common_save)
+    val resolvedLabel = label ?: stringResource(CoreR.string.common_name)
+    val resolvedConfirmLabel = confirmLabel ?: stringResource(CoreR.string.common_save)
     var value by remember { mutableStateOf(initial) }
     val fieldFocus = remember { FocusRequester() }
     val focusGuard = remember { FocusRequestGuard() }
@@ -79,10 +80,10 @@ fun TextInputDialog(
                 Spacer(Modifier.height(22.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     if (onDelete != null) {
-                        OwnTVButton(stringResource(R.string.common_delete), onClick = onDelete, style = OwnTVButtonStyle.SECONDARY)
+                        OwnTVButton(stringResource(CoreR.string.common_delete), onClick = onDelete, style = OwnTVButtonStyle.SECONDARY)
                         Spacer(Modifier.weight(1f))
                     }
-                    OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
                     OwnTVButton(
                         resolvedConfirmLabel,

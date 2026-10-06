@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +30,6 @@ import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.compose.ui.res.stringResource
-import tv.own.owntv.R
 import tv.own.owntv.core.database.dao.LinkedSubtitle
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.rememberDialogFocusRestore
@@ -77,10 +78,10 @@ fun DeleteSubtitlesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     ) {
         // Title + Delete all (top-right).
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Box(Modifier.weight(1f)) { Header(stringResource(R.string.settings_delete_subtitles), onBack) }
+            Box(Modifier.weight(1f)) { Header(stringResource(CoreR.string.settings_delete_subtitles), onBack) }
             if (movieCount + seriesCount > 0) {
                 OwnTVButton(
-                    stringResource(R.string.settings_delete_all),
+                    stringResource(CoreR.string.settings_delete_all),
                     onClick = { dialogFocus.value = deleteAllFocus; showDeleteAll = true },
                     style = OwnTVButtonStyle.SECONDARY,
                     modifier = Modifier.focusRequester(deleteAllFocus),
@@ -95,8 +96,8 @@ fun DeleteSubtitlesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 val count = if (s == DeleteSubtitlesViewModel.Section.MOVIES) movieCount else seriesCount
                 OwnTVButton(
                     stringResource(
-                        R.string.settings_section_count,
-                        if (s == DeleteSubtitlesViewModel.Section.MOVIES) stringResource(R.string.settings_movies) else stringResource(R.string.settings_series),
+                        CoreR.string.settings_section_count,
+                        if (s == DeleteSubtitlesViewModel.Section.MOVIES) stringResource(CoreR.string.settings_movies) else stringResource(CoreR.string.settings_series),
                         count,
                     ),
                     onClick = { vm.selectSection(s) },
@@ -110,8 +111,8 @@ fun DeleteSubtitlesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         if (items.isEmpty()) {
             Text(
                 stringResource(
-                    R.string.settings_no_downloaded_subtitles,
-                    if (section == DeleteSubtitlesViewModel.Section.MOVIES) stringResource(R.string.settings_movies).lowercase() else stringResource(R.string.settings_series).lowercase(),
+                    CoreR.string.settings_no_downloaded_subtitles,
+                    if (section == DeleteSubtitlesViewModel.Section.MOVIES) stringResource(CoreR.string.settings_movies).lowercase() else stringResource(CoreR.string.settings_series).lowercase(),
                 ),
                 style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant,
                 modifier = Modifier.padding(16.dp),
@@ -122,8 +123,8 @@ fun DeleteSubtitlesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 Row2(
                     icon = OwnTVIcon.SUBTITLE,
                     title = displayTitle,
-                    desc = listOfNotNull(item.languageName ?: item.language, item.releaseName).joinToString(stringResource(R.string.content_metadata_separator)),
-                    chip = stringResource(R.string.common_delete), primaryChip = false,
+                    desc = listOfNotNull(item.languageName ?: item.language, item.releaseName).joinToString(stringResource(CoreR.string.content_metadata_separator)),
+                    chip = stringResource(CoreR.string.common_delete), primaryChip = false,
                     onClick = { confirmDelete = item },
                 )
             }
@@ -132,9 +133,9 @@ fun DeleteSubtitlesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     confirmDelete?.let { item ->
         ConfirmDialog(
-            title = stringResource(R.string.settings_delete_subtitle),
+            title = stringResource(CoreR.string.settings_delete_subtitle),
             message = stringResource(
-                R.string.settings_delete_subtitle_message,
+                CoreR.string.settings_delete_subtitle_message,
                 item.languageName ?: item.language ?: item.fileName,
                 item.displayTitle(),
             ),
@@ -145,11 +146,11 @@ fun DeleteSubtitlesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
     if (showDeleteAll) {
         PickerDialog(
-            title = stringResource(R.string.settings_delete_all_subtitles),
+            title = stringResource(CoreR.string.settings_delete_all_subtitles),
             options = listOf(
-                "ALL" to stringResource(R.string.settings_delete_all),
-                "MOVIES" to stringResource(R.string.settings_delete_all_movies),
-                "SERIES" to stringResource(R.string.settings_delete_all_series),
+                "ALL" to stringResource(CoreR.string.settings_delete_all),
+                "MOVIES" to stringResource(CoreR.string.settings_delete_all_movies),
+                "SERIES" to stringResource(CoreR.string.settings_delete_all_series),
             ),
             selected = "",
             onSelect = { choice ->
@@ -169,7 +170,7 @@ fun DeleteSubtitlesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 private fun LinkedSubtitle.displayTitle(): String {
     val episodeTitle = episodeDisplayTitleParts(mediaType, contentTitle, contentKey) ?: return contentTitle
     return stringResource(
-        R.string.player_episode_context_title,
+        CoreR.string.player_episode_context_title,
         episodeTitle.baseTitle,
         episodeTitle.season,
         episodeTitle.episode,

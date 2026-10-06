@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -55,7 +57,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.core.backup.BackupManager
 import tv.own.owntv.core.companion.CompanionServerState
 import tv.own.owntv.core.sync.local.SyncDirection
@@ -124,9 +125,9 @@ fun LocalSyncScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Box(Modifier.weight(1f)) {
                 Header(
-                    stringResource(R.string.local_sync_title),
+                    stringResource(CoreR.string.local_sync_title),
                     onBack,
-                    subtitle = stringResource(R.string.local_sync_description),
+                    subtitle = stringResource(CoreR.string.local_sync_description),
                 )
             }
             SyncModePill(on = listening != null)
@@ -156,9 +157,9 @@ fun LocalSyncScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     // A listening port and an announcement on the LAN — a network state, not an
                     // archive.
                     icon = OwnTVIcon.NETWORK,
-                    title = stringResource(R.string.local_sync_mode),
-                    desc = stringResource(R.string.local_sync_mode_description),
-                    chip = stringResource(if (listening != null) R.string.common_on else R.string.common_off),
+                    title = stringResource(CoreR.string.local_sync_mode),
+                    desc = stringResource(CoreR.string.local_sync_mode_description),
+                    chip = stringResource(if (listening != null) CoreR.string.common_on else CoreR.string.common_off),
                     primaryChip = listening != null,
                     modifier = Modifier.focusRequester(firstFocus),
                     onClick = { if (listening != null) vm.stopHosting() else vm.startHosting() },
@@ -166,13 +167,13 @@ fun LocalSyncScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 Row2(
                     // This starts discovery. REFRESH reads as "sync again", the far end of the flow.
                     icon = OwnTVIcon.SEARCH,
-                    title = stringResource(R.string.local_sync_connect),
-                    desc = stringResource(R.string.local_sync_connect_description),
+                    title = stringResource(CoreR.string.local_sync_connect),
+                    desc = stringResource(CoreR.string.local_sync_connect_description),
                     modifier = Modifier.focusRequester(connectFocus),
                     onClick = { stepFocus.value = connectFocus; vm.beginPairing() },
                 )
                 if (paired.isNotEmpty()) {
-                    GroupLabel(stringResource(R.string.local_sync_paired_devices))
+                    GroupLabel(stringResource(CoreR.string.local_sync_paired_devices))
                     // Only the devices whose names collide get a code, so a normal household
                     // never sees one.
                     val codes = shortCodes(paired)
@@ -181,7 +182,7 @@ fun LocalSyncScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         Row2(
                             icon = OwnTVIcon.PHONE,
                             title = codes[device.id]
-                                ?.let { stringResource(R.string.local_sync_device_with_code, device.name, it) }
+                                ?.let { stringResource(CoreR.string.local_sync_device_with_code, device.name, it) }
                                 ?: device.name,
                             desc = lastSyncedText(device.lastSyncAt),
                             chevron = true,
@@ -217,7 +218,7 @@ fun LocalSyncScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 color = DestructiveRed,
             )
             Spacer(Modifier.height(8.dp))
-            OwnTVButton(stringResource(R.string.settings_close), onClick = vm::dismissError, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.settings_close), onClick = vm::dismissError, style = OwnTVButtonStyle.SECONDARY)
         }
 
         Spacer(Modifier.height(24.dp))
@@ -279,7 +280,7 @@ fun SetupLocalSyncScreen(onRestored: () -> Unit, onBack: () -> Unit, modifier: M
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
         Header(
-            stringResource(R.string.setup_sync_device),
+            stringResource(CoreR.string.setup_sync_device),
             onBack = { if (step is LocalSyncViewModel.Step.Result) onRestored() else vm.cancel() },
         )
         Spacer(Modifier.height(12.dp))
@@ -305,12 +306,12 @@ fun SetupLocalSyncScreen(onRestored: () -> Unit, onBack: () -> Unit, modifier: M
                 color = DestructiveRed,
             )
             Spacer(Modifier.height(8.dp))
-            OwnTVButton(stringResource(R.string.settings_close), onClick = vm::dismissError, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.settings_close), onClick = vm::dismissError, style = OwnTVButtonStyle.SECONDARY)
         }
 
         if (vm.busy) {
             Spacer(Modifier.height(12.dp))
-            Text(stringResource(R.string.local_sync_working), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.local_sync_working), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         }
         Spacer(Modifier.height(24.dp))
     }
@@ -321,12 +322,12 @@ fun SetupLocalSyncScreen(onRestored: () -> Unit, onBack: () -> Unit, modifier: M
 private fun SetupResultBlock(step: LocalSyncViewModel.Step.Result, onDone: () -> Unit) {
     val colors = OwnTVTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(stringResource(R.string.local_sync_done), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+        Text(stringResource(CoreR.string.local_sync_done), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
         step.received?.let {
-            Text(stringResource(R.string.local_sync_received_items, it.items), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.local_sync_received_items, it.items), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         }
         Spacer(Modifier.height(10.dp))
-        OwnTVButton(stringResource(R.string.common_done), onClick = onDone)
+        OwnTVButton(stringResource(CoreR.string.common_done), onClick = onDone)
     }
 }
 
@@ -342,7 +343,7 @@ private fun SyncModePill(on: Boolean) {
     Text(
         // Off says only "Off": the alternative is a second "Sync mode …" string, and this slot
         // already reads "Off" in the More screen's preview pane for this very feature.
-        text = stringResource(if (on) R.string.local_sync_mode_pill else R.string.common_off),
+        text = stringResource(if (on) CoreR.string.local_sync_mode_pill else CoreR.string.common_off),
         style = MaterialTheme.typography.labelMedium,
         color = if (on) colors.onPrimaryContainer else colors.onSecondaryContainer,
         fontWeight = FontWeight.SemiBold,
@@ -406,7 +407,7 @@ private fun BusyRow() {
     ) {
         BusySpinner(Modifier.size(18.dp), colors.primary)
         Text(
-            stringResource(R.string.local_sync_working),
+            stringResource(CoreR.string.local_sync_working),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
         )
@@ -451,10 +452,10 @@ private fun BusySpinner(modifier: Modifier, color: Color) {
 /** "Last synced: 2 hours ago", or the plain "Not synced yet" the EPG rows already use. */
 @Composable
 private fun lastSyncedText(at: Long): String = if (at <= 0) {
-    stringResource(R.string.settings_epg_sources_not_synced)
+    stringResource(CoreR.string.settings_epg_sources_not_synced)
 } else {
     stringResource(
-        R.string.local_sync_last_synced,
+        CoreR.string.local_sync_last_synced,
         android.text.format.DateUtils
             .getRelativeTimeSpanString(at, System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS)
             .toString(),
@@ -482,7 +483,7 @@ private fun HostingCard(state: CompanionServerState.Listening, deviceName: Strin
         Text(deviceName, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
         Spacer(Modifier.height(6.dp))
         Text(
-            stringResource(R.string.local_sync_host_hint),
+            stringResource(CoreR.string.local_sync_host_hint),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -499,7 +500,7 @@ private fun HostingCard(state: CompanionServerState.Listening, deviceName: Strin
         state.qr?.let { qr ->
             Image(
                 bitmap = qr.asImageBitmap(),
-                contentDescription = stringResource(R.string.local_sync_qr_description),
+                contentDescription = stringResource(CoreR.string.local_sync_qr_description),
                 modifier = Modifier.size(QR_SIZE).clip(RoundedCornerShape(14.dp)).background(Color.White).padding(9.dp),
                 contentScale = ContentScale.Fit,
             )
@@ -522,10 +523,10 @@ private fun FindDeviceBlock(vm: LocalSyncViewModel) {
     val colors = OwnTVTheme.colors
     var manual by remember { mutableStateOf("") }
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(stringResource(R.string.local_sync_find_hint), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+        Text(stringResource(CoreR.string.local_sync_find_hint), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
         if (vm.found.isEmpty()) {
-            Text(stringResource(R.string.local_sync_searching), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.local_sync_searching), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         } else {
             vm.found.forEach { device ->
                 // A device already paired says so instead of showing an address the user has no use
@@ -534,7 +535,7 @@ private fun FindDeviceBlock(vm: LocalSyncViewModel) {
                 Row2(
                     icon = OwnTVIcon.PHONE,
                     title = device.name,
-                    desc = if (known != null) stringResource(R.string.local_sync_already_paired) else device.address,
+                    desc = if (known != null) stringResource(CoreR.string.local_sync_already_paired) else device.address,
                     onClick = { vm.choose(device) },
                 )
             }
@@ -543,15 +544,15 @@ private fun FindDeviceBlock(vm: LocalSyncViewModel) {
         OwnTVTextField(
             value = manual,
             onValueChange = { manual = it },
-            label = stringResource(R.string.local_sync_manual_address_label),
+            label = stringResource(CoreR.string.local_sync_manual_address_label),
         )
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OwnTVButton(
-                stringResource(R.string.settings_backup_continue),
+                stringResource(CoreR.string.settings_backup_continue),
                 onClick = { if (manual.isNotBlank()) vm.chooseAddress(manual.trim(), portOf(manual)) },
             )
-            OwnTVButton(stringResource(R.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
         }
     }
 }
@@ -561,21 +562,21 @@ private fun PinBlock(vm: LocalSyncViewModel) {
     val colors = OwnTVTheme.colors
     var pin by remember { mutableStateOf("") }
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(stringResource(R.string.local_sync_enter_pin_description), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+        Text(stringResource(CoreR.string.local_sync_enter_pin_description), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         Spacer(Modifier.height(10.dp))
         OwnTVTextField(
             value = pin,
             onValueChange = { pin = it.filter(Char::isDigit).take(PIN_LENGTH) },
-            label = stringResource(R.string.local_sync_pin_label),
+            label = stringResource(CoreR.string.local_sync_pin_label),
             keyboardType = KeyboardType.NumberPassword,
         )
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OwnTVButton(
-                stringResource(R.string.local_sync_pair),
+                stringResource(CoreR.string.local_sync_pair),
                 onClick = { if (pin.length == PIN_LENGTH) vm.submitPin(pin) },
             )
-            OwnTVButton(stringResource(R.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
         }
     }
 }
@@ -596,22 +597,22 @@ private fun DirectionBlock(vm: LocalSyncViewModel, step: LocalSyncViewModel.Step
         Spacer(Modifier.height(10.dp))
         Row2(
             icon = OwnTVIcon.SEND,
-            title = stringResource(R.string.local_sync_send_to, name),
-            desc = stringResource(R.string.local_sync_send_description),
+            title = stringResource(CoreR.string.local_sync_send_to, name),
+            desc = stringResource(CoreR.string.local_sync_send_description),
             onClick = { vm.chooseDirection(SyncDirection.SEND) },
         )
         Row2(
             icon = OwnTVIcon.DOWNLOADS,
-            title = stringResource(R.string.local_sync_receive_from, name),
-            desc = stringResource(R.string.local_sync_receive_description),
+            title = stringResource(CoreR.string.local_sync_receive_from, name),
+            desc = stringResource(CoreR.string.local_sync_receive_description),
             onClick = { vm.chooseDirection(SyncDirection.RECEIVE) },
         )
         Row2(
             // Two arrows say "both ways" at a glance, and it stops REFRESH meaning both
             // "find a device" and "two-way sync" on the same screen.
             icon = OwnTVIcon.SWAP,
-            title = stringResource(R.string.local_sync_merge_with, name),
-            desc = stringResource(R.string.local_sync_merge_description),
+            title = stringResource(CoreR.string.local_sync_merge_with, name),
+            desc = stringResource(CoreR.string.local_sync_merge_description),
             onClick = { vm.chooseDirection(SyncDirection.MERGE) },
         )
         // The only destructive row here. The glyph is right; what it lacked was any sign that it is
@@ -619,15 +620,15 @@ private fun DirectionBlock(vm: LocalSyncViewModel, step: LocalSyncViewModel.Step
         Divider()
         Row2(
             icon = OwnTVIcon.CLOSE,
-            title = stringResource(R.string.local_sync_unpair),
-            desc = stringResource(R.string.local_sync_unpair_description),
+            title = stringResource(CoreR.string.local_sync_unpair),
+            desc = stringResource(CoreR.string.local_sync_unpair_description),
             iconTint = DestructiveRed,
             iconBackground = DestructiveTile,
             titleTint = DestructiveTitle,
             onClick = { vm.unpair(step.device); vm.cancel() },
         )
         Spacer(Modifier.height(10.dp))
-        OwnTVButton(stringResource(R.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
+        OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
     }
 }
 
@@ -640,21 +641,21 @@ private fun SectionsBlock(vm: LocalSyncViewModel, step: LocalSyncViewModel.Step.
         Text(
             stringResource(
                 when (step.direction) {
-                    SyncDirection.SEND -> R.string.local_sync_what_to_send
-                    SyncDirection.RECEIVE -> R.string.local_sync_what_to_receive
-                    SyncDirection.MERGE -> R.string.local_sync_what_to_merge
+                    SyncDirection.SEND -> CoreR.string.local_sync_what_to_send
+                    SyncDirection.RECEIVE -> CoreR.string.local_sync_what_to_receive
+                    SyncDirection.MERGE -> CoreR.string.local_sync_what_to_merge
                 },
             ),
             style = MaterialTheme.typography.titleMedium,
             color = colors.onSurface,
         )
-        Text(stringResource(R.string.local_sync_sections_hint), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+        Text(stringResource(CoreR.string.local_sync_sections_hint), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
         BackupManager.Section.entries.forEach { section ->
             Row2(
                 icon = OwnTVIcon.BACKUP,
                 title = stringResource(section.labelRes()),
-                chip = stringResource(if (section in sections) R.string.common_on else R.string.common_off),
+                chip = stringResource(if (section in sections) CoreR.string.common_on else CoreR.string.common_off),
                 primaryChip = section in sections,
                 onClick = { sections = if (section in sections) sections - section else sections + section },
             )
@@ -662,10 +663,10 @@ private fun SectionsBlock(vm: LocalSyncViewModel, step: LocalSyncViewModel.Step.
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OwnTVButton(
-                stringResource(R.string.settings_backup_continue),
+                stringResource(CoreR.string.settings_backup_continue),
                 onClick = { if (sections.isNotEmpty()) vm.start(sections) },
             )
-            OwnTVButton(stringResource(R.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
         }
     }
 }
@@ -676,34 +677,34 @@ private fun ConfirmBlock(vm: LocalSyncViewModel, step: LocalSyncViewModel.Step.C
     val colors = OwnTVTheme.colors
     val preview = step.preview
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(stringResource(R.string.local_sync_confirm_title), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+        Text(stringResource(CoreR.string.local_sync_confirm_title), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
         if (preview.isEmpty) {
-            Text(stringResource(R.string.local_sync_nothing_to_change), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.local_sync_nothing_to_change), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         } else {
-            Text(stringResource(R.string.local_sync_confirm_hint), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.local_sync_confirm_hint), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             Spacer(Modifier.height(8.dp))
-            Change(R.string.local_sync_change_profiles, preview.newProfiles)
-            Change(R.string.local_sync_change_sources, preview.newSources)
-            Change(R.string.local_sync_change_favorites, preview.newFavorites)
-            Change(R.string.local_sync_change_history, preview.newHistory)
-            Change(R.string.local_sync_change_resume, preview.newResume)
-            Change(R.string.local_sync_change_reorder, preview.newReorder)
-            Change(R.string.local_sync_change_settings, preview.changedSettings)
-            Change(R.string.local_sync_change_deletions, preview.deletions)
+            Change(CoreR.string.local_sync_change_profiles, preview.newProfiles)
+            Change(CoreR.string.local_sync_change_sources, preview.newSources)
+            Change(CoreR.string.local_sync_change_favorites, preview.newFavorites)
+            Change(CoreR.string.local_sync_change_history, preview.newHistory)
+            Change(CoreR.string.local_sync_change_resume, preview.newResume)
+            Change(CoreR.string.local_sync_change_reorder, preview.newReorder)
+            Change(CoreR.string.local_sync_change_settings, preview.changedSettings)
+            Change(CoreR.string.local_sync_change_deletions, preview.deletions)
             if (preview.hasCustomizations) {
-                Text(stringResource(R.string.local_sync_change_customize), style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.local_sync_change_customize), style = MaterialTheme.typography.bodyMedium, color = colors.onSurface)
             }
         }
         if (step.direction == SyncDirection.MERGE) {
-            Text(stringResource(R.string.local_sync_merge_note), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.local_sync_merge_note), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
         }
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OwnTVButton(
-                stringResource(R.string.local_sync_apply),
+                stringResource(CoreR.string.local_sync_apply),
                 onClick = { if (!preview.isEmpty) vm.confirm() },
             )
-            OwnTVButton(stringResource(R.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
         }
     }
 }
@@ -712,15 +713,15 @@ private fun ConfirmBlock(vm: LocalSyncViewModel, step: LocalSyncViewModel.Step.C
 private fun ResultBlock(vm: LocalSyncViewModel, step: LocalSyncViewModel.Step.Result) {
     val colors = OwnTVTheme.colors
     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-        Text(stringResource(R.string.local_sync_done), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+        Text(stringResource(CoreR.string.local_sync_done), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
         step.received?.let {
-            Text(stringResource(R.string.local_sync_received_items, it.items), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.local_sync_received_items, it.items), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         }
         if (step.sent) {
-            Text(stringResource(R.string.local_sync_sent), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.local_sync_sent), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         }
         Spacer(Modifier.height(10.dp))
-        OwnTVButton(stringResource(R.string.common_done), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
+        OwnTVButton(stringResource(CoreR.string.common_done), onClick = vm::cancel, style = OwnTVButtonStyle.SECONDARY)
     }
 }
 
@@ -736,20 +737,20 @@ private fun Change(labelRes: Int, count: Int) {
 }
 
 private fun SyncFailure.messageRes(): Int = when (this) {
-    SyncFailure.Unreachable -> R.string.local_sync_error_unreachable
-    SyncFailure.NotAuthorized -> R.string.local_sync_error_unauthorized
-    SyncFailure.BadPayload -> R.string.local_sync_error_bad_payload
-    SyncFailure.Unknown -> R.string.local_sync_error_unknown
+    SyncFailure.Unreachable -> CoreR.string.local_sync_error_unreachable
+    SyncFailure.NotAuthorized -> CoreR.string.local_sync_error_unauthorized
+    SyncFailure.BadPayload -> CoreR.string.local_sync_error_bad_payload
+    SyncFailure.Unknown -> CoreR.string.local_sync_error_unknown
 }
 
 private fun BackupManager.Section.labelRes(): Int = when (this) {
-    BackupManager.Section.SOURCES -> R.string.settings_backup_section_sources
-    BackupManager.Section.CUSTOMIZE -> R.string.settings_backup_section_customize
-    BackupManager.Section.FAVORITES -> R.string.settings_backup_section_favorites
-    BackupManager.Section.HISTORY -> R.string.settings_backup_section_history
-    BackupManager.Section.RESUME -> R.string.settings_backup_section_resume
-    BackupManager.Section.MANUAL_REORDER -> R.string.settings_backup_section_reorder
-    BackupManager.Section.SETTINGS -> R.string.settings_backup_section_settings
+    BackupManager.Section.SOURCES -> CoreR.string.settings_backup_section_sources
+    BackupManager.Section.CUSTOMIZE -> CoreR.string.settings_backup_section_customize
+    BackupManager.Section.FAVORITES -> CoreR.string.settings_backup_section_favorites
+    BackupManager.Section.HISTORY -> CoreR.string.settings_backup_section_history
+    BackupManager.Section.RESUME -> CoreR.string.settings_backup_section_resume
+    BackupManager.Section.MANUAL_REORDER -> CoreR.string.settings_backup_section_reorder
+    BackupManager.Section.SETTINGS -> CoreR.string.settings_backup_section_settings
 }
 
 /** `192.168.1.5:8089` or a whole URL both carry a port; a bare address means the usual one. */

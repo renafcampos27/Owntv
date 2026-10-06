@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -57,7 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.core.companion.CompanionLink
 import tv.own.owntv.core.i18n.SupportedLocale
 import tv.own.owntv.core.i18n.SupportedLocales
@@ -133,12 +134,12 @@ fun FirstRunLanguageSelector(modifier: Modifier = Modifier) {
             )
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = selectedLocale?.endonym ?: stringResource(R.string.settings_language_system_default),
+                    text = selectedLocale?.endonym ?: stringResource(CoreR.string.settings_language_system_default),
                     style = MaterialTheme.typography.labelLarge.copy(fontFamily = FontFamily.SansSerif),
                     color = foreground,
                 )
                 Text(
-                    text = selectedLocale?.englishName ?: stringResource(R.string.settings_language_system_default_description),
+                    text = selectedLocale?.englishName ?: stringResource(CoreR.string.settings_language_system_default_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = foreground.copy(alpha = 0.78f),
                 )
@@ -202,7 +203,7 @@ private fun FirstRunLanguagePopup(
                 ),
             ) {
                 Text(
-                    text = stringResource(R.string.settings_language),
+                    text = stringResource(CoreR.string.settings_language),
                     style = MaterialTheme.typography.titleLarge,
                     color = OwnTVTheme.colors.onSurface,
                 )
@@ -216,8 +217,8 @@ private fun FirstRunLanguagePopup(
                 ) {
                     item(key = SupportedLocales.SYSTEM_DEFAULT_TAG) {
                         LanguageRow(
-                            endonym = stringResource(R.string.settings_language_system_default),
-                            englishName = stringResource(R.string.settings_language_system_default_description),
+                            endonym = stringResource(CoreR.string.settings_language_system_default),
+                            englishName = stringResource(CoreR.string.settings_language_system_default_description),
                             coverage = null,
                             selected = currentTag.isEmpty(),
                             onClick = { choose(SupportedLocales.SYSTEM_DEFAULT_TAG) },
@@ -253,8 +254,8 @@ fun LanguageSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var query by remember { mutableStateOf("") }
     var showContribution by remember { mutableStateOf(false) }
 
-    val systemLabel = stringResource(R.string.settings_language_system_default)
-    val systemDesc = stringResource(R.string.settings_language_system_default_description)
+    val systemLabel = stringResource(CoreR.string.settings_language_system_default)
+    val systemDesc = stringResource(CoreR.string.settings_language_system_default_description)
     val filtered = remember(query, viewModel.pickerRows) {
         val q = query.trim()
         if (q.isEmpty()) {
@@ -304,13 +305,13 @@ fun LanguageSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             .padding(horizontal = 40.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Header(title = stringResource(R.string.settings_language), onBack = onBack)
+        Header(title = stringResource(CoreR.string.settings_language), onBack = onBack)
         Spacer(Modifier.height(12.dp))
 
         SearchBar(
             query = query,
             onQueryChange = { query = it },
-            placeholder = stringResource(R.string.settings_language_search_hint),
+            placeholder = stringResource(CoreR.string.settings_language_search_hint),
             modifier = Modifier
                 .fillMaxWidth()
                 .focusRequester(searchFocus),
@@ -320,7 +321,7 @@ fun LanguageSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(16.dp))
         OwnTVButton(
-            label = stringResource(R.string.settings_language_help_translate),
+            label = stringResource(CoreR.string.settings_language_help_translate),
             onClick = { showContribution = true },
             modifier = Modifier.fillMaxWidth(),
             style = OwnTVButtonStyle.SECONDARY,
@@ -376,7 +377,7 @@ internal fun openContributionLink(context: Context, url: String): Boolean = runC
 
 internal fun copyContributionLink(context: Context, url: String): Boolean = runCatching {
     val clipboard = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-    clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(R.string.settings_language_help_translate), url))
+    clipboard.setPrimaryClip(ClipData.newPlainText(context.getString(CoreR.string.settings_language_help_translate), url))
     true
 }.getOrDefault(false)
 
@@ -408,19 +409,19 @@ private fun TranslationContributionDialog(onDismiss: () -> Unit) {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                stringResource(R.string.settings_language_help_translate),
+                stringResource(CoreR.string.settings_language_help_translate),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.primary,
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(R.string.settings_language_contribution_description),
+                stringResource(CoreR.string.settings_language_contribution_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.primary,
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(R.string.settings_language_request_workflow),
+                stringResource(CoreR.string.settings_language_request_workflow),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
             )
@@ -434,13 +435,13 @@ private fun TranslationContributionDialog(onDismiss: () -> Unit) {
                 ) {
                     Image(
                         bitmap = qr.asImageBitmap(),
-                        contentDescription = stringResource(R.string.settings_language_contribution_qr_description),
+                        contentDescription = stringResource(CoreR.string.settings_language_contribution_qr_description),
                         modifier = Modifier.size(220.dp),
                     )
                 }
             } else {
                 Text(
-                    stringResource(R.string.settings_language_contribution_qr_failed),
+                    stringResource(CoreR.string.settings_language_contribution_qr_failed),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
@@ -455,7 +456,7 @@ private fun TranslationContributionDialog(onDismiss: () -> Unit) {
                         null
                     } else {
                         copyUrl = url
-                        R.string.settings_language_contribution_open_failed
+                        CoreR.string.settings_language_contribution_open_failed
                     }
                 },
                 modifier = Modifier
@@ -465,13 +466,13 @@ private fun TranslationContributionDialog(onDismiss: () -> Unit) {
             )
             Spacer(Modifier.height(10.dp))
             OwnTVButton(
-                label = stringResource(R.string.settings_language_request_new),
+                label = stringResource(CoreR.string.settings_language_request_new),
                 onClick = {
                     status = if (openContributionLink(context, requestUrl)) {
                         null
                     } else {
                         copyUrl = requestUrl
-                        R.string.settings_language_contribution_open_failed
+                        CoreR.string.settings_language_contribution_open_failed
                     }
                 },
                 modifier = Modifier.fillMaxWidth(),
@@ -484,18 +485,18 @@ private fun TranslationContributionDialog(onDismiss: () -> Unit) {
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OwnTVButton(
-                    label = stringResource(R.string.settings_language_contribution_copy),
+                    label = stringResource(CoreR.string.settings_language_contribution_copy),
                     onClick = {
                         status = if (copyContributionLink(context, copyUrl)) {
-                            R.string.settings_language_contribution_copied
+                            CoreR.string.settings_language_contribution_copied
                         } else {
-                            R.string.settings_language_contribution_copy_failed
+                            CoreR.string.settings_language_contribution_copy_failed
                         }
                     },
                     style = OwnTVButtonStyle.SECONDARY,
                 )
                 OwnTVButton(
-                    label = stringResource(R.string.settings_close),
+                    label = stringResource(CoreR.string.settings_close),
                     onClick = onDismiss,
                     style = OwnTVButtonStyle.SECONDARY,
                 )
@@ -547,7 +548,7 @@ private fun LanguageRow(
             }
             if (coverage != null) {
                 Text(
-                    stringResource(R.string.settings_language_coverage, coverage),
+                    stringResource(CoreR.string.settings_language_coverage, coverage),
                     style = MaterialTheme.typography.labelMedium,
                     color = if (selected) colors.onPrimaryContainer else colors.onSecondaryContainer,
                     fontWeight = FontWeight.SemiBold,

@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,7 +18,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.BrandLockup
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.ui.theme.OwnTVTheme
@@ -43,7 +44,7 @@ fun PreviewPane(
         BrandLockup(markSize = 56, textSize = 34)
         Spacer(Modifier.height(Dimens.GapMedium))
         Text(
-            text = stringResource(R.string.content_preview_player),
+            text = stringResource(CoreR.string.content_preview_player),
             style = MaterialTheme.typography.titleMedium,
             color = colors.textSecondary,
             textAlign = TextAlign.Center,

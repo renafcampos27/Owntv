@@ -1,5 +1,7 @@
 package tv.own.owntv.features.live
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -36,7 +38,6 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.core.live.CatchupJumps
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -111,13 +112,13 @@ internal fun CatchupManualTimeDialog(
             ) {
                 Column(Modifier.dialogPanel(width = 440.dp, corner = 16.dp, padding = 18.dp, scroll = false)) {
                     Text(
-                        stringResource(R.string.content_catchup_jump_exact),
+                        stringResource(CoreR.string.content_catchup_jump_exact),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.onSurface,
                     )
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        stringResource(R.string.content_catchup_jump_hint),
+                        stringResource(CoreR.string.content_catchup_jump_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                     )
@@ -150,11 +151,11 @@ internal fun CatchupManualTimeDialog(
                     Spacer(Modifier.height(16.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         OwnTVButton(
-                            stringResource(R.string.content_play),
+                            stringResource(CoreR.string.content_play),
                             onClick = { onPick(CatchupJumps.instantOf(point, nowMs, zone)) },
                         )
                         OwnTVButton(
-                            stringResource(R.string.common_cancel),
+                            stringResource(CoreR.string.common_cancel),
                             onClick = onDismiss,
                             style = OwnTVButtonStyle.SECONDARY,
                         )

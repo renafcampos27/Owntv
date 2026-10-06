@@ -1,5 +1,7 @@
 package tv.own.owntv.features.live
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -27,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.core.live.CatchupJumps
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -98,7 +99,7 @@ internal fun CatchupJumpRows(
                     surface = GlassSurface.DIALOGS,
                 ) { _ ->
                     Text(
-                        stringResource(R.string.content_catchup_jump_exact),
+                        stringResource(CoreR.string.content_catchup_jump_exact),
                         style = MaterialTheme.typography.titleMedium,
                         color = colors.primary,
                         modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 10.dp),
@@ -148,7 +149,7 @@ internal fun CatchupJumpDialog(
                     Text(title, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                     Spacer(Modifier.height(2.dp))
                     Text(
-                        stringResource(R.string.content_catchup_jump_prompt),
+                        stringResource(CoreR.string.content_catchup_jump_prompt),
                         style = MaterialTheme.typography.bodySmall,
                         color = colors.onSurfaceVariant,
                     )
@@ -162,7 +163,7 @@ internal fun CatchupJumpDialog(
                     )
                     Spacer(Modifier.height(14.dp))
                     OwnTVButton(
-                        stringResource(R.string.content_close),
+                        stringResource(CoreR.string.content_close),
                         onClick = onDismiss,
                         style = OwnTVButtonStyle.SECONDARY,
                     )
@@ -181,10 +182,10 @@ internal fun CatchupFailureDialog(channelName: String, onRetry: () -> Unit, onLi
         Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
             Column(Modifier.dialogPanel(width = 460.dp, corner = 16.dp, padding = 18.dp, scroll = false), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(channelName, style = MaterialTheme.typography.titleMedium)
-                Text(stringResource(R.string.catchup_open_failed), style = MaterialTheme.typography.bodyMedium)
-                OwnTVButton(stringResource(R.string.common_retry), onClick = onRetry, modifier = Modifier.focusRequester(focus))
-                OwnTVButton(stringResource(R.string.catchup_return_live), onClick = onLive, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                Text(stringResource(CoreR.string.catchup_open_failed), style = MaterialTheme.typography.bodyMedium)
+                OwnTVButton(stringResource(CoreR.string.common_retry), onClick = onRetry, modifier = Modifier.focusRequester(focus))
+                OwnTVButton(stringResource(CoreR.string.catchup_return_live), onClick = onLive, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
             }
         }
     }

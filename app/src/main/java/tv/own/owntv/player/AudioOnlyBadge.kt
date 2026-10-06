@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,7 +20,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.theme.OwnTVTheme
 
@@ -58,13 +59,13 @@ fun AudioOnlyBadge(modifier: Modifier = Modifier, compact: Boolean = false) {
             )
             if (!compact) {
                 Text(
-                    text = stringResource(R.string.player_audio_only_title),
+                    text = stringResource(CoreR.string.player_audio_only_title),
                     style = MaterialTheme.typography.titleLarge,
                     color = Color.White,
                     textAlign = TextAlign.Center,
                 )
                 Text(
-                    text = stringResource(R.string.player_audio_only_body),
+                    text = stringResource(CoreR.string.player_audio_only_body),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.7f),
                     textAlign = TextAlign.Center,

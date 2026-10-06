@@ -1,8 +1,9 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.annotation.StringRes
 import androidx.compose.ui.graphics.Color
-import tv.own.owntv.R
 import tv.own.owntv.core.content.AdultCategoryClassifier
 
 /**
@@ -21,26 +22,26 @@ import tv.own.owntv.core.content.AdultCategoryClassifier
  * silently falling to OTHER.
  */
 enum class ChannelGenre(@param:StringRes val displayLabelRes: Int, val canonicalLabel: String, val dot: Color) {
-    SPORT(R.string.content_genre_sport, "Sport", Color(0xFF4CAF50)),
-    NEWS(R.string.content_genre_news, "News", Color(0xFFEF5350)),
-    MOVIES(R.string.content_genre_movies, "Movies", Color(0xFFAB47BC)),
-    SERIES(R.string.content_genre_series, "Series", Color(0xFF3D5AFE)),
-    KIDS(R.string.content_genre_kids, "Kids", Color(0xFFFFB300)),
-    MUSIC(R.string.content_genre_music, "Music", Color(0xFF42A5F5)),
-    DOCUMENTARY(R.string.content_genre_documentary, "Documentary", Color(0xFF26A69A)),
-    ANIME(R.string.content_genre_anime, "Anime", Color(0xFFD500F9)),
-    ENTERTAINMENT(R.string.content_genre_entertainment, "Entertainment", Color(0xFF7C4DFF)),
-    RELIGIOUS(R.string.content_genre_religious, "Religious", Color(0xFF8D6E63)),
-    ADULT(R.string.content_genre_adult, "Adult", Color(0xFF78909C)),
+    SPORT(CoreR.string.content_genre_sport, "Sport", Color(0xFF4CAF50)),
+    NEWS(CoreR.string.content_genre_news, "News", Color(0xFFEF5350)),
+    MOVIES(CoreR.string.content_genre_movies, "Movies", Color(0xFFAB47BC)),
+    SERIES(CoreR.string.content_genre_series, "Series", Color(0xFF3D5AFE)),
+    KIDS(CoreR.string.content_genre_kids, "Kids", Color(0xFFFFB300)),
+    MUSIC(CoreR.string.content_genre_music, "Music", Color(0xFF42A5F5)),
+    DOCUMENTARY(CoreR.string.content_genre_documentary, "Documentary", Color(0xFF26A69A)),
+    ANIME(CoreR.string.content_genre_anime, "Anime", Color(0xFFD500F9)),
+    ENTERTAINMENT(CoreR.string.content_genre_entertainment, "Entertainment", Color(0xFF7C4DFF)),
+    RELIGIOUS(CoreR.string.content_genre_religious, "Religious", Color(0xFF8D6E63)),
+    ADULT(CoreR.string.content_genre_adult, "Adult", Color(0xFF78909C)),
     // Film/series sub-genres — mainly for Movies & Series category rails (VOD categories like
     // "Action", "Comedy", "Drama"). Distinct hues spaced around the wheel from the channel genres.
-    ACTION(R.string.content_genre_action, "Action", Color(0xFFFF7043)),
-    COMEDY(R.string.content_genre_comedy, "Comedy", Color(0xFFFFEE58)),
-    DRAMA(R.string.content_genre_drama, "Drama", Color(0xFF5C6BC0)),
-    HORROR(R.string.content_genre_horror, "Horror", Color(0xFFB71C1C)),
-    SCIFI(R.string.content_genre_scifi, "Sci-Fi", Color(0xFF00BCD4)),
-    ROMANCE(R.string.content_genre_romance, "Romance", Color(0xFFEC407A)),
-    OTHER(R.string.content_genre_other, "Other", Color(0xFF9E9E9E));
+    ACTION(CoreR.string.content_genre_action, "Action", Color(0xFFFF7043)),
+    COMEDY(CoreR.string.content_genre_comedy, "Comedy", Color(0xFFFFEE58)),
+    DRAMA(CoreR.string.content_genre_drama, "Drama", Color(0xFF5C6BC0)),
+    HORROR(CoreR.string.content_genre_horror, "Horror", Color(0xFFB71C1C)),
+    SCIFI(CoreR.string.content_genre_scifi, "Sci-Fi", Color(0xFF00BCD4)),
+    ROMANCE(CoreR.string.content_genre_romance, "Romance", Color(0xFFEC407A)),
+    OTHER(CoreR.string.content_genre_other, "Other", Color(0xFF9E9E9E));
 
     companion object {
         /**

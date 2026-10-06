@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +32,6 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import kotlinx.coroutines.delay
-import tv.own.owntv.R
 import tv.own.owntv.ui.format.rememberSystemTimeFormatter
 import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.core.live.EpgNowNext
@@ -78,7 +79,7 @@ fun LiveEpgCard(
     ) {
         epg.now?.let { entry ->
             Column(Modifier.widthIn(max = 300.dp)) {
-                SlotLabel(stringResource(if (archive) R.string.content_archive_playing else R.string.content_live_now), colors.primary)
+                SlotLabel(stringResource(if (archive) CoreR.string.content_archive_playing else CoreR.string.content_live_now), colors.primary)
                 Text(
                     entry.title,
                     style = MaterialTheme.typography.titleSmall,
@@ -91,15 +92,15 @@ fun LiveEpgCard(
                 Text(
                     if (remaining in 1..600) {
                         stringResource(
-                            R.string.content_live_time_remaining,
-                            formatTime(entry.stopMs),
+                            CoreR.string.content_live_time_remaining,
+                            formatTime(entry.displayStopMs),
                             remaining,
                         )
                     } else {
                         stringResource(
-                            R.string.content_live_time_range,
-                            formatTime(entry.startMs),
-                            formatTime(entry.stopMs),
+                            CoreR.string.content_live_time_range,
+                            formatTime(entry.displayStartMs),
+                            formatTime(entry.displayStopMs),
                         )
                     },
                     style = MaterialTheme.typography.labelSmall,
@@ -144,7 +145,7 @@ fun LiveEpgCard(
         }
         epg.next?.let { entry ->
             Column(Modifier.widthIn(max = 240.dp)) {
-                SlotLabel(stringResource(if (archive) R.string.content_archive_then else R.string.content_live_next), Color.White.copy(alpha = 0.45f))
+                SlotLabel(stringResource(if (archive) CoreR.string.content_archive_then else CoreR.string.content_live_next), Color.White.copy(alpha = 0.45f))
                 Text(
                     entry.title,
                     style = MaterialTheme.typography.bodyMedium,
@@ -154,9 +155,9 @@ fun LiveEpgCard(
                 )
                 Text(
                     stringResource(
-                        R.string.content_live_time_range,
-                        formatTime(entry.startMs),
-                        formatTime(entry.stopMs),
+                        CoreR.string.content_live_time_range,
+                        formatTime(entry.displayStartMs),
+                        formatTime(entry.displayStopMs),
                     ),
                     style = MaterialTheme.typography.labelSmall,
                     color = Color.White.copy(alpha = 0.4f),

@@ -1,5 +1,7 @@
 package tv.own.owntv.features.series
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
@@ -224,20 +226,20 @@ private fun SeriesContextMenu(
             // The menu as data: same actions, same gating, same order as the buttons that used to be
             // written out here one by one. Close is not in the list — it stays pinned last.
             val actions = buildList {
-                add(MenuAction("favourite", if (isFavorite) stringResource(R.string.content_remove_favourite) else stringResource(R.string.content_add_favourite), OwnTVIcon.FAVORITE, onClick = onToggleFavorite))
-                if (canMove) add(MenuAction("move", stringResource(R.string.content_move), onClick = onMove))
-                if (canMove) add(MenuAction("move_to_category", stringResource(R.string.content_move_to_category), onClick = onMoveToCategory))
-                if (isHistory) add(MenuAction("remove_history", stringResource(R.string.content_remove_history), onClick = onRemoveFromHistory))
-                add(MenuAction("hide", stringResource(R.string.common_hide), onClick = onHide))
-                add(MenuAction("download", stringResource(R.string.content_download_all_episodes), OwnTVIcon.DOWNLOADS, onClick = onDownload))
-                if (hasTmdbDetails) add(MenuAction("tmdb_details", stringResource(R.string.content_tmdb_details), OwnTVIcon.MENU, onClick = onShowDetails))
+                add(MenuAction("favourite", if (isFavorite) stringResource(CoreR.string.content_remove_favourite) else stringResource(CoreR.string.content_add_favourite), OwnTVIcon.FAVORITE, onClick = onToggleFavorite))
+                if (canMove) add(MenuAction("move", stringResource(CoreR.string.content_move), onClick = onMove))
+                if (canMove) add(MenuAction("move_to_category", stringResource(CoreR.string.content_move_to_category), onClick = onMoveToCategory))
+                if (isHistory) add(MenuAction("remove_history", stringResource(CoreR.string.content_remove_history), onClick = onRemoveFromHistory))
+                add(MenuAction("hide", stringResource(CoreR.string.common_hide), onClick = onHide))
+                add(MenuAction("download", stringResource(CoreR.string.content_download_all_episodes), OwnTVIcon.DOWNLOADS, onClick = onDownload))
+                if (hasTmdbDetails) add(MenuAction("tmdb_details", stringResource(CoreR.string.content_tmdb_details), OwnTVIcon.MENU, onClick = onShowDetails))
                 // Play Trailer (§7.3 U4) — only when TMDB actually has a trailer for this show (§11.1 gating).
-                trailerKey?.let { key -> add(MenuAction("play_trailer", stringResource(R.string.content_play_trailer)) { onPlayTrailer(key) }) }
+                trailerKey?.let { key -> add(MenuAction("play_trailer", stringResource(CoreR.string.content_play_trailer)) { onPlayTrailer(key) }) }
                 // Refetch TMDB details (§11.2 U5a) — clear a wrong/stale match (or a 7-day "no match" cache) and re-search.
                 if (canRefetchTmdb) {
-                    add(MenuAction("refetch_tmdb", stringResource(R.string.content_refetch_tmdb), onClick = onRefetch))
+                    add(MenuAction("refetch_tmdb", stringResource(CoreR.string.content_refetch_tmdb), onClick = onRefetch))
                     // Set TMDB name (§11.2 U5b) — hand-type the exact TMDB title when the auto-match is wrong.
-                    add(MenuAction("set_tmdb_name", stringResource(R.string.content_set_tmdb_name), onClick = onSetTmdbName))
+                    add(MenuAction("set_tmdb_name", stringResource(CoreR.string.content_set_tmdb_name), onClick = onSetTmdbName))
                 }
             }
             arranged(ContentMenu.SERIES, actions).forEachIndexed { index, action ->
@@ -250,7 +252,7 @@ private fun SeriesContextMenu(
                 )
             }
             Spacer(Modifier.height(4.dp))
-            OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, modifier = Modifier.fillMaxWidth())
+            OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -265,9 +267,9 @@ private fun SeriesGrid(
     lockedKey: LiveKey? = null,
     modifier: Modifier,
 ) {
-    val alreadyDownloadedMessage = stringResource(R.string.content_already_downloaded)
-    val refetchingTmdbMessage = stringResource(R.string.content_refetching_tmdb)
-    val researchingTmdbMessage = stringResource(R.string.content_researching_tmdb)
+    val alreadyDownloadedMessage = stringResource(CoreR.string.content_already_downloaded)
+    val refetchingTmdbMessage = stringResource(CoreR.string.content_refetching_tmdb)
+    val researchingTmdbMessage = stringResource(CoreR.string.content_researching_tmdb)
     val railItems by vm.railItems.collectAsStateWithLifecycle()
     val providerNames by vm.providerNames.collectAsStateWithLifecycle()
     val selectedKey by vm.selectedKey.collectAsStateWithLifecycle()
@@ -314,7 +316,7 @@ private fun SeriesGrid(
 
     val selectedIndex = railItems.indexOfFirst { it.key == selectedKey }.coerceAtLeast(0)
     val selectedItem = railItems.getOrNull(selectedIndex)
-    val selectedLabel = selectedItem?.displayLabel(R.string.content_category_all_series) ?: stringResource(R.string.content_category_all_series)
+    val selectedLabel = selectedItem?.displayLabel(CoreR.string.content_category_all_series) ?: stringResource(CoreR.string.content_category_all_series)
     val gridSelFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     val firstItemFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     // Right from the rail on an empty list: the list's search box, so a search with no results can be cleared.
@@ -508,7 +510,7 @@ private fun SeriesGrid(
             width = cine?.category ?: panels?.category ?: Dimens.RailWidthFixed,
             categories = railItems.map {
                 RailCategory(
-                    it.displayLabel(R.string.content_category_all_series),
+                    it.displayLabel(CoreR.string.content_category_all_series),
                     it.icon,
                     showGenreDot = it.key is LiveKey.Folder,
                     providerName = it.providerName,
@@ -678,8 +680,8 @@ private fun SeriesGrid(
                         logoUrl = tv.own.owntv.core.metadata.MetadataImages.logo(meta?.logoPath),
                         metaLine = listOfNotNull(
                             year?.let { localizedInteger(it, grouping = false) },
-                            rating?.let { stringResource(R.string.content_rating, it) },
-                        ).joinToString(stringResource(R.string.content_metadata_separator)),
+                            rating?.let { stringResource(CoreR.string.content_rating, it) },
+                        ).joinToString(stringResource(CoreR.string.content_metadata_separator)),
                         qualityBadges = cineQuality,
                         // A show's episodes are only synced once it is opened, so there is nothing
                         // here to resume from until then — see the Series note in the plan.
@@ -692,27 +694,27 @@ private fun SeriesGrid(
                     Spacer(Modifier.height(14.dp))
                 }
                 Text(
-                    pluralStringResource(R.plurals.content_count_series, count, selectedLabel, count),
+                    pluralStringResource(CoreR.plurals.content_count_series, count, selectedLabel, count),
                     style = MaterialTheme.typography.titleSmall,
                     color = OwnTVTheme.colors.onSurface,
                     fontWeight = FontWeight.Bold,
                 )
                 Spacer(Modifier.height(8.dp))
             } else {
-                Text(stringResource(R.string.content_section_category, stringResource(R.string.common_nav_series), selectedLabel), style = MaterialTheme.typography.headlineLarge, color = OwnTVTheme.colors.onSurface)
+                Text(stringResource(CoreR.string.content_section_category, stringResource(CoreR.string.common_nav_series), selectedLabel), style = MaterialTheme.typography.headlineLarge, color = OwnTVTheme.colors.onSurface)
                 Spacer(Modifier.height(4.dp))
-                Text(pluralStringResource(R.plurals.content_count_series, count, selectedLabel, count), style = MaterialTheme.typography.titleMedium, color = OwnTVTheme.colors.primary, fontWeight = FontWeight.Bold)
+                Text(pluralStringResource(CoreR.plurals.content_count_series, count, selectedLabel, count), style = MaterialTheme.typography.titleMedium, color = OwnTVTheme.colors.primary, fontWeight = FontWeight.Bold)
                 Spacer(Modifier.height(14.dp))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
-                SearchBar(query = searchQuery, onQueryChange = vm::setSearchQuery, placeholder = stringResource(R.string.content_search_series, selectedLabel), modifier = Modifier.weight(1f).focusRequester(listSearchFocus))
+                SearchBar(query = searchQuery, onQueryChange = vm::setSearchQuery, placeholder = stringResource(CoreR.string.content_search_series, selectedLabel), modifier = Modifier.weight(1f).focusRequester(listSearchFocus))
                 Spacer(Modifier.width(10.dp))
-                SortChip(mode = sortMode, onToggle = vm::toggleSort, playlistLabel = stringResource(R.string.content_provider))
+                SortChip(mode = sortMode, onToggle = vm::toggleSort, playlistLabel = stringResource(CoreR.string.content_provider))
                 // Cinematic is grid-only, so the toggle would be a button that changes nothing.
                 if (!cinematic) {
                 Spacer(Modifier.width(10.dp))
                 tv.own.owntv.ui.components.OwnTVButton(
-                    label = stringResource(if (viewMode == SettingsRepository.VodViewMode.GRID) R.string.settings_view_grid else R.string.settings_view_list),
+                    label = stringResource(if (viewMode == SettingsRepository.VodViewMode.GRID) CoreR.string.settings_view_grid else CoreR.string.settings_view_list),
                     onClick = vm::toggleViewMode,
                     icon = if (viewMode == SettingsRepository.VodViewMode.GRID) OwnTVIcon.MENU else OwnTVIcon.SERIES,
                     style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY,
@@ -724,7 +726,7 @@ private fun SeriesGrid(
             if (series.itemCount == 0) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        if (searchQuery.isNotBlank()) stringResource(R.string.content_no_series_found, searchQuery.trim()) else stringResource(R.string.content_no_series_here),
+                        if (searchQuery.isNotBlank()) stringResource(CoreR.string.content_no_series_found, searchQuery.trim()) else stringResource(CoreR.string.content_no_series_here),
                         style = MaterialTheme.typography.bodyLarge, color = OwnTVTheme.colors.onSurfaceVariant,
                     )
                 }
@@ -833,7 +835,7 @@ private fun SeriesGrid(
             ) {
                 val s = selectedSeries
                 if (s == null) {
-                    PreviewPane(hint = stringResource(R.string.content_focus_series))
+                    PreviewPane(hint = stringResource(CoreR.string.content_focus_series))
                 } else {
                 // Gap-fill merge (§7.1/§4.1): provider wins unless the mode is TMDB-only.
                 val meta = selectedSeriesMeta?.takeIf { it.seriesId == s.id }?.cache
@@ -878,14 +880,14 @@ private fun SeriesGrid(
                     }
                     Spacer(Modifier.height(14.dp))
                     Text(s.name, style = MaterialTheme.typography.titleLarge, color = OwnTVTheme.colors.onSurface)
-                    val metaBits = listOfNotNull(year?.let { localizedInteger(it, grouping = false) }, rating?.let { stringResource(R.string.content_rating, it) })
+                    val metaBits = listOfNotNull(year?.let { localizedInteger(it, grouping = false) }, rating?.let { stringResource(CoreR.string.content_rating, it) })
                     if (metaBits.isNotEmpty()) {
                         Spacer(Modifier.height(4.dp))
-                        Text(metaBits.joinToString(stringResource(R.string.content_metadata_separator)), style = MaterialTheme.typography.bodyMedium, color = OwnTVTheme.colors.onSurfaceVariant)
+                        Text(metaBits.joinToString(stringResource(CoreR.string.content_metadata_separator)), style = MaterialTheme.typography.bodyMedium, color = OwnTVTheme.colors.onSurfaceVariant)
                     }
                     if (genres.isNotEmpty()) {
                         Spacer(Modifier.height(6.dp))
-                        Text(genres.joinToString(stringResource(R.string.content_genres_separator)), style = MaterialTheme.typography.labelMedium, color = OwnTVTheme.colors.primary)
+                        Text(genres.joinToString(stringResource(CoreR.string.content_genres_separator)), style = MaterialTheme.typography.labelMedium, color = OwnTVTheme.colors.primary)
                     }
                     if (!plot.isNullOrBlank()) {
                         Spacer(Modifier.height(12.dp))
@@ -893,12 +895,12 @@ private fun SeriesGrid(
                     }
                     if (cast.isNotEmpty()) {
                         Spacer(Modifier.height(12.dp))
-                        Text(stringResource(R.string.content_media_cast), style = MaterialTheme.typography.labelMedium, color = OwnTVTheme.colors.onSurface)
+                        Text(stringResource(CoreR.string.content_media_cast), style = MaterialTheme.typography.labelMedium, color = OwnTVTheme.colors.onSurface)
                         Spacer(Modifier.height(2.dp))
                         Text(cast.take(6).joinToString(", "), style = MaterialTheme.typography.bodySmall, color = OwnTVTheme.colors.onSurfaceVariant, maxLines = 2, overflow = TextOverflow.Ellipsis)
                     }
                     Spacer(Modifier.height(16.dp))
-                    Text(stringResource(R.string.content_press_ok_episodes), style = MaterialTheme.typography.bodyMedium, color = OwnTVTheme.colors.primary)
+                    Text(stringResource(CoreR.string.content_press_ok_episodes), style = MaterialTheme.typography.bodyMedium, color = OwnTVTheme.colors.primary)
                 }
                 }
             }
@@ -950,9 +952,9 @@ private fun SeriesGrid(
     val moveTargets by vm.moveTargets.collectAsStateWithLifecycle()
     if (creatingCategory) {
         TextInputDialog(
-            title = stringResource(R.string.settings_customize_new_category_title),
+            title = stringResource(CoreR.string.settings_customize_new_category_title),
             hint = stringResource(R.string.settings_customize_new_category_description),
-            confirmLabel = stringResource(R.string.common_create),
+            confirmLabel = stringResource(CoreR.string.common_create),
             allowBlank = false,
             onConfirm = { vm.createCustomCategory(it); creatingCategory = false },
             onDismiss = { creatingCategory = false },
@@ -963,7 +965,7 @@ private fun SeriesGrid(
             if (originKey != null) {
                 MoveToCategoryDialog(
                     moveTargets = moveTargets.filterNot { it.id == originKey },
-                    originName = moveOriginName ?: stringResource(R.string.settings_customize_this_category),
+                    originName = moveOriginName ?: stringResource(CoreR.string.settings_customize_this_category),
                     onNewCategory = { creatingCategory = true },
                     onMove = { targetId, keepInOrigin ->
                         vm.moveToCategory(CustomizeKeys.series(s), s.id, originKey, targetId, keepInOrigin)
@@ -1034,7 +1036,7 @@ private fun SeriesGrid(
     // Move mode overlay.
     moveState?.let { ms ->
         MoveOrderOverlay(
-            title = stringResource(R.string.content_reorder_series),
+            title = stringResource(CoreR.string.content_reorder_series),
             itemNames = ms.items.map { it.name },
             activeIndex = ms.activeIndex,
             onMoveUp = vm::moveUp,
@@ -1047,7 +1049,7 @@ private fun SeriesGrid(
     // Category Move mode overlay.
     categoryMoveState?.let { ms ->
         MoveOrderOverlay(
-            title = stringResource(R.string.content_move),
+            title = stringResource(CoreR.string.content_move),
             itemNames = ms.items,
             activeIndex = ms.activeIndex,
             onMoveUp = vm::moveCategoryUp,
@@ -1059,7 +1061,7 @@ private fun SeriesGrid(
 
     contextCategory?.let { item ->
         CategoryContextMenu(
-            categoryName = item.displayLabel(R.string.content_category_all_series),
+            categoryName = item.displayLabel(CoreR.string.content_category_all_series),
             canHide = item.key is LiveKey.Folder || item.key is LiveKey.Custom,
             canMove = item.key is LiveKey.Folder || item.key is LiveKey.Custom,
             onHide = { vm.hideCategory(item.key); contextCategory = null },
@@ -1123,7 +1125,7 @@ private fun buildSeriesDetails(
     val year = if (tmdbWins) meta?.year ?: s.year else s.year ?: meta?.year
     val rating = if (tmdbWins) meta?.rating?.takeIf { it > 0 } ?: s.rating?.takeIf { it > 0 }
         else s.rating?.takeIf { it > 0 } ?: meta?.rating?.takeIf { it > 0 }
-    val metaLine = listOfNotNull(year?.let { localizedInteger(it, grouping = false) }, rating?.let { stringResource(R.string.content_rating, it) }).joinToString(stringResource(R.string.content_metadata_separator))
+    val metaLine = listOfNotNull(year?.let { localizedInteger(it, grouping = false) }, rating?.let { stringResource(CoreR.string.content_rating, it) }).joinToString(stringResource(CoreR.string.content_metadata_separator))
     return tv.own.owntv.features.shell.components.MediaDetailsUi(
         title = s.name,
         backdropUrl = backdrop,
@@ -1139,7 +1141,7 @@ private fun buildSeriesDetails(
 /** A provider may omit an episode title. Keep the fallback in Compose so it follows the active locale. */
 @Composable
 private fun episodeDisplayTitle(episode: EpisodeEntity): String =
-    episode.name.takeIf { it.isNotBlank() } ?: stringResource(R.string.player_episode_number, episode.episodeNumber)
+    episode.name.takeIf { it.isNotBlank() } ?: stringResource(CoreR.string.player_episode_number, episode.episodeNumber)
 
 /** Right-hand pane for the focused episode (Option B): 16:9 TMDB still, name, S/E · year · rating, plot. */
 @Composable
@@ -1154,7 +1156,7 @@ private fun EpisodeDetailPane(
 ) {
     val colors = OwnTVTheme.colors
     if (episode == null) {
-        PreviewPane(hint = stringResource(R.string.content_focus_episode))
+        PreviewPane(hint = stringResource(CoreR.string.content_focus_episode))
         return
     }
     val still = tv.own.owntv.core.metadata.MetadataImages.backdrop(meta?.backdropPath ?: meta?.posterPath)
@@ -1162,11 +1164,11 @@ private fun EpisodeDetailPane(
     val plot = if (tmdbWins) meta?.overview ?: episode.plot?.takeIf { it.isNotBlank() }
         else episode.plot?.takeIf { it.isNotBlank() } ?: meta?.overview
     val bits = listOfNotNull(
-        stringResource(R.string.content_season_episode, episode.seasonNumber, episode.episodeNumber),
+        stringResource(CoreR.string.content_season_episode, episode.seasonNumber, episode.episodeNumber),
         // The full day where one is known; the bare year only when it is not, since on a long-running
         // show the year is shared by hundreds of episodes and identifies none of them.
         rememberAirDateLabel(episode, meta) ?: meta?.year?.let { localizedInteger(it, grouping = false) },
-        meta?.rating?.takeIf { it > 0 }?.let { stringResource(R.string.content_rating, it) },
+        meta?.rating?.takeIf { it > 0 }?.let { stringResource(CoreR.string.content_rating, it) },
     )
     Column(modifier = Modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(Dimens.GapLarge)) {
         // Non-focusable status strip — the focused episode's own download, else the series' aggregate.
@@ -1181,15 +1183,15 @@ private fun EpisodeDetailPane(
                 modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp))
                     .background(colors.primaryContainer.copy(alpha = 0.22f)).padding(12.dp),
             ) {
-                Text(stringResource(R.string.content_next_up), style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                Text(stringResource(CoreR.string.content_next_up), style = MaterialTheme.typography.labelSmall, color = colors.primary)
                 Spacer(Modifier.height(4.dp))
-                Text(stringResource(R.string.content_season_episode_title, nup.seasonNumber, nup.episodeNumber, episodeDisplayTitle(nup)), style = MaterialTheme.typography.titleMedium, color = colors.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(stringResource(CoreR.string.content_season_episode_title, nup.seasonNumber, nup.episodeNumber, episodeDisplayTitle(nup)), style = MaterialTheme.typography.titleMedium, color = colors.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 if (nextUpPositionMs > 0) {
                     Spacer(Modifier.height(2.dp))
-                    Text(stringResource(R.string.content_resume_at, formatTimestamp(nextUpPositionMs)), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                    Text(stringResource(CoreR.string.content_resume_at, formatTimestamp(nextUpPositionMs)), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                 }
                 Spacer(Modifier.height(10.dp))
-                OwnTVButton(label = stringResource(R.string.content_play), onClick = onPlayNextUp, icon = OwnTVIcon.PLAY, modifier = Modifier.fillMaxWidth())
+                OwnTVButton(label = stringResource(CoreR.string.content_play), onClick = onPlayNextUp, icon = OwnTVIcon.PLAY, modifier = Modifier.fillMaxWidth())
             }
             Spacer(Modifier.height(14.dp))
         }
@@ -1206,13 +1208,13 @@ private fun EpisodeDetailPane(
         Spacer(Modifier.height(14.dp))
         Text(title, style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
         Spacer(Modifier.height(4.dp))
-        Text(bits.joinToString(stringResource(R.string.content_metadata_separator)), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+        Text(bits.joinToString(stringResource(CoreR.string.content_metadata_separator)), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         if (!plot.isNullOrBlank()) {
             Spacer(Modifier.height(12.dp))
             Text(plot, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
         }
         Spacer(Modifier.height(16.dp))
-        Text(stringResource(R.string.content_ok_play_options), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
+        Text(stringResource(CoreR.string.content_ok_play_options), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
     }
 }
 
@@ -1249,16 +1251,16 @@ private fun EpisodeContextMenu(
             // The menu as data: same actions, same gating, same order as the buttons that used to be
             // written out here one by one. Close is not in the list — it stays pinned last.
             val actions = buildList {
-                add(MenuAction("download", stringResource(R.string.content_download), OwnTVIcon.DOWNLOADS, onClick = onDownload))
+                add(MenuAction("download", stringResource(CoreR.string.content_download), OwnTVIcon.DOWNLOADS, onClick = onDownload))
                 // Phase B: one-off external playback, independent of the global "External player" toggle.
-                add(MenuAction("play_external", stringResource(R.string.content_play_external), OwnTVIcon.PLAY, onClick = onPlayExternal))
+                add(MenuAction("play_external", stringResource(CoreR.string.content_play_external), OwnTVIcon.PLAY, onClick = onPlayExternal))
                 // Manual override of the ≥95% auto-detected watched state (option 2 design pass).
-                add(MenuAction("mark_watched", if (watched) stringResource(R.string.content_mark_unwatched) else stringResource(R.string.content_mark_watched), onClick = onToggleWatched))
-                if (hasTmdbDetails) add(MenuAction("tmdb_details", stringResource(R.string.content_tmdb_details), OwnTVIcon.MENU, onClick = onShowDetails))
+                add(MenuAction("mark_watched", if (watched) stringResource(CoreR.string.content_mark_unwatched) else stringResource(CoreR.string.content_mark_watched), onClick = onToggleWatched))
+                if (hasTmdbDetails) add(MenuAction("tmdb_details", stringResource(CoreR.string.content_tmdb_details), OwnTVIcon.MENU, onClick = onShowDetails))
                 // Refetch TMDB details (§11.2 U5a) — clears this episode's cache AND its show's match, then re-searches.
-                if (canRefetchTmdb) add(MenuAction("refetch_tmdb", stringResource(R.string.content_refetch_tmdb), onClick = onRefetch))
+                if (canRefetchTmdb) add(MenuAction("refetch_tmdb", stringResource(CoreR.string.content_refetch_tmdb), onClick = onRefetch))
                 // Delete subtitles — only when this episode has downloaded OpenSubtitles subs (§11).
-                onDeleteSubtitles?.let { add(MenuAction("delete_subtitles", stringResource(R.string.content_delete_subtitles), OwnTVIcon.SUBTITLE, onClick = it)) }
+                onDeleteSubtitles?.let { add(MenuAction("delete_subtitles", stringResource(CoreR.string.content_delete_subtitles), OwnTVIcon.SUBTITLE, onClick = it)) }
             }
             arranged(ContentMenu.EPISODE, actions).forEachIndexed { index, action ->
                 OwnTVButton(
@@ -1270,7 +1272,7 @@ private fun EpisodeContextMenu(
                 )
             }
             Spacer(Modifier.height(4.dp))
-            OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, modifier = Modifier.fillMaxWidth())        }
+            OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, modifier = Modifier.fillMaxWidth())        }
     }
 }
 
@@ -1286,11 +1288,11 @@ private fun buildEpisodeDetails(
     val plot = if (tmdbWins) meta?.overview ?: ep.plot else ep.plot?.takeIf { it.isNotBlank() } ?: meta?.overview
     val metaLine = listOfNotNull(
         rememberAirDateLabel(ep, meta) ?: meta?.year?.let { localizedInteger(it, grouping = false) },
-        meta?.rating?.takeIf { it > 0 }?.let { stringResource(R.string.content_rating, it) },
-    ).joinToString(stringResource(R.string.content_metadata_separator))
+        meta?.rating?.takeIf { it > 0 }?.let { stringResource(CoreR.string.content_rating, it) },
+    ).joinToString(stringResource(CoreR.string.content_metadata_separator))
     return tv.own.owntv.features.shell.components.MediaDetailsUi(
         title = title,
-        subtitle = stringResource(R.string.content_season_episode, ep.seasonNumber, ep.episodeNumber),
+        subtitle = stringResource(CoreR.string.content_season_episode, ep.seasonNumber, ep.episodeNumber),
         backdropUrl = still,
         posterUrl = null,
         metaLine = metaLine,
@@ -1308,8 +1310,8 @@ private fun EpisodeView(
     onRestored: () -> Unit,
     modifier: Modifier,
 ) {
-    val alreadyDownloadedMessage = stringResource(R.string.content_already_downloaded)
-    val refetchingTmdbMessage = stringResource(R.string.content_refetching_tmdb)
+    val alreadyDownloadedMessage = stringResource(CoreR.string.content_already_downloaded)
+    val refetchingTmdbMessage = stringResource(CoreR.string.content_refetching_tmdb)
     val episodes by vm.episodes.collectAsStateWithLifecycle()
     val loading by vm.episodesLoading.collectAsStateWithLifecycle()
     val favoriteIds by vm.favoriteIds.collectAsStateWithLifecycle()
@@ -1450,11 +1452,11 @@ private fun EpisodeView(
             .padding(horizontal = Dimens.ScreenPaddingH, vertical = Dimens.ScreenPaddingV),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            OwnTVButton(label = stringResource(R.string.common_back), onClick = { vm.closeSeries() }, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.CHEVRON)
+            OwnTVButton(label = stringResource(CoreR.string.common_back), onClick = { vm.closeSeries() }, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.CHEVRON)
             Text(series.name, style = MaterialTheme.typography.headlineLarge, color = OwnTVTheme.colors.onSurface)
             Spacer(Modifier.weight(1f))
             OwnTVButton(
-                label = if (favoriteIds.contains(series.id)) stringResource(R.string.content_favorited) else stringResource(R.string.content_favorite),
+                label = if (favoriteIds.contains(series.id)) stringResource(CoreR.string.content_favorited) else stringResource(CoreR.string.content_favorite),
                 onClick = { vm.toggleFavorite(series) },
                 style = OwnTVButtonStyle.SECONDARY,
                 icon = OwnTVIcon.FAVORITE,
@@ -1463,7 +1465,7 @@ private fun EpisodeView(
             // least one watched episode; filters the active season's episode list.
             if (completedIds.isNotEmpty()) {
                 OwnTVButton(
-                    label = if (hideWatched) stringResource(R.string.content_show_watched) else stringResource(R.string.content_hide_watched),
+                    label = if (hideWatched) stringResource(CoreR.string.content_show_watched) else stringResource(CoreR.string.content_hide_watched),
                     onClick = { vm.setHideWatched(!hideWatched) },
                     style = OwnTVButtonStyle.SECONDARY,
                 )
@@ -1472,8 +1474,8 @@ private fun EpisodeView(
             // catalog's own view toggle, so it reads as the same idea in a different place.
             OwnTVButton(
                 label = stringResource(
-                    if (episodeViewMode == SettingsRepository.VodViewMode.GRID) R.string.settings_view_grid
-                    else R.string.settings_view_list,
+                    if (episodeViewMode == SettingsRepository.VodViewMode.GRID) CoreR.string.settings_view_grid
+                    else CoreR.string.settings_view_list,
                 ),
                 onClick = {
                     vm.setEpisodeViewMode(
@@ -1487,7 +1489,7 @@ private fun EpisodeView(
             // Season/episode order for THIS series (visual only — playback always runs 1,2,3…).
             // Opens the popup; the two orders are set independently and saved per series.
             OwnTVButton(
-                label = stringResource(R.string.content_sorting),
+                label = stringResource(CoreR.string.content_sorting),
                 onClick = { showSorting = true },
                 style = OwnTVButtonStyle.SECONDARY,
                 icon = OwnTVIcon.SORT,
@@ -1500,7 +1502,7 @@ private fun EpisodeView(
                 OwnTVSpinner(sizeDp = 48)
             }
             episodes.isEmpty() -> Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.content_no_episodes), style = MaterialTheme.typography.bodyLarge, color = OwnTVTheme.colors.onSurfaceVariant)
+                Text(stringResource(CoreR.string.content_no_episodes), style = MaterialTheme.typography.bodyLarge, color = OwnTVTheme.colors.onSurfaceVariant)
             }
             else -> {
                 // Option B (§11.1): episode list on the left, focused-episode detail pane on the right.
@@ -1660,7 +1662,7 @@ private fun EpisodeView(
         val cacheForEp = selectedEpisodeMeta?.takeIf { it.episodeId == ep.id }?.cache
         val alreadyDownloaded = downloads[ep.id] != null
         tv.own.owntv.ui.components.OwnTVPopup(onDismissRequest = { contextEpisode = null }) { EpisodeContextMenu(
-            title = stringResource(R.string.content_season_episode_title, ep.seasonNumber, ep.episodeNumber, episodeDisplayTitle(ep)),
+            title = stringResource(CoreR.string.content_season_episode_title, ep.seasonNumber, ep.episodeNumber, episodeDisplayTitle(ep)),
             watched = ep.id in completedIds,
             hasTmdbDetails = metadataMode.enrich && cacheForEp != null,
             canRefetchTmdb = metadataMode.enrich,
@@ -1703,7 +1705,7 @@ private fun EpisodeView(
             showEpisodeDeleteSubs = false
         } else {
             tv.own.owntv.features.subtitles.SubtitleDeletePopup(
-                contentTitle = stringResource(R.string.content_season_episode_title, ep.seasonNumber, ep.episodeNumber, episodeDisplayTitle(ep)),
+                contentTitle = stringResource(CoreR.string.content_season_episode_title, ep.seasonNumber, ep.episodeNumber, episodeDisplayTitle(ep)),
                 items = contextEpisodeSubs,
                 onDelete = { sub ->
                     vm.deleteSubtitle(sub.cacheId)
@@ -1742,9 +1744,9 @@ private fun EpisodeView(
 private fun SeasonChip(season: Int, selected: Boolean, completedCount: Int, totalCount: Int, onClick: () -> Unit) {
     val colors = OwnTVTheme.colors
     val label = if (totalCount > 0) {
-        stringResource(R.string.content_season_progress, season, completedCount, totalCount)
+        stringResource(CoreR.string.content_season_progress, season, completedCount, totalCount)
     } else {
-        stringResource(R.string.content_season, season)
+        stringResource(CoreR.string.content_season, season)
     }
     FocusableSurface(
         onClick = onClick,
@@ -1863,7 +1865,7 @@ private fun EpisodeTile(
                 }
                 if (lastWatched) {
                     Text(
-                        stringResource(R.string.content_last_watched),
+                        stringResource(CoreR.string.content_last_watched),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onPrimaryContainer,
                         modifier = Modifier.align(Alignment.BottomStart).padding(6.dp)
@@ -1982,7 +1984,7 @@ private fun EpisodeRow(
                 // Mark the episode you last watched so it's findable even when it isn't focused (#22).
                 if (lastWatched) {
                     Text(
-                        stringResource(R.string.content_last_watched),
+                        stringResource(CoreR.string.content_last_watched),
                         style = MaterialTheme.typography.labelSmall,
                         color = colors.onPrimaryContainer,
                         modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(colors.primaryContainer).padding(horizontal = 8.dp, vertical = 3.dp),
@@ -2047,8 +2049,8 @@ private fun SeriesListRow(
                 )
                 val meta = buildList {
                     series.year?.let { add(localizedInteger(it, grouping = false)) }
-                    series.rating?.takeIf { it > 0 }?.let { add(stringResource(R.string.content_rating, it)) }
-                }.joinToString(stringResource(R.string.content_metadata_separator))
+                    series.rating?.takeIf { it > 0 }?.let { add(stringResource(CoreR.string.content_rating, it)) }
+                }.joinToString(stringResource(CoreR.string.content_metadata_separator))
                 if (meta.isNotBlank()) {
                     Text(meta, style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
@@ -2087,10 +2089,10 @@ private fun SeriesSortingDialog(
         contentAlignment = Alignment.Center,
     ) {
         Column(Modifier.dialogPanel(width = 680.dp, padding = 28.dp)) {
-            Text(stringResource(R.string.content_sorting), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.content_sorting), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(20.dp))
             SortingRow(
-                label = stringResource(R.string.content_seasons),
+                label = stringResource(CoreR.string.content_seasons),
                 descending = order.seasonsDescending,
                 onSelect = { desc -> onChange(desc, order.episodesDescending) },
                 // Pre-focus the row the user is most likely to change first.
@@ -2098,7 +2100,7 @@ private fun SeriesSortingDialog(
             )
             Spacer(Modifier.height(12.dp))
             SortingRow(
-                label = stringResource(R.string.content_episodes),
+                label = stringResource(CoreR.string.content_episodes),
                 descending = order.episodesDescending,
                 onSelect = { desc -> onChange(order.seasonsDescending, desc) },
             )
@@ -2128,13 +2130,13 @@ private fun SortingRow(
             overflow = TextOverflow.Ellipsis,
         )
         OwnTVButton(
-            label = stringResource(R.string.content_oldest_first),
+            label = stringResource(CoreR.string.content_oldest_first),
             onClick = { onSelect(false) },
             style = if (!descending) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
             modifier = if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier,
         )
         OwnTVButton(
-            label = stringResource(R.string.content_newest_first),
+            label = stringResource(CoreR.string.content_newest_first),
             onClick = { onSelect(true) },
             style = if (descending) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
         )

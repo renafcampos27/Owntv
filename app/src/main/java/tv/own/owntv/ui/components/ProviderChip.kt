@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
@@ -16,7 +18,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 
 /** Compact, non-focusable source label used only when a section has multiple active playlists. */
@@ -28,7 +29,7 @@ fun ProviderChip(
     compact: Boolean = false,
 ) {
     val colors = OwnTVTheme.colors
-    val description = stringResource(R.string.content_provider_name, name)
+    val description = stringResource(CoreR.string.content_provider_name, name)
     Text(
         text = name,
         style = if (compact) MaterialTheme.typography.labelSmall else MaterialTheme.typography.labelMedium,

@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.rememberScrollState
@@ -28,7 +30,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVAvatar
 import tv.own.owntv.ui.components.ProfileIcon
@@ -79,7 +80,7 @@ fun AvatarPickerDialog(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = stringResource(R.string.content_avatar_picker_title),
+                text = stringResource(CoreR.string.content_avatar_picker_title),
                 style = MaterialTheme.typography.titleLarge,
                 color = colors.onSurface,
                 textAlign = TextAlign.Center,
@@ -131,13 +132,13 @@ fun AvatarPickerDialog(
                         }
                     }
                     Text(
-                        text = stringResource(R.string.profiles_avatar_own_picture),
+                        text = stringResource(CoreR.string.profiles_avatar_own_picture),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurfaceVariant,
                     )
                     if (customPath.isNotBlank() && onClearCustom != null) {
                         tv.own.owntv.ui.components.OwnTVButton(
-                            label = stringResource(R.string.common_clear),
+                            label = stringResource(CoreR.string.common_clear),
                             onClick = onClearCustom,
                             style = tv.own.owntv.ui.components.OwnTVButtonStyle.SECONDARY,
                         )

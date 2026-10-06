@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import tv.own.owntv.core.epg.displayLogoUrl
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.basicMarquee
@@ -36,7 +38,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.i18n.HorizontalDirection
 import tv.own.owntv.core.i18n.horizontalDirection
 import tv.own.owntv.core.database.entity.ChannelEntity
@@ -109,7 +110,7 @@ fun ChannelListOverlay(
                 .padding(vertical = 18.dp),
         ) {
             Text(
-                title ?: stringResource(R.string.content_channel_overlay_title),
+                title ?: stringResource(CoreR.string.content_channel_overlay_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.primary,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),

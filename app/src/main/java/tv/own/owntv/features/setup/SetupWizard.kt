@@ -1,5 +1,7 @@
 package tv.own.owntv.features.setup
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
@@ -57,7 +59,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.SourceEntity
 import tv.own.owntv.core.setup.SourceImporter
 import tv.own.owntv.core.sync.importProgressDisplay
@@ -99,10 +100,10 @@ private enum class Step { WELCOME, DISPLAY_SIZE, DISCLAIMER, SETUP_CHOICE, SYNC_
 @Composable
 fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit, modifier: Modifier = Modifier) {
     val vm: SetupViewModel = koinViewModel()
-    val defaultProfileName = stringResource(R.string.setup_default_profile)
-    val defaultIptvName = stringResource(R.string.setup_default_iptv)
-    val defaultPlaylistName = stringResource(R.string.setup_name_default_playlist)
-    val defaultPortalName = stringResource(R.string.setup_default_portal)
+    val defaultProfileName = stringResource(CoreR.string.setup_default_profile)
+    val defaultIptvName = stringResource(CoreR.string.setup_default_iptv)
+    val defaultPlaylistName = stringResource(CoreR.string.setup_name_default_playlist)
+    val defaultPortalName = stringResource(CoreR.string.setup_default_portal)
     var step by rememberSaveable(firstRun) { mutableStateOf(if (firstRun) Step.WELCOME else Step.CREATE_PROFILE) }
     val importState by vm.state.collectAsStateWithLifecycle()
     val progress by vm.progress.collectAsStateWithLifecycle()
@@ -240,7 +241,7 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
         // A file is chosen and nothing has been asked of it yet — so ask, over whatever is behind.
         restoreFile?.takeIf { restoreSections == null }?.let { file ->
             SectionPickerDialog(
-                title = stringResource(R.string.settings_backup_what_restore),
+                title = stringResource(CoreR.string.settings_backup_what_restore),
                 // Every section, not only the ones the file holds: Settings can narrow the list
                 // because it has already opened the container, and this has not — a sealed file says
                 // nothing until its password arrives, and asking for that before the user has said
@@ -248,7 +249,7 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
                 // nothing for it.
                 sections = tv.own.owntv.core.backup.BackupManager.Section.entries,
                 initial = allRestoreSections,
-                confirmLabel = stringResource(R.string.settings_backup_restore_action),
+                confirmLabel = stringResource(CoreR.string.settings_backup_restore_action),
                 onConfirm = { chosen ->
                     restoreSections = chosen
                     vm.importBackup(file, onDone, chosen) // restore activates a profile itself
@@ -270,7 +271,7 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
 private fun WelcomeScreen(onNext: () -> Unit) {
     MainSetupPage {
         Text(
-            stringResource(R.string.setup_welcome_to),
+            stringResource(CoreR.string.setup_welcome_to),
             style = MaterialTheme.typography.labelMedium.copy(
                 fontWeight = FontWeight.Bold,
                 letterSpacing = 2.sp,
@@ -280,14 +281,14 @@ private fun WelcomeScreen(onNext: () -> Unit) {
         Spacer(Modifier.height(19.dp))
         BrandLockup(markSize = 82, textSize = 62)
         Spacer(Modifier.height(24.dp))
-        Text(stringResource(R.string.setup_welcome_tagline), style = MaterialTheme.typography.titleMedium, color = OwnTVTheme.colors.onSurfaceVariant)
+        Text(stringResource(CoreR.string.setup_welcome_tagline), style = MaterialTheme.typography.titleMedium, color = OwnTVTheme.colors.onSurfaceVariant)
         Spacer(Modifier.height(30.dp))
         SetupAccentRule()
         Spacer(Modifier.height(26.dp))
         FirstRunLanguageSelector()
         Spacer(Modifier.height(14.dp))
         OwnTVButton(
-            stringResource(R.string.setup_get_started),
+            stringResource(CoreR.string.setup_get_started),
             onClick = onNext,
             modifier = Modifier.width(192.dp).height(50.dp),
             icon = OwnTVIcon.PLAY,
@@ -323,14 +324,14 @@ private fun DisplaySizeScreen(onNext: () -> Unit, onBack: () -> Unit) {
     Box(Modifier.fillMaxSize()) {
     MainSetupPage(contentScale = FULL_SETUP_CONTENT_SCALE) {
         Text(
-            stringResource(R.string.setup_display_size_title),
+            stringResource(CoreR.string.setup_display_size_title),
             style = MaterialTheme.typography.headlineLarge,
             color = colors.onSurface,
             textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(10.dp))
         Text(
-            stringResource(R.string.setup_display_size_description),
+            stringResource(CoreR.string.setup_display_size_description),
             style = MaterialTheme.typography.bodyLarge,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -340,7 +341,7 @@ private fun DisplaySizeScreen(onNext: () -> Unit, onBack: () -> Unit) {
         // Zoom first: it scales everything including the font row below it, so it is the coarse
         // control and the one most likely to be enough on its own.
         DisplaySizeRow(
-            label = stringResource(R.string.settings_ui_zoom),
+            label = stringResource(CoreR.string.settings_ui_zoom),
             percent = zoom,
             atMin = zoom <= UiZoom.MIN,
             atMax = zoom >= UiZoom.MAX,
@@ -356,7 +357,7 @@ private fun DisplaySizeScreen(onNext: () -> Unit, onBack: () -> Unit) {
         )
         Spacer(Modifier.height(14.dp))
         DisplaySizeRow(
-            label = stringResource(R.string.settings_font_size),
+            label = stringResource(CoreR.string.settings_font_size),
             percent = fontSize,
             atMin = fontSize <= UiFontScale.MIN,
             atMax = fontSize >= UiFontScale.MAX,
@@ -368,7 +369,7 @@ private fun DisplaySizeScreen(onNext: () -> Unit, onBack: () -> Unit) {
         SetupAccentRule()
         Spacer(Modifier.height(18.dp))
         Text(
-            stringResource(R.string.setup_display_size_preview),
+            stringResource(CoreR.string.setup_display_size_preview),
             style = MaterialTheme.typography.bodyLarge,
             color = colors.onSurface,
             textAlign = TextAlign.Center,
@@ -377,19 +378,19 @@ private fun DisplaySizeScreen(onNext: () -> Unit, onBack: () -> Unit) {
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OwnTVButton(
-                stringResource(R.string.common_back),
+                stringResource(CoreR.string.common_back),
                 onClick = onBack,
                 modifier = Modifier.width(140.dp),
                 style = OwnTVButtonStyle.SECONDARY,
             )
             OwnTVButton(
-                stringResource(R.string.settings_reset),
+                stringResource(CoreR.string.settings_reset),
                 onClick = { vm.reset() },
                 modifier = Modifier.width(150.dp),
                 style = OwnTVButtonStyle.SECONDARY,
             )
             OwnTVButton(
-                stringResource(R.string.setup_continue),
+                stringResource(CoreR.string.setup_continue),
                 onClick = onNext,
                 modifier = Modifier.width(200.dp),
             )
@@ -417,20 +418,20 @@ private fun DisplaySizeScreen(onNext: () -> Unit, onBack: () -> Unit) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    stringResource(R.string.settings_low_zoom_warning_title),
+                    stringResource(CoreR.string.settings_low_zoom_warning_title),
                     style = MaterialTheme.typography.titleLarge,
                     color = colors.onSurface,
                 )
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    stringResource(R.string.settings_low_zoom_warning, UiZoom.LOW_RAM_WARN, UiZoom.LOW_RAM_WARN),
+                    stringResource(CoreR.string.settings_low_zoom_warning, UiZoom.LOW_RAM_WARN, UiZoom.LOW_RAM_WARN),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(20.dp))
                 OwnTVButton(
-                    stringResource(R.string.settings_low_zoom_accept),
+                    stringResource(CoreR.string.settings_low_zoom_accept),
                     onClick = {
                         lowZoomAccepted = true
                         pendingLowZoom = null
@@ -472,16 +473,16 @@ private fun DisplaySizeRow(
         Text(label, style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant)
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(20.dp)) {
-            SetupStepButton(stringResource(R.string.settings_decrease), dimmed = atMin, onClick = onDecrease)
+            SetupStepButton(stringResource(CoreR.string.settings_decrease), dimmed = atMin, onClick = onDecrease)
             Text(
-                stringResource(R.string.common_percent, percent),
+                stringResource(CoreR.string.common_percent, percent),
                 style = MaterialTheme.typography.headlineMedium,
                 color = colors.primary,
                 modifier = Modifier.width(130.dp),
                 textAlign = TextAlign.Center,
             )
             SetupStepButton(
-                stringResource(R.string.settings_increase),
+                stringResource(CoreR.string.settings_increase),
                 dimmed = atMax,
                 modifier = increaseFocus?.let { Modifier.focusRequester(it) } ?: Modifier,
                 onClick = onIncrease,
@@ -521,10 +522,10 @@ private fun DisclaimerScreen(onAgree: () -> Unit, onBack: () -> Unit) {
     MainSetupPage {
         BrandLockup(markSize = 36, textSize = 26)
         Spacer(Modifier.height(24.dp))
-        Text(stringResource(R.string.setup_before_you_start), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+        Text(stringResource(CoreR.string.setup_before_you_start), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
         Spacer(Modifier.height(10.dp))
         Text(
-            stringResource(R.string.setup_disclaimer),
+            stringResource(CoreR.string.setup_disclaimer),
             style = MaterialTheme.typography.bodyLarge,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -535,13 +536,13 @@ private fun DisclaimerScreen(onAgree: () -> Unit, onBack: () -> Unit) {
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OwnTVButton(
-                stringResource(R.string.common_back),
+                stringResource(CoreR.string.common_back),
                 onClick = onBack,
                 modifier = Modifier.width(140.dp),
                 style = OwnTVButtonStyle.SECONDARY,
             )
             OwnTVButton(
-                stringResource(R.string.setup_i_understand),
+                stringResource(CoreR.string.setup_i_understand),
                 onClick = onAgree,
                 modifier = Modifier.width(220.dp).focusRequester(fr),
             )
@@ -558,10 +559,10 @@ private fun SetupChoiceScreen(onCreate: () -> Unit, onRestore: () -> Unit, onSyn
     MainSetupPage {
         BrandLockup(markSize = 36, textSize = 26)
         Spacer(Modifier.height(24.dp))
-        Text(stringResource(R.string.setup_set_up_owntv), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+        Text(stringResource(CoreR.string.setup_set_up_owntv), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
         Spacer(Modifier.height(10.dp))
         Text(
-            stringResource(R.string.setup_setup_choice_description),
+            stringResource(CoreR.string.setup_setup_choice_description),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -571,9 +572,9 @@ private fun SetupChoiceScreen(onCreate: () -> Unit, onRestore: () -> Unit, onSyn
         SetupAccentRule()
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            ChoiceCard(icon = OwnTVIcon.PERSON, title = stringResource(R.string.setup_new_profile), desc = stringResource(R.string.setup_create_profile_add_sources), modifier = Modifier.focusRequester(fr), onClick = onCreate)
-            ChoiceCard(icon = OwnTVIcon.DOWNLOADS, title = stringResource(R.string.setup_restore_backup), desc = stringResource(R.string.setup_import_profiles_playlists), onClick = onRestore)
-            ChoiceCard(icon = OwnTVIcon.REFRESH, title = stringResource(R.string.setup_sync_device), desc = stringResource(R.string.setup_sync_device_description), onClick = onSyncDevice)
+            ChoiceCard(icon = OwnTVIcon.PERSON, title = stringResource(CoreR.string.setup_new_profile), desc = stringResource(CoreR.string.setup_create_profile_add_sources), modifier = Modifier.focusRequester(fr), onClick = onCreate)
+            ChoiceCard(icon = OwnTVIcon.DOWNLOADS, title = stringResource(CoreR.string.setup_restore_backup), desc = stringResource(CoreR.string.setup_import_profiles_playlists), onClick = onRestore)
+            ChoiceCard(icon = OwnTVIcon.REFRESH, title = stringResource(CoreR.string.setup_sync_device), desc = stringResource(CoreR.string.setup_sync_device_description), onClick = onSyncDevice)
         }
     }
 }
@@ -586,10 +587,10 @@ private fun AddContentScreen(hasExisting: Boolean, onNew: () -> Unit, onExisting
     MainSetupPage {
         BrandLockup(markSize = 36, textSize = 26)
         Spacer(Modifier.height(24.dp))
-        Text(stringResource(R.string.setup_add_playlist), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+        Text(stringResource(CoreR.string.setup_add_playlist), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
         Spacer(Modifier.height(10.dp))
         Text(
-            stringResource(R.string.setup_add_playlist_description),
+            stringResource(CoreR.string.setup_add_playlist_description),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
             textAlign = TextAlign.Center,
@@ -599,15 +600,15 @@ private fun AddContentScreen(hasExisting: Boolean, onNew: () -> Unit, onExisting
         SetupAccentRule()
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            ChoiceCard(icon = OwnTVIcon.ADD, title = stringResource(R.string.setup_new), desc = stringResource(R.string.setup_add_m3u_xtream), modifier = Modifier.focusRequester(fr), onClick = onNew)
+            ChoiceCard(icon = OwnTVIcon.ADD, title = stringResource(CoreR.string.setup_new), desc = stringResource(CoreR.string.setup_add_m3u_xtream), modifier = Modifier.focusRequester(fr), onClick = onNew)
             if (hasExisting) {
-                ChoiceCard(icon = OwnTVIcon.PLAYLIST, title = stringResource(R.string.setup_existing), desc = stringResource(R.string.setup_use_other_profile_playlists), onClick = onExisting)
+                ChoiceCard(icon = OwnTVIcon.PLAYLIST, title = stringResource(CoreR.string.setup_existing), desc = stringResource(CoreR.string.setup_use_other_profile_playlists), onClick = onExisting)
             }
-            ChoiceCard(icon = OwnTVIcon.DOWNLOADS, title = stringResource(R.string.setup_import), desc = stringResource(R.string.setup_restore_backup_file), onClick = onImport)
+            ChoiceCard(icon = OwnTVIcon.DOWNLOADS, title = stringResource(CoreR.string.setup_import), desc = stringResource(CoreR.string.setup_restore_backup_file), onClick = onImport)
         }
         Spacer(Modifier.height(24.dp))
         OwnTVButton(
-            stringResource(R.string.setup_skip_for_now),
+            stringResource(CoreR.string.setup_skip_for_now),
             onClick = onSkip,
             modifier = Modifier.width(190.dp),
             style = OwnTVButtonStyle.SECONDARY,
@@ -702,9 +703,9 @@ private fun ExistingSourcesScreen(sources: List<SourceEntity>, onAdd: (Set<Long>
     BackHandler { onBack() }
     Box(Modifier.fillMaxSize().padding(40.dp), contentAlignment = Alignment.Center) {
         Column(Modifier.widthIn(max = 620.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(stringResource(R.string.setup_use_existing_playlists), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.setup_use_existing_playlists), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
             Spacer(Modifier.height(6.dp))
-            Text(stringResource(R.string.setup_pick_playlists), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+            Text(stringResource(CoreR.string.setup_pick_playlists), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
             Spacer(Modifier.height(20.dp))
             // Cap to the screen (minus header/footer) so Back/Add stay reachable on small screens.
             val listMax = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 260.dp).coerceIn(140.dp, 320.dp)
@@ -731,8 +732,8 @@ private fun ExistingSourcesScreen(sources: List<SourceEntity>, onAdd: (Set<Long>
             }
             Spacer(Modifier.height(20.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(pluralStringResource(R.plurals.setup_add_selected_playlists, selected.size, selected.size), onClick = { onAdd(selected) }, enabled = selected.isNotEmpty())
+                OwnTVButton(stringResource(CoreR.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(pluralStringResource(CoreR.plurals.setup_add_selected_playlists, selected.size, selected.size), onClick = { onAdd(selected) }, enabled = selected.isNotEmpty())
             }
         }
     }
@@ -748,23 +749,23 @@ private fun ImportBackupScreen(
     when (state) {
         SourceImporter.ImportState.Running -> Centered {
             OwnTVSpinner(sizeDp = 56); Spacer(Modifier.height(16.dp))
-            Text(stringResource(R.string.setup_restoring), style = MaterialTheme.typography.titleMedium, color = OwnTVTheme.colors.onSurface)
+            Text(stringResource(CoreR.string.setup_restoring), style = MaterialTheme.typography.titleMedium, color = OwnTVTheme.colors.onSurface)
         }
         is SourceImporter.ImportState.NeedPassword -> Centered {
             var password by remember { mutableStateOf("") }
             val firstFocus = remember { FocusRequester() }
             LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
             Text(
-                if (state.retry) stringResource(R.string.setup_wrong_backup_password) else stringResource(R.string.setup_enter_backup_password),
+                if (state.retry) stringResource(CoreR.string.setup_wrong_backup_password) else stringResource(CoreR.string.setup_enter_backup_password),
                 style = MaterialTheme.typography.headlineLarge, color = OwnTVTheme.colors.onSurface,
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 when {
-                    state.retry && state.sealed -> stringResource(R.string.setup_password_mismatch_sealed)
-                    state.retry -> stringResource(R.string.setup_password_mismatch)
-                    state.sealed -> stringResource(R.string.setup_backup_encrypted_prompt)
-                    else -> stringResource(R.string.setup_backup_passwords_encrypted_prompt)
+                    state.retry && state.sealed -> stringResource(CoreR.string.setup_password_mismatch_sealed)
+                    state.retry -> stringResource(CoreR.string.setup_password_mismatch)
+                    state.sealed -> stringResource(CoreR.string.setup_backup_encrypted_prompt)
+                    else -> stringResource(CoreR.string.setup_backup_passwords_encrypted_prompt)
                 },
                 style = MaterialTheme.typography.bodyMedium, color = OwnTVTheme.colors.onSurfaceVariant,
                 textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 520.dp),
@@ -773,30 +774,30 @@ private fun ImportBackupScreen(
             OwnTVTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = stringResource(R.string.setup_backup_password),
+                label = stringResource(CoreR.string.setup_backup_password),
                 isPassword = true,
                 focusRequester = firstFocus,
                 modifier = Modifier.widthIn(max = 420.dp),
             )
             Spacer(Modifier.height(20.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
                 // No "Skip" for a sealed container: without the password there is nothing to restore.
                 if (!state.sealed) {
-                    OwnTVButton(stringResource(R.string.setup_skip_no_passwords), onClick = { onPassword(state.file, null) }, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.setup_skip_no_passwords), onClick = { onPassword(state.file, null) }, style = OwnTVButtonStyle.SECONDARY)
                 }
-                OwnTVButton(stringResource(R.string.setup_restore), onClick = { onPassword(state.file, password) }, enabled = password.isNotBlank())
+                OwnTVButton(stringResource(CoreR.string.setup_restore), onClick = { onPassword(state.file, password) }, enabled = password.isNotBlank())
             }
         }
         is SourceImporter.ImportState.Failed -> Centered {
-            Text(stringResource(R.string.setup_restore_failed), style = MaterialTheme.typography.headlineLarge, color = OwnTVTheme.colors.onSurface)
+            Text(stringResource(CoreR.string.setup_restore_failed), style = MaterialTheme.typography.headlineLarge, color = OwnTVTheme.colors.onSurface)
             Spacer(Modifier.height(8.dp))
             Text(state.failure.displayText(), style = MaterialTheme.typography.bodyMedium, color = OwnTVTheme.colors.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 520.dp))
             Spacer(Modifier.height(20.dp))
-            OwnTVButton(stringResource(R.string.common_back), onClick = onBack)
+            OwnTVButton(stringResource(CoreR.string.common_back), onClick = onBack)
         }
         else -> StorageBrowser(
-            title = stringResource(R.string.setup_pick_backup_file),
+            title = stringResource(CoreR.string.setup_pick_backup_file),
             mode = BrowseMode.FILE,
             // `.own` containers plus pre-4.2 `.json` backups.
             fileExtensions = tv.own.owntv.core.backup.BackupManager.RESTORE_EXTENSIONS,
@@ -818,19 +819,19 @@ private fun ImportBackupChooserScreen(onRemote: () -> Unit, onLocal: () -> Unit,
     LaunchedEffect(Unit) { runCatching { fr.requestFocus() } }
     BackHandler { onBack() }
     Centered {
-        Text(stringResource(R.string.setup_restore_a_backup), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+        Text(stringResource(CoreR.string.setup_restore_a_backup), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
         Spacer(Modifier.height(6.dp))
         Text(
-            stringResource(R.string.setup_restore_choice_description),
+            stringResource(CoreR.string.setup_restore_choice_description),
             style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center,
         )
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            ChoiceCard(icon = OwnTVIcon.PLAYLIST, title = stringResource(R.string.setup_from_phone), desc = stringResource(R.string.setup_upload_from_wifi_device), modifier = Modifier.focusRequester(fr), onClick = onRemote)
-            ChoiceCard(icon = OwnTVIcon.DOWNLOADS, title = stringResource(R.string.setup_local_file), desc = stringResource(R.string.setup_pick_backup_local), onClick = onLocal)
+            ChoiceCard(icon = OwnTVIcon.PLAYLIST, title = stringResource(CoreR.string.setup_from_phone), desc = stringResource(CoreR.string.setup_upload_from_wifi_device), modifier = Modifier.focusRequester(fr), onClick = onRemote)
+            ChoiceCard(icon = OwnTVIcon.DOWNLOADS, title = stringResource(CoreR.string.setup_local_file), desc = stringResource(CoreR.string.setup_pick_backup_local), onClick = onLocal)
         }
         Spacer(Modifier.height(24.dp))
-        OwnTVButton(stringResource(R.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
+        OwnTVButton(stringResource(CoreR.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
     }
 }
 
@@ -882,16 +883,16 @@ private fun ImportProgressScreen(
                 val display = progress?.importProgressDisplay()
                 OwnTVSpinner(sizeDp = 56)
                 Spacer(Modifier.height(20.dp))
-                Text(stringResource(R.string.setup_importing_catalog), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                Text(stringResource(CoreR.string.setup_importing_catalog), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    display?.primaryText() ?: stringResource(R.string.setup_preparing_catalog),
+                    display?.primaryText() ?: stringResource(CoreR.string.setup_preparing_catalog),
                     style = MaterialTheme.typography.headlineLarge,
                     color = colors.primary,
                 )
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    display?.detailText() ?: stringResource(R.string.setup_preparing_catalog),
+                    display?.detailText() ?: stringResource(CoreR.string.setup_preparing_catalog),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
@@ -899,33 +900,33 @@ private fun ImportProgressScreen(
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     // Enter the app right away; the import keeps running (VM is activity-scoped) and
                     // content appears as it lands — no need to sit through a big movies/series sync.
-                    OwnTVButton(stringResource(R.string.setup_run_in_background), onClick = onBackground, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(bgFr))
-                    OwnTVButton(stringResource(R.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.setup_run_in_background), onClick = onBackground, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(bgFr))
+                    OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
                 }
                 Spacer(Modifier.height(10.dp))
                 Text(
-                    stringResource(R.string.setup_watching_during_import),
+                    stringResource(CoreR.string.setup_watching_during_import),
                     style = MaterialTheme.typography.bodySmall,
                     color = colors.onSurfaceVariant,
                 )
             }
             is SourceImporter.ImportState.Success -> {
-                Text(stringResource(R.string.setup_all_set), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+                Text(stringResource(CoreR.string.setup_all_set), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
                 Spacer(Modifier.height(10.dp))
                 state.counts?.let { counts ->
                     Text(counts.summaryText(includeEpg = true), style = MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 560.dp))
                 }
                 state.restoredItems?.let { items ->
-                    Text(pluralStringResource(R.plurals.setup_restored_items, items, items), style = MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 560.dp))
+                    Text(pluralStringResource(CoreR.plurals.setup_restored_items, items, items), style = MaterialTheme.typography.titleMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 560.dp))
                 }
                 state.passwordsOmitted.takeIf { it }?.let {
-                    Text(stringResource(R.string.setup_passwords_omitted), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text(stringResource(CoreR.string.setup_passwords_omitted), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
                 state.skippedSources.takeIf { it > 0 }?.let { skipped ->
-                    Text(pluralStringResource(R.plurals.setup_skipped_sources, skipped, skipped), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text(pluralStringResource(CoreR.plurals.setup_skipped_sources, skipped, skipped), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
                 if (state.invalidLocale) {
-                    Text(stringResource(R.string.setup_invalid_locale), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
+                    Text(stringResource(CoreR.string.setup_invalid_locale), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
                 state.warnings.warningText()?.let { warning ->
                     Text(warning, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
@@ -934,16 +935,16 @@ private fun ImportProgressScreen(
                     Text(remainder, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center)
                 }
                 Spacer(Modifier.height(28.dp))
-                OwnTVButton(stringResource(R.string.setup_continue), onClick = onContinue, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(fr))
+                OwnTVButton(stringResource(CoreR.string.setup_continue), onClick = onContinue, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(fr))
             }
             is SourceImporter.ImportState.Failed -> {
-                Text(stringResource(R.string.setup_import_failed), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+                Text(stringResource(CoreR.string.setup_import_failed), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
                 Spacer(Modifier.height(10.dp))
                 Text(state.failure.displayText(), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant, textAlign = TextAlign.Center, modifier = Modifier.widthIn(max = 520.dp))
                 Spacer(Modifier.height(28.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OwnTVButton(stringResource(R.string.common_back), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
-                    OwnTVButton(stringResource(R.string.setup_try_again_caps), onClick = onRetry, modifier = Modifier.focusRequester(fr))
+                    OwnTVButton(stringResource(CoreR.string.common_back), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.setup_try_again_caps), onClick = onRetry, modifier = Modifier.focusRequester(fr))
                 }
             }
         }

@@ -1,5 +1,7 @@
 package tv.own.owntv.features.recordings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.ui.platform.testTag
 
 import androidx.compose.foundation.background
@@ -47,7 +49,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.RecordingEntity
 import tv.own.owntv.core.model.RecordingStatus
 import tv.own.owntv.core.model.RecordingFailure
@@ -93,24 +94,24 @@ fun RecordingsScreen(
     val context = LocalContext.current
     LaunchedEffect(vm, context) {
         vm.retryUnavailable.collect {
-            android.widget.Toast.makeText(context, R.string.recording_retry_unavailable, android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(context, CoreR.string.recording_retry_unavailable, android.widget.Toast.LENGTH_LONG).show()
         }
     }
 
     LaunchedEffect(vm, context) {
         vm.archiveActionUnavailable.collect {
-            android.widget.Toast.makeText(context, R.string.recording_archive_resume_unavailable, android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(context, CoreR.string.recording_archive_resume_unavailable, android.widget.Toast.LENGTH_LONG).show()
         }
     }
 
     LaunchedEffect(vm, context) {
         vm.playUnavailable.collect {
-            android.widget.Toast.makeText(context, R.string.recording_watch_unavailable, android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(context, CoreR.string.recording_watch_unavailable, android.widget.Toast.LENGTH_LONG).show()
         }
     }
     LaunchedEffect(vm, context) {
         vm.partsRequireInternal.collect {
-            android.widget.Toast.makeText(context, R.string.recording_parts_require_internal, android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(context, CoreR.string.recording_parts_require_internal, android.widget.Toast.LENGTH_LONG).show()
         }
     }
 
@@ -204,13 +205,13 @@ fun RecordingsScreen(
     ) {
         if (!embedded) {
             Text(
-                stringResource(R.string.recording_title),
+                stringResource(CoreR.string.recording_title),
                 style = MaterialTheme.typography.headlineLarge,
                 color = colors.onSurface,
             )
             Spacer(Modifier.height(6.dp))
             Text(
-                stringResource(R.string.recording_description),
+                stringResource(CoreR.string.recording_description),
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -225,7 +226,7 @@ fun RecordingsScreen(
         if (listRows.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    stringResource(R.string.recording_empty),
+                    stringResource(CoreR.string.recording_empty),
                     color = colors.onSurfaceVariant,
                     style = MaterialTheme.typography.bodyLarge,
                 )
@@ -273,13 +274,13 @@ fun RecordingsScreen(
 
 /** Most urgent groups first; partial captures are separate from saved files. */
 private enum class RecordingGroup(val labelRes: Int) {
-    NOW(R.string.recording_group_now),
-    SCHEDULED(R.string.recording_group_scheduled),
-    PAUSED(R.string.recording_archive_paused),
-    PARTIAL(R.string.recording_group_partial),
-    COMPLETED(R.string.recording_group_saved),
-    FAILED(R.string.recording_group_failed),
-    MISSED(R.string.recording_group_missed),
+    NOW(CoreR.string.recording_group_now),
+    SCHEDULED(CoreR.string.recording_group_scheduled),
+    PAUSED(CoreR.string.recording_archive_paused),
+    PARTIAL(CoreR.string.recording_group_partial),
+    COMPLETED(CoreR.string.recording_group_saved),
+    FAILED(CoreR.string.recording_group_failed),
+    MISSED(CoreR.string.recording_group_missed),
 }
 
 private sealed interface RecordingListRow {
@@ -341,7 +342,7 @@ private fun SectionHeader(group: RecordingGroup, count: Int) {
             fontWeight = FontWeight.Bold,
         )
         Text(
-            stringResource(R.string.content_downloads_count, count),
+            stringResource(CoreR.string.content_downloads_count, count),
             style = MaterialTheme.typography.labelMedium,
             color = OwnTVTheme.colors.onSurfaceVariant,
         )
@@ -418,29 +419,29 @@ private fun RecordingRow(
     val actions: @Composable RowScope.() -> Unit = {
         // One primary action per state, and never more than the state can honestly offer.
         if (recording.archivePaused && recording.status == RecordingStatus.PARTIAL) {
-            OwnTVButton(stringResource(R.string.recording_archive_resume), onClick = onResume, modifier = focusModifier)
+            OwnTVButton(stringResource(CoreR.string.recording_archive_resume), onClick = onResume, modifier = focusModifier)
         } else when (recording.status) {
             // No icon: it sits next to Delete, and the glyph made Play the wider of the two for no
             // reason a viewer could name.
             RecordingStatus.COMPLETED, RecordingStatus.PARTIAL -> OwnTVButton(
-                stringResource(if (tv.own.owntv.core.recording.RecordingIntegrity.canPlay(recording)) R.string.content_downloads_play else R.string.recording_recover_archive),
+                stringResource(if (tv.own.owntv.core.recording.RecordingIntegrity.canPlay(recording)) CoreR.string.content_downloads_play else CoreR.string.recording_recover_archive),
                 onClick = if (tv.own.owntv.core.recording.RecordingIntegrity.canPlay(recording)) onPlay else onRetry,
                 modifier = focusModifier,
             )
             RecordingStatus.RECORDING -> OwnTVButton(
-                stringResource(if (growing) R.string.recording_watch_in_progress else R.string.recording_stop),
+                stringResource(if (growing) CoreR.string.recording_watch_in_progress else CoreR.string.recording_stop),
                 onClick = if (growing) onPlay else onStop,
                 style = OwnTVButtonStyle.SECONDARY,
                 modifier = focusModifier,
             )
             RecordingStatus.SCHEDULED -> OwnTVButton(
-                stringResource(R.string.common_cancel),
+                stringResource(CoreR.string.common_cancel),
                 onClick = onCancel,
                 style = OwnTVButtonStyle.SECONDARY,
                 modifier = focusModifier,
             )
             RecordingStatus.FAILED, RecordingStatus.MISSED -> OwnTVButton(
-                stringResource(if (recording.programmeStopMs <= System.currentTimeMillis()) R.string.recording_recover_archive else R.string.common_retry),
+                stringResource(if (recording.programmeStopMs <= System.currentTimeMillis()) CoreR.string.recording_recover_archive else CoreR.string.common_retry),
                 onClick = onRetry,
                 style = OwnTVButtonStyle.SECONDARY,
                 modifier = focusModifier,
@@ -449,20 +450,20 @@ private fun RecordingRow(
         }
         if (growing) {
             if (!compactLayout) Spacer(Modifier.width(10.dp))
-            OwnTVButton(stringResource(R.string.recording_stop), onClick = onStop, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.recording_stop), onClick = onStop, style = OwnTVButtonStyle.SECONDARY)
         }
         if (recording.archivePaused && recording.status == RecordingStatus.PARTIAL && recording.failure != RecordingFailure.NONE) {
             if (!compactLayout) Spacer(Modifier.width(10.dp))
-            OwnTVButton(stringResource(R.string.recording_recover_archive), onClick = onRetry, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.recording_recover_archive), onClick = onRetry, style = OwnTVButtonStyle.SECONDARY)
         }
         if (tv.own.owntv.core.recording.ArchiveResumePolicy.canPause(recording)) {
             if (!compactLayout) Spacer(Modifier.width(10.dp))
-            OwnTVButton(stringResource(R.string.recording_archive_pause), onClick = onPause, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.recording_archive_pause), onClick = onPause, style = OwnTVButtonStyle.SECONDARY)
         }
         if (recording.status == RecordingStatus.PARTIAL && tv.own.owntv.core.recording.RecordingIntegrity.canPlay(recording)) {
             if (!compactLayout) Spacer(Modifier.width(10.dp))
             OwnTVButton(
-                stringResource(if (recording.programmeStopMs <= System.currentTimeMillis()) R.string.recording_recover_archive else R.string.common_retry),
+                stringResource(if (recording.programmeStopMs <= System.currentTimeMillis()) CoreR.string.recording_recover_archive else CoreR.string.common_retry),
                 onClick = onRetry,
                 style = OwnTVButtonStyle.SECONDARY,
             )
@@ -472,7 +473,7 @@ private fun RecordingRow(
         if (recording.status != RecordingStatus.SCHEDULED) {
             if (!compactLayout) Spacer(Modifier.width(10.dp))
             OwnTVButton(
-                stringResource(R.string.common_delete),
+                stringResource(CoreR.string.common_delete),
                 onClick = onDelete,
                 style = OwnTVButtonStyle.SECONDARY,
             )
@@ -499,8 +500,8 @@ private fun RecordingRow(
 @Composable
 private fun StatusLine(recording: RecordingEntity) {
     if (recording.archivePaused && recording.status == RecordingStatus.PARTIAL) {
-        Text(stringResource(R.string.recording_archive_paused), style = MaterialTheme.typography.labelSmall)
-        Text(stringResource(R.string.recording_archive_retained), style = MaterialTheme.typography.labelSmall)
+        Text(stringResource(CoreR.string.recording_archive_paused), style = MaterialTheme.typography.labelSmall)
+        Text(stringResource(CoreR.string.recording_archive_retained), style = MaterialTheme.typography.labelSmall)
         return
     }
 
@@ -510,42 +511,42 @@ private fun StatusLine(recording: RecordingEntity) {
         // Confirmed media duration and file bytes, never wall-clock time relabelled as captured media.
         RecordingStatus.RECORDING -> Text(
             buildList {
-                add(stringResource(R.string.recording_group_now))
-                if (recording.capturedDurationMs > 0) add(stringResource(R.string.recording_captured_duration, captureDurationText(recording.capturedDurationMs)))
-                if (recording.bytes > 0) add(stringResource(R.string.common_size_mb, sizeMb(recording.bytes)))
-            }.joinToString(stringResource(R.string.content_epg_bits_separator)),
+                add(stringResource(CoreR.string.recording_group_now))
+                if (recording.capturedDurationMs > 0) add(stringResource(CoreR.string.recording_captured_duration, captureDurationText(recording.capturedDurationMs)))
+                if (recording.bytes > 0) add(stringResource(CoreR.string.common_size_mb, sizeMb(recording.bytes)))
+            }.joinToString(stringResource(CoreR.string.content_epg_bits_separator)),
             style = MaterialTheme.typography.bodySmall,
             color = colors.primary,
             fontWeight = FontWeight.SemiBold,
         )
         RecordingStatus.SCHEDULED -> Text(
-            stringResource(R.string.recording_scheduled_for, whenText(recording.startMs)),
+            stringResource(CoreR.string.recording_scheduled_for, whenText(recording.startMs)),
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
         )
         RecordingStatus.COMPLETED, RecordingStatus.PARTIAL -> Column {
             Text(
                 buildList {
-                    add(stringResource(if (recording.status == RecordingStatus.PARTIAL) R.string.recording_group_partial else R.string.recording_file_saved))
+                    add(stringResource(if (recording.status == RecordingStatus.PARTIAL) CoreR.string.recording_group_partial else CoreR.string.recording_file_saved))
                     if (recording.capturedDurationMs > 0) {
-                        add(stringResource(R.string.recording_captured_duration, captureDurationText(recording.capturedDurationMs)))
+                        add(stringResource(CoreR.string.recording_captured_duration, captureDurationText(recording.capturedDurationMs)))
                     } else {
-                        add(stringResource(R.string.recording_duration_unmeasured))
+                        add(stringResource(CoreR.string.recording_duration_unmeasured))
                     }
-                    if (recording.bytes > 0) add(stringResource(R.string.common_size_mb, sizeMb(recording.bytes)))
-                }.joinToString(stringResource(R.string.content_epg_bits_separator)),
+                    if (recording.bytes > 0) add(stringResource(CoreR.string.common_size_mb, sizeMb(recording.bytes)))
+                }.joinToString(stringResource(CoreR.string.content_epg_bits_separator)),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.primary,
                 fontWeight = FontWeight.SemiBold,
             )
             if (recording.recoveryOfId != null) {
-                Text(stringResource(R.string.recording_archive_copy), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text(stringResource(CoreR.string.recording_archive_copy), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
         }
         // The whole point of the Missed group: the reason, in words, not a code.
         RecordingStatus.FAILED, RecordingStatus.MISSED -> Text(
             RecordingRules.displayTextOf(recording.failure, context.resources)
-                ?: stringResource(R.string.recording_failed_unknown),
+                ?: stringResource(CoreR.string.recording_failed_unknown),
             style = MaterialTheme.typography.bodySmall,
             color = Color(0xFFEF4444),
         )
@@ -561,31 +562,31 @@ private fun IntegrityDetails(row: RecordingEntity, recovery: RecordingEntity?) {
     Column {
         if (row.status == RecordingStatus.RECORDING || row.status == RecordingStatus.PARTIAL ||
             row.status == RecordingStatus.COMPLETED || row.status == RecordingStatus.FAILED) {
-            Text(stringResource(R.string.recording_expected_duration, captureDurationText((row.programmeStopMs - row.programmeStartMs).coerceAtLeast(0))),
+            Text(stringResource(CoreR.string.recording_expected_duration, captureDurationText((row.programmeStopMs - row.programmeStartMs).coerceAtLeast(0))),
                 style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             val captureWindow = (row.stopMs - row.startMs).coerceAtLeast(0)
             if (row.recoveryOfId == null && captureWindow != row.programmeStopMs - row.programmeStartMs) {
-                Text(stringResource(R.string.recording_capture_window, captureDurationText(captureWindow)),
+                Text(stringResource(CoreR.string.recording_capture_window, captureDurationText(captureWindow)),
                     style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
             if (row.status == RecordingStatus.FAILED) {
-                Text(stringResource(if (row.capturedDurationMs > 0) R.string.recording_captured_duration else R.string.recording_duration_unmeasured,
+                Text(stringResource(if (row.capturedDurationMs > 0) CoreR.string.recording_captured_duration else CoreR.string.recording_duration_unmeasured,
                     captureDurationText(row.capturedDurationMs)), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
             if (row.gapCount > 0 || row.missingDurationMs > 0) {
-                Text(stringResource(R.string.recording_missing_estimate, captureDurationText(row.missingDurationMs), row.gapCount),
+                Text(stringResource(CoreR.string.recording_missing_estimate, captureDurationText(row.missingDurationMs), row.gapCount),
                     style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
             if (row.captureFailure != null && row.captureFailure != RecordingFailure.NONE) {
                 RecordingRules.displayTextOf(row.captureFailure!!, res)?.let {
-                    Text(stringResource(R.string.recording_capture_failure, it), style = MaterialTheme.typography.labelSmall, color = Color(0xFFEF4444))
+                    Text(stringResource(CoreR.string.recording_capture_failure, it), style = MaterialTheme.typography.labelSmall, color = Color(0xFFEF4444))
                 }
             }
             if (tv.own.owntv.core.recording.RecordingIntegrity.finalizationFailed(row)) {
-                Text(stringResource(R.string.recording_finalize_failure,
-                    RecordingRules.displayTextOf(row.finalizationFailure!!, res) ?: stringResource(R.string.recording_failed_unknown)),
+                Text(stringResource(CoreR.string.recording_finalize_failure,
+                    RecordingRules.displayTextOf(row.finalizationFailure!!, res) ?: stringResource(CoreR.string.recording_failed_unknown)),
                     style = MaterialTheme.typography.labelSmall, color = Color(0xFFEF4444))
-                if (row.bytes > 0) Text(stringResource(R.string.recording_retained_capture),
+                if (row.bytes > 0) Text(stringResource(CoreR.string.recording_retained_capture),
                     style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             } else if (row.captureFailure == null && row.status == RecordingStatus.PARTIAL && row.failure != RecordingFailure.NONE) {
                 RecordingRules.displayTextOf(row.failure, res)?.let {
@@ -593,20 +594,20 @@ private fun IntegrityDetails(row: RecordingEntity, recovery: RecordingEntity?) {
                 }
             }
             if (row.capturedDurationMs <= 0 && row.status != RecordingStatus.FAILED) {
-                Text(stringResource(R.string.recording_integrity_unverified), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
+                Text(stringResource(CoreR.string.recording_integrity_unverified), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
             }
         }
         if (recovery != null) {
             val status = stringResource(when (recovery.status) {
-                RecordingStatus.SCHEDULED -> R.string.recording_group_scheduled
-                RecordingStatus.RECORDING -> R.string.recording_group_now
-                RecordingStatus.COMPLETED -> R.string.recording_file_saved
-                RecordingStatus.PARTIAL -> R.string.recording_group_partial
-                RecordingStatus.FAILED -> R.string.recording_group_failed
-                RecordingStatus.MISSED -> R.string.recording_group_missed
-                RecordingStatus.CANCELLED -> R.string.recording_recovery_cancelled
+                RecordingStatus.SCHEDULED -> CoreR.string.recording_group_scheduled
+                RecordingStatus.RECORDING -> CoreR.string.recording_group_now
+                RecordingStatus.COMPLETED -> CoreR.string.recording_file_saved
+                RecordingStatus.PARTIAL -> CoreR.string.recording_group_partial
+                RecordingStatus.FAILED -> CoreR.string.recording_group_failed
+                RecordingStatus.MISSED -> CoreR.string.recording_group_missed
+                RecordingStatus.CANCELLED -> CoreR.string.recording_recovery_cancelled
             })
-            Text(stringResource(R.string.recording_recovery_state, recovery.recoveryAttempt, status),
+            Text(stringResource(CoreR.string.recording_recovery_state, recovery.recoveryAttempt, status),
                 style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant)
         }
     }
@@ -628,7 +629,7 @@ private fun StorageBar(info: RecordingStorageInfo) {
     Column(Modifier.fillMaxWidth()) {
         RecordingStorageHeader(compactLayout) {
             Text(
-                stringResource(R.string.content_downloads_storage),
+                stringResource(CoreR.string.content_downloads_storage),
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold,
@@ -636,10 +637,10 @@ private fun StorageBar(info: RecordingStorageInfo) {
             if (!compactLayout) Spacer(Modifier.weight(1f))
             Text(
                 if (info.known) stringResource(
-                    R.string.content_downloads_storage_free,
+                    CoreR.string.content_downloads_storage_free,
                     gigabytes(info.freeBytes),
                     gigabytes(info.totalBytes),
-                ) else stringResource(R.string.media_space_unknown),
+                ) else stringResource(CoreR.string.media_space_unknown),
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.primary,
                 fontWeight = FontWeight.SemiBold,

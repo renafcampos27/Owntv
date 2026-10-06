@@ -1,5 +1,10 @@
 package tv.own.owntv.features.live
 
+import tv.own.owntv.core.R as CoreR
+
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.key
+
 import androidx.compose.ui.platform.testTag
 
 import tv.own.owntv.ui.components.FocusRequestGuard
@@ -172,6 +177,7 @@ fun LiveScreen(
     val browseGuide by vm.browseNowNext.collectAsStateWithLifecycle()
     val nowNext = browseGuide.second.takeIf { browseGuide.first == previewChannel?.id }
     val searchQuery by vm.searchQuery.collectAsStateWithLifecycle()
+    val categoryQuery by vm.categoryQuery.collectAsStateWithLifecycle()
     val sortMode by vm.sortMode.collectAsStateWithLifecycle()
     val livePreviewSetting by vm.livePreviewEnabled.collectAsStateWithLifecycle()
     val channels = vm.channels.collectAsLazyPagingItems()
@@ -526,7 +532,7 @@ fun LiveScreen(
 
     val selectedIndex = railItems.indexOfFirst { it.key == selectedKey }.coerceAtLeast(0)
     val selectedItem = railItems.getOrNull(selectedIndex)
-    val selectedLabel = selectedItem?.displayLabel() ?: stringResource(R.string.content_category_all_channels)
+    val selectedLabel = selectedItem?.displayLabel() ?: stringResource(CoreR.string.content_category_all_channels)
 
     // Manual panel widths (Settings → Panel Width Adjustment). The saved percentages now resolve
     // against the inside of one shared content container; no stored value is rewritten.
@@ -571,6 +577,8 @@ fun LiveScreen(
         // their own three tabs above it, so there is no category rail to draw.
         if (lockedKey == null && !compact && !channelsOnly) {
         CategoryRail(
+            searchQuery = categoryQuery,
+            onSearchQueryChange = vm::setCategoryQuery,
             width = panels?.category ?: Dimens.RailWidthFixed,
             categories = railItems.map {
                 RailCategory(
@@ -744,7 +752,7 @@ fun LiveScreen(
                 }
             }
             Text(
-                stringResource(R.string.content_section_category, stringResource(R.string.common_nav_live_tv), selectedLabel),
+                stringResource(CoreR.string.content_section_category, stringResource(CoreR.string.common_nav_live_tv), selectedLabel),
                 style = MaterialTheme.typography.headlineMedium,
                 color = OwnTVTheme.colors.onSurface,
                 maxLines = 2,
@@ -752,7 +760,7 @@ fun LiveScreen(
             )
             Spacer(Modifier.height(4.dp))
             Text(
-                pluralStringResource(R.plurals.content_count_channels, count, selectedLabel, count),
+                pluralStringResource(CoreR.plurals.content_count_channels, count, selectedLabel, count),
                 style = MaterialTheme.typography.titleMedium,
                 color = OwnTVTheme.colors.primary,
                 fontWeight = FontWeight.Bold,
@@ -763,7 +771,7 @@ fun LiveScreen(
                 SearchBar(
                     query = searchQuery,
                     onQueryChange = vm::setSearchQuery,
-                    placeholder = stringResource(R.string.content_search_channels, selectedLabel),
+                    placeholder = stringResource(CoreR.string.content_search_channels, selectedLabel),
                     modifier = Modifier.weight(1f).focusRequester(listSearchFocus).onFocusChanged { if (it.hasFocus && previewEnabled) vm.stopPreview() },
                 )
                 Spacer(Modifier.size(10.dp))
@@ -774,7 +782,7 @@ fun LiveScreen(
             if (channels.itemCount == 0) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                     Text(
-                        if (searchQuery.isNotBlank()) stringResource(R.string.content_no_channels_found, searchQuery.trim()) else stringResource(R.string.content_no_channels_here),
+                        if (searchQuery.isNotBlank()) stringResource(CoreR.string.content_no_channels_found, searchQuery.trim()) else stringResource(CoreR.string.content_no_channels_here),
                         style = MaterialTheme.typography.bodyLarge,
                         color = OwnTVTheme.colors.onSurfaceVariant,
                     )
@@ -840,7 +848,12 @@ fun LiveScreen(
                                 nowTitle = rowNowTitle,
                                 showNumber = showChannelNumbers,
                                 providerName = providerNames[channel.sourceId],
-                                modifier = rowModifier.testTag("owntv_channel_$chId"),
+                                modifier = rowModifier.testTag("owntv_channel_$chId").onPreviewKeyEvent { event ->
+                                    if (event.type == KeyEventType.KeyDown && event.key == Key.DirectionLeft &&
+                                        lockedKey == null && !compact && !channelsOnly) {
+                                        runCatching { railFocus.requestFocus() }.getOrDefault(false)
+                                    } else false
+                                },
                                 onFocus = onFocusRow,
                                 onClick = onClickRow,
                                 onLongClick = onLongClickRow,
@@ -932,9 +945,9 @@ fun LiveScreen(
 
     renaming?.let { ch ->
         TextInputDialog(
-            title = stringResource(R.string.content_rename_channel),
+            title = stringResource(CoreR.string.content_rename_channel),
             initial = ch.name,
-            hint = stringResource(R.string.content_rename_hint),
+            hint = stringResource(CoreR.string.content_rename_hint),
             onConfirm = { vm.renameChannel(ch, it.takeIf { t -> t.isNotBlank() }); renaming = null },
             onDismiss = { renaming = null },
         )
@@ -986,7 +999,7 @@ fun LiveScreen(
                     vm.addToMultiview(ch, multiviewTiles)
                     multiviewToast.show(
                         multiviewRes.getString(
-                            R.string.multiview_added,
+                            CoreR.string.multiview_added,
                             vm.multiviewSelection.value.size,
                             multiviewTiles,
                         ),
@@ -1009,6 +1022,9 @@ fun LiveScreen(
                 contextChannel = null
             },
             onRemoveFromHistory = { vm.removeFromHistory(ch.id); contextChannel = null },
+            onRemoveFromCategory = (selectedKey as? LiveKey.Custom)?.let { key ->
+                { vm.removeFromCustomCategory(ch, key); contextChannel = null }
+            },
             onDismiss = { contextChannel = null },
         )
     }
@@ -1042,9 +1058,9 @@ fun LiveScreen(
     val moveTargets by vm.moveTargets.collectAsStateWithLifecycle()
     if (creatingCategory) {
         TextInputDialog(
-            title = stringResource(R.string.settings_customize_new_category_title),
+            title = stringResource(CoreR.string.settings_customize_new_category_title),
             hint = stringResource(R.string.settings_customize_new_category_description),
-            confirmLabel = stringResource(R.string.common_create),
+            confirmLabel = stringResource(CoreR.string.common_create),
             allowBlank = false,
             onConfirm = { vm.createCustomCategory(it); creatingCategory = false },
             onDismiss = { creatingCategory = false },
@@ -1055,7 +1071,7 @@ fun LiveScreen(
             if (originKey != null) {
                 MoveToCategoryDialog(
                     moveTargets = moveTargets.filterNot { it.id == originKey },
-                    originName = moveOriginName ?: stringResource(R.string.settings_customize_this_category),
+                    originName = moveOriginName ?: stringResource(CoreR.string.settings_customize_this_category),
                     onNewCategory = { creatingCategory = true },
                     onMove = { targetId, keepInOrigin ->
                         vm.moveToCategory(CustomizeKeys.channel(ch), ch.id, originKey, targetId, keepInOrigin)
@@ -1070,7 +1086,7 @@ fun LiveScreen(
     // Move mode overlay — intercepts D-pad Up/Down/OK/Back while reordering.
     moveState?.let { ms ->
         MoveOrderOverlay(
-            title = stringResource(R.string.content_reorder_channel),
+            title = stringResource(CoreR.string.content_reorder_channel),
             itemNames = ms.items.map { it.name },
             activeIndex = ms.activeIndex,
             onMoveUp = vm::moveUp,
@@ -1083,7 +1099,7 @@ fun LiveScreen(
     // Category Move mode overlay — intercepts D-pad Up/Down/OK/Back while reordering.
     categoryMoveState?.let { ms ->
         MoveOrderOverlay(
-            title = stringResource(R.string.content_move),
+            title = stringResource(CoreR.string.content_move),
             itemNames = ms.items,
             activeIndex = ms.activeIndex,
             onMoveUp = vm::moveCategoryUp,
@@ -1201,6 +1217,7 @@ private fun ChannelContextMenu(
     // "Move to category…" (issue #87): send this channel into a user's combined category.
     onMoveToCategory: () -> Unit,
     onRemoveFromHistory: () -> Unit,
+    onRemoveFromCategory: (() -> Unit)?,
     onDismiss: () -> Unit,
 ) {
     val colors = OwnTVTheme.colors
@@ -1223,28 +1240,31 @@ private fun ChannelContextMenu(
             // The menu as data: same actions, same gating, same order as the buttons that used to be
             // written out here one by one. Close is not in the list — it stays pinned last.
             val actions = buildList {
-                add(MenuAction("favourite", if (isFavorite) stringResource(R.string.content_remove_favourite) else stringResource(R.string.content_add_favourite), OwnTVIcon.FAVORITE, group = 0, onClick = onToggleFavorite))
-                add(MenuAction("rename", stringResource(R.string.content_rename), group = 0, onClick = onRename))
-                add(MenuAction("versions", stringResource(R.string.channel_versions_title), OwnTVIcon.MENU, group = 1, onClick = onVersions))
-                add(MenuAction("match_epg", stringResource(R.string.content_match_epg), OwnTVIcon.EPG, group = 1, onClick = onMatchEpg))
-                add(MenuAction("epg_offset", stringResource(R.string.content_epg_time_offset), OwnTVIcon.EPG, group = 1, onClick = onEpgOffset))
-                if (hasCatchup) add(MenuAction("catchup", stringResource(R.string.content_catchup), group = 1, onClick = onCatchup))
+                add(MenuAction("favourite", if (isFavorite) stringResource(CoreR.string.content_remove_favourite) else stringResource(CoreR.string.content_add_favourite), OwnTVIcon.FAVORITE, group = 0, onClick = onToggleFavorite))
+                add(MenuAction("rename", stringResource(CoreR.string.content_rename), group = 0, onClick = onRename))
+                add(MenuAction("versions", stringResource(CoreR.string.channel_versions_title), OwnTVIcon.MENU, group = 1, onClick = onVersions))
+                add(MenuAction("match_epg", stringResource(CoreR.string.content_match_epg), OwnTVIcon.EPG, group = 1, onClick = onMatchEpg))
+                add(MenuAction("epg_offset", stringResource(CoreR.string.content_epg_time_offset), OwnTVIcon.EPG, group = 1, onClick = onEpgOffset))
+                if (hasCatchup) add(MenuAction("catchup", stringResource(CoreR.string.content_catchup), group = 1, onClick = onCatchup))
                 // Record this channel from now. The guide's Record needs a programme, so a channel
                 // the provider publishes no guide for can only be recorded from here.
-                add(MenuAction("record", stringResource(R.string.recording_record), OwnTVIcon.LIVE_TV, group = 1, onClick = onRecord))
-                add(MenuAction("local_timeshift", stringResource(R.string.local_timeshift_start), OwnTVIcon.HISTORY, group = 1, onClick = onLocalTimeshift))
+                add(MenuAction("record", stringResource(CoreR.string.recording_record), OwnTVIcon.LIVE_TV, group = 1, onClick = onRecord))
+                add(MenuAction("local_timeshift", stringResource(CoreR.string.local_timeshift_start), OwnTVIcon.HISTORY, group = 1, onClick = onLocalTimeshift))
                 // Always offered, regardless of the Live TV external-player default — this is the per-channel
                 // escape hatch for a stream neither in-app engine can open (same as Movies/Series/Downloads).
-                add(MenuAction("play_external", stringResource(R.string.content_play_external_short), OwnTVIcon.PLAY, group = 1, onClick = onPlayExternal))
+                add(MenuAction("play_external", stringResource(CoreR.string.content_play_external_short), OwnTVIcon.PLAY, group = 1, onClick = onPlayExternal))
                 if (onAddToMultiview != null) {
-                    add(MenuAction("add_to_multiview", stringResource(R.string.multiview_add_to), OwnTVIcon.LIST_GRID, group = 1, onClick = onAddToMultiview))
+                    add(MenuAction("add_to_multiview", stringResource(CoreR.string.multiview_add_to), OwnTVIcon.LIST_GRID, group = 1, onClick = onAddToMultiview))
                 }
                 if (canMove) {
-                    add(MenuAction("move", stringResource(R.string.content_move), group = 2, onClick = onMove))
-                    add(MenuAction("move_to_category", stringResource(R.string.content_move_to_category), group = 2, onClick = onMoveToCategory))
+                    add(MenuAction("move", stringResource(CoreR.string.content_move), group = 2, onClick = onMove))
+                    add(MenuAction("move_to_category", stringResource(CoreR.string.content_move_to_category), group = 2, onClick = onMoveToCategory))
                 }
-                add(MenuAction("hide", stringResource(R.string.content_hide_channel), destructive = true, group = 3, onClick = onHide))
-                if (isHistory) add(MenuAction("remove_history", stringResource(R.string.content_remove_history), destructive = true, group = 3, onClick = onRemoveFromHistory))
+                onRemoveFromCategory?.let { remove ->
+                    add(MenuAction("remove_category", stringResource(R.string.channel_remove_from_category), group = 2, onClick = remove))
+                }
+                add(MenuAction("hide", stringResource(CoreR.string.content_hide_channel), destructive = true, group = 3, onClick = onHide))
+                if (isHistory) add(MenuAction("remove_history", stringResource(CoreR.string.content_remove_history), destructive = true, group = 3, onClick = onRemoveFromHistory))
             }
             var previousGroup: Int? = null
             arranged(ContentMenu.LIVE, actions).forEachIndexed { index, action ->
@@ -1260,7 +1280,7 @@ private fun ChannelContextMenu(
             }
 
             ContextMenuDivider()
-            ChannelMenuAction(stringResource(R.string.content_close), onDismiss, OwnTVIcon.CLOSE, Modifier.fillMaxWidth())
+            ChannelMenuAction(stringResource(CoreR.string.content_close), onDismiss, OwnTVIcon.CLOSE, Modifier.fillMaxWidth())
         }
     }
     }
@@ -1332,7 +1352,7 @@ private fun LivePreviewPane(
     val previewLoading = showVideo && previewState == tv.own.owntv.player.LivePreviewEngine.State.LOADING
     val videoRes = previewHeight?.let { "${it}p" }
     if (channel == null) {
-        PreviewPane(hint = stringResource(R.string.content_focus_channel))
+        PreviewPane(hint = stringResource(CoreR.string.content_focus_channel))
         return
     }
     Column(
@@ -1374,7 +1394,7 @@ private fun LivePreviewPane(
                         .padding(horizontal = 10.dp, vertical = 5.dp),
                 ) {
                     Text(
-                        stringResource(R.string.content_preview_single_stream),
+                        stringResource(CoreR.string.content_preview_single_stream),
                         style = MaterialTheme.typography.labelMedium,
                         color = androidx.compose.ui.graphics.Color.White,
                     )
@@ -1414,7 +1434,7 @@ private fun LivePreviewPane(
         // the long-press menu. Just a hint so the watch affordance + where-to-find-options stay obvious.
         Spacer(Modifier.height(14.dp))
         Text(
-            stringResource(R.string.content_press_ok_fullscreen),
+            stringResource(CoreR.string.content_press_ok_fullscreen),
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center,
@@ -1446,14 +1466,14 @@ private fun ChannelMetaRow(
     // public property declared in another module.
     val coverageDays = nowNext?.coverageDays
     val epgStatus = when {
-        nowNext == null || (nowNext.now == null && nowNext.next == null) -> stringResource(R.string.content_no_epg)
-        coverageDays != null && coverageDays > 0 -> stringResource(R.string.content_epg_days, coverageDays)
-        else -> stringResource(R.string.content_epg)
+        nowNext == null || (nowNext.now == null && nowNext.next == null) -> stringResource(CoreR.string.content_no_epg)
+        coverageDays != null && coverageDays > 0 -> stringResource(CoreR.string.content_epg_days, coverageDays)
+        else -> stringResource(CoreR.string.content_epg)
     }
 
     // Catch-up status — only meaningful when the channel actually supports it.
     val catchupLabel = if (channel.catchup) {
-        channel.catchupDays.takeIf { it > 0 }?.let { stringResource(R.string.content_catchup_days, it) } ?: stringResource(R.string.content_catchup)
+        channel.catchupDays.takeIf { it > 0 }?.let { stringResource(CoreR.string.content_catchup_days, it) } ?: stringResource(CoreR.string.content_catchup)
     } else null
 
     val chips = buildList {
@@ -1526,7 +1546,7 @@ private fun EpgSection(nowNext: EpgNowNext?) {
     Spacer(Modifier.height(16.dp))
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (now != null) {
-            Text(stringResource(R.string.content_live_now_label), style = MaterialTheme.typography.labelSmall, color = colors.primary, fontWeight = FontWeight.Bold)
+            Text(stringResource(CoreR.string.content_live_now_label), style = MaterialTheme.typography.labelSmall, color = colors.primary, fontWeight = FontWeight.Bold)
             Text(
                 now.title,
                 style = MaterialTheme.typography.titleSmall,
@@ -1542,7 +1562,7 @@ private fun EpgSection(nowNext: EpgNowNext?) {
                 Box(Modifier.fillMaxWidth(progress).height(4.dp).clip(RoundedCornerShape(2.dp)).background(colors.primary))
             }
             Text(
-                stringResource(R.string.content_live_time_range_plain, formatTime(now.startMs), formatTime(now.stopMs)),
+                stringResource(CoreR.string.content_live_time_range_plain, formatTime(now.displayStartMs), formatTime(now.displayStopMs)),
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurfaceVariant,
             )
@@ -1561,7 +1581,7 @@ private fun EpgSection(nowNext: EpgNowNext?) {
         }
         if (next != null) {
             Spacer(Modifier.height(2.dp))
-            Text(stringResource(R.string.content_live_next_label, formatTime(next.startMs)), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold)
+            Text(stringResource(CoreR.string.content_live_next_label, formatTime(next.displayStartMs)), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold)
             Text(
                 next.title,
                 style = MaterialTheme.typography.bodyMedium,
@@ -1585,10 +1605,10 @@ private fun EpgSection(nowNext: EpgNowNext?) {
         val later = nowNext.upcoming
         if (later.isNotEmpty()) {
             Spacer(Modifier.height(6.dp))
-            Text(stringResource(R.string.content_live_later_label), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold)
+            Text(stringResource(CoreR.string.content_live_later_label), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold)
             later.forEach { p ->
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Text(formatTime(p.startMs), style = MaterialTheme.typography.labelSmall, color = colors.primary)
+                    Text(formatTime(p.displayStartMs), style = MaterialTheme.typography.labelSmall, color = colors.primary)
                     Text(p.title, style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
@@ -1604,7 +1624,7 @@ private fun formatCatchupTime(
 ): String {
     val formatDay = rememberBestDateFormatter("EEE")
     val day = formatDay(startMs)
-    return stringResource(R.string.content_live_day_time_range, day, formatTime(startMs), formatTime(stopMs))
+    return stringResource(CoreR.string.content_live_day_time_range, day, formatTime(startMs), formatTime(stopMs))
 }
 
 /** Live TV catch-up: pick a recent (already-aired) programme on a catch-up channel to replay from start. */
@@ -1662,20 +1682,20 @@ private fun CatchupDialog(
         // stays reachable on small/low-res screens; the outer column can't verticalScroll (LazyColumn).
         val listHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 220.dp).coerceIn(140.dp, 300.dp)
         Column(Modifier.dialogPanel(width = 460.dp, corner = 16.dp, padding = 18.dp, scroll = false)) {
-            Text(stringResource(R.string.content_catchup_title, channelName), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+            Text(stringResource(CoreR.string.content_catchup_title, channelName), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             Spacer(Modifier.height(2.dp))
             val noGuide = list?.isEmpty() == true && jumpOffsetsSec.isNotEmpty()
             Text(
-                stringResource(if (noGuide) R.string.content_catchup_jump_prompt else R.string.content_catchup_prompt),
+                stringResource(if (noGuide) CoreR.string.content_catchup_jump_prompt else CoreR.string.content_catchup_prompt),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
             )
             Spacer(Modifier.height(12.dp))
             when (val progs = list) {
                 null -> if (loaded == CatchupListResult.Error) {
-                    Text(stringResource(R.string.catchup_list_load_failed), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    Text(stringResource(CoreR.string.catchup_list_load_failed), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                     Spacer(Modifier.height(10.dp))
-                    OwnTVButton(stringResource(R.string.common_retry), onClick = { retry++ }, modifier = Modifier.focusRequester(firstFocus))
+                    OwnTVButton(stringResource(CoreR.string.common_retry), onClick = { retry++ }, modifier = Modifier.focusRequester(firstFocus))
                 } else Box(Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) { OwnTVSpinner(sizeDp = 28) }
                 else -> if (progs.isEmpty()) {
                     // No guide for this channel. The archive still exists, so offer times to jump to;
@@ -1690,7 +1710,7 @@ private fun CatchupDialog(
                         )
                     } else {
                         Text(
-                            stringResource(R.string.content_catchup_empty),
+                            stringResource(CoreR.string.content_catchup_empty),
                             style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant,
                         )
                     }
@@ -1706,7 +1726,7 @@ private fun CatchupDialog(
                             ) { _ ->
                                 Column(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp)) {
                                     Text(p.title, style = MaterialTheme.typography.titleMedium, color = colors.onSurface, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                                    Text(formatCatchupTime(p.startMs, p.stopMs, formatTime), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
+                                    Text(formatCatchupTime(p.displayStartMs, p.displayStopMs, formatTime), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
                                 }
                             }
                         }
@@ -1714,7 +1734,7 @@ private fun CatchupDialog(
                 }
             }
             Spacer(Modifier.height(14.dp))
-            OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY,
+            OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY,
                 modifier = if (list?.isEmpty() == true && jumpOffsetsSec.isEmpty()) Modifier.focusRequester(firstFocus) else Modifier)
         }
         }
@@ -1766,13 +1786,13 @@ internal fun EpgMatchDialog(
         // Same small-screen cap as CatchupDialog: search bar + buttons must stay reachable.
         val listHeight = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp - 260.dp).coerceIn(140.dp, 240.dp)
         Column(Modifier.dialogPanel(width = 384.dp, corner = 16.dp, padding = 14.dp)) {
-            Text(stringResource(R.string.content_match_epg), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+            Text(stringResource(CoreR.string.content_match_epg), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             Spacer(Modifier.height(2.dp))
             Text(
                 if (currentMatch != null) {
-                    stringResource(R.string.content_epg_match_prompt_current, channelName, currentMatch)
+                    stringResource(CoreR.string.content_epg_match_prompt_current, channelName, currentMatch)
                 } else {
-                    stringResource(R.string.content_epg_match_prompt, channelName)
+                    stringResource(CoreR.string.content_epg_match_prompt, channelName)
                 },
                 style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
             )
@@ -1781,13 +1801,13 @@ internal fun EpgMatchDialog(
             // reaches Close/Clear directly — no scrolling to the bottom of a long list.
             Row(Modifier.fillMaxWidth()) {
                 Column(Modifier.weight(1f)) {
-                    SearchBar(query = query, onQueryChange = { query = it }, placeholder = stringResource(R.string.content_search_guide_channels), modifier = Modifier.fillMaxWidth().focusRequester(searchFocus), surface = GlassSurface.DIALOGS)
+                    SearchBar(query = query, onQueryChange = { query = it }, placeholder = stringResource(CoreR.string.content_search_guide_channels), modifier = Modifier.fillMaxWidth().focusRequester(searchFocus), surface = GlassSurface.DIALOGS)
                     Spacer(Modifier.height(12.dp))
                     val list = results
                     when {
                         list == null -> androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth().height(80.dp), contentAlignment = Alignment.Center) { OwnTVSpinner(sizeDp = 28) }
                         list.isEmpty() -> Text(
-                            if (query.isBlank()) stringResource(R.string.content_no_epg_data) else stringResource(R.string.content_no_guide_channels, query),
+                            if (query.isBlank()) stringResource(CoreR.string.content_no_epg_data) else stringResource(CoreR.string.content_no_guide_channels, query),
                             style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant,
                         )
                         else -> LazyColumn(Modifier.fillMaxWidth().height(listHeight), verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -1810,8 +1830,8 @@ internal fun EpgMatchDialog(
                 }
                 Spacer(Modifier.width(10.dp))
                 Column(Modifier.width(110.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OwnTVButton(stringResource(R.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.fillMaxWidth())
-                    if (currentMatch != null) OwnTVButton(stringResource(R.string.content_clear_match), onClick = onClear, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.fillMaxWidth())
+                    OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.fillMaxWidth())
+                    if (currentMatch != null) OwnTVButton(stringResource(CoreR.string.content_clear_match), onClick = onClear, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.fillMaxWidth())
                 }
             }
         }
@@ -1852,17 +1872,17 @@ internal fun EpgOffsetDialog(
             Modifier.dialogPanel(width = 420.dp, corner = 16.dp, padding = 18.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Text(stringResource(R.string.content_epg_time_offset), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+            Text(stringResource(CoreR.string.content_epg_time_offset), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             Spacer(Modifier.height(2.dp))
             Text(
-                stringResource(R.string.content_epg_offset_channel_description, channelName),
+                stringResource(CoreR.string.content_epg_offset_channel_description, channelName),
                 style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
                 textAlign = androidx.compose.ui.text.style.TextAlign.Center,
             )
             Spacer(Modifier.height(14.dp))
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OwnTVButton(
-                    stringResource(R.string.content_epg_shift_minutes, "−", "30"),
+                    stringResource(CoreR.string.content_epg_shift_minutes, "−", "30"),
                     onClick = { minutes = (minutes - 30).coerceAtLeast(-12 * 60) },
                     style = OwnTVButtonStyle.SECONDARY, compact = true,
                 )
@@ -1874,7 +1894,7 @@ internal fun EpgOffsetDialog(
                     textAlign = androidx.compose.ui.text.style.TextAlign.Center,
                 )
                 OwnTVButton(
-                    stringResource(R.string.content_epg_shift_minutes, "+", "30"),
+                    stringResource(CoreR.string.content_epg_shift_minutes, "+", "30"),
                     onClick = { minutes = (minutes + 30).coerceAtMost(14 * 60) },
                     style = OwnTVButtonStyle.SECONDARY, compact = true,
                 )
@@ -1882,7 +1902,7 @@ internal fun EpgOffsetDialog(
             Spacer(Modifier.height(6.dp))
             Text(
                 stringResource(
-                    if (currentMinutes == null) R.string.content_epg_offset_following_global else R.string.content_epg_offset_channel_only,
+                    if (currentMinutes == null) CoreR.string.content_epg_offset_following_global else CoreR.string.content_epg_offset_channel_only,
                     liveEpgShiftLabel(globalMinutes),
                 ),
                 style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant,
@@ -1890,19 +1910,19 @@ internal fun EpgOffsetDialog(
             Spacer(Modifier.height(14.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 OwnTVButton(
-                    stringResource(R.string.common_done),
+                    stringResource(CoreR.string.common_done),
                     onClick = { onSet(minutes); onDismiss() },
                     modifier = Modifier.weight(1f).focusRequester(doneFocus),
                 )
                 if (currentMinutes != null) {
                     OwnTVButton(
-                        stringResource(R.string.content_epg_offset_use_global),
+                        stringResource(CoreR.string.content_epg_offset_use_global),
                         onClick = { onSet(null); onDismiss() },
                         style = OwnTVButtonStyle.SECONDARY,
                         modifier = Modifier.weight(1f),
                     )
                 }
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.weight(1f))
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.weight(1f))
             }
         }
     }
@@ -1912,7 +1932,7 @@ internal fun EpgOffsetDialog(
 
 @Composable
 private fun liveEpgShiftLabel(minutes: Int): String {
-    if (minutes == 0) return stringResource(R.string.common_off)
+    if (minutes == 0) return stringResource(CoreR.string.common_off)
     val locale = androidx.compose.ui.platform.LocalConfiguration.current.locales[0] ?: java.util.Locale.US
     val number = java.text.NumberFormat.getIntegerInstance(locale)
     val sign = if (minutes < 0) "−" else "+"
@@ -1920,10 +1940,10 @@ private fun liveEpgShiftLabel(minutes: Int): String {
     val hours = absolute / 60
     val remainder = absolute % 60
     return when {
-        hours == 0 -> stringResource(R.string.content_epg_shift_minutes, sign, number.format(remainder))
-        remainder == 0 -> stringResource(R.string.content_epg_shift_hours, sign, number.format(hours))
+        hours == 0 -> stringResource(CoreR.string.content_epg_shift_minutes, sign, number.format(remainder))
+        remainder == 0 -> stringResource(CoreR.string.content_epg_shift_hours, sign, number.format(hours))
         else -> stringResource(
-            R.string.content_epg_shift_hours_minutes,
+            CoreR.string.content_epg_shift_hours_minutes,
             sign,
             number.format(hours),
             number.format(remainder),

@@ -155,4 +155,15 @@ class ChannelAlternativesTest {
         )
         assertFalse(result)
     }
+    @Test fun scheduledHandoverWaitDoesNotSpendShortAlternativeTimeout() = runBlocking {
+        var waiting = true
+        val result = tryChannelAlternatives(
+            initial = 1, alternatives = { emptyList<Int>() }, timeoutMs = 40,
+            isWaitingForHandover = { waiting },
+            attempt = { delay(180); waiting = false; true },
+            failed = { error("Scheduled wait was charged as a failed attempt") }, switching = {},
+        )
+        assertTrue(result)
+    }
+
 }

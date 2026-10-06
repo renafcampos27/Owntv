@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Column
@@ -24,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.TextInputDialog
 import tv.own.owntv.ui.components.restoreAfterDialogClose
@@ -76,38 +77,38 @@ fun WeatherSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             .verticalScroll(scrollState)
             .padding(horizontal = 40.dp, vertical = 28.dp),
     ) {
-        Header(stringResource(R.string.settings_weather), onBack)
+        Header(stringResource(CoreR.string.settings_weather), onBack)
         Spacer(Modifier.height(8.dp))
 
-        GroupLabel(stringResource(R.string.settings_top_bar_weather))
+        GroupLabel(stringResource(CoreR.string.settings_top_bar_weather))
         Row2(
-            icon = OwnTVIcon.WEATHER, title = stringResource(R.string.settings_show_weather),
-            desc = stringResource(R.string.settings_show_weather_description),
-            chip = if (enabled) stringResource(R.string.common_on) else stringResource(R.string.common_off), primaryChip = enabled,
+            icon = OwnTVIcon.WEATHER, title = stringResource(CoreR.string.settings_show_weather),
+            desc = stringResource(CoreR.string.settings_show_weather_description),
+            chip = if (enabled) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off), primaryChip = enabled,
             modifier = Modifier.focusRequester(firstFocus),
             onClick = { vm.setWeatherEnabled(!enabled) },
         )
         Row2(
-            icon = OwnTVIcon.WEATHER, title = stringResource(R.string.settings_custom_location),
-            desc = stringResource(R.string.settings_custom_location_description),
-            chip = location.ifBlank { stringResource(R.string.settings_auto) }, primaryChip = false, chevron = true,
+            icon = OwnTVIcon.WEATHER, title = stringResource(CoreR.string.settings_custom_location),
+            desc = stringResource(CoreR.string.settings_custom_location_description),
+            chip = location.ifBlank { stringResource(CoreR.string.settings_auto) }, primaryChip = false, chevron = true,
             modifier = Modifier.focusRequester(locationRowFocus),
             onClick = { showLocation = true },
         )
         Row2(
-            icon = OwnTVIcon.WEATHER, title = stringResource(R.string.settings_temperature_unit),
-            desc = stringResource(R.string.settings_temperature_description),
-            chip = stringResource(if (fahrenheit) R.string.settings_degree_fahrenheit else R.string.settings_degree_celsius), primaryChip = true,
+            icon = OwnTVIcon.WEATHER, title = stringResource(CoreR.string.settings_temperature_unit),
+            desc = stringResource(CoreR.string.settings_temperature_description),
+            chip = stringResource(if (fahrenheit) CoreR.string.settings_degree_fahrenheit else CoreR.string.settings_degree_celsius), primaryChip = true,
             onClick = { vm.setWeatherFahrenheit(!fahrenheit) },
         )
     }
 
     if (showLocation) {
         TextInputDialog(
-            title = stringResource(R.string.settings_custom_location),
+            title = stringResource(CoreR.string.settings_custom_location),
             initial = location,
-            label = stringResource(R.string.settings_city_latlon),
-            hint = stringResource(R.string.settings_location_hint),
+            label = stringResource(CoreR.string.settings_city_latlon),
+            hint = stringResource(CoreR.string.settings_location_hint),
             onConfirm = { vm.setWeatherLocation(it); showLocation = false },
             onDismiss = { showLocation = false },
         )

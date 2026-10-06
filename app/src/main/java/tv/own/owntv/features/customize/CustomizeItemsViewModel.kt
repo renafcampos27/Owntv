@@ -69,6 +69,7 @@ class CustomizeItemsViewModel(
     private val contentOrderDao: ContentOrderDao,
     private val customCategoryDao: CustomCategoryDao,
     private val customize: CustomizationStore,
+    private val userDataWriter: tv.own.owntv.core.backup.UserDataWriter,
 ) : ViewModel() {
 
     private data class Ctx(val profileId: Long, val sources: List<tv.own.owntv.core.database.entity.SourceEntity>) {
@@ -501,17 +502,35 @@ class CustomizeItemsViewModel(
      * browse pager drops it, a custom category deletes its membership row, and Favorites deletes the
      * favorite row. The item always stays in All/search/recent.
      */
+    fun removeFromCategory(row: CustomizeItemRow) {
+        val ci = _catInfo.value?.takeIf { it.isCustom } ?: return
+        val owner = ctx.value
+        if (owner.profileId < 0) return
+        viewModelScope.launch {
+            if (ctx.value != owner || _catInfo.value != ci) return@launch
+            userDataWriter.removeCustomCategoryMember(owner.profileId, ci.mediaType, ci.contextKey, row.itemId)
+            val current = customize.observe(owner.profileId, ci.mediaType).first()
+            val stillAssigned = customCategoryDao.contextsOf(owner.profileId, ci.mediaType, row.itemId).isNotEmpty()
+            if (!stillAssigned) current.movedFromOrigin[row.key]?.let { origin ->
+                customize.setItemMovedFromOrigin(owner.profileId, ci.mediaType, row.key, origin, moved = false)
+            }
+        }
+    }
+
     fun moveTo(row: CustomizeItemRow, targetId: String, keepInOrigin: Boolean) {
         val ci = _catInfo.value ?: return
         if (targetId == ci.contextKey) return
+        val owner = ctx.value
+        if (owner.profileId < 0) return
         viewModelScope.launch {
-            val pid = ctx.value.profileId
+            if (ctx.value != owner || _catInfo.value != ci) return@launch
+            val pid = owner.profileId
             customCategoryDao.appendItem(pid, ci.mediaType, targetId, row.itemId)
             if (!keepInOrigin) {
                 when {
                     // Custom origin → drop the membership row (the item leaves THIS category).
                     CustomizeKeys.isCustom(ci.contextKey) ->
-                        customCategoryDao.deleteItem(pid, ci.mediaType, ci.contextKey, row.itemId)
+                        userDataWriter.removeCustomCategoryMember(pid, ci.mediaType, ci.contextKey, row.itemId)
                     // Provider-folder origin → mark it moved-out; the browse pager then drops the
                     // item from that folder while keeping it in All/search/recent. (Favorites can't
                     // be an origin here — this screen is only opened from Customize's category rows.)

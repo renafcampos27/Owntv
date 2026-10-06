@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +28,6 @@ import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import kotlinx.coroutines.delay
-import tv.own.owntv.R
 import tv.own.owntv.core.ui.findActivity
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -96,11 +97,11 @@ fun AutoFrameRatePrompt(
         contentAlignment = Alignment.Center,
     ) {
         Column(Modifier.dialogPanel(width = 520.dp, padding = 28.dp)) {
-            Text(stringResource(R.string.player_frame_rate_prompt_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.player_frame_rate_prompt_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(10.dp))
             Text(
                 stringResource(
-                    R.string.player_frame_rate_prompt_description,
+                    CoreR.string.player_frame_rate_prompt_description,
                     fps?.roundToInt() ?: 0,
                     currentHz.roundToInt(),
                     targetHz.roundToInt(),
@@ -110,9 +111,9 @@ fun AutoFrameRatePrompt(
             )
             Spacer(Modifier.height(22.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.settings_not_now), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.settings_not_now), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.player_frame_rate_turn_on), onClick = onEnable, modifier = Modifier.focusRequester(focus))
+                OwnTVButton(stringResource(CoreR.string.player_frame_rate_turn_on), onClick = onEnable, modifier = Modifier.focusRequester(focus))
             }
         }
     }

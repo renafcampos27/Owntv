@@ -8,6 +8,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.currentCoroutineContext
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.player.wrappedZapIndex
 import tv.own.owntv.core.live.LiveKey
@@ -90,12 +92,10 @@ class LiveZapList(
         if (armed && channel.categoryId == categoryId && list.any { matchesPlaying(it, channel.id) }) return
         loadJob?.cancel()
         loadJob = scope.launch {
-            publish(
-                loaded = loadForChannel(channel),
-                categoryId = channel.categoryId,
-                title = channel.categoryId?.let { categoryName(it) }?.takeIf { it.isNotBlank() },
-                key = null,
-            )
+            val loaded = loadForChannel(channel)
+            val title = channel.categoryId?.let { categoryName(it) }?.takeIf { it.isNotBlank() }
+            currentCoroutineContext().ensureActive()
+            publish(loaded, categoryId = channel.categoryId, title = title, key = null)
         }
     }
 
@@ -107,7 +107,21 @@ class LiveZapList(
         loadJob = scope.launch {
             val loaded = loadForCategory(categoryId)
             if (loaded.isEmpty()) return@launch
-            publish(loaded, categoryId = categoryId, title = categoryName(categoryId), key = null)
+            val title = categoryName(categoryId)
+            currentCoroutineContext().ensureActive()
+            publish(loaded, categoryId = categoryId, title = title, key = null)
+            onLoaded()
+        }
+    }
+
+    /** A custom category shares the same cancellation and publication rules as provider folders. */
+    fun armForCustom(key: LiveKey.Custom, title: String, load: suspend () -> List<ChannelEntity>, onLoaded: () -> Unit) {
+        loadJob?.cancel()
+        loadJob = scope.launch {
+            val loaded = load()
+            if (loaded.isEmpty()) return@launch
+            currentCoroutineContext().ensureActive()
+            publish(loaded, categoryId = null, title = title, key = key)
             onLoaded()
         }
     }

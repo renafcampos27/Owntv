@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.rememberScrollState
@@ -80,20 +82,20 @@ fun SimpleModeMenu(
             )
             Spacer(Modifier.height(24.dp))
             OwnTVButton(
-                label = androidx.compose.ui.res.stringResource(R.string.common_nav_settings),
+                label = androidx.compose.ui.res.stringResource(CoreR.string.common_nav_settings),
                 onClick = onSettings,
                 style = OwnTVButtonStyle.PRIMARY,
             )
             Spacer(Modifier.height(16.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 OwnTVButton(
-                    label = androidx.compose.ui.res.stringResource(R.string.common_cancel),
+                    label = androidx.compose.ui.res.stringResource(CoreR.string.common_cancel),
                     onClick = onDismiss,
                     style = OwnTVButtonStyle.SECONDARY,
                     modifier = Modifier.focusRequester(cancelFocus),
                 )
                 OwnTVButton(
-                    label = androidx.compose.ui.res.stringResource(R.string.common_exit),
+                    label = androidx.compose.ui.res.stringResource(CoreR.string.common_exit),
                     onClick = onExit,
                     style = OwnTVButtonStyle.PRIMARY,
                 )

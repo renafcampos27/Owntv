@@ -4,7 +4,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Test
 
 class RecoveryTimeoutTest {
-    @Test fun existingInstallKeepsThreeSeconds() { assertEquals(3, RecoveryTimeout.normalize(null)) }
+    @Test fun unsetPreferenceUsesSevenSeconds() { assertEquals(7, RecoveryTimeout.normalize(null)) }
     @Test fun allSelectableValuesArePreserved() {
         for (seconds in 1..60) {
             assertEquals(seconds, RecoveryTimeout.normalize(seconds))

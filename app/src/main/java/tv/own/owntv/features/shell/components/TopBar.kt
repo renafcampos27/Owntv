@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import android.text.format.DateFormat
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Canvas
@@ -42,7 +44,6 @@ import androidx.compose.ui.layout.layout
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import kotlinx.coroutines.delay
-import tv.own.owntv.R
 import tv.own.owntv.core.weather.WeatherInfo
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVIcon
@@ -209,11 +210,11 @@ private fun PlaylistChip(
 private fun WeatherChip(info: WeatherInfo, fahrenheit: Boolean) {
     val colors = OwnTVTheme.colors
     val temp = if (fahrenheit) {
-        stringResource(R.string.common_weather_fahrenheit, (info.temperatureC * 9 / 5 + 32).toInt())
+        stringResource(CoreR.string.common_weather_fahrenheit, (info.temperatureC * 9 / 5 + 32).toInt())
     } else {
-        stringResource(R.string.common_weather_celsius, info.temperatureC.toInt())
+        stringResource(CoreR.string.common_weather_celsius, info.temperatureC.toInt())
     }
-    val location = if (info.city.isNotBlank()) stringResource(R.string.common_weather_city, temp, info.city) else temp
+    val location = if (info.city.isNotBlank()) stringResource(CoreR.string.common_weather_city, temp, info.city) else temp
     val shape = RoundedCornerShape(TopBarChipCorner)
     Box(Modifier.clip(shape).glass(GlassSurface.TOPBAR, colors.surfaceContainer.copy(alpha = 0.6f), shape, frostScale = TopBarFrost, condenseChrome = true).padding(horizontal = 14.dp, vertical = 7.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {

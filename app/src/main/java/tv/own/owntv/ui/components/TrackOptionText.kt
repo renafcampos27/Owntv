@@ -1,9 +1,10 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
-import tv.own.owntv.R
 import tv.own.owntv.player.TrackLabelKind
 import tv.own.owntv.player.TrackOption
 import java.util.Locale
@@ -26,8 +27,8 @@ fun TrackOption.displayLabel(): String {
                 ?: code.uppercase(locale)
         }
     val fallback = when (labelKind) {
-        TrackLabelKind.AUDIO -> stringResource(R.string.player_audio_track_number, displayNumber())
-        TrackLabelKind.SUBTITLE -> stringResource(R.string.player_subtitle_track_number, displayNumber())
+        TrackLabelKind.AUDIO -> stringResource(CoreR.string.player_audio_track_number, displayNumber())
+        TrackLabelKind.SUBTITLE -> stringResource(CoreR.string.player_subtitle_track_number, displayNumber())
     }
     // External subs already carry their source in the raw label's `OS_`/`LOCAL_` prefix (see
     // SubtitleTrackLabel), so appending a source word here would state it twice on every row.

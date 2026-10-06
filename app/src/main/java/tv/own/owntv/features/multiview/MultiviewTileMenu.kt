@@ -1,5 +1,7 @@
 package tv.own.owntv.features.multiview
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -21,7 +23,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.dialogPanel
@@ -62,7 +63,7 @@ fun MultiviewTileMenu(
     ) {
         Column(Modifier.dialogPanel(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             MenuRow(
-                label = stringResource(R.string.multiview_tile_change_channel),
+                label = stringResource(CoreR.string.multiview_tile_change_channel),
                 icon = OwnTVIcon.LIVE_TV,
                 onClick = onChangeChannel,
                 modifier = Modifier.focusRequester(focus),
@@ -70,22 +71,22 @@ fun MultiviewTileMenu(
             // Growing the grid is a deliberate act, which is what makes the Settings number a
             // ceiling rather than a size: four allowed does not mean four every time.
             if (onAddTile != null) {
-                MenuRow(stringResource(R.string.multiview_add_channel), OwnTVIcon.ADD, onAddTile)
+                MenuRow(stringResource(CoreR.string.multiview_add_channel), OwnTVIcon.ADD, onAddTile)
             }
             if (filled) {
-                MenuRow(stringResource(R.string.multiview_tile_fullscreen), OwnTVIcon.EXPAND, onFullscreen)
-                MenuRow(stringResource(R.string.multiview_audio_tile), OwnTVIcon.VOLUME_HIGH, onSound)
+                MenuRow(stringResource(CoreR.string.multiview_tile_fullscreen), OwnTVIcon.EXPAND, onFullscreen)
+                MenuRow(stringResource(CoreR.string.multiview_audio_tile), OwnTVIcon.VOLUME_HIGH, onSound)
                 // Give up this tile's picture and keep only its sound — or take the picture back.
                 MenuRow(
                     label = stringResource(
-                        if (soundOnly) R.string.multiview_tile_show_picture else R.string.multiview_tile_sound_only,
+                        if (soundOnly) CoreR.string.multiview_tile_show_picture else CoreR.string.multiview_tile_sound_only,
                     ),
                     icon = OwnTVIcon.HEADPHONES,
                     onClick = onSoundOnly,
                 )
-                MenuRow(stringResource(R.string.multiview_tile_remove), OwnTVIcon.CLOSE, onRemove)
+                MenuRow(stringResource(CoreR.string.multiview_tile_remove), OwnTVIcon.CLOSE, onRemove)
             }
-            MenuRow(stringResource(R.string.content_close), OwnTVIcon.CLOSE, onDismiss)
+            MenuRow(stringResource(CoreR.string.content_close), OwnTVIcon.CLOSE, onDismiss)
         }
     }
     }

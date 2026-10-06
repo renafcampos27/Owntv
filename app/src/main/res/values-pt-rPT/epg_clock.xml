@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catchup_clock_minus_step">−30 min</string>
+    <string name="catchup_clock_plus_step">+30 min</string>
+    <string name="catchup_clock_back">Voltar</string>
+    <string name="epg_grid_corrected_clock">Posição no guia: %1$s–%2$s (hora corrigida)</string>
+    <string name="catchup_clock_by_playlist">Fuso dos diferidos por lista</string>
+    <string name="catchup_clock_follow_global">Seguir a definição geral</string>
+    <string name="catchup_clock_source_offset">Desvio UTC: %1$s</string>
+    <string name="catchup_clock_source_note">Altera o fuso usado para pedir os diferidos. Não desloca as horas apresentadas nem acrescenta outra correção ao programa.</string>
+</resources>

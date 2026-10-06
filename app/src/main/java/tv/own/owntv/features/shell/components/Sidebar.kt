@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.ui.platform.testTag
 
 import androidx.compose.animation.core.LinearEasing
@@ -55,7 +57,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.core.nav.MainSection
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.NavAccentBar
 import tv.own.owntv.ui.components.rememberNavLadderColors
@@ -164,7 +165,7 @@ fun Sidebar(
             contentAlignment = Alignment.Center,
         ) {
             if (expanded) {
-                SectionLabel(stringResource(R.string.common_browse))
+                SectionLabel(stringResource(CoreR.string.common_browse))
                 Spacer(Modifier.height(4.dp))
             }
 
@@ -296,7 +297,7 @@ private fun NowPlayingItem(
                 }
             }
             Text(
-                stringResource(R.string.shell_now_playing),
+                stringResource(CoreR.string.shell_now_playing),
                 style = MaterialTheme.typography.labelSmall,
                 color = if (focused) colors.onSurface else colors.primary,
                 maxLines = 1,
@@ -319,7 +320,7 @@ private fun ProfileCard(
     onSwitchProfile: () -> Unit,
 ) {
     val colors = OwnTVTheme.colors
-    val sourceLabel = sourceSummary ?: stringResource(R.string.shell_no_source)
+    val sourceLabel = sourceSummary ?: stringResource(CoreR.string.shell_no_source)
 
     if (!expanded) {
         // Fixed nav: just the avatar — click opens the profile switcher ("who's watching"), long-press
@@ -347,7 +348,7 @@ private fun ProfileCard(
             AvatarButton(avatarId = avatarId, avatarPath = avatarPath, sizeDp = 64, onClick = onPickAvatar)
             Spacer(Modifier.height(10.dp))
             Text(
-                profileName.ifBlank { stringResource(R.string.common_own_tv_user) },
+                profileName.ifBlank { stringResource(CoreR.string.common_own_tv_user) },
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.onSurface,
                 maxLines = 1,
@@ -381,7 +382,7 @@ private fun ProfileCard(
                 ) {
                     OwnTVIcon(icon = OwnTVIcon.PERSON, tint = c, modifier = Modifier.size(18.dp))
                     Text(
-                        stringResource(R.string.common_switch_profile),
+                        stringResource(CoreR.string.common_switch_profile),
                         style = MaterialTheme.typography.labelLarge,
                         color = c,
                         maxLines = 1,

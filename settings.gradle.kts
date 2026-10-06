@@ -19,6 +19,16 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // Only the native engine is resolved here; customized Core modules keep their own source.
+        exclusiveContent {
+            forRepository {
+                maven {
+                    name = "OwnTVNative"
+                    url = uri("https://ahxn00.github.io/OwnTV_Core/maven")
+                }
+            }
+            filter { includeModule("tv.own.owntv", "libmpv") }
+        }
         // tv.own.owntv:core and :player-core, built from https://github.com/renatofc27/OwnTV_Core.
         // That repository is public, but GitHub's Maven registry demands credentials even for a
         // public package — so resolution needs a token with read:packages. Put it in

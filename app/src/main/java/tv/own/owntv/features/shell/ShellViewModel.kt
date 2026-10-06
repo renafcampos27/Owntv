@@ -152,7 +152,7 @@ class ShellViewModel(
             if (epgModes.isNotEmpty()) {
                 val epgSources = epgSourceStore.getAll()
                 epgSources.forEach { src ->
-                    val mode = epgModes[src.id] ?: EpgRefresh.OFF
+                    val mode = epgModes[src.id] ?: EpgRefresh.DEFAULT
                     if (shouldRefreshEpg(mode, src.lastSyncAt, nowMs, includeStartup)) {
                         val base = epgDao.countForSources(listOf(src.id))
                         Log.d(TAG, "checkAutoRefresh epg sourceId=${src.id} mode=$mode — enqueuing")
@@ -245,7 +245,7 @@ class ShellViewModel(
         .stateIn(viewModelScope, SharingStarted.Eagerly, FontCustomization())
 
     val animationLevel: StateFlow<tv.own.owntv.core.theme.AnimationLevel> = settings.animationLevel
-        .stateIn(viewModelScope, SharingStarted.Eagerly, tv.own.owntv.core.theme.AnimationLevel.FULL)
+        .stateIn(viewModelScope, SharingStarted.Eagerly, tv.own.owntv.core.theme.AnimationLevel.OFF)
 
     val accent: StateFlow<AccentColor> = settings.accent
         .stateIn(viewModelScope, SharingStarted.Eagerly, AccentColor.TEAL)

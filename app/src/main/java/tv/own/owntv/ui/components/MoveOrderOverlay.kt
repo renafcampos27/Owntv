@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import kotlinx.coroutines.delay
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -36,7 +38,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
@@ -103,7 +104,7 @@ fun MoveOrderOverlay(
         ) {
             Text(title, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             Text(
-                stringResource(R.string.common_move_instructions),
+                stringResource(CoreR.string.common_move_instructions),
                 style = MaterialTheme.typography.bodySmall,
                 color = colors.onSurfaceVariant,
             )
@@ -124,7 +125,7 @@ fun MoveOrderOverlay(
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (isActive) {
-                                Text(stringResource(R.string.setup_move_indicator) + " ", style = MaterialTheme.typography.bodyMedium, color = colors.onPrimary)
+                                Text(stringResource(CoreR.string.setup_move_indicator) + " ", style = MaterialTheme.typography.bodyMedium, color = colors.onPrimary)
                             }
                             Text(
                                 name,
@@ -140,8 +141,8 @@ fun MoveOrderOverlay(
             Spacer(Modifier.height(4.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                 // Save gets the focus: TV focus lands here on overlay open, so onKeyEvent fires.
-                OwnTVButton(stringResource(R.string.common_save), onClick = onCommit, modifier = Modifier.weight(1f).focusRequester(focus))
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.weight(1f))
+                OwnTVButton(stringResource(CoreR.string.common_save), onClick = onCommit, modifier = Modifier.weight(1f).focusRequester(focus))
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY, modifier = Modifier.weight(1f))
             }
         }
     }

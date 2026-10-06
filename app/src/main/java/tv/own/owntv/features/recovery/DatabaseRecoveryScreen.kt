@@ -1,5 +1,7 @@
 package tv.own.owntv.features.recovery
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import androidx.tv.material3.Button
 import androidx.tv.material3.Text
 import androidx.compose.ui.res.stringResource
-import tv.own.owntv.R
 
 /**
  * Shown instead of the shell when the database cannot be opened — a migration that failed, or a file
@@ -49,9 +50,9 @@ fun DatabaseRecoveryScreen(
             modifier = Modifier.widthIn(max = 760.dp).padding(48.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            Text(stringResource(R.string.recovery_title), fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
+            Text(stringResource(CoreR.string.recovery_title), fontSize = 30.sp, fontWeight = FontWeight.Bold, color = Color.White)
             Text(
-                stringResource(R.string.recovery_data_safe_full),
+                stringResource(CoreR.string.recovery_data_safe_full),
                 fontSize = 18.sp,
                 color = Color(0xFFCFCFD6),
             )
@@ -59,15 +60,15 @@ fun DatabaseRecoveryScreen(
                 Text(message, fontSize = 14.sp, color = Color(0xFF8A8A94))
             }
             Button(onClick = onRetry, modifier = Modifier.focusRequester(focus).focusable()) {
-                Text(stringResource(R.string.recovery_retry))
+                Text(stringResource(CoreR.string.recovery_retry))
             }
             Text(
-                stringResource(R.string.recovery_backup_hint),
+                stringResource(CoreR.string.recovery_backup_hint),
                 fontSize = 14.sp,
                 color = Color(0xFF8A8A94),
             )
             Button(onClick = { if (confirmingReset) onResetData() else confirmingReset = true }) {
-                Text(stringResource(if (confirmingReset) R.string.recovery_confirm_reset else R.string.recovery_reset))
+                Text(stringResource(if (confirmingReset) CoreR.string.recovery_confirm_reset else CoreR.string.recovery_reset))
             }
         }
     }

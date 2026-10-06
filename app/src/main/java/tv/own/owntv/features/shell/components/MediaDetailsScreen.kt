@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.runtime.Immutable
 
 import androidx.activity.compose.BackHandler
@@ -47,7 +49,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.components.modalScrim
 import tv.own.owntv.ui.components.trapAllFocusExit
@@ -176,19 +177,19 @@ fun MediaDetailsScreen(details: MediaDetailsUi, onExit: () -> Unit, modifier: Mo
             Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 28.dp, vertical = 18.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
                 if (!details.plot.isNullOrBlank()) {
                     Column {
-                        Text(stringResource(R.string.content_media_overview), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                        Text(stringResource(CoreR.string.content_media_overview), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                         Spacer(Modifier.height(6.dp))
                         Text(details.plot, style = MaterialTheme.typography.bodyLarge, color = colors.onSurfaceVariant)
                     }
                 }
                 if (details.cast.isNotEmpty()) {
                     Column {
-                        Text(stringResource(R.string.content_media_cast), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
+                        Text(stringResource(CoreR.string.content_media_cast), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
                         Spacer(Modifier.height(10.dp))
                         CastGrid(details.cast)
                     }
                 }
-                Text(stringResource(R.string.content_media_press_back), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
+                Text(stringResource(CoreR.string.content_media_press_back), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
             }
         }
     }

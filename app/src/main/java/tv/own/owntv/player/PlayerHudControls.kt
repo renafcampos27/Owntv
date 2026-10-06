@@ -1,5 +1,7 @@
 package tv.own.owntv.player
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.focusGroup
@@ -65,7 +67,6 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVIcon
 import androidx.compose.ui.focus.onFocusChanged
@@ -94,14 +95,14 @@ internal fun mmss(sec: Int): String = tv.own.owntv.ui.components.formatTimestamp
 internal fun CircleButton(icon: OwnTVIcon, size: Int, primary: Boolean = false, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val remote = tv.own.owntv.ui.components.rememberRemoteTextInput()
     val description = stringResource(when (icon) {
-        OwnTVIcon.BACK -> R.string.common_back
-        OwnTVIcon.PLAY -> R.string.adaptive_play
-        OwnTVIcon.PAUSE -> R.string.adaptive_pause
-        OwnTVIcon.REWIND -> R.string.adaptive_rewind
-        OwnTVIcon.FORWARD -> R.string.adaptive_forward
-        OwnTVIcon.SKIP_PREVIOUS -> R.string.adaptive_previous
-        OwnTVIcon.SKIP_NEXT -> R.string.adaptive_next
-        else -> R.string.common_nav_more
+        OwnTVIcon.BACK -> CoreR.string.common_back
+        OwnTVIcon.PLAY -> CoreR.string.adaptive_play
+        OwnTVIcon.PAUSE -> CoreR.string.adaptive_pause
+        OwnTVIcon.REWIND -> CoreR.string.adaptive_rewind
+        OwnTVIcon.FORWARD -> CoreR.string.adaptive_forward
+        OwnTVIcon.SKIP_PREVIOUS -> CoreR.string.adaptive_previous
+        OwnTVIcon.SKIP_NEXT -> CoreR.string.adaptive_next
+        else -> CoreR.string.common_nav_more
     })
     // Focus fills the button with the accent and rings it in a white hairline. The glyph takes
     // onAccentOnVideo rather than a fixed dark, so a deep custom accent still gets a readable icon —
@@ -217,7 +218,7 @@ internal fun LiveStateBadge(offsetSec: Int?) {
             modifier = Modifier.size(10.dp),
         )
         Text(
-            if (behind) stringResource(R.string.player_live_offset, mmss(offsetSec)) else stringResource(R.string.player_live),
+            if (behind) stringResource(CoreR.string.player_live_offset, mmss(offsetSec)) else stringResource(CoreR.string.player_live),
             style = MaterialTheme.typography.labelSmall.copy(textDirection = TextDirection.Content),
             color = Color.White,
             fontWeight = FontWeight.Bold,
@@ -245,7 +246,7 @@ internal fun GoLivePill(enabled: Boolean, onClick: () -> Unit) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
             val tint = if (focused) OwnTVTheme.colors.onAccentOnVideo else Color.White
             OwnTVIcon(OwnTVIcon.LIVE_DOT, tint = tint, filled = true, modifier = Modifier.size(16.dp))
-            Text(stringResource(R.string.player_go_live), style = MaterialTheme.typography.labelLarge, color = tint, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            Text(stringResource(CoreR.string.player_go_live), style = MaterialTheme.typography.labelLarge, color = tint, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
     }
 }
@@ -318,9 +319,9 @@ internal fun SpeedButton(label: String, active: Boolean, toolLabel: String, onCl
 
 @Composable
 internal fun formatSpeed(speed: Double): String = if (speed == 1.0) {
-    stringResource(R.string.player_speed_normal_short)
+    stringResource(CoreR.string.player_speed_normal_short)
 } else {
-    stringResource(R.string.player_speed, localizedDecimal(speed))
+    stringResource(CoreR.string.player_speed, localizedDecimal(speed))
 }
 
 /** The MPV/EXO engine toggle: a one-line pill showing the active engine, flipped on click. Accent-coloured
@@ -393,11 +394,11 @@ internal fun CtrlButton(
                         Modifier.align(Alignment.TopEnd).size(15.dp).clip(CircleShape).background(OwnTVTheme.colors.accentOnVideo),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(stringResource(R.string.common_number_grouped, badge), style = MaterialTheme.typography.labelSmall, color = OwnTVTheme.colors.onAccentOnVideo, fontWeight = FontWeight.Bold)
+                        Text(stringResource(CoreR.string.common_number_grouped, badge), style = MaterialTheme.typography.labelSmall, color = OwnTVTheme.colors.onAccentOnVideo, fontWeight = FontWeight.Bold)
                     }
                 }
             }
-            ExpandingLabel(focused, label, badge?.let { stringResource(R.string.common_number_grouped, it) }, tint)
+            ExpandingLabel(focused, label, badge?.let { stringResource(CoreR.string.common_number_grouped, it) }, tint)
         }
     }
 }
@@ -427,7 +428,7 @@ internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepM
     val shownDuration = touchDuration ?: durationMs
     val frac = preview ?: if (shownDuration > 0) (positionMs.toFloat() / shownDuration).coerceIn(0f, 1f) else 0f
     val shownPosition = if (preview != null) (frac.toDouble() * shownDuration).toLong() else positionMs
-    val accessibleLabel = stringResource(R.string.player_time_progress, formatTime(shownPosition), formatTime(shownDuration))
+    val accessibleLabel = stringResource(CoreR.string.player_time_progress, formatTime(shownPosition), formatTime(shownDuration))
     // The buffer ghost: how far ahead the engine has data. Never behind the playhead, so a stale or
     // unreported value simply draws nothing rather than a stripe that contradicts the fill.
     val bufferedFrac = if (shownDuration > 0) (bufferedMs.toFloat() / shownDuration).coerceIn(frac, 1f) else frac
@@ -470,7 +471,7 @@ internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepM
                     Modifier.offset(y = (-32).dp).clip(RoundedCornerShape(8.dp)).background(Color.Black.copy(alpha = 0.9f)).padding(horizontal = 8.dp, vertical = 3.dp),
                 ) {
                     Text(
-                        stringResource(R.string.player_time_remaining, formatTime((shownDuration - shownPosition).coerceAtLeast(0))),
+                        stringResource(CoreR.string.player_time_remaining, formatTime((shownDuration - shownPosition).coerceAtLeast(0))),
                         style = MaterialTheme.typography.labelMedium.copy(textDirection = TextDirection.Content),
                         color = Color.White,
                     )
@@ -501,7 +502,7 @@ internal fun LiveTimelineBar(
     var touchWindow by remember(contextKey) { mutableStateOf<Int?>(null) }
     val shownOffset = previewSec ?: offsetSec
     val displayWindow = touchWindow ?: maxOf(LIVE_WINDOW_SEC, shownOffset).coerceAtMost(windowSec.coerceAtLeast(1))
-    val accessibleLabel = stringResource(R.string.player_tool_catchup)
+    val accessibleLabel = stringResource(CoreR.string.player_tool_catchup)
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val frac = offsetFrac(shownOffset, displayWindow) // 1 = live edge, 0 = far edge
@@ -586,9 +587,9 @@ internal fun LiveTimelineBar(
                     val atClock = clock(liveEdgeMs - shownOffset.coerceAtLeast(0) * 1000L)
                     Text(
                         when {
-                            here != null -> stringResource(R.string.player_live_scrub_at, atClock, here.title)
-                            shownOffset <= 1 -> stringResource(R.string.player_live)
-                            else -> stringResource(R.string.player_live_offset, mmss(shownOffset))
+                            here != null -> stringResource(CoreR.string.player_live_scrub_at, atClock, here.title)
+                            shownOffset <= 1 -> stringResource(CoreR.string.player_live)
+                            else -> stringResource(CoreR.string.player_live_offset, mmss(shownOffset))
                         },
                         style = MaterialTheme.typography.labelMedium.copy(textDirection = TextDirection.Content),
                         color = Color.White,

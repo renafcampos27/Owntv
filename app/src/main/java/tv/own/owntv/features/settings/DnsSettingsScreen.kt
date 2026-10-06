@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -30,7 +32,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.network.DohPresets
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -129,15 +130,15 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             .padding(horizontal = 40.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Header(stringResource(R.string.settings_dns), onBack)
+        Header(stringResource(CoreR.string.settings_dns), onBack)
         Spacer(Modifier.height(8.dp))
 
-        GroupLabel(stringResource(R.string.settings_dns_custom))
+        GroupLabel(stringResource(CoreR.string.settings_dns_custom))
         Row2(
             icon = OwnTVIcon.DNS,
-            title = stringResource(R.string.settings_dns_use_custom),
-            desc = stringResource(R.string.settings_dns_toggle_description),
-            chip = stringResource(if (effectiveEnabled) R.string.common_on else R.string.common_off),
+            title = stringResource(CoreR.string.settings_dns_use_custom),
+            desc = stringResource(CoreR.string.settings_dns_toggle_description),
+            chip = stringResource(if (effectiveEnabled) CoreR.string.common_on else CoreR.string.common_off),
             primaryChip = effectiveEnabled,
             modifier = Modifier
                 .focusRequester(toggleFocus)
@@ -149,7 +150,7 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         if (toggleOn && !serverConfigured) {
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(R.string.settings_dns_server_missing),
+                stringResource(CoreR.string.settings_dns_server_missing),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFFEF4444),
             )
@@ -195,8 +196,8 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 OwnTVTextField(
                     value = server,
                     onValueChange = { server = it },
-                    label = stringResource(R.string.settings_dns_server),
-                    placeholder = stringResource(R.string.settings_dns_server_hint),
+                    label = stringResource(CoreR.string.settings_dns_server),
+                    placeholder = stringResource(CoreR.string.settings_dns_server_hint),
                     focusRequester = serverFieldFocus,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -212,11 +213,11 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     horizontalArrangement = Arrangement.spacedBy(16.dp),
                     modifier = Modifier.focusProperties { up = serverFieldFocus },
                 ) {
-                    OwnTVButton(stringResource(R.string.common_save), onClick = { applySave() }, modifier = Modifier.focusRequester(saveFocus))
+                    OwnTVButton(stringResource(CoreR.string.common_save), onClick = { applySave() }, modifier = Modifier.focusRequester(saveFocus))
                     OwnTVButton(
                         label = stringResource(
-                            if (dnsTestState is SettingsViewModel.DnsTestState.Testing) R.string.settings_testing
-                            else R.string.settings_dns_test,
+                            if (dnsTestState is SettingsViewModel.DnsTestState.Testing) CoreR.string.settings_testing
+                            else CoreR.string.settings_dns_test,
                         ),
                         onClick = {
                             val s = server.trim()
@@ -232,13 +233,13 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         Spacer(Modifier.height(20.dp))
         Text(
-            stringResource(R.string.settings_dns_explanation),
+            stringResource(CoreR.string.settings_dns_explanation),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            stringResource(R.string.settings_dns_limitations),
+            stringResource(CoreR.string.settings_dns_limitations),
             style = MaterialTheme.typography.bodySmall,
             color = colors.onSurfaceVariant,
         )
@@ -250,7 +251,7 @@ private fun DnsTestLabel(state: SettingsViewModel.DnsTestState) {
     val colors = OwnTVTheme.colors
     val (text, color) = when (state) {
         is SettingsViewModel.DnsTestState.Ok -> stringResource(
-            R.string.settings_dns_resolved,
+            CoreR.string.settings_dns_resolved,
             state.millis,
         ) to colors.primary
         is SettingsViewModel.DnsTestState.Fail -> state.failure.displayText() to Color(0xFFEF4444)
@@ -263,12 +264,12 @@ private fun DnsTestLabel(state: SettingsViewModel.DnsTestState) {
 
 @Composable
 private fun SettingsViewModel.DnsTestFailure.displayText(): String = when (this) {
-    SettingsViewModel.DnsTestFailure.ServerRequired -> stringResource(R.string.settings_dns_enter_server)
-    SettingsViewModel.DnsTestFailure.ServerNotReachable -> stringResource(R.string.settings_dns_not_reachable)
-    SettingsViewModel.DnsTestFailure.TimedOut -> stringResource(R.string.settings_dns_timed_out)
-    SettingsViewModel.DnsTestFailure.NetworkUnreachable -> stringResource(R.string.settings_dns_network_unreachable)
-    SettingsViewModel.DnsTestFailure.ConnectionRefused -> stringResource(R.string.settings_dns_connection_refused)
-    is SettingsViewModel.DnsTestFailure.NoAddresses -> stringResource(R.string.settings_dns_no_addresses, host)
+    SettingsViewModel.DnsTestFailure.ServerRequired -> stringResource(CoreR.string.settings_dns_enter_server)
+    SettingsViewModel.DnsTestFailure.ServerNotReachable -> stringResource(CoreR.string.settings_dns_not_reachable)
+    SettingsViewModel.DnsTestFailure.TimedOut -> stringResource(CoreR.string.settings_dns_timed_out)
+    SettingsViewModel.DnsTestFailure.NetworkUnreachable -> stringResource(CoreR.string.settings_dns_network_unreachable)
+    SettingsViewModel.DnsTestFailure.ConnectionRefused -> stringResource(CoreR.string.settings_dns_connection_refused)
+    is SettingsViewModel.DnsTestFailure.NoAddresses -> stringResource(CoreR.string.settings_dns_no_addresses, host)
     is SettingsViewModel.DnsTestFailure.Unknown -> rawMessage
-    SettingsViewModel.DnsTestFailure.Generic -> stringResource(R.string.settings_dns_test_failed)
+    SettingsViewModel.DnsTestFailure.Generic -> stringResource(CoreR.string.settings_dns_test_failed)
 }

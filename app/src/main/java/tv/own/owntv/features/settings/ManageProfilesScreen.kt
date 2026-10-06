@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,7 +37,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.database.entity.ProfileEntity
 import tv.own.owntv.features.profiles.ProfileEditorDialog
 import tv.own.owntv.features.profiles.ProfileGateSessionViewModel
@@ -54,7 +55,7 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val gateSession: ProfileGateSessionViewModel = koinViewModel()
     val profiles by vm.profiles.collectAsStateWithLifecycle()
     val activeProfileId by vm.activeProfileId.collectAsStateWithLifecycle()
-    val defaultProfileName = stringResource(R.string.profiles_default_name)
+    val defaultProfileName = stringResource(CoreR.string.profiles_default_name)
     val colors = OwnTVTheme.colors
 
     var editing by remember { mutableStateOf<ProfileEntity?>(null) }
@@ -124,9 +125,9 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             .padding(horizontal = 40.dp, vertical = 28.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(stringResource(R.string.profiles_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.profiles_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
             Spacer(Modifier.weight(1f))
-            OwnTVButton(stringResource(R.string.profiles_add_button), onClick = { creating = true }, icon = OwnTVIcon.ADD, modifier = Modifier.focusRequester(addFocus))
+            OwnTVButton(stringResource(CoreR.string.profiles_add_button), onClick = { creating = true }, icon = OwnTVIcon.ADD, modifier = Modifier.focusRequester(addFocus))
         }
         Spacer(Modifier.height(20.dp))
 
@@ -166,8 +167,8 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     }
     confirmDelete?.let { p ->
         ConfirmDialog(
-            title = stringResource(R.string.profiles_delete_title, p.name),
-            message = stringResource(R.string.profiles_delete_message),
+            title = stringResource(CoreR.string.profiles_delete_title, p.name),
+            message = stringResource(CoreR.string.profiles_delete_message),
             onConfirm = {
                 // Only an active-profile deletion changes the identity authenticated by this
                 // Activity. Deleting an unrelated profile must not reopen the gate for the profile
@@ -193,18 +194,18 @@ private fun ProfileRow(profile: ProfileEntity, canDelete: Boolean, rowModifier: 
         Column(Modifier.weight(1f)) {
             Text(profile.name, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             val tags = buildList {
-                if (profile.isKids) add(stringResource(R.string.profiles_kids_tag))
-                if (profile.pinHash != null) add(stringResource(R.string.profiles_locked_tag))
+                if (profile.isKids) add(stringResource(CoreR.string.profiles_kids_tag))
+                if (profile.pinHash != null) add(stringResource(CoreR.string.profiles_locked_tag))
             }
             if (tags.isNotEmpty()) {
                 Text(tags.joinToString(" • "), style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
             }
         }
         Spacer(Modifier.width(12.dp))
-        OwnTVButton(stringResource(R.string.common_edit), onClick = onEdit, style = OwnTVButtonStyle.SECONDARY)
+        OwnTVButton(stringResource(CoreR.string.common_edit), onClick = onEdit, style = OwnTVButtonStyle.SECONDARY)
         if (canDelete) {
             Spacer(Modifier.width(10.dp))
-            OwnTVButton(stringResource(R.string.common_delete), onClick = onDelete, style = OwnTVButtonStyle.SECONDARY)
+            OwnTVButton(stringResource(CoreR.string.common_delete), onClick = onDelete, style = OwnTVButtonStyle.SECONDARY)
         }
     }
 }

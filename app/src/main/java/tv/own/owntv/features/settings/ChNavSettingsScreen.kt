@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import android.view.KeyEvent as AndroidKeyEvent
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
@@ -99,10 +101,10 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             .padding(horizontal = 40.dp, vertical = 28.dp),
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
-        Header(title = stringResource(R.string.settings_remote_shortcuts), onBack = onBack)
+        Header(title = stringResource(CoreR.string.settings_remote_shortcuts), onBack = onBack)
         Spacer(Modifier.height(4.dp))
         Text(
-            stringResource(R.string.settings_remote_shortcuts_description),
+            stringResource(CoreR.string.settings_remote_shortcuts_description),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
         )
@@ -110,9 +112,9 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
 
         Row2(
             icon = OwnTVIcon.CH_NAV,
-            title = stringResource(R.string.settings_remote_shortcuts_enabled),
-            desc = stringResource(R.string.settings_remote_shortcuts_enabled_description),
-            chip = stringResource(if (enabled) R.string.common_on else R.string.common_off),
+            title = stringResource(CoreR.string.settings_remote_shortcuts_enabled),
+            desc = stringResource(CoreR.string.settings_remote_shortcuts_enabled_description),
+            chip = stringResource(if (enabled) CoreR.string.common_on else CoreR.string.common_off),
             primaryChip = enabled,
             chevron = true,
             onClick = { dialogReturn = firstFocus; dialog = ChNavDialog.ENABLED },
@@ -120,12 +122,12 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
 
         Spacer(Modifier.height(10.dp))
-        GroupLabel(stringResource(R.string.settings_remote_shortcuts_assignments))
+        GroupLabel(stringResource(CoreR.string.settings_remote_shortcuts_assignments))
         bindings.filter { it.action != RemoteShortcutAction.OPEN_MOVIES && it.action != RemoteShortcutAction.OPEN_SERIES }.sortedWith(compareBy<RemoteShortcutBinding> { it.keyCode }.thenBy { it.press.ordinal }).forEach { binding ->
             val buttonLabel = remoteButtonLabel(binding.keyCode)
             val pressLabel = stringResource(
-                if (binding.press == RemoteShortcutPress.SHORT) R.string.settings_remote_shortcuts_short_press
-                else R.string.settings_remote_shortcuts_long_press,
+                if (binding.press == RemoteShortcutPress.SHORT) CoreR.string.settings_remote_shortcuts_short_press
+                else CoreR.string.settings_remote_shortcuts_long_press,
             )
             val keycapColor = remoteButtonKeycapColor(binding.keyCode)
             Row2(
@@ -136,7 +138,7 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 keycapLabel = if (keycapColor != null) buttonLabel.take(1).uppercase() else null,
                 title = buttonLabel,
                 desc = stringResource(
-                    R.string.settings_remote_shortcuts_binding,
+                    CoreR.string.settings_remote_shortcuts_binding,
                     pressLabel,
                     remoteActionLabel(binding.action),
                 ),
@@ -150,25 +152,25 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         }
         Row2(
             icon = OwnTVIcon.ADD,
-            title = stringResource(R.string.settings_remote_shortcuts_add),
-            desc = stringResource(R.string.settings_remote_shortcuts_add_description),
+            title = stringResource(CoreR.string.settings_remote_shortcuts_add),
+            desc = stringResource(CoreR.string.settings_remote_shortcuts_add_description),
             chevron = true,
             onClick = { editingExisting = false; dialog = ChNavDialog.CAPTURE },
         )
         Row2(
             icon = OwnTVIcon.REFRESH,
-            title = stringResource(R.string.settings_remote_shortcuts_reset),
-            desc = stringResource(R.string.settings_remote_shortcuts_reset_description),
+            title = stringResource(CoreR.string.settings_remote_shortcuts_reset),
+            desc = stringResource(CoreR.string.settings_remote_shortcuts_reset_description),
             chevron = true,
             onClick = { dialog = ChNavDialog.RESET },
         )
 
         Spacer(Modifier.height(10.dp))
-        GroupLabel(stringResource(R.string.settings_skip_counts))
+        GroupLabel(stringResource(CoreR.string.settings_skip_counts))
         Row2(
             OwnTVIcon.PAGE_TOWARD_FIRST,
-            stringResource(R.string.settings_ch_nav_up),
-            stringResource(R.string.settings_ch_nav_up_description),
+            stringResource(CoreR.string.settings_ch_nav_up),
+            stringResource(CoreR.string.settings_ch_nav_up_description),
             localizedInteger(upSkip, grouping = false),
             chevron = true,
             onClick = { dialogReturn = upSkipFocus; dialog = ChNavDialog.UP_SKIP },
@@ -176,8 +178,8 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
         Row2(
             OwnTVIcon.PAGE_TOWARD_LAST,
-            stringResource(R.string.settings_ch_nav_down),
-            stringResource(R.string.settings_ch_nav_down_description),
+            stringResource(CoreR.string.settings_ch_nav_down),
+            stringResource(CoreR.string.settings_ch_nav_down_description),
             localizedInteger(downSkip, grouping = false),
             chevron = true,
             onClick = { dialogReturn = downSkipFocus; dialog = ChNavDialog.DOWN_SKIP },
@@ -185,26 +187,26 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
 
         Spacer(Modifier.height(12.dp))
-        GroupLabel(stringResource(R.string.settings_how_it_works))
+        GroupLabel(stringResource(CoreR.string.settings_how_it_works))
         Text(
-            stringResource(R.string.settings_remote_shortcuts_help),
+            stringResource(CoreR.string.settings_remote_shortcuts_help),
             style = MaterialTheme.typography.bodyMedium,
             color = colors.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
         )
     }
 
-    val warnText = stringResource(R.string.settings_large_skips_warning)
+    val warnText = stringResource(CoreR.string.settings_large_skips_warning)
     when (dialog) {
         ChNavDialog.ENABLED -> PickerDialog(
-            title = stringResource(R.string.settings_remote_shortcuts_enabled),
-            options = listOf("true" to stringResource(R.string.common_on), "false" to stringResource(R.string.common_off)),
+            title = stringResource(CoreR.string.settings_remote_shortcuts_enabled),
+            options = listOf("true" to stringResource(CoreR.string.common_on), "false" to stringResource(CoreR.string.common_off)),
             selected = enabled.toString(),
             onSelect = { value -> vm.setChNavEnabled(value.toBoolean()); dialog = ChNavDialog.NONE },
             onDismiss = { dialog = ChNavDialog.NONE },
         )
         ChNavDialog.UP_SKIP -> NumberInputDialog(
-            title = stringResource(R.string.settings_ch_nav_up),
+            title = stringResource(CoreR.string.settings_ch_nav_up),
             value = upSkip,
             min = 1,
             max = ChNavLimits.HARD_MAX,
@@ -216,7 +218,7 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             onDismiss = { dialog = ChNavDialog.NONE },
         )
         ChNavDialog.DOWN_SKIP -> NumberInputDialog(
-            title = stringResource(R.string.settings_ch_nav_down),
+            title = stringResource(CoreR.string.settings_ch_nav_down),
             value = downSkip,
             min = 1,
             max = ChNavLimits.HARD_MAX,
@@ -237,8 +239,8 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         ChNavDialog.ACTION -> pendingBinding?.let { binding ->
             val actionOptions = RemoteShortcutAction.entries.filter { it != RemoteShortcutAction.OPEN_MOVIES && it != RemoteShortcutAction.OPEN_SERIES }.map { it.name to remoteActionLabel(it) }
             PickerDialog(
-                title = stringResource(R.string.settings_remote_shortcuts_choose_action),
-                options = if (editingExisting) listOf(String() to stringResource(R.string.common_delete)) + actionOptions else actionOptions,
+                title = stringResource(CoreR.string.settings_remote_shortcuts_choose_action),
+                options = if (editingExisting) listOf(String() to stringResource(CoreR.string.common_delete)) + actionOptions else actionOptions,
                 selected = binding.action.name,
                 searchable = true,
                 leadingIcons = buildMap {
@@ -255,10 +257,10 @@ fun ChNavSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             )
         }
         ChNavDialog.RESET -> PickerDialog(
-            title = stringResource(R.string.settings_remote_shortcuts_reset),
+            title = stringResource(CoreR.string.settings_remote_shortcuts_reset),
             options = listOf(
-                "true" to stringResource(R.string.common_reset),
-                "false" to stringResource(R.string.common_cancel),
+                "true" to stringResource(CoreR.string.common_reset),
+                "false" to stringResource(CoreR.string.common_cancel),
             ),
             selected = "false",
             onSelect = { value ->
@@ -328,14 +330,14 @@ private fun RemoteButtonCapturePopup(
                     Modifier.dialogPanel(width = 520.dp, padding = 20.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp),
                 ) {
-                    Text(stringResource(R.string.settings_remote_shortcuts_capture_title), style = MaterialTheme.typography.titleLarge)
+                    Text(stringResource(CoreR.string.settings_remote_shortcuts_capture_title), style = MaterialTheme.typography.titleLarge)
                     Text(
-                        stringResource(R.string.settings_remote_shortcuts_capture_description),
+                        stringResource(CoreR.string.settings_remote_shortcuts_capture_description),
                         style = MaterialTheme.typography.bodyMedium,
                         color = OwnTVTheme.colors.onSurfaceVariant,
                     )
                     OwnTVButton(
-                        stringResource(R.string.common_cancel),
+                        stringResource(CoreR.string.common_cancel),
                         onClick = onDismiss,
                         style = OwnTVButtonStyle.SECONDARY,
                         modifier = Modifier
@@ -356,25 +358,25 @@ private fun remoteButtonLabel(keyCode: Int): String = when {
     keyCode in AndroidKeyEvent.KEYCODE_NUMPAD_0..AndroidKeyEvent.KEYCODE_NUMPAD_9 ->
         localizedInteger(keyCode - AndroidKeyEvent.KEYCODE_NUMPAD_0, grouping = false)
     else -> when (keyCode) {
-    AndroidKeyEvent.KEYCODE_CHANNEL_UP -> stringResource(R.string.settings_remote_button_channel_up)
-    AndroidKeyEvent.KEYCODE_CHANNEL_DOWN -> stringResource(R.string.settings_remote_button_channel_down)
-    AndroidKeyEvent.KEYCODE_MEDIA_REWIND -> stringResource(R.string.settings_remote_button_rewind)
-    AndroidKeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> stringResource(R.string.settings_remote_button_fast_forward)
-    AndroidKeyEvent.KEYCODE_MEDIA_PREVIOUS -> stringResource(R.string.settings_remote_button_previous)
-    AndroidKeyEvent.KEYCODE_MEDIA_NEXT -> stringResource(R.string.settings_remote_button_next)
+    AndroidKeyEvent.KEYCODE_CHANNEL_UP -> stringResource(CoreR.string.settings_remote_button_channel_up)
+    AndroidKeyEvent.KEYCODE_CHANNEL_DOWN -> stringResource(CoreR.string.settings_remote_button_channel_down)
+    AndroidKeyEvent.KEYCODE_MEDIA_REWIND -> stringResource(CoreR.string.settings_remote_button_rewind)
+    AndroidKeyEvent.KEYCODE_MEDIA_FAST_FORWARD -> stringResource(CoreR.string.settings_remote_button_fast_forward)
+    AndroidKeyEvent.KEYCODE_MEDIA_PREVIOUS -> stringResource(CoreR.string.settings_remote_button_previous)
+    AndroidKeyEvent.KEYCODE_MEDIA_NEXT -> stringResource(CoreR.string.settings_remote_button_next)
     AndroidKeyEvent.KEYCODE_MEDIA_PLAY_PAUSE,
     AndroidKeyEvent.KEYCODE_MEDIA_PLAY,
     AndroidKeyEvent.KEYCODE_MEDIA_PAUSE,
-    -> stringResource(R.string.settings_remote_action_play_pause)
-    AndroidKeyEvent.KEYCODE_GUIDE -> stringResource(R.string.common_nav_guide)
-    AndroidKeyEvent.KEYCODE_INFO -> stringResource(R.string.player_tool_info)
-    AndroidKeyEvent.KEYCODE_MENU -> stringResource(R.string.settings_remote_button_menu)
-    AndroidKeyEvent.KEYCODE_CAPTIONS -> stringResource(R.string.player_tool_subtitles)
-    AndroidKeyEvent.KEYCODE_PROG_RED -> stringResource(R.string.settings_remote_button_red)
-    AndroidKeyEvent.KEYCODE_PROG_GREEN -> stringResource(R.string.settings_remote_button_green)
-    AndroidKeyEvent.KEYCODE_PROG_YELLOW -> stringResource(R.string.settings_remote_button_yellow)
-    AndroidKeyEvent.KEYCODE_PROG_BLUE -> stringResource(R.string.settings_remote_button_blue)
-        else -> stringResource(R.string.settings_remote_shortcuts_unknown_button, keyCode)
+    -> stringResource(CoreR.string.settings_remote_action_play_pause)
+    AndroidKeyEvent.KEYCODE_GUIDE -> stringResource(CoreR.string.common_nav_guide)
+    AndroidKeyEvent.KEYCODE_INFO -> stringResource(CoreR.string.player_tool_info)
+    AndroidKeyEvent.KEYCODE_MENU -> stringResource(CoreR.string.settings_remote_button_menu)
+    AndroidKeyEvent.KEYCODE_CAPTIONS -> stringResource(CoreR.string.player_tool_subtitles)
+    AndroidKeyEvent.KEYCODE_PROG_RED -> stringResource(CoreR.string.settings_remote_button_red)
+    AndroidKeyEvent.KEYCODE_PROG_GREEN -> stringResource(CoreR.string.settings_remote_button_green)
+    AndroidKeyEvent.KEYCODE_PROG_YELLOW -> stringResource(CoreR.string.settings_remote_button_yellow)
+    AndroidKeyEvent.KEYCODE_PROG_BLUE -> stringResource(CoreR.string.settings_remote_button_blue)
+        else -> stringResource(CoreR.string.settings_remote_shortcuts_unknown_button, keyCode)
     }
 }
 
@@ -416,31 +418,31 @@ private fun remoteButtonKeycapColor(keyCode: Int): Color? = when (keyCode) {
 @Composable
 private fun remoteActionLabel(action: RemoteShortcutAction): String = stringResource(
     when (action) {
-        RemoteShortcutAction.OPEN_HOME -> R.string.common_nav_home
-        RemoteShortcutAction.OPEN_LIVE_TV -> R.string.common_nav_live_tv
-        RemoteShortcutAction.OPEN_MOVIES -> R.string.common_nav_movies
-        RemoteShortcutAction.OPEN_SERIES -> R.string.common_nav_series
+        RemoteShortcutAction.OPEN_HOME -> CoreR.string.common_nav_home
+        RemoteShortcutAction.OPEN_LIVE_TV -> CoreR.string.common_nav_live_tv
+        RemoteShortcutAction.OPEN_MOVIES -> CoreR.string.common_nav_movies
+        RemoteShortcutAction.OPEN_SERIES -> CoreR.string.common_nav_series
         RemoteShortcutAction.OPEN_DOWNLOADS -> R.string.common_nav_downloads
-        RemoteShortcutAction.OPEN_GUIDE -> R.string.common_nav_guide
-        RemoteShortcutAction.OPEN_SEARCH -> R.string.common_nav_search
-        RemoteShortcutAction.OPEN_SETTINGS -> R.string.common_nav_settings
-        RemoteShortcutAction.OPEN_PROFILE_SWITCHER -> R.string.profiles_title
-        RemoteShortcutAction.OPEN_PLAYLIST_SWITCHER -> R.string.settings_playlists
-        RemoteShortcutAction.CONTINUE_LAST_WATCHED -> R.string.settings_remote_action_continue
-        RemoteShortcutAction.FOCUS_NOW_PLAYING -> R.string.settings_remote_action_focus_now_playing
-        RemoteShortcutAction.EXPAND_NOW_PLAYING -> R.string.settings_remote_action_expand_now_playing
-        RemoteShortcutAction.ENTER_MINI_PLAYER -> R.string.settings_remote_action_mini_player
-        RemoteShortcutAction.ENTER_AUDIO_MODE -> R.string.player_tool_audio_only
-        RemoteShortcutAction.PLAY_PAUSE -> R.string.settings_remote_action_play_pause
-        RemoteShortcutAction.PAGE_TOWARD_FIRST -> R.string.settings_remote_action_page_first
-        RemoteShortcutAction.PAGE_TOWARD_LAST -> R.string.settings_remote_action_page_last
-        RemoteShortcutAction.JUMP_TO_FIRST -> R.string.settings_remote_action_jump_first
-        RemoteShortcutAction.JUMP_TO_LAST -> R.string.settings_remote_action_jump_last
-        RemoteShortcutAction.RETURN_TO_LIVE -> R.string.player_go_live
-        RemoteShortcutAction.OPEN_SUBTITLE_CONTROLS -> R.string.player_tool_subtitles
-        RemoteShortcutAction.OPEN_AUDIO_CONTROLS -> R.string.player_tool_audio
-        RemoteShortcutAction.OPEN_ASPECT_CONTROLS -> R.string.player_tool_aspect
-        RemoteShortcutAction.TOGGLE_PLAYBACK_INFO -> R.string.player_tool_info
+        RemoteShortcutAction.OPEN_GUIDE -> CoreR.string.common_nav_guide
+        RemoteShortcutAction.OPEN_SEARCH -> CoreR.string.common_nav_search
+        RemoteShortcutAction.OPEN_SETTINGS -> CoreR.string.common_nav_settings
+        RemoteShortcutAction.OPEN_PROFILE_SWITCHER -> CoreR.string.profiles_title
+        RemoteShortcutAction.OPEN_PLAYLIST_SWITCHER -> CoreR.string.settings_playlists
+        RemoteShortcutAction.CONTINUE_LAST_WATCHED -> CoreR.string.settings_remote_action_continue
+        RemoteShortcutAction.FOCUS_NOW_PLAYING -> CoreR.string.settings_remote_action_focus_now_playing
+        RemoteShortcutAction.EXPAND_NOW_PLAYING -> CoreR.string.settings_remote_action_expand_now_playing
+        RemoteShortcutAction.ENTER_MINI_PLAYER -> CoreR.string.settings_remote_action_mini_player
+        RemoteShortcutAction.ENTER_AUDIO_MODE -> CoreR.string.player_tool_audio_only
+        RemoteShortcutAction.PLAY_PAUSE -> CoreR.string.settings_remote_action_play_pause
+        RemoteShortcutAction.PAGE_TOWARD_FIRST -> CoreR.string.settings_remote_action_page_first
+        RemoteShortcutAction.PAGE_TOWARD_LAST -> CoreR.string.settings_remote_action_page_last
+        RemoteShortcutAction.JUMP_TO_FIRST -> CoreR.string.settings_remote_action_jump_first
+        RemoteShortcutAction.JUMP_TO_LAST -> CoreR.string.settings_remote_action_jump_last
+        RemoteShortcutAction.RETURN_TO_LIVE -> CoreR.string.player_go_live
+        RemoteShortcutAction.OPEN_SUBTITLE_CONTROLS -> CoreR.string.player_tool_subtitles
+        RemoteShortcutAction.OPEN_AUDIO_CONTROLS -> CoreR.string.player_tool_audio
+        RemoteShortcutAction.OPEN_ASPECT_CONTROLS -> CoreR.string.player_tool_aspect
+        RemoteShortcutAction.TOGGLE_PLAYBACK_INFO -> CoreR.string.player_tool_info
     },
 )
 

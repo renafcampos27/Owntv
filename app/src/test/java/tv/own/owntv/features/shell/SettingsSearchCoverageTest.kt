@@ -79,7 +79,7 @@ class SettingsSearchCoverageTest {
 
         val screen = File("src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt").readText()
         val titleOf = excluded.associateWith { key ->
-            Regex("""VideoQuickRef\("$key",\s*[A-Z_]+,\s*OwnTVIcon\.[A-Z_]+,\s*(R\.string\.[a-z_0-9]+)""")
+            Regex("""VideoQuickRef\("$key",\s*[A-Z_]+,\s*OwnTVIcon\.[A-Z_]+,\s*((?:CoreR|R)\.string\.[a-z_0-9]+)""")
                 .find(screen)?.groupValues?.get(1)
         }
         assertEquals(
@@ -90,8 +90,8 @@ class SettingsSearchCoverageTest {
         // A bespoke entry may label the row with the short "quick" variant of the same string —
         // `settings_quick_channel_numbers` where the catalogue says `settings_channel_numbers`. Same
         // setting, two ids, so compare the setting rather than the id.
-        fun normalize(res: String) = res.removePrefix("R.string.").removePrefix("settings_").removePrefix("quick_")
-        val present = Regex("""R\.string\.[a-z_0-9]+""").findAll(searchBlock).map { normalize(it.value) }.toSet()
+        fun normalize(res: String) = res.substringAfter(".string.").removePrefix("settings_").removePrefix("quick_")
+        val present = Regex("""(?:CoreR|R)\.string\.[a-z_0-9]+""").findAll(searchBlock).map { normalize(it.value) }.toSet()
         val uncovered = titleOf.filterValues { it != null && normalize(it) !in present }
         assertEquals(
             "rows skipped by the derivation with no bespoke entry left — they are unfindable",

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catchup_clock_minus_step">−30 min</string>
+    <string name="catchup_clock_plus_step">+30 min</string>
+    <string name="catchup_clock_back">Back</string>
+    <string name="epg_grid_corrected_clock">Position in guide: %1$s–%2$s (corrected time)</string>
+    <string name="catchup_clock_by_playlist">Archive time zone by playlist</string>
+    <string name="catchup_clock_follow_global">Follow general setting</string>
+    <string name="catchup_clock_source_offset">UTC offset: %1$s</string>
+    <string name="catchup_clock_source_note">This changes the time zone used to request archives. It does not shift programme labels or add another programme correction.</string>
+</resources>

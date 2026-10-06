@@ -1,5 +1,7 @@
 package tv.own.owntv.features.customize
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -28,7 +30,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVButton
 import tv.own.owntv.ui.components.OwnTVButtonStyle
@@ -73,10 +74,10 @@ fun MoveToCategoryDialog(
             Column(
                 Modifier.dialogPanel(width = 560.dp, padding = 28.dp),
             ) {
-                Text(stringResource(R.string.settings_move_category_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+                Text(stringResource(CoreR.string.settings_move_category_title), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
                 Spacer(Modifier.height(6.dp))
                 Text(
-                    stringResource(R.string.settings_move_category_description, originName),
+                    stringResource(CoreR.string.settings_move_category_description, originName),
                     style = MaterialTheme.typography.bodyMedium,
                     color = colors.onSurfaceVariant,
                 )
@@ -96,7 +97,7 @@ fun MoveToCategoryDialog(
                             contentAlignment = Alignment.CenterStart,
                         ) {
                             Text(
-                                stringResource(R.string.settings_move_category_new),
+                                stringResource(CoreR.string.settings_move_category_new),
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = colors.onSurface,
                                 modifier = Modifier.padding(horizontal = 18.dp, vertical = 12.dp),
@@ -128,7 +129,7 @@ fun MoveToCategoryDialog(
                                     modifier = Modifier.weight(1f),
                                 )
                                 Text(
-                                    stringResource(R.string.common_number_grouped, target.count),
+                                    stringResource(CoreR.string.common_number_grouped, target.count),
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = colors.onSurfaceVariant,
                                 )
@@ -147,7 +148,7 @@ fun MoveToCategoryDialog(
                 ) {
                     Text(
                         (if (keepInOrigin) "☑ " else "☐ ") +
-                            stringResource(R.string.settings_move_category_keep, originName),
+                            stringResource(CoreR.string.settings_move_category_keep, originName),
                         style = MaterialTheme.typography.bodyMedium,
                         color = colors.onSurface,
                         modifier = Modifier.padding(horizontal = 18.dp, vertical = 10.dp),
@@ -155,10 +156,10 @@ fun MoveToCategoryDialog(
                 }
                 Spacer(Modifier.height(20.dp))
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                    OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
                     OwnTVButton(
-                        stringResource(R.string.settings_move_category_action),
+                        stringResource(CoreR.string.settings_move_category_action),
                         onClick = { selectedTarget?.let { onMove(it, keepInOrigin) } },
                         enabled = selectedTarget != null,
                         style = OwnTVButtonStyle.SECONDARY,

@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -24,7 +26,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
@@ -48,18 +49,18 @@ fun ResumeDialog(
         contentAlignment = Alignment.Center,
     ) {
         Column(Modifier.dialogPanel(padding = 28.dp, fill = colors.surfaceContainerHigh.copy(alpha = 0.88f))) {
-            Text(stringResource(R.string.common_resume_prompt), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.common_resume_prompt), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(R.string.common_resume_position, formatTimestamp(positionMs)),
+                stringResource(CoreR.string.common_resume_position, formatTimestamp(positionMs)),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
             Spacer(Modifier.height(22.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_start_over), onClick = onStartOver, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_start_over), onClick = onStartOver, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
-                OwnTVButton(stringResource(R.string.common_resume), onClick = onResume, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(focus))
+                OwnTVButton(stringResource(CoreR.string.common_resume), onClick = onResume, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(focus))
             }
         }
     }
@@ -79,9 +80,9 @@ fun formatTimestamp(ms: Long): String {
     val m = (totalSec % 3600) / 60
     val s = totalSec % 60
     return if (h > 0) {
-        stringResource(R.string.common_timestamp_hours, h, m, s)
+        stringResource(CoreR.string.common_timestamp_hours, h, m, s)
     } else {
-        stringResource(R.string.common_timestamp_minutes, m, s)
+        stringResource(CoreR.string.common_timestamp_minutes, m, s)
     }
 }
 
@@ -92,8 +93,8 @@ fun formatTimestamp(res: android.content.res.Resources, ms: Long): String {
     val m = (totalSec % 3600) / 60
     val s = totalSec % 60
     return if (h > 0) {
-        res.getString(R.string.common_timestamp_hours, h, m, s)
+        res.getString(CoreR.string.common_timestamp_hours, h, m, s)
     } else {
-        res.getString(R.string.common_timestamp_minutes, m, s)
+        res.getString(CoreR.string.common_timestamp_minutes, m, s)
     }
 }

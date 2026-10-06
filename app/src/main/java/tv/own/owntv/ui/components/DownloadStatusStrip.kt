@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -22,7 +24,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.download.DownloadStripKind
 import tv.own.owntv.core.download.DownloadStripState
 import tv.own.owntv.ui.theme.OwnTVTheme
@@ -33,10 +34,10 @@ fun DownloadStatusStrip(state: DownloadStripState, modifier: Modifier = Modifier
     val colors = OwnTVTheme.colors
     val accent = if (state.isError) Color(0xFFEF4444) else colors.primary
     val label = when (state.kind) {
-        DownloadStripKind.DOWNLOADING -> pluralStringResource(R.plurals.content_downloading_items, state.count, state.count)
-        DownloadStripKind.QUEUED -> pluralStringResource(R.plurals.content_queued_items, state.count, state.count)
-        DownloadStripKind.PAUSED -> pluralStringResource(R.plurals.content_paused_items, state.count, state.count)
-        DownloadStripKind.FAILED -> pluralStringResource(R.plurals.content_downloads_failed, state.count, state.count)
+        DownloadStripKind.DOWNLOADING -> pluralStringResource(CoreR.plurals.content_downloading_items, state.count, state.count)
+        DownloadStripKind.QUEUED -> pluralStringResource(CoreR.plurals.content_queued_items, state.count, state.count)
+        DownloadStripKind.PAUSED -> pluralStringResource(CoreR.plurals.content_paused_items, state.count, state.count)
+        DownloadStripKind.FAILED -> pluralStringResource(CoreR.plurals.content_downloads_failed, state.count, state.count)
     }
     Column(
         modifier = modifier
@@ -51,7 +52,7 @@ fun DownloadStatusStrip(state: DownloadStripState, modifier: Modifier = Modifier
             Text(label, style = MaterialTheme.typography.labelLarge, color = accent, fontWeight = FontWeight.SemiBold)
             Spacer(Modifier.weight(1f))
             state.progress?.let {
-                Text(stringResource(R.string.content_progress_percent, (it * 100).toInt()), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
+                Text(stringResource(CoreR.string.content_progress_percent, (it * 100).toInt()), style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
             }
         }
         if (!state.isError) {

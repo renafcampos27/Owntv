@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -27,7 +29,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 
 /** Lightweight indeterminate spinner drawn with Canvas (no Material dependency). */
@@ -91,8 +92,8 @@ fun ErrorState(
     onRetry: (() -> Unit)? = null,
 ) {
     val colors = OwnTVTheme.colors
-    val resolvedTitle = title ?: stringResource(R.string.common_something_went_wrong)
-    val resolvedRetryLabel = retryLabel ?: stringResource(R.string.common_retry)
+    val resolvedTitle = title ?: stringResource(CoreR.string.common_something_went_wrong)
+    val resolvedRetryLabel = retryLabel ?: stringResource(CoreR.string.common_retry)
     Column(
         modifier = modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,

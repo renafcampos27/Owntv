@@ -1,5 +1,7 @@
 package tv.own.owntv.features.settings
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -12,7 +14,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.theme.Dimens
@@ -89,31 +90,31 @@ internal fun AllowanceCard(
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text(
-                    androidx.compose.ui.res.stringResource(R.string.settings_metadata_allowance).uppercase(),
+                    androidx.compose.ui.res.stringResource(CoreR.string.settings_metadata_allowance).uppercase(),
                     style = MaterialTheme.typography.labelSmall,
                     color = colors.onSurfaceVariant,
                 )
                 Text(
-                    androidx.compose.ui.res.stringResource(R.string.settings_allowance_available),
+                    androidx.compose.ui.res.stringResource(CoreR.string.settings_allowance_available),
                     style = MaterialTheme.typography.titleMedium,
                     color = colors.onSurface,
                 )
             }
-            ServiceChip(androidx.compose.ui.res.stringResource(R.string.settings_allowance_refills, refillTime), true)
+            ServiceChip(androidx.compose.ui.res.stringResource(CoreR.string.settings_allowance_refills, refillTime), true)
         }
         Spacer(Modifier.height(12.dp))
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(14.dp)) {
             AllowanceBar(
-                androidx.compose.ui.res.stringResource(R.string.settings_allowance_minute), minuteRemaining, minuteLimit,
-                androidx.compose.ui.res.stringResource(R.string.settings_metadata_reset_automatic), Modifier.weight(1f),
+                androidx.compose.ui.res.stringResource(CoreR.string.settings_allowance_minute), minuteRemaining, minuteLimit,
+                androidx.compose.ui.res.stringResource(CoreR.string.settings_metadata_reset_automatic), Modifier.weight(1f),
             )
             AllowanceBar(
-                androidx.compose.ui.res.stringResource(R.string.settings_allowance_hour), hourRemaining, hourLimit,
-                androidx.compose.ui.res.stringResource(R.string.settings_metadata_reset_automatic), Modifier.weight(1f),
+                androidx.compose.ui.res.stringResource(CoreR.string.settings_allowance_hour), hourRemaining, hourLimit,
+                androidx.compose.ui.res.stringResource(CoreR.string.settings_metadata_reset_automatic), Modifier.weight(1f),
             )
             AllowanceBar(
-                androidx.compose.ui.res.stringResource(R.string.settings_allowance_day), dayRemaining, dayLimit,
-                androidx.compose.ui.res.stringResource(R.string.settings_allowance_refills, refillTime), Modifier.weight(1f),
+                androidx.compose.ui.res.stringResource(CoreR.string.settings_allowance_day), dayRemaining, dayLimit,
+                androidx.compose.ui.res.stringResource(CoreR.string.settings_allowance_refills, refillTime), Modifier.weight(1f),
             )
         }
     }
@@ -234,7 +235,7 @@ private fun AllowanceBar(label: String, remaining: Int, limit: Int, footer: Stri
         Row(Modifier.fillMaxWidth()) {
             Text(label, style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, modifier = Modifier.weight(1f))
             Text(
-                androidx.compose.ui.res.pluralStringResource(R.plurals.settings_allowance_value, remaining, remaining, limit),
+                androidx.compose.ui.res.pluralStringResource(CoreR.plurals.settings_allowance_value, remaining, remaining, limit),
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurface,
             )

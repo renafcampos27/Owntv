@@ -1,10 +1,11 @@
 package tv.own.owntv.features.more
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import tv.own.owntv.R
 import tv.own.owntv.features.settings.SettingsViewModel
 import tv.own.owntv.features.settings.VIDEO_QUICK_ROWS
 import tv.own.owntv.features.settings.videoQuickBinding
@@ -42,28 +43,28 @@ fun quickPreviewRows(settingsVm: SettingsViewModel): List<QuickPreviewRow> {
     val autoPlayNext by settingsVm.autoPlayNext.collectAsStateWithLifecycle()
     val updateCheck by settingsVm.updateCheckOnStart.collectAsStateWithLifecycle()
 
-    val on = stringResource(R.string.common_on)
-    val off = stringResource(R.string.common_off)
+    val on = stringResource(CoreR.string.common_on)
+    val off = stringResource(CoreR.string.common_off)
     fun onOff(value: Boolean) = if (value) on else off
 
     val roots: Map<String, QuickPreviewRow> = mapOf(
         "quick_live_preview" to QuickPreviewRow(
-            OwnTVIcon.LIVE_TV, stringResource(R.string.settings_quick_live_preview), onOff(livePreview),
+            OwnTVIcon.LIVE_TV, stringResource(CoreR.string.settings_quick_live_preview), onOff(livePreview),
         ),
         "quick_preview_sound" to QuickPreviewRow(
-            OwnTVIcon.AUDIO, stringResource(R.string.settings_quick_preview_sound), onOff(previewAudio),
+            OwnTVIcon.AUDIO, stringResource(CoreR.string.settings_quick_preview_sound), onOff(previewAudio),
         ),
         "quick_channel_numbers" to QuickPreviewRow(
-            OwnTVIcon.LIVE_TV, stringResource(R.string.settings_quick_channel_numbers), onOff(channelNumbers),
+            OwnTVIcon.LIVE_TV, stringResource(CoreR.string.settings_quick_channel_numbers), onOff(channelNumbers),
         ),
         "quick_hdr" to QuickPreviewRow(
-            OwnTVIcon.VIDEO, stringResource(R.string.settings_quick_hdr), onOff(hdr),
+            OwnTVIcon.VIDEO, stringResource(CoreR.string.settings_quick_hdr), onOff(hdr),
         ),
         "quick_autoplay" to QuickPreviewRow(
-            OwnTVIcon.AUTOPLAY_NEXT, stringResource(R.string.settings_quick_autoplay), onOff(autoPlayNext),
+            OwnTVIcon.AUTOPLAY_NEXT, stringResource(CoreR.string.settings_quick_autoplay), onOff(autoPlayNext),
         ),
         "quick_check_update" to QuickPreviewRow(
-            OwnTVIcon.DOWNLOADS, stringResource(R.string.settings_quick_check_update), onOff(updateCheck),
+            OwnTVIcon.DOWNLOADS, stringResource(CoreR.string.settings_quick_check_update), onOff(updateCheck),
         ),
     )
 

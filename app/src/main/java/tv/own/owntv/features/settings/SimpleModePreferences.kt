@@ -14,7 +14,7 @@ import org.json.JSONObject
 // App-owned preferences, included in SETTINGS backups through TvBackupAppSettings.
 private val Context.simpleModeStore by preferencesDataStore(name = "owntv_simple_mode")
 
-data class SimpleModeOptions(val hideCategories: Boolean = false, val hideSidebar: Boolean = false, val channelRecovery: Boolean = true, val startOnBoot: Boolean = false, val startOnWake: Boolean = false, val recoveryTimeoutSeconds: Int = RecoveryTimeout.DEFAULT_SECONDS)
+data class SimpleModeOptions(val hideCategories: Boolean = true, val hideSidebar: Boolean = true, val channelRecovery: Boolean = true, val startOnBoot: Boolean = false, val startOnWake: Boolean = false, val recoveryTimeoutSeconds: Int = RecoveryTimeout.DEFAULT_SECONDS)
 
 object SimpleModePreferences {
 
@@ -35,8 +35,8 @@ object SimpleModePreferences {
     suspend fun setStartOnWake(context: Context, enabled: Boolean) { context.applicationContext.simpleModeStore.edit { it[wake] = enabled } }
 
     private fun options(prefs: Preferences) = SimpleModeOptions(
-        hideCategories = prefs[categories] ?: false,
-        hideSidebar = prefs[sidebar] ?: false,
+        hideCategories = prefs[categories] ?: true,
+        hideSidebar = prefs[sidebar] ?: true,
         channelRecovery = prefs[recovery] ?: true,
         startOnBoot = prefs[boot] ?: false,
         startOnWake = prefs[wake] ?: false,

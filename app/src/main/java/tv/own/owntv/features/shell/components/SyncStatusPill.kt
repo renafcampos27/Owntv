@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -29,7 +31,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
-import tv.own.owntv.R
 import tv.own.owntv.core.network.ConnectivityObserver
 import tv.own.owntv.core.sync.SyncProgressCounts
 import tv.own.owntv.core.sync.SyncResult
@@ -180,7 +181,7 @@ fun SyncStatusPill(modifier: Modifier = Modifier) {
         }
         if (hidden > 0) {
             Text(
-                pluralStringResource(R.plurals.sync_status_more, hidden, hidden),
+                pluralStringResource(CoreR.plurals.sync_status_more, hidden, hidden),
                 style = MaterialTheme.typography.labelMedium,
                 color = colors.onSurfaceVariant,
                 maxLines = 1,
@@ -245,89 +246,89 @@ private fun SyncLine.text(): String = when (this) {
             )
         }
         val countsText = counts?.displayText().orEmpty()
-        if (countsText.isBlank()) stringResource(R.string.sync_status_catalog, sync.sourceName)
-        else stringResource(R.string.sync_status_catalog_with_counts, sync.sourceName, countsText)
+        if (countsText.isBlank()) stringResource(CoreR.string.sync_status_catalog, sync.sourceName)
+        else stringResource(CoreR.string.sync_status_catalog_with_counts, sync.sourceName, countsText)
     }
     is SyncLine.Epg -> {
         val context = LocalContext.current
         val countParts = buildList {
-            if (sync.channels > 0) add(pluralStringResource(R.plurals.sync_count_channels, sync.channels, compactCount(context, sync.channels)))
-            if (sync.programmes > 0) add(pluralStringResource(R.plurals.sync_count_epg, sync.programmes, compactCount(context, sync.programmes)))
+            if (sync.channels > 0) add(pluralStringResource(CoreR.plurals.sync_count_channels, sync.channels, compactCount(context, sync.channels)))
+            if (sync.programmes > 0) add(pluralStringResource(CoreR.plurals.sync_count_epg, sync.programmes, compactCount(context, sync.programmes)))
         }
-        val countsText = countParts.joinToString(stringResource(R.string.sync_counts_separator))
-        if (countsText.isBlank()) stringResource(R.string.sync_status_epg, sync.sourceName)
-        else stringResource(R.string.sync_status_epg_with_counts, sync.sourceName, countsText)
+        val countsText = countParts.joinToString(stringResource(CoreR.string.sync_counts_separator))
+        if (countsText.isBlank()) stringResource(CoreR.string.sync_status_epg, sync.sourceName)
+        else stringResource(CoreR.string.sync_status_epg_with_counts, sync.sourceName, countsText)
     }
     // No percentage: a recording ends on the clock, not on a byte count, so there is nothing to be
     // a percentage of.
     // With the size as it grows: a recording has no total to count towards, so the bytes already
     // written are the only sign it is moving rather than stuck.
     is SyncLine.Recording -> listOfNotNull(
-        stringResource(R.string.recording_pill_line, recording.title),
+        stringResource(CoreR.string.recording_pill_line, recording.title),
         recording.bytes.takeIf { it > 0 }
-            ?.let { stringResource(R.string.common_size_mb, recordingSizeMb(it)) },
-    ).joinToString(stringResource(R.string.content_epg_bits_separator))
+            ?.let { stringResource(CoreR.string.common_size_mb, recordingSizeMb(it)) },
+    ).joinToString(stringResource(CoreR.string.content_epg_bits_separator))
     is SyncLine.Download -> {
         val percent = download.progress?.let { (it * 100).toInt() }
-        if (percent == null) stringResource(R.string.sync_status_download, download.title)
-        else stringResource(R.string.sync_status_download_with_progress, download.title, percent)
+        if (percent == null) stringResource(CoreR.string.sync_status_download, download.title)
+        else stringResource(CoreR.string.sync_status_download_with_progress, download.title, percent)
     }
     is SyncLine.Trending -> when (build.stage) {
-        TrendingActivityTracker.Stage.STARTING -> stringResource(R.string.sync_status_trending_starting, build.sourceName)
+        TrendingActivityTracker.Stage.STARTING -> stringResource(CoreR.string.sync_status_trending_starting, build.sourceName)
         TrendingActivityTracker.Stage.RECEIVED -> pluralStringResource(
-            R.plurals.sync_status_trending_received,
+            CoreR.plurals.sync_status_trending_received,
             build.candidates,
             build.candidates,
         )
-        TrendingActivityTracker.Stage.PREPARING -> stringResource(R.string.sync_status_trending_preparing)
-        TrendingActivityTracker.Stage.MATCHING_MOVIES -> stringResource(R.string.sync_status_trending_matching_movies)
-        TrendingActivityTracker.Stage.MATCHING_SERIES -> stringResource(R.string.sync_status_trending_matching_series)
-        TrendingActivityTracker.Stage.LOADING_SEASONS -> stringResource(R.string.sync_status_trending_loading_seasons)
+        TrendingActivityTracker.Stage.PREPARING -> stringResource(CoreR.string.sync_status_trending_preparing)
+        TrendingActivityTracker.Stage.MATCHING_MOVIES -> stringResource(CoreR.string.sync_status_trending_matching_movies)
+        TrendingActivityTracker.Stage.MATCHING_SERIES -> stringResource(CoreR.string.sync_status_trending_matching_series)
+        TrendingActivityTracker.Stage.LOADING_SEASONS -> stringResource(CoreR.string.sync_status_trending_loading_seasons)
         TrendingActivityTracker.Stage.ENRICHING -> pluralStringResource(
-            R.plurals.sync_status_trending_building,
+            CoreR.plurals.sync_status_trending_building,
             build.matched,
             build.matched,
         )
         TrendingActivityTracker.Stage.PUBLISHING -> pluralStringResource(
-            R.plurals.sync_status_trending_publishing,
+            CoreR.plurals.sync_status_trending_publishing,
             build.matched,
             build.matched,
         )
     }
     is SyncLine.TrendingDetail -> when (build.stage) {
-        TrendingActivityTracker.Stage.STARTING -> stringResource(R.string.sync_status_trending_detail_waiting)
+        TrendingActivityTracker.Stage.STARTING -> stringResource(CoreR.string.sync_status_trending_detail_waiting)
         TrendingActivityTracker.Stage.RECEIVED -> stringResource(
-            R.string.sync_status_trending_detail_received,
+            CoreR.string.sync_status_trending_detail_received,
             build.movieCandidates,
             build.seriesCandidates,
         )
         TrendingActivityTracker.Stage.PREPARING -> stringResource(
-            R.string.sync_status_trending_detail_preparing,
+            CoreR.string.sync_status_trending_detail_preparing,
             build.preparationProcessed,
             build.preparationTotal,
         )
         TrendingActivityTracker.Stage.MATCHING_MOVIES -> stringResource(
-            R.string.sync_status_trending_detail_movies,
+            CoreR.string.sync_status_trending_detail_movies,
             build.movieChecked,
             build.movieCandidates,
             build.movieMatches,
             build.movieTarget,
         )
         TrendingActivityTracker.Stage.MATCHING_SERIES -> stringResource(
-            R.string.sync_status_trending_detail_series,
+            CoreR.string.sync_status_trending_detail_series,
             build.seriesChecked,
             build.seriesCandidates,
             build.seriesMatches,
             build.seriesTarget,
         )
         TrendingActivityTracker.Stage.LOADING_SEASONS -> stringResource(
-            R.string.sync_status_trending_detail_loading_seasons,
+            CoreR.string.sync_status_trending_detail_loading_seasons,
             build.seasonsProcessed,
             build.seasonsTotal,
         )
         TrendingActivityTracker.Stage.ENRICHING,
         TrendingActivityTracker.Stage.PUBLISHING -> stringResource(
-            R.string.sync_status_trending_detail_selected,
+            CoreR.string.sync_status_trending_detail_selected,
             build.movieMatches,
             build.seriesMatches,
             build.finalItems,
@@ -340,33 +341,33 @@ private fun completedLine(completed: SyncActivityTracker.CompletedSync, online: 
     is SyncResult.Success -> {
         val changes = buildList {
             if (result.categoriesAdded > 0) {
-                add(pluralStringResource(R.plurals.sync_categories_added, result.categoriesAdded, result.categoriesAdded))
+                add(pluralStringResource(CoreR.plurals.sync_categories_added, result.categoriesAdded, result.categoriesAdded))
             }
             if (result.categoriesRemoved > 0) {
-                add(pluralStringResource(R.plurals.sync_categories_removed, result.categoriesRemoved, result.categoriesRemoved))
+                add(pluralStringResource(CoreR.plurals.sync_categories_removed, result.categoriesRemoved, result.categoriesRemoved))
             }
-        }.joinToString(stringResource(R.string.sync_counts_separator))
-        if (changes.isBlank()) stringResource(R.string.sync_status_complete, completed.sourceName)
-        else stringResource(R.string.sync_status_complete_with_changes, completed.sourceName, changes)
+        }.joinToString(stringResource(CoreR.string.sync_counts_separator))
+        if (changes.isBlank()) stringResource(CoreR.string.sync_status_complete, completed.sourceName)
+        else stringResource(CoreR.string.sync_status_complete_with_changes, completed.sourceName, changes)
     }
     is SyncResult.Failed -> stringResource(
-        R.string.sync_status_failed,
+        CoreR.string.sync_status_failed,
         completed.sourceName,
         classifySyncFailure(result.message, online).displayText(),
     )
-    SyncResult.Cancelled -> stringResource(R.string.sync_status_cancelled, completed.sourceName)
+    SyncResult.Cancelled -> stringResource(CoreR.string.sync_status_cancelled, completed.sourceName)
 }
 
 @Composable
 private fun trendingCompletedLine(completed: TrendingActivityTracker.CompletedBuild): String = when {
-    completed.preservedFailure -> stringResource(R.string.sync_status_trending_preserved)
+    completed.preservedFailure -> stringResource(CoreR.string.sync_status_trending_preserved)
     completed.eligible -> pluralStringResource(
-        R.plurals.sync_status_trending_ready,
+        CoreR.plurals.sync_status_trending_ready,
         completed.itemCount,
         completed.itemCount,
     )
     else -> pluralStringResource(
-        R.plurals.sync_status_trending_below_minimum,
+        CoreR.plurals.sync_status_trending_below_minimum,
         completed.itemCount,
         completed.itemCount,
     )
@@ -374,7 +375,7 @@ private fun trendingCompletedLine(completed: TrendingActivityTracker.CompletedBu
 
 @Composable
 private fun trendingCompletedDetailLine(completed: TrendingActivityTracker.CompletedBuild): String = stringResource(
-    R.string.sync_status_trending_detail_completed,
+    CoreR.string.sync_status_trending_detail_completed,
     completed.movieMatches,
     completed.movieCandidates,
     completed.seriesMatches,

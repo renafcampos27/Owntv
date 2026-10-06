@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
@@ -26,7 +28,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
@@ -62,10 +63,10 @@ fun SetTmdbNameDialog(
         Column(
             Modifier.dialogPanel(width = 480.dp, padding = 28.dp),
         ) {
-            Text(stringResource(R.string.setup_tmdb_name), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            Text(stringResource(CoreR.string.setup_tmdb_name), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(6.dp))
             Text(
-                stringResource(R.string.setup_tmdb_description),
+                stringResource(CoreR.string.setup_tmdb_description),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
             )
@@ -73,7 +74,7 @@ fun SetTmdbNameDialog(
             OwnTVTextField(
                 value = title,
                 onValueChange = { title = it },
-                label = stringResource(R.string.common_title),
+                label = stringResource(CoreR.string.common_title),
                 modifier = Modifier.fillMaxWidth(),
                 focusRequester = titleFocus,
             )
@@ -81,17 +82,17 @@ fun SetTmdbNameDialog(
             OwnTVTextField(
                 value = year,
                 onValueChange = { s -> year = s.filter { it.isDigit() }.take(4) },
-                label = stringResource(R.string.setup_year_optional),
+                label = stringResource(CoreR.string.setup_year_optional),
                 modifier = Modifier.fillMaxWidth(),
                 keyboardType = KeyboardType.Number,
             )
             Spacer(Modifier.height(22.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OwnTVButton(stringResource(R.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
-                if (hasOverride) OwnTVButton(stringResource(R.string.common_clear), onClick = onClear, style = OwnTVButtonStyle.SECONDARY)
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
+                if (hasOverride) OwnTVButton(stringResource(CoreR.string.common_clear), onClick = onClear, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
                 OwnTVButton(
-                    stringResource(R.string.common_save),
+                    stringResource(CoreR.string.common_save),
                     onClick = { onSave(title.trim(), year.trim().toIntOrNull()) },
                     enabled = title.trim().isNotEmpty(),
                 )

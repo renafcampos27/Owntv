@@ -1,5 +1,7 @@
 package tv.own.owntv.features.shell.components
 
+import tv.own.owntv.core.R as CoreR
+
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -35,10 +37,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import tv.own.owntv.R
 import tv.own.owntv.core.i18n.HorizontalDirection
 import tv.own.owntv.core.i18n.horizontalDirection
-import tv.own.owntv.core.database.entity.CategoryEntity
+import tv.own.owntv.core.live.LiveKey
+import tv.own.owntv.features.live.LiveRailItem
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.ContentPanelFill
 import tv.own.owntv.ui.components.modalScrim
@@ -52,28 +54,28 @@ import tv.own.owntv.ui.theme.OwnTVTheme
  * inside the in-player channel list. Shows every Live TV category/group (with customizations applied:
  * hidden categories excluded, renames shown, manual order respected). OK loads that category's
  * channels into the channel-list overlay; Back or Left returns to the channel list without changing
- * anything. The playing channel's own category is highlighted and focused first.
+ * anything. The armed provider/custom category is highlighted and focused first.
  */
 @Composable
 fun CategoryBrowserOverlay(
-    categories: List<Pair<CategoryEntity, String>>,
-    currentCategoryId: Long?,
-    onSelect: (categoryId: Long) -> Unit,
+    categories: List<LiveRailItem>,
+    currentKey: LiveKey?,
+    onSelect: (LiveKey) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val colors = OwnTVTheme.colors
     val layoutDirection = LocalLayoutDirection.current
-    val currentIndex = remember(categories, currentCategoryId) {
-        categories.indexOfFirst { it.first.id == currentCategoryId }.coerceAtLeast(0)
+    val currentIndex = remember(categories, currentKey) {
+        categories.indexOfFirst { it.key == currentKey }.coerceAtLeast(0)
     }
     val initialScrollIndex = (currentIndex - 2).coerceAtLeast(0)
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialScrollIndex)
     val focusCurrent = remember { FocusRequester() }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(categories, currentKey) {
         withFrameNanos { }
-        if (runCatching { focusCurrent.requestFocus() }.isFailure) {
+        if (!runCatching { focusCurrent.requestFocus() }.getOrDefault(false)) {
             delay(50)
             runCatching { focusCurrent.requestFocus() }
         }
@@ -99,7 +101,7 @@ fun CategoryBrowserOverlay(
                 .padding(vertical = 18.dp),
         ) {
             Text(
-                stringResource(R.string.content_category_browser_title),
+                stringResource(CoreR.string.content_category_browser_title),
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.primary,
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 6.dp),
@@ -112,14 +114,14 @@ fun CategoryBrowserOverlay(
                 ),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
-                items(categories, key = { it.first.id }, contentType = { "category" }) { (cat, displayName) ->
-                    val isCurrent = cat.id == currentCategoryId
-                    val onRowClick = remember(cat.id) { { onSelect(cat.id) } }
+                items(categories, key = { it.key.toString() }, contentType = { "category" }) { cat ->
+                    val isCurrent = cat.key == currentKey
+                    val onRowClick = { onSelect(cat.key) }
                     CategoryRow(
-                        name = displayName,
+                        name = cat.title.orEmpty(),
                         isCurrent = isCurrent,
                         onClick = onRowClick,
-                        modifier = if (cat.id == categories.getOrNull(currentIndex)?.first?.id) {
+                        modifier = if (cat.key == categories.getOrNull(currentIndex)?.key) {
                             Modifier.focusRequester(focusCurrent)
                         } else {
                             Modifier
