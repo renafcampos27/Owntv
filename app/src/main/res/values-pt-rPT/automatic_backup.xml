@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="automatic_backup_title">Backup automático</string>
+    <string name="automatic_backup_manual">Manual</string>
+    <string name="automatic_backup_three_months">A cada 3 meses</string>
+    <string name="automatic_backup_six_months">A cada 6 meses</string>
+    <string name="automatic_backup_yearly">Uma vez por ano</string>
+    <string name="automatic_backup_description">Backups completos e encriptados dos perfis escolhidos, listas e definições. Guarda os três backups automáticos mais recentes.</string>
+    <string name="automatic_backup_setup_required">A predefinição é a cada 6 meses. Escolhe a pasta, os perfis e a palavra-passe para ativar o agendamento.</string>
+    <string name="automatic_backup_manual_status">Backups automáticos desligados. Podes criar um backup manualmente.</string>
+    <string name="automatic_backup_next">Próximo backup: %1$s. O Android pode adiá-lo até o dispositivo estar disponível.</string>
+    <string name="automatic_backup_last">Último backup automático: %1$s</string>
+    <string name="automatic_backup_failed">O backup precisa de atenção. Verifica a pasta e o acesso ao armazenamento, ou configura novamente.</string>
+    <string name="automatic_backup_configure">Configurar backup automático</string>
+    <string name="automatic_backup_now">Criar backup agora</string>
+    <string name="automatic_backup_password_note">Guarda esta palavra-passe: é necessária para restaurar o backup em qualquer dispositivo. Fica protegida nesta box. O armazenamento da app é apagado ao desinstalar ou limpar os dados; escolhe uma pasta externa para uma cópia independente.</string>
+    <string name="automatic_backup_confirm_password">Confirmar palavra-passe</string>
+    <string name="automatic_backup_save">Guardar agendamento</string>
+    <string name="automatic_backup_pending">Backup pendente. Será criado quando o Android permitir e a pasta estiver disponível.</string>
+</resources>

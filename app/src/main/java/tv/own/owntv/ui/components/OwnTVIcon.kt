@@ -26,7 +26,7 @@ enum class OwnTVIcon {
     SORT, SWAP, HEADPHONES, EXPAND,
     IMAGE, INFO, LANGUAGE, GEAR, SPARKLE,
     CATCHUP,
-    WEATHER, NETWORK, TEXT_SIZE, BACKUP, REFRESH, POWER, MOTION, GLOW, WARNING, LIST_GRID,
+    NETWORK, TEXT_SIZE, BACKUP, REFRESH, POWER, MOTION, WARNING, LIST_GRID,
     // Marks that exist so one glyph stops doing two jobs: NETWORK was both proxy and DNS, EXPAND was
     // both panel width and focus highlight, SKIP_NEXT was both channel paging and autoplay-next.
     DNS, PANEL_WIDTH, FOCUS_HIGHLIGHT, CH_NAV, AUTOPLAY_NEXT, LIVE_DOT, SEEK_BACK, SEEK_FORWARD, MORE,
@@ -472,23 +472,6 @@ fun OwnTVIcon(
             }
             drawPath(sparkle, tint, style = Fill)
         }
-            OwnTVIcon.WEATHER -> {
-                // Sun behind a cloud. Lighter than the 2f default: a sun, its rays and a three-lobe
-                // cloud is the busiest glyph in the set, and the rays close up at settings-row size.
-                val thin = Stroke(width = 1.7f * s, cap = StrokeCap.Round, join = StrokeJoin.Round)
-                drawCircleStroke(p(8.2f, 7.2f), 2.8f * s, tint, thin)
-                drawLineStroke(p(8.2f, 2f), p(8.2f, 3.3f), tint, thin)
-                drawLineStroke(p(2.9f, 7.2f), p(4.2f, 7.2f), tint, thin)
-                drawLineStroke(p(4.5f, 3.5f), p(5.4f, 4.4f), tint, thin)
-                drawLineStroke(p(11.9f, 3.5f), p(11f, 4.4f), tint, thin)
-                // The cloud is three arcs plus a flat bottom rather than one Path: the round caps make
-                // the joins continuous, and it keeps the whole shape in the same drawArc vocabulary the
-                // rest of this file uses.
-                drawLineStroke(p(8.5f, 20f), p(17f, 20f), tint, thin)
-                drawArc(tint, 90f, -180f, false, p(13.8f, 13.6f), Size(6.4f * s, 6.4f * s), style = thin)
-                drawArc(tint, -28.4f, -138.6f, false, p(7.98f, 11.08f), Size(9.6f * s, 9.6f * s), style = thin)
-                drawArc(tint, -79.4f, -150f, false, p(4.9f, 14.75f), Size(5.4f * s, 5.4f * s), style = thin)
-            }
             OwnTVIcon.NETWORK -> {
                 // Globe: equator + two latitudes + one meridian. A share graph reads as "send to".
                 val thin = Stroke(width = 1.7f * s, cap = StrokeCap.Round, join = StrokeJoin.Round)
@@ -549,13 +532,6 @@ fun OwnTVIcon(
                 drawLineStroke(p(2.5f, 8.5f), p(7.5f, 8.5f), tint, stroke)
                 drawLineStroke(p(1.6f, 12.4f), p(6.6f, 12.4f), tint, stroke)
                 drawLineStroke(p(2.8f, 16.3f), p(6.8f, 16.3f), tint, stroke)
-            }
-            OwnTVIcon.GLOW -> { // Light spilling from a centre: a solid core inside two pairs of arcs.
-                drawCircle(tint, 3.2f * s, p(12f, 12f))
-                drawArc(tint, -134.2f, -91.6f, false, p(5.89f, 6f), Size(12f * s, 12f * s), style = stroke)
-                drawArc(tint, -45.8f, 91.6f, false, p(6.12f, 6f), Size(12f * s, 12f * s), style = stroke)
-                drawArc(tint, -134.6f, -90.8f, false, p(1.51f, 1.6f), Size(20.8f * s, 20.8f * s), style = stroke)
-                drawArc(tint, -45.4f, 90.8f, false, p(1.69f, 1.6f), Size(20.8f * s, 20.8f * s), style = stroke)
             }
             OwnTVIcon.WARNING -> { // A clock read as "history" on the error log; a triangle cannot.
                 drawPath(triangle(p(12f, 3.6f), p(21.8f, 20.4f), p(2.2f, 20.4f)), tint, style = stroke)

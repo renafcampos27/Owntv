@@ -58,10 +58,8 @@ import tv.own.owntv.features.shell.OwnTVShell
 import tv.own.owntv.features.shell.ShellViewModel
 import tv.own.owntv.ui.theme.BlurredBackdrop
 import tv.own.owntv.ui.theme.BackdropLuminanceMap
-import tv.own.owntv.ui.theme.GlassMotionState
 import tv.own.owntv.ui.theme.LocalBlurredBackdrop
 import tv.own.owntv.ui.theme.LocalGlass
-import tv.own.owntv.ui.theme.LocalGlassMotion
 import tv.own.owntv.ui.theme.LocalUiFontScaleFactor
 import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.core.theme.UiFontScale
@@ -264,7 +262,6 @@ class MainActivity : ComponentActivity() {
             val focusHighlightWidth by viewModel.focusHighlightWidth.collectAsStateWithLifecycle()
             val uiZoomPercent by viewModel.uiZoomPercent.collectAsStateWithLifecycle()
             val fontCustomization by viewModel.fontCustomization.collectAsStateWithLifecycle()
-            val requestedAnimationLevel by viewModel.animationLevel.collectAsStateWithLifecycle()
             val visualProfile by get<tv.own.owntv.core.settings.SettingsRepository>().visualProfile.collectAsStateWithLifecycle(initialValue = tv.own.owntv.core.theme.VisualProfile.AUTO)
             val deviceMemory = remember {
                 val manager = getSystemService(android.app.ActivityManager::class.java)
@@ -273,7 +270,6 @@ class MainActivity : ComponentActivity() {
                 manager.isLowRamDevice to info.totalMem
             }
             val lightVisuals = tv.own.owntv.core.theme.VisualProfilePolicy.isLight(visualProfile, deviceMemory.first, deviceMemory.second)
-            val animationLevel = tv.own.owntv.core.theme.VisualProfilePolicy.animation(requestedAnimationLevel, lightVisuals)
             val bgImagePath by viewModel.bgImagePath.collectAsStateWithLifecycle()
             val requestedGlass by viewModel.glassConfig.collectAsStateWithLifecycle()
             val glassConfig = tv.own.owntv.core.theme.VisualProfilePolicy.glass(requestedGlass, lightVisuals)
@@ -357,7 +353,6 @@ class MainActivity : ComponentActivity() {
                 customAccent = customAccent,
                 focusHighlight = focusHighlight,
                 focusBorderWidthDp = focusHighlightWidth,
-                animationLevel = animationLevel,
                 mainFontFamily = fontCustomization.mainFamily,
                 popupFontFamily = fontCustomization.popupFamily,
                 popupFontSizePercent = fontCustomization.popupFontSizePercent,
@@ -377,14 +372,6 @@ class MainActivity : ComponentActivity() {
                 // backdrop stands in for. Captured here (top of the tree) so glass panels can map their
                 // own on-screen rect into the blurred bitmap's coordinate space.
                 var rootSizePx by remember { mutableStateOf(Size.Zero) }
-                val glassMotionScope = rememberCoroutineScope()
-                val glassMotion = remember(glassMotionScope) { GlassMotionState(glassMotionScope) }
-                LaunchedEffect(glassActive, effectiveGlass.depthEffects, animationLevel) {
-                    glassMotion.setEnabled(
-                        glassActive && effectiveGlass.depthEffects &&
-                            animationLevel == tv.own.owntv.core.theme.AnimationLevel.FULL,
-                    )
-                }
                 // Phase 4 — real backdrop blur. Load+blur the background once (cached) when glass is on,
                 // a background image is set, blur strength > 0, and the device supports it (API 31+).
                 // Otherwise this stays null and panels fall back to Tier-1 translucency.
@@ -412,7 +399,6 @@ class MainActivity : ComponentActivity() {
                     ),
                     LocalUiFontScaleFactor provides UiFontScale.factor(fontCustomization.sizePercent),
                     LocalGlass provides effectiveGlass,
-                    LocalGlassMotion provides glassMotion,
                     LocalBlurredBackdrop provides blurred,
                 ) {
                     // Wrap the shell in the locale locals (LocalResources/LocalContext/
@@ -426,7 +412,6 @@ class MainActivity : ComponentActivity() {
                             .background(OwnTVTheme.colors.background)
                             .onGloballyPositioned {
                                 rootSizePx = Size(it.size.width.toFloat(), it.size.height.toFloat())
-                                glassMotion.setRootSize(rootSizePx, base.density * UiZoom.factor(uiZoomPercent))
                             },
                     ) {
                         // Background image sits behind everything when a path is set; otherwise the solid

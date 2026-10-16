@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="automatic_backup_title">Automatic backup</string>
+    <string name="automatic_backup_manual">Manual</string>
+    <string name="automatic_backup_three_months">Every 3 months</string>
+    <string name="automatic_backup_six_months">Every 6 months</string>
+    <string name="automatic_backup_yearly">Once a year</string>
+    <string name="automatic_backup_description">Complete encrypted backups of the selected profiles, playlists and settings. Keeps the three most recent automatic backups.</string>
+    <string name="automatic_backup_setup_required">Every 6 months is the default. Choose a folder, profiles and password to enable the schedule.</string>
+    <string name="automatic_backup_manual_status">Automatic backups are off. You can still create a backup manually.</string>
+    <string name="automatic_backup_next">Next backup: %1$s. Android may defer it until the device is available.</string>
+    <string name="automatic_backup_last">Last automatic backup: %1$s</string>
+    <string name="automatic_backup_failed">Backup needs attention. Check the destination and storage access, or configure it again.</string>
+    <string name="automatic_backup_configure">Configure automatic backup</string>
+    <string name="automatic_backup_now">Create backup now</string>
+    <string name="automatic_backup_password_note">Keep this password: you need it to restore the backup on any device. It is stored securely on this box. App storage is erased if you uninstall or clear app data; choose an external folder for an independent copy.</string>
+    <string name="automatic_backup_confirm_password">Confirm password</string>
+    <string name="automatic_backup_save">Save schedule</string>
+    <string name="automatic_backup_pending">Backup due. It will run when Android permits and the destination is available.</string>
+</resources>

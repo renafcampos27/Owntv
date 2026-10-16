@@ -240,8 +240,6 @@ class ShellViewModel(
     val fontCustomization: StateFlow<FontCustomization> = settings.fontCustomization
         .stateIn(viewModelScope, SharingStarted.Eagerly, FontCustomization())
 
-    val animationLevel: StateFlow<tv.own.owntv.core.theme.AnimationLevel> = settings.animationLevel
-        .stateIn(viewModelScope, SharingStarted.Eagerly, tv.own.owntv.core.theme.AnimationLevel.OFF)
 
     val accent: StateFlow<AccentColor> = settings.accent
         .stateIn(viewModelScope, SharingStarted.Eagerly, AccentColor.TEAL)

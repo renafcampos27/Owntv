@@ -97,7 +97,6 @@ import tv.own.owntv.features.shell.components.PreviewPane
 import tv.own.owntv.features.shell.components.RailCategory
 import tv.own.owntv.features.shell.components.SettingsScreen
 import tv.own.owntv.features.shell.components.Sidebar
-import tv.own.owntv.features.shell.components.SolidAmbientBackdrop
 import tv.own.owntv.features.shell.components.TopBar
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -201,7 +200,6 @@ fun OwnTVShell(
     )
     val miniSizePct by settingsRepo.miniPlayerSizePct.collectAsStateWithLifecycle(initialValue = tv.own.owntv.core.player.MiniPlayerSize.DEFAULT)
     val miniPosName by settingsRepo.miniPlayerPosition.collectAsStateWithLifecycle(initialValue = tv.own.owntv.core.player.MiniPlayerPosition.DEFAULT.name)
-    val ambientGlowEnabled by settingsRepo.ambientGlowEnabled.collectAsStateWithLifecycle(initialValue = false)
     val miniPos = tv.own.owntv.core.player.MiniPlayerPosition.fromName(miniPosName)
     // §8 "Reaching the mini player" — the mini window floats above the content panel, so D-pad focus
     // search has no spatial path into it from most screens. These are the three deliberate ways in:
@@ -1486,14 +1484,6 @@ fun OwnTVShell(
             }
           }
         }
-        // The solid-mode wizard aura is deliberately drawn after the opaque browse surfaces so it
-        // remains visible, exactly like the approved concept. It never intercepts input; fullscreen
-        // video and glass mode skip it entirely. The TV shell uses a static glow.
-        SolidAmbientBackdrop(
-            glowEnabled = ambientGlowEnabled,
-            pulseEnabled = false,
-            modifier = Modifier.fillMaxSize(),
-        )
       }
 
       // Unobtrusive background-sync pill (bottom middle): visible while any catalog sync runs —

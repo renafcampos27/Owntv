@@ -3,7 +3,6 @@ package tv.own.owntv.features.shell.components
 import tv.own.owntv.core.R as CoreR
 
 import android.text.format.DateFormat
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -42,7 +41,6 @@ import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.ui.theme.glass
-import tv.own.owntv.ui.theme.ownTvTween
 import java.util.Date
 
 // Top-bar chips: corner matches the nav buttons (14dp, not full-pill) and a lighter frost than the
@@ -70,16 +68,11 @@ fun TopBar(
     // Audio Mode can expand into a two-line now-playing card and 36 dp transport control. Preserve the
     // existing 48 dp strip for it; ordinary pills need only 40 dp, reclaiming 4 dp above and below.
     val hasAudioBar = audioBar != null
-    val barHeight by animateDpAsState(
-        when {
-            hasAudioBar && audioBarExpanded -> Dimens.TopBarAudioExpandedHeight
-            hasAudioBar -> Dimens.TopBarHeight
-            else -> Dimens.TopBarCompactHeight
-        },
-        // ownTvTween, so Reduce animations snaps between the two heights instead of sliding.
-        animationSpec = tv.own.owntv.ui.theme.ownTvTween(180),
-        label = "topBarHeight",
-    )
+    val barHeight = when {
+        hasAudioBar && audioBarExpanded -> Dimens.TopBarAudioExpandedHeight
+        hasAudioBar -> Dimens.TopBarHeight
+        else -> Dimens.TopBarCompactHeight
+    }
     val verticalInset = if (hasAudioBar) 4.dp else 2.dp
     Row(
         modifier = modifier

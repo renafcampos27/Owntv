@@ -1,6 +1,5 @@
 package tv.own.owntv.player
 
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -72,7 +71,7 @@ fun MiniPlayer(
     // video. The controls stay composed (and focusable) even when hidden, so pressing toward the
     // mini-player lands focus on a button and reveals them.
     var focused by remember { mutableStateOf(false) }
-    val controlsAlpha by animateFloatAsState(if (focused) 1f else 0f, label = "miniControls")
+    val controlsAlpha = if (focused) 1f else 0f
     // Back from inside the window hands focus back to the control the user came from — without this
     // entering the mini player stranded you, which is half of why it was unreachable in the first place.
     if (focused && onBack != null) BackHandler { onBack() }

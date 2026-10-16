@@ -5,8 +5,6 @@ import tv.own.owntv.core.R as CoreR
 import android.content.Context
 import tv.own.owntv.core.home.HeroItem
 import tv.own.owntv.core.home.TrendingHomeItem
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -1203,11 +1201,7 @@ private fun HeroRowSection(
                 ) { index, item ->
                     val isExpanded = index == expandedIndex
                     val targetWidth = if (isExpanded) expandedWidth else Dimens.HeroBaseWidth
-                    val width by animateDpAsState(
-                        targetValue = targetWidth,
-                        animationSpec = tween(durationMillis = if (isExpanded) 500 else 150),
-                        label = "heroCardWidth",
-                    )
+                    val width = targetWidth
 
                     val imageUrl = when (item) {
                         is HeroItem.MovieHero -> item.movie.posterUrl

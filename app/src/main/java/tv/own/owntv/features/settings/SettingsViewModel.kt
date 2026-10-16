@@ -1025,13 +1025,6 @@ class SettingsViewModel(
         settings.vodLayout.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.SettingsRepository.VodLayout.SEPARATE)
     fun setVodLayout(layout: tv.own.owntv.core.settings.SettingsRepository.VodLayout) { viewModelScope.launch { settings.setVodLayout(layout) } }
 
-    val ambientGlowEnabled: StateFlow<Boolean> =
-        settings.ambientGlowEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-    fun setAmbientGlowEnabled(enabled: Boolean) { viewModelScope.launch { settings.setAmbientGlowEnabled(enabled) } }
-
-    val ambientGlowPulse: StateFlow<Boolean> =
-        settings.ambientGlowPulse.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
-    fun setAmbientGlowPulse(enabled: Boolean) { viewModelScope.launch { settings.setAmbientGlowPulse(enabled) } }
 
     // Per-section "remember last item per category" (default OFF). OFF resets the browse list to the top
     // when switching category; ON keeps a separate scroll position per category. The Live toggle also

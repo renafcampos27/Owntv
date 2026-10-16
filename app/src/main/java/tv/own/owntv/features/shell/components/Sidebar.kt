@@ -4,12 +4,6 @@ import tv.own.owntv.core.R as CoreR
 
 import androidx.compose.ui.platform.testTag
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.border
@@ -68,7 +62,6 @@ import tv.own.owntv.ui.components.roundedPanel
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
-import tv.own.owntv.ui.theme.animationsOn
 import tv.own.owntv.ui.theme.glass
 
 /**
@@ -240,17 +233,7 @@ private fun NowPlayingItem(
 ) {
     val colors = OwnTVTheme.colors
     val shape = RoundedCornerShape(13.dp)
-    val pulse = if (animationsOn) {
-        val transition = rememberInfiniteTransition(label = "nowPlayingRing")
-        transition.animateFloat(
-            initialValue = 0.35f,
-            targetValue = 0.95f,
-            animationSpec = infiniteRepeatable(tween(1100, easing = LinearEasing), RepeatMode.Reverse),
-            label = "nowPlayingRingAlpha",
-        ).value
-    } else {
-        0.7f
-    }
+    val pulse = 0.7f
     FocusableSurface(
         onClick = onClick,
         modifier = modifier.fillMaxWidth(),

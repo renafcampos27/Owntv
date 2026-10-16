@@ -48,6 +48,37 @@ class CompleteSettingsBackupTest {
 
     private suspend fun read(store: DataStore<Preferences>) = SimpleModeBackupCodec.decode(SimpleModePreferences.exportBackup(store), SimpleModeOptions())
 
+    @Test fun sidebarAndPriorityDefaultsApplyOnceAndPreserveOtherPreferences() = runBlocking {
+        var calls = 0
+        withStore("tv-defaults") { store ->
+            SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(configured))
+            SimpleModePreferences.applyTvDefaultsOnce(store) { calls++ }
+            assertEquals(configured.copy(hideSidebar = false), read(store))
+            SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(configured))
+        }
+        withStore("tv-defaults") { store ->
+            SimpleModePreferences.applyTvDefaultsOnce(store) { calls++ }
+            assertEquals(configured, read(store))
+        }
+        assertEquals(1, calls)
+        assertFalse(SimpleModeOptions().hideSidebar)
+    }
+
+    @Test fun failedPriorityUpdateDoesNotCommitSidebarOrMigrationMarker() = runBlocking {
+        withStore("tv-defaults-failure") { store ->
+            SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(configured))
+            try {
+                SimpleModePreferences.applyTvDefaultsOnce(store) { throw java.io.IOException("storage unavailable") }
+                fail("Expected storage failure")
+            } catch (_: java.io.IOException) { }
+            assertEquals(configured, read(store))
+            var retried = false
+            SimpleModePreferences.applyTvDefaultsOnce(store) { retried = true }
+            assertTrue(retried)
+            assertEquals(configured.copy(hideSidebar = false), read(store))
+        }
+    }
+
     @Test fun completeFileRoundTripRestoresEveryOptionAndPersistsAfterReopeningStore() = runBlocking {
         var file = ""
         withStore("source") { store ->
@@ -157,4 +188,34 @@ class CompleteSettingsBackupTest {
             assertEquals(options, SimpleModeBackupCodec.decode(SimpleModeBackupCodec.encode(options), SimpleModeOptions()))
         }
     }
+    @Test fun automaticUpdatesAreEnabledOnceAndDoNotOverrideLaterOptOutAfterReopening() = runBlocking {
+        var enabled = false
+        withStore("update-once") { store ->
+            SimpleModePreferences.enableAutomaticUpdatesOnce(store) { enabled = true }
+            assertTrue(enabled)
+            enabled = false
+            SimpleModePreferences.enableAutomaticUpdatesOnce(store) { enabled = true }
+            assertFalse(enabled)
+        }
+        withStore("update-once") { store ->
+            SimpleModePreferences.enableAutomaticUpdatesOnce(store) { enabled = true }
+            assertFalse(enabled)
+        }
+    }
+
+    @Test fun failedUpdateDefaultIsRetriedWithoutChangingOtherPreferences() = runBlocking {
+        withStore("update-retry") { store ->
+            SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(configured))
+            try {
+                SimpleModePreferences.enableAutomaticUpdatesOnce(store) { error("write failed") }
+                fail("Expected failure")
+            } catch (_: IllegalStateException) { }
+            var attempts = 0
+            SimpleModePreferences.enableAutomaticUpdatesOnce(store) { attempts++ }
+            SimpleModePreferences.enableAutomaticUpdatesOnce(store) { attempts++ }
+            assertEquals(1, attempts)
+            assertEquals(configured, read(store))
+        }
+    }
+
 }

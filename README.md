@@ -277,6 +277,10 @@ Which of the two starts a stream is yours to set, separately for Live TV and for
 [ZXing](https://github.com/zxing/zxing) — and the wider Kotlin / AndroidX open-source ecosystem.
 Thank you to all their maintainers. See each project for its own license.
 
+## Pendências da edição TV
+
+Antes de uma nova análise de melhorias, correções ou inovações, consultar [Melhorias futuras pendentes](docs/MELHORIAS_FUTURAS_PENDENTES.md).
+
 ## ⚖️ Legal
 
 OwnTV is a media **player** only. It ships with no channels, playlists, subscriptions, or content, and

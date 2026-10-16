@@ -3,12 +3,6 @@ package tv.own.owntv.player
 import tv.own.owntv.core.R as CoreR
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.background
@@ -68,7 +62,6 @@ import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.ui.theme.LocalPopupFontFamily
-import tv.own.owntv.ui.theme.animationsOn
 
 /**
  * The wide "now-playing" bar shown in the top bar while [PlayerMode.AUDIO]
@@ -348,15 +341,7 @@ private fun StationDot(color: Color) {
 @Composable
 private fun LiveRow(dotColor: Color, playing: Boolean) {
     val colors = OwnTVTheme.colors
-    val a = if (animationsOn && playing) {
-        val transition = rememberInfiniteTransition(label = "liveDot")
-        val alpha by transition.animateFloat(
-            initialValue = 0.35f, targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Reverse),
-            label = "liveDotAlpha",
-        )
-        alpha
-    } else 1f
+    val a = 1f
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         Box(Modifier.size(6.dp).clip(CircleShape).background(dotColor).alpha(a))
         Text(stringResource(CoreR.string.player_live), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold)
@@ -364,27 +349,17 @@ private fun LiveRow(dotColor: Color, playing: Boolean) {
 }
 
 /**
- * Bars that dance while [playing] and freeze flat when paused (Audio Mode plan §3/§6). Also stands in
+ * Static bars distinguish [playing] from paused (Audio Mode plan §3/§6). Also stands in
  * for the missing picture on the sidebar's Now Playing item while Audio Mode is running.
  */
 @Composable
 internal fun Equalizer(playing: Boolean, color: Color, modifier: Modifier) {
     val bars = 5
-    val heights = if (animationsOn && playing) {
-        val transition = rememberInfiniteTransition(label = "eq")
-        List(bars) { i ->
-            transition.animateFloat(
-                initialValue = 0.25f, targetValue = 1f,
-                animationSpec = infiniteRepeatable(tween(420 + i * 90, easing = LinearEasing), RepeatMode.Reverse),
-                label = "eqBar$i",
-            )
-        }
-    } else null
     Canvas(modifier) {
         val gap = size.width * 0.12f
         val barW = (size.width - gap * (bars - 1)) / bars
         for (i in 0 until bars) {
-            val h = heights?.get(i)?.value ?: if (playing) 0.55f else 0.18f
+            val h = if (playing) 0.55f else 0.18f
             val bh = size.height * h
             drawRoundRect(
                 color = color,

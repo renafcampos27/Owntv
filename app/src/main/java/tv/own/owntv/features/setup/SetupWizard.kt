@@ -3,12 +3,6 @@ package tv.own.owntv.features.setup
 import tv.own.owntv.core.R as CoreR
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.focusGroup
@@ -637,7 +631,6 @@ private fun MainSetupPage(
     content: @Composable androidx.compose.foundation.layout.ColumnScope.() -> Unit,
 ) {
     Box(Modifier.fillMaxSize()) {
-        SetupAmbientBackdrop()
         Box(
             modifier = Modifier.fillMaxSize().padding(40.dp),
             contentAlignment = Alignment.Center,
@@ -653,44 +646,6 @@ private fun MainSetupPage(
                 content = content,
             )
         }
-    }
-}
-
-@Composable
-private fun SetupAmbientBackdrop() {
-    val primary = OwnTVTheme.colors.primary
-    val transition = rememberInfiniteTransition()
-    val ringScale by transition.animateFloat(
-        initialValue = 0.97f,
-        targetValue = 1.03f,
-        animationSpec = infiniteRepeatable(
-            animation = tween(durationMillis = 6_000, easing = FastOutSlowInEasing),
-            repeatMode = RepeatMode.Reverse,
-        ),
-    )
-
-    Canvas(Modifier.fillMaxSize()) {
-        val center = Offset(size.width * 0.5f, size.height * 0.48f)
-        val glowRadius = size.minDimension * 0.46f
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    primary.copy(alpha = 0.12f),
-                    primary.copy(alpha = 0.045f),
-                    Color.Transparent,
-                ),
-                center = center,
-                radius = glowRadius,
-            ),
-            radius = glowRadius,
-            center = center,
-        )
-        drawCircle(
-            color = primary.copy(alpha = 0.075f),
-            radius = size.minDimension * 0.34f * ringScale,
-            center = center,
-            style = Stroke(width = 1.dp.toPx()),
-        )
     }
 }
 

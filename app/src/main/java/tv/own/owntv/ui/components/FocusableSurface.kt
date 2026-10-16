@@ -2,8 +2,6 @@ package tv.own.owntv.ui.components
 
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -27,22 +25,16 @@ import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.layout.boundsInRoot
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.GlassInteraction
 import tv.own.owntv.ui.theme.LocalGlass
-import tv.own.owntv.ui.theme.LocalGlassMotion
 import tv.own.owntv.ui.theme.OwnTVTheme
-import tv.own.owntv.ui.theme.animationsOn
 import tv.own.owntv.ui.theme.glass
 
 @Composable
@@ -94,53 +86,46 @@ fun FocusableSurface(
     val pressed by interaction.collectIsPressedAsState()
     val visuallySelected = selected && renderSelectionContainer
     val visualState = when {
-        pressed -> GlassInteraction.PRESSED
-        focused -> GlassInteraction.FOCUSED
-        visuallySelected -> GlassInteraction.SELECTED
-        else -> GlassInteraction.IDLE
-    }
-    // Row-sized glass controls use only the restrained 1.008 focus lift from the material ladder;
-    // larger poster cards (1.03+) retain their deliberate depth motion. Glass never adds the separate
-    // solid-mode glow shadow, avoiding trails while scrolling wide rows.
-    val glassConfig = LocalGlass.current
-    val glassy = surface != null && glassConfig.isGlassy(surface)
-    val motion = LocalGlassMotion.current
-    val motionToken = remember { Any() }
-    val density = LocalDensity.current
-    val travelPx = remember(density) { with(density) { 40.dp.toPx() } }
-    val motionEnabled = glassy && glassConfig.depthEffects && animationsOn
-    val compactFocusableRow = focusedScale <= 1.012f
-    val compactGlassRow = glassy && compactFocusableRow
-    // Primary action pills deliberately remain solid brand anchors. All other standard solid-mode
-    // controls share the same M3 tonal focus ladder instead of inheriting dozens of unrelated fills.
-    val solidBrandAnchor = unfocusedContainerColor == colors.primary &&
-        focusedContainerColor == colors.primary
-    val lit = focusLight != null && !glassy
-    val useSolidTonalLadder = !glassy && showFocusBorder && !solidBrandAnchor && !lit
-    val solidTonalBase = if (unfocusedContainerColor.alpha > 0f) {
-        unfocusedContainerColor
-    } else {
-        // Transparent list rows still need the tonal focus to sit on the same elevated card tone
-        // they used before Phase 5; using surfaceContainerLow made both themes look flat and muddy.
-        colors.surfaceContainerHigh
-    }
-    val solidFocusedContainer = colors.primaryContainer.copy(alpha = 0.22f)
-        .compositeOver(solidTonalBase)
-    val solidSelectedContainer = colors.primaryContainer.copy(alpha = 0.14f)
-        .compositeOver(solidTonalBase)
+    pressed -> GlassInteraction.PRESSED
+    focused -> GlassInteraction.FOCUSED
+    visuallySelected -> GlassInteraction.SELECTED
+    else -> GlassInteraction.IDLE
+}
+// Static focus feedback preserves the focus ring and selection without a motion timeline.
+val glassConfig = LocalGlass.current
+val glassy = surface != null && glassConfig.isGlassy(surface)
+val compactFocusableRow = focusedScale <= 1.012f
+val compactGlassRow = glassy && compactFocusableRow
+// Primary action pills deliberately remain solid brand anchors. All other standard solid-mode
+// controls share the same M3 tonal focus ladder instead of inheriting dozens of unrelated fills.
+val solidBrandAnchor = unfocusedContainerColor == colors.primary &&
+    focusedContainerColor == colors.primary
+val lit = focusLight != null && !glassy
+val useSolidTonalLadder = !glassy && showFocusBorder && !solidBrandAnchor && !lit
+val solidTonalBase = if (unfocusedContainerColor.alpha > 0f) {
+    unfocusedContainerColor
+} else {
+    // Transparent list rows still need the tonal focus to sit on the same elevated card tone
+    // they used before Phase 5; using surfaceContainerLow made both themes look flat and muddy.
+    colors.surfaceContainerHigh
+}
+val solidFocusedContainer = colors.primaryContainer.copy(alpha = 0.22f)
+    .compositeOver(solidTonalBase)
+val solidSelectedContainer = colors.primaryContainer.copy(alpha = 0.14f)
+    .compositeOver(solidTonalBase)
 
-    // Fast D-pad navigation can move focus through several cards before the previous frame reaches
-    // the GPU. Keep the immediate tint/lens/rim feedback, but promote only the surface that remains
-    // focused long enough to the full aligned-backdrop frost path. This avoids a 4K texture sample at
-    // every transient focus stop without making navigation feel delayed.
-    var focusFrostSettled by remember { mutableStateOf(false) }
-    if (focused && glassy && surface == GlassSurface.CARDS) {
-        // Conditional effect means only the one focused card owns a timer; dense idle lists launch
-        // no settle coroutines. Leaving this composition group also cancels the timer immediately.
-        LaunchedEffect(Unit) {
-            kotlinx.coroutines.delay(FOCUS_FROST_SETTLE_MS)
-            focusFrostSettled = true
-        }
+// Fast D-pad navigation can move focus through several cards before the previous frame reaches
+// the GPU. Keep the immediate tint/lens/rim feedback, but promote only the surface that remains
+// focused long enough to the full aligned-backdrop frost path. This avoids a 4K texture sample at
+// every transient focus stop without making navigation feel delayed.
+var focusFrostSettled by remember { mutableStateOf(false) }
+if (focused && glassy && surface == GlassSurface.CARDS) {
+    // Conditional effect means only the one focused card owns a timer; dense idle lists launch
+    // no settle coroutines. Leaving this composition group also cancels the timer immediately.
+    LaunchedEffect(Unit) {
+        kotlinx.coroutines.delay(FOCUS_FROST_SETTLE_MS)
+        focusFrostSettled = true
+    }
     } else {
         SideEffect {
             if (focusFrostSettled) focusFrostSettled = false
@@ -150,33 +135,21 @@ fun FocusableSurface(
         focused && glassy && surface == GlassSurface.CARDS && !focusFrostSettled
     ) 0f else glassFrostScale
 
-    val scaleState = animateFloatAsState(
-        when {
-            (focused || pressed) && glassy && !glassConfig.depthEffects -> 1f
-            pressed -> 0.992f
-            compactGlassRow && focused && glassConfig.depthEffects -> 1.008f
-            focused -> focusedScale
-            else -> 1f
-        },
-        animationSpec = tv.own.owntv.ui.theme.ownTvTween(if (pressed) 80 else if (compactFocusableRow) 0 else 170),
-        label = "focusScale",
-    )
-    val containerState = animateColorAsState(
-        when {
-            focused && lit -> focusLight.copy(alpha = 0.22f)
-            focused && useSolidTonalLadder -> solidFocusedContainer
-            visuallySelected && useSolidTonalLadder -> solidSelectedContainer
-            focused -> focusedContainerColor
-            visuallySelected -> selectedContainerColor
-            else -> unfocusedContainerColor
-        },
-        // A row that loses focus is commonly moved by bringIntoView in the same frame. Fading its
-        // wide focus fill toward transparent therefore produces a dark plate that visibly follows
-        // behind the new focus position. Compact rows snap the fill state in both material modes;
-        // poster cards retain the softer transition because they do not scroll as one-row plates.
-        animationSpec = tv.own.owntv.ui.theme.ownTvTween(if (compactFocusableRow) 0 else 160),
-        label = "focusContainer",
-    )
+    val scaleState = when {
+        (focused || pressed) && glassy && !glassConfig.depthEffects -> 1f
+        pressed -> 0.992f
+        compactGlassRow && focused && glassConfig.depthEffects -> 1.008f
+        focused -> focusedScale
+        else -> 1f
+    }
+    val containerState = when {
+        focused && lit -> focusLight.copy(alpha = 0.22f)
+        focused && useSolidTonalLadder -> solidFocusedContainer
+        visuallySelected && useSolidTonalLadder -> solidSelectedContainer
+        focused -> focusedContainerColor
+        visuallySelected -> selectedContainerColor
+        else -> unfocusedContainerColor
+    }
     val showBorder = showFocusBorder && (focused || visuallySelected)
     // #121: the user's chosen ring width. A wider ring also opens the glow up with it, so "extra
     // thick" reads as a halo from sofa distance instead of just a fatter line.
@@ -188,14 +161,8 @@ fun FocusableSurface(
 
     Box(
         modifier = modifier
-            .then(
-                if (motion != null && motionEnabled && focused) Modifier.onGloballyPositioned { coordinates ->
-                    val center = coordinates.boundsInRoot().center
-                    motion.focusArrived(motionToken, center, travelPx, motionEnabled)
-                } else Modifier,
-            )
             .graphicsLayer {
-                val s = scaleState.value
+                val s = scaleState
                 scaleX = s
                 scaleY = s
             }
@@ -204,15 +171,7 @@ fun FocusableSurface(
                 // while bringIntoView scrolls its parent, which reads as a moving black bar in light
                 // mode. The tonal fill + accent boundary are the compact-row focus signal; reserve
                 // the depth shadow for larger cards that do not exhibit the scrolling trail.
-                if (focused && lit && animationsOn) Modifier.shadow(
-                    // The bloom IS the animation here: at reduced level it goes and the rim carries
-                    // the focus on its own.
-                    elevation = (10 * glowScale).dp,
-                    shape = shape,
-                    clip = false,
-                    ambientColor = focusLight,
-                    spotColor = focusLight,
-                ) else if (focused && !glassy && !compactFocusableRow) Modifier.shadow(
+                if (focused && !glassy && !compactFocusableRow) Modifier.shadow(
                     elevation = (glowElevation * glowScale).dp,
                     shape = shape,
                     clip = false,
@@ -226,14 +185,14 @@ fun FocusableSurface(
                 // fills); plain tonal fill otherwise. When surface is null, behaviour is unchanged.
                 if (glassy) Modifier.glass(
                     surface = surface,
-                    baseFill = if (visuallySelected && !focused) colors.surfaceContainerHigh else containerState.value,
+                    baseFill = if (visuallySelected && !focused) colors.surfaceContainerHigh else containerState,
                     shape = shape,
                     frostScale = effectiveFrostScale,
                     interaction = visualState,
                     idleRimAlpha = glassIdleRimAlpha,
                     condenseChrome = glassCondensesWithContent,
                 )
-                else Modifier.drawBehind { drawRect(containerState.value) }
+                else Modifier.drawBehind { drawRect(containerState) }
             )
             .then(
                 if (glassy && visuallySelected && !focused) {

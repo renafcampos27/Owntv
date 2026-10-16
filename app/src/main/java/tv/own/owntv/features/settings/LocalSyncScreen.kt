@@ -3,12 +3,6 @@ package tv.own.owntv.features.settings
 import tv.own.owntv.core.R as CoreR
 
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.Image
@@ -75,7 +69,6 @@ import tv.own.owntv.ui.components.trapAllFocusExit
 import tv.own.owntv.ui.components.trapVerticalFocusExit
 import tv.own.owntv.ui.components.roundedPanel
 import tv.own.owntv.ui.theme.OwnTVTheme
-import tv.own.owntv.ui.theme.animationsOn
 
 /**
  * Settings → Local sync. The television's half of swapping data with the phone over the home Wi-Fi.
@@ -418,22 +411,10 @@ private fun BusyRow() {
  * An indeterminate ring. Compose Material3 is not a dependency of this app, so the one spinner this
  * screen needs is drawn rather than dragged in.
  *
- * Gated on [animationsOn], and the repeat uses a plain fixed `tween` — `ownTvTween` collapses to 0 ms
- * when the user turns Animations off, and a 0 ms iteration inside `infiniteRepeatable` is a
- * divide-by-zero on the main thread. See the warning on `ownTvTween`.
  */
 @Composable
 private fun BusySpinner(modifier: Modifier, color: Color) {
-    val angle = if (animationsOn) {
-        rememberInfiniteTransition(label = "localSyncBusy").animateFloat(
-            initialValue = 0f,
-            targetValue = 360f,
-            animationSpec = infiniteRepeatable(tween(900, easing = LinearEasing), RepeatMode.Restart),
-            label = "localSyncBusyAngle",
-        ).value
-    } else {
-        0f
-    }
+    val angle = 0f
     Canvas(modifier) {
         val stroke = size.minDimension * 0.14f
         val d = size.minDimension - stroke

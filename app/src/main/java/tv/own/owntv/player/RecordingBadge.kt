@@ -2,12 +2,6 @@ package tv.own.owntv.player
 
 import tv.own.owntv.core.R as CoreR
 
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -32,7 +26,6 @@ import androidx.tv.material3.Text
 import org.koin.compose.koinInject
 import tv.own.owntv.core.recording.RecordingActivityTracker
 import tv.own.owntv.core.settings.SettingsRepository
-import tv.own.owntv.core.theme.AnimationLevel
 
 /**
  * "REC", over the picture, for as long as anything is being recorded.
@@ -48,33 +41,10 @@ import tv.own.owntv.core.theme.AnimationLevel
 @Composable
 fun RecordingBadge(modifier: Modifier = Modifier) {
     val tracker: RecordingActivityTracker = koinInject()
-    val settings: SettingsRepository = koinInject()
     val active by tracker.active.collectAsStateWithLifecycle()
     if (active.isEmpty()) return
 
-    val animation by settings.animationLevel.collectAsStateWithLifecycle(initialValue = AnimationLevel.OFF)
-
-    // The pulse is what makes a red dot read as "recording" rather than as an error marker — but with
-    // Animations off there is NO transition started at all, rather than one scaled to zero.
-    //
-    // That distinction is the whole reason this is written as a branch: an infinite animation whose
-    // duration had been scaled to 0 ms is what crashed the app in 4.2.3, from the LIVE badge in this
-    // very HUD. `AnimationLevel.scale(...)` returning 0 must never reach `infiniteRepeatable`.
-    val dotAlpha = if (animation == AnimationLevel.OFF) {
-        1f
-    } else {
-        val transition = rememberInfiniteTransition(label = "rec")
-        val pulse by transition.animateFloat(
-            initialValue = 1f,
-            targetValue = 0.25f,
-            animationSpec = infiniteRepeatable(
-                animation = tween(durationMillis = PULSE_MS, easing = LinearEasing),
-                repeatMode = RepeatMode.Reverse,
-            ),
-            label = "recPulse",
-        )
-        pulse
-    }
+    val dotAlpha = 1f
 
     Row(
         modifier = modifier
@@ -103,5 +73,3 @@ fun RecordingBadge(modifier: Modifier = Modifier) {
 
 /** The same warning red the rest of the app uses for a failure, which is also what a REC dot is. */
 private val RecordingRed = Color(0xFFEF4444)
-
-private const val PULSE_MS = 900

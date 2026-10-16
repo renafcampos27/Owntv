@@ -14,7 +14,7 @@ import org.json.JSONObject
 // App-owned preferences, included in SETTINGS backups through TvBackupAppSettings.
 private val Context.simpleModeStore by preferencesDataStore(name = "owntv_simple_mode")
 
-data class SimpleModeOptions(val hideCategories: Boolean = true, val hideSidebar: Boolean = true, val channelRecovery: Boolean = true, val startOnBoot: Boolean = false, val startOnWake: Boolean = false, val recoveryTimeoutSeconds: Int = RecoveryTimeout.DEFAULT_SECONDS)
+data class SimpleModeOptions(val hideCategories: Boolean = true, val hideSidebar: Boolean = false, val channelRecovery: Boolean = true, val startOnBoot: Boolean = false, val startOnWake: Boolean = false, val recoveryTimeoutSeconds: Int = RecoveryTimeout.DEFAULT_SECONDS)
 
 object SimpleModePreferences {
 
@@ -25,6 +25,35 @@ object SimpleModePreferences {
     private val recovery = booleanPreferencesKey("channel_recovery")
     private val boot = booleanPreferencesKey("start_on_boot")
     private val wake = booleanPreferencesKey("start_on_wake")
+    private val updateDefaultApplied = booleanPreferencesKey("automatic_updates_enabled_20261016")
+
+    /** One-time TV upgrade preference; subsequent user choices and restored settings remain valid. */
+    suspend fun enableAutomaticUpdatesOnce(context: Context, enable: suspend () -> Unit) =
+        enableAutomaticUpdatesOnce(context.applicationContext.simpleModeStore, enable)
+
+    internal suspend fun enableAutomaticUpdatesOnce(store: DataStore<Preferences>, enable: suspend () -> Unit) {
+        store.edit { prefs ->
+            if (prefs[updateDefaultApplied] != true) {
+                enable()
+                prefs[updateDefaultApplied] = true
+            }
+        }
+    }
+
+    private val tvDefaultsApplied = booleanPreferencesKey("sidebar_and_priority_defaults_20261016")
+
+    suspend fun applyTvDefaultsOnce(context: Context, disablePriority: suspend () -> Unit) =
+        applyTvDefaultsOnce(context.applicationContext.simpleModeStore, disablePriority)
+
+    internal suspend fun applyTvDefaultsOnce(store: DataStore<Preferences>, disablePriority: suspend () -> Unit) {
+        store.edit { prefs ->
+            if (prefs[tvDefaultsApplied] != true) {
+                disablePriority()
+                prefs[sidebar] = false
+                prefs[tvDefaultsApplied] = true
+            }
+        }
+    }
 
     suspend fun setRecoveryTimeout(context: Context, seconds: Int) {
         context.applicationContext.simpleModeStore.edit { it[recoveryTimeout] = RecoveryTimeout.normalize(seconds) }
@@ -36,7 +65,7 @@ object SimpleModePreferences {
 
     private fun options(prefs: Preferences) = SimpleModeOptions(
         hideCategories = prefs[categories] ?: true,
-        hideSidebar = prefs[sidebar] ?: true,
+        hideSidebar = prefs[sidebar] ?: false,
         channelRecovery = prefs[recovery] ?: true,
         startOnBoot = prefs[boot] ?: false,
         startOnWake = prefs[wake] ?: false,

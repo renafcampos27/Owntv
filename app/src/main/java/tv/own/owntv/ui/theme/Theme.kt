@@ -10,7 +10,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.darkColorScheme
 import androidx.tv.material3.lightColorScheme
 import tv.own.owntv.core.theme.AccentColor
-import tv.own.owntv.core.theme.AnimationLevel
 import tv.own.owntv.core.theme.AppFontFamily
 import tv.own.owntv.core.theme.PopupFontScale
 import tv.own.owntv.core.theme.PopupSizeScale
@@ -92,7 +91,6 @@ fun OwnTVTheme(
     customAccent: String = "",
     focusHighlight: String = "",
     focusBorderWidthDp: Int = 2,
-    animationLevel: AnimationLevel = AnimationLevel.OFF,
     mainFontFamily: AppFontFamily = AppFontFamily.SYSTEM_SANS,
     popupFontFamily: AppFontFamily = AppFontFamily.LORA,
     popupFontSizePercent: Int = PopupFontScale.DEFAULT,
@@ -116,7 +114,6 @@ fun OwnTVTheme(
         LocalOwnTVColors provides colors,
         LocalThemeMode provides themeMode,
         LocalFocusBorderWidth provides focusBorderWidthDp.dp,
-        LocalAnimationLevel provides animationLevel,
         LocalMainFontFamily provides mainFontFamily.asComposeFamily(),
         LocalPopupFontFamily provides popupFontFamily.asComposeFamily(),
         LocalPopupFontScaleFactor provides PopupFontScale.factor(popupFontSizePercent),

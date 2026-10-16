@@ -1,11 +1,6 @@
 package tv.own.owntv.ui.theme
 
 import androidx.compose.foundation.background
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.tween
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.Immutable
@@ -41,8 +36,6 @@ import androidx.compose.ui.node.invalidateDraw
 import androidx.compose.ui.platform.InspectorInfo
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 import tv.own.owntv.core.theme.GlassConfig
 import tv.own.owntv.core.theme.GlassSurface
 
@@ -143,115 +136,6 @@ val LocalContentScrolled = compositionLocalOf { false }
  * should never frost (the fullscreen player, over opaque video) provide null.
  */
 val LocalActionSurface = compositionLocalOf<GlassSurface?> { GlassSurface.DIALOGS }
-
-/**
- * One shared focus-motion timeline for the whole app. A single scalar [Animatable] drives the
- * 140 ms glint/rim arrival and the 220 ms backdrop parallax, so rapid D-pad movement cancels the
- * previous motion instead of creating one queued animation per card.
- */
-@Stable
-class GlassMotionState(private val scope: CoroutineScope) {
-    private val timeline = Animatable(1f)
-    private var currentFocus: Any? = null
-    private var lastFocusCenter: Offset? = null
-    private var arrivalOffset = Offset.Zero
-    private var parallaxStart = Offset.Zero
-    private var parallaxTarget = Offset.Zero
-    private var rootSize = Size.Zero
-    private var density = 1f
-    private var enabled = true
-
-    fun setRootSize(size: Size, density: Float) {
-        rootSize = size
-        this.density = density.coerceAtLeast(0.1f)
-    }
-
-    fun setEnabled(value: Boolean) {
-        if (enabled == value) return
-        enabled = value
-        if (!value) scope.launch {
-            timeline.stop()
-            arrivalOffset = Offset.Zero
-            parallaxStart = Offset.Zero
-            parallaxTarget = Offset.Zero
-            timeline.snapTo(1f)
-        }
-    }
-
-    fun focusArrived(token: Any, center: Offset, travelPx: Float, animate: Boolean) {
-        if (!center.x.isFinite() || !center.y.isFinite()) return
-        if (!animate || !enabled) {
-            currentFocus = token
-            lastFocusCenter = center
-            scope.launch {
-                timeline.stop()
-                arrivalOffset = Offset.Zero
-                parallaxStart = Offset.Zero
-                parallaxTarget = Offset.Zero
-                timeline.snapTo(1f)
-            }
-            return
-        }
-        if (currentFocus === token) {
-            updateFocusedPosition(token, center)
-            return
-        }
-        val previous = lastFocusCenter
-        val delta = if (previous == null) Offset.Zero else center - previous
-        val direction = when {
-            kotlin.math.abs(delta.x) >= kotlin.math.abs(delta.y) && delta.x != 0f -> Offset(-kotlin.math.sign(delta.x), 0f)
-            delta.y != 0f -> Offset(0f, -kotlin.math.sign(delta.y))
-            else -> Offset.Zero
-        }
-        currentFocus = token
-        lastFocusCenter = center
-        scope.launch {
-            val currentParallax = parallaxOffset()
-            timeline.stop()
-            arrivalOffset = direction * travelPx
-            parallaxStart = currentParallax
-            parallaxTarget = targetParallax(center)
-            timeline.snapTo(0f)
-            timeline.animateTo(1f, tween(durationMillis = 220, easing = LinearEasing))
-        }
-    }
-
-    fun updateFocusedPosition(token: Any, center: Offset) {
-        if (currentFocus !== token || !center.x.isFinite() || !center.y.isFinite() || !enabled) return
-        lastFocusCenter = center
-        parallaxTarget = targetParallax(center)
-    }
-
-    private fun targetParallax(center: Offset): Offset {
-        if (rootSize.width <= 0f || rootSize.height <= 0f) return Offset.Zero
-        return Offset(
-            x = (center.x / rootSize.width - 0.5f) * 12f * density,
-            y = (center.y / rootSize.height - 0.5f) * 8f * density,
-        )
-    }
-
-    private fun eased(durationMs: Float): Float {
-        val local = (timeline.value * 220f / durationMs).coerceIn(0f, 1f)
-        return FastOutSlowInEasing.transform(local)
-    }
-
-    fun glintOffset(): Offset = if (enabled) arrivalOffset * (1f - eased(140f)) else Offset.Zero
-
-    fun focusedRimScale(): Float = if (enabled) {
-        androidx.compose.ui.util.lerp(0.92f / 0.78f, 1f, eased(140f))
-    } else 1f
-
-    fun parallaxOffset(): Offset {
-        if (!enabled) return Offset.Zero
-        val fraction = eased(220f)
-        return Offset(
-            androidx.compose.ui.util.lerp(parallaxStart.x, parallaxTarget.x, fraction),
-            androidx.compose.ui.util.lerp(parallaxStart.y, parallaxTarget.y, fraction),
-        )
-    }
-}
-
-val LocalGlassMotion = compositionLocalOf<GlassMotionState?> { null }
 
 /**
  * Holder for the single shared blurred copy of the background image (Phase 4 backdrop blur).
@@ -372,9 +256,6 @@ fun Modifier.glass(
     // thickness. Both only diverge from the shipped values once the user has actually picked one.
     val focusRingMix = if (customFocusRing) 0.85f else 0.38f
     val focusRingWidth = LocalFocusBorderWidth.current.let { if (it == Dimens.FocusBorderWidth) 1.5.dp else it }
-    val motion = LocalGlassMotion.current
-    val motionFocused = interaction == GlassInteraction.FOCUSED || interaction == GlassInteraction.PRESSED
-    fun glintMotionOffset(): Offset = if (motionFocused) motion?.glintOffset() ?: Offset.Zero else Offset.Zero
     // 55% is the compatibility baseline: existing users keep the exact Phase 7 appearance.
     // The control only scales focused light, never the material tint or idle list rendering.
     val highlightScale = (config.highlightStrength / GlassConfig.DEFAULT_HIGHLIGHT_STRENGTH)
@@ -386,11 +267,7 @@ fun Modifier.glass(
         // Read the local only on explicitly tagged chrome. Cards/panels never subscribe to scroll
         // state, so crossing the threshold cannot fan out recomposition through a dense list.
         val contentScrolled = LocalContentScrolled.current
-        val progress by animateFloatAsState(
-            targetValue = if (contentScrolled) 1f else 0f,
-            animationSpec = ownTvTween(160),
-            label = "chromeCondense",
-        )
+        val progress = if (contentScrolled) 1f else 0f
         progress
     } else {
         0f
@@ -458,9 +335,7 @@ fun Modifier.glass(
     // entirely so the wallpaper cannot bleed through and the control truthfully reaches its maximum.
     if (config.alpha >= 0.995f) {
         return this.drawWithCache {
-            val rimMotionScale = if (
-                interaction == GlassInteraction.FOCUSED || interaction == GlassInteraction.PRESSED
-            ) motion?.focusedRimScale() ?: 1f else 1f
+
             val body = if (lightweightIdle || !treatment.glint) null else createLuminousBody(
                 material = material,
                 interaction = interaction,
@@ -477,11 +352,11 @@ fun Modifier.glass(
                 interaction = interaction,
                 idleAlpha = resolvedIdleRim,
                 highlightScale = highlightScale,
-                focusedMotionScale = rimMotionScale,
+
             )
             onDrawWithContent {
                 drawRect(baseFill)
-                body?.let { drawLuminousBody(it, darkLensMix(null), glintMotionOffset()) }
+                body?.let { drawLuminousBody(it, darkLensMix(null)) }
                 drawContent()
                 rim?.let(::drawLuminousRim)
             }
@@ -491,14 +366,12 @@ fun Modifier.glass(
     // No wallpaper is a deliberate tonal/ceramic material, not fake transparency over a flat colour.
     if (!config.hasBackdrop) {
         return this.drawWithCache {
-            val rimMotionScale = if (
-                interaction == GlassInteraction.FOCUSED || interaction == GlassInteraction.PRESSED
-            ) motion?.focusedRimScale() ?: 1f else 1f
+
             val body = if (lightweightIdle || !treatment.glint) null else createLuminousBody(material = material, interaction = interaction, tonal = true, highlightScale = highlightScale)
-            val rim = if (lightweightIdle) null else createLuminousRim(material = material, treatment = treatment, accent = accent, shape = shape, interaction = interaction, idleAlpha = resolvedIdleRim, highlightScale = highlightScale, focusedMotionScale = rimMotionScale, focusRingMix = focusRingMix, focusRingWidth = focusRingWidth)
+            val rim = if (lightweightIdle) null else createLuminousRim(material = material, treatment = treatment, accent = accent, shape = shape, interaction = interaction, idleAlpha = resolvedIdleRim, highlightScale = highlightScale, focusRingMix = focusRingMix, focusRingWidth = focusRingWidth)
             onDrawWithContent {
                 drawRect(baseFill.copy(alpha = 0.94f))
-                body?.let { drawLuminousBody(it, darkLensMix(null), glintMotionOffset()) }
+                body?.let { drawLuminousBody(it, darkLensMix(null)) }
                 drawContent()
                 rim?.let(::drawLuminousRim)
             }
@@ -527,15 +400,13 @@ fun Modifier.glass(
         return this
             .then(if (blurred != null && adaptiveEligible) GlassPositionElement(position) else Modifier)
             .drawWithCache {
-                val rimMotionScale = if (
-                    interaction == GlassInteraction.FOCUSED || interaction == GlassInteraction.PRESSED
-                ) motion?.focusedRimScale() ?: 1f else 1f
+
                 val body = if (!treatment.glint) null else createLuminousBody(material = material, interaction = interaction, tonal = false, highlightScale = highlightScale)
-                val rim = createLuminousRim(material = material, treatment = treatment, accent = accent, shape = shape, interaction = interaction, idleAlpha = resolvedIdleRim, highlightScale = highlightScale, focusedMotionScale = rimMotionScale, focusRingMix = focusRingMix, focusRingWidth = focusRingWidth)
+                val rim = createLuminousRim(material = material, treatment = treatment, accent = accent, shape = shape, interaction = interaction, idleAlpha = resolvedIdleRim, highlightScale = highlightScale, focusRingMix = focusRingMix, focusRingWidth = focusRingWidth)
                 onDrawWithContent {
                     val sampled = blurred?.sampledLuminance(position.bounds)
                     drawRect(baseFill.copy(alpha = tintAlpha(sampled)))
-                    body?.let { drawLuminousBody(it, darkLensMix(sampled), glintMotionOffset()) }
+                    body?.let { drawLuminousBody(it, darkLensMix(sampled)) }
                     drawContent()
                     drawLuminousRim(rim)
                 }
@@ -554,10 +425,8 @@ fun Modifier.glass(
             // Gradients depend only on this node's size and material inputs. Cache them across frames;
             // the moving backdrop bounds stay in the draw lambda so scrolling does not rebuild them.
             val body = if (treatment.glint) createLuminousBody(material = material, interaction = interaction, tonal = false, highlightScale = highlightScale) else null
-            val rimMotionScale = if (
-                interaction == GlassInteraction.FOCUSED || interaction == GlassInteraction.PRESSED
-            ) motion?.focusedRimScale() ?: 1f else 1f
-            val rim = createLuminousRim(material = material, treatment = treatment, accent = accent, shape = shape, interaction = interaction, idleAlpha = resolvedIdleRim, highlightScale = highlightScale, focusedMotionScale = rimMotionScale, focusRingMix = focusRingMix, focusRingWidth = focusRingWidth)
+
+            val rim = createLuminousRim(material = material, treatment = treatment, accent = accent, shape = shape, interaction = interaction, idleAlpha = resolvedIdleRim, highlightScale = highlightScale, focusRingMix = focusRingMix, focusRingWidth = focusRingWidth)
             onDrawWithContent {
                 val bounds = position.bounds
                 val sampled = blurred.sampledLuminance(bounds)
@@ -578,8 +447,7 @@ fun Modifier.glass(
                 // are invisible while the bitmap is at full root resolution (scale ≈ 1) but misalign the
                 // frost whenever the bitmap is smaller than the root — e.g. a 4K root with the 1920-capped
                 // bitmap (scale = 2).
-                val parallax = motion?.parallaxOffset() ?: Offset.Zero
-                translate(-(bounds.left + parallax.x) * sx, -(bounds.top + parallax.y) * sy) {
+                translate(-bounds.left * sx, -bounds.top * sy) {
                     scale(rootW / lower.width * sx, rootH / lower.height * sy, pivot = Offset.Zero) {
                         drawImage(lower, topLeft = Offset.Zero, alpha = 1f - frostSelection.upperWeight)
                     }
@@ -596,7 +464,7 @@ fun Modifier.glass(
                     // Bounds not resolved yet (first frame) → keep the panel readable with the solid fill.
                     drawRect(baseFill)
                 }
-                body?.let { drawLuminousBody(it, darkLensMix(sampled), glintMotionOffset()) }
+                body?.let { drawLuminousBody(it, darkLensMix(sampled)) }
                 drawContent()
                 drawLuminousRim(rim)
             }
@@ -752,18 +620,15 @@ private fun CacheDrawScope.createLuminousBody(
 private fun DrawScope.drawLuminousBody(
     body: LuminousBody,
     darkLensMix: Float,
-    glintOffset: Offset,
 ) {
     val dark = darkLensMix.coerceIn(0f, 1f)
-    translate(glintOffset.x, glintOffset.y) {
-        if (dark < 1f) {
-            drawRadialGlow(WhiteLens, body.lensCenter, body.lensRadius, alpha = body.lensPeak.coerceAtMost(1f) * (1f - dark))
-            body.focusSweep?.let { drawRect(brush = it, alpha = 1f - dark) }
-        }
-        if (dark > 0f) {
-            drawRadialGlow(BlackLens, body.lensCenter, body.lensRadius, alpha = (body.lensPeak * 0.70f).coerceAtMost(1f) * dark)
-            body.darkFocusSweep?.let { drawRect(brush = it, alpha = dark) }
-        }
+    if (dark < 1f) {
+        drawRadialGlow(WhiteLens, body.lensCenter, body.lensRadius, alpha = body.lensPeak.coerceAtMost(1f) * (1f - dark))
+        body.focusSweep?.let { drawRect(brush = it, alpha = 1f - dark) }
+    }
+    if (dark > 0f) {
+        drawRadialGlow(BlackLens, body.lensCenter, body.lensRadius, alpha = (body.lensPeak * 0.70f).coerceAtMost(1f) * dark)
+        body.darkFocusSweep?.let { drawRect(brush = it, alpha = dark) }
     }
     drawVerticalFade(BlackShade, body.shadeStartY, body.shadeEndY, alpha = body.shadeAlpha)
 }
@@ -777,7 +642,6 @@ private fun CacheDrawScope.createLuminousRim(
     interaction: GlassInteraction,
     idleAlpha: Float,
     highlightScale: Float,
-    focusedMotionScale: Float = 1f,
     focusRingMix: Float = 0.38f,
     focusRingWidth: Dp = 1.5.dp,
 ): LuminousRim {
@@ -785,12 +649,12 @@ private fun CacheDrawScope.createLuminousRim(
     val selected = interaction == GlassInteraction.SELECTED
     val peak = when {
         !treatment.brightRim -> 0f
-        focused -> material.rimFocused * highlightScale * focusedMotionScale
+        focused -> material.rimFocused * highlightScale
         selected -> material.rimSelected
         else -> idleAlpha
     }
     val tail = when {
-        focused -> 0.12f * highlightScale * focusedMotionScale
+        focused -> 0.12f * highlightScale
         selected -> 0.10f
         else -> idleAlpha * 0.45f
     }

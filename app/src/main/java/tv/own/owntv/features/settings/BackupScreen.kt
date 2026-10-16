@@ -3,6 +3,8 @@ package tv.own.owntv.features.settings
 import tv.own.owntv.core.R as CoreR
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
@@ -124,7 +126,8 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     // two wins would come down to whether onEnter runs inside requestFocus(), and this screen's restore
     // is not worth betting on that ordering.
     var dialogReturn by remember { mutableStateOf<FocusRequester?>(null) }
-    val anyDialogOpen = showBrowser || showExportPicker || showProfilePicker || pendingFolderBrowser || exportFolder != null ||
+    var automaticDialogOpen by remember { mutableStateOf(false) }
+    val anyDialogOpen = automaticDialogOpen || showBrowser || showExportPicker || showProfilePicker || pendingFolderBrowser || exportFolder != null ||
         showRestoreChooser || showRemoteRestore || showExportChooser || showRemoteExportPassword || showRemoteExport ||
         state is BackupViewModel.State.ChooseRestore || state is BackupViewModel.State.NeedPassword
     LaunchedEffect(anyDialogOpen) {
@@ -150,7 +153,8 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 }
             }
             .focusGroup()
-            .padding(horizontal = 40.dp, vertical = 28.dp),
+            .padding(horizontal = 40.dp, vertical = 28.dp)
+            .verticalScroll(rememberScrollState()),
     ) {
         Text(stringResource(CoreR.string.settings_backup_title), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)
         Spacer(Modifier.height(8.dp))
@@ -164,6 +168,9 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             OwnTVButton(stringResource(CoreR.string.settings_backup_export_button), onClick = { dialogReturn = firstFocus; showExportChooser = true }, icon = OwnTVIcon.BACKUP, enabled = state != BackupViewModel.State.Working, modifier = Modifier.focusRequester(firstFocus))
             OwnTVButton(stringResource(CoreR.string.settings_backup_restore_button), onClick = { dialogReturn = restoreBtnFocus; showRestoreChooser = true }, style = OwnTVButtonStyle.SECONDARY, icon = OwnTVIcon.REFRESH, enabled = state != BackupViewModel.State.Working, modifier = Modifier.focusRequester(restoreBtnFocus))
         }
+        Spacer(Modifier.height(20.dp))
+
+        AutomaticBackupControls(vm) { automaticDialogOpen = it }
         Spacer(Modifier.height(20.dp))
 
         when (val s = state) {
@@ -457,7 +464,7 @@ private fun BackupPasswordDialog(
  */
     }
 @Composable
-private fun ProfilePickerDialog(
+internal fun ProfilePickerDialog(
     profiles: List<tv.own.owntv.core.database.entity.ProfileEntity>,
     activeId: Long,
     verifyPin: (tv.own.owntv.core.database.entity.ProfileEntity, String) -> Boolean,

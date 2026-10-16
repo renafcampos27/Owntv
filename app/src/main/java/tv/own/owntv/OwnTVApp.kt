@@ -113,7 +113,28 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         // the live preview engine, which is a lazy singleton — so nothing wrote to the diagnostics log
         // until the user happened to open Live TV, and a fault during startup, a VOD open or an EPG sync
         // produced an empty report from a user who had deliberately turned logging on.
+        appScope.launch {
+            try { tv.own.owntv.features.settings.AutomaticBackupScheduler.update(this@OwnTVApp) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { /* Retry scheduling on the next application start. */ }
+        }
         tv.own.owntv.player.LiveDiagnosticsLog.init(this)
+        appScope.launch {
+            val settings = GlobalContext.get().get<tv.own.owntv.core.settings.SettingsRepository>()
+            try {
+                tv.own.owntv.features.settings.SimpleModePreferences.enableAutomaticUpdatesOnce(this@OwnTVApp) {
+                    settings.setUpdateCheckOnStart(true)
+                }
+                tv.own.owntv.features.settings.SimpleModePreferences.applyTvDefaultsOnce(this@OwnTVApp) {
+                    GlobalContext.get().get<tv.own.owntv.core.customize.CustomizationStore>()
+                        .disableChannelVersionPriority()
+                }
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: java.io.IOException) {
+                // Leave the marker unset and retry next launch; storage failure must not abort TV startup.
+            }
+        }
         appScope.launch {
             val settings = GlobalContext.get().get<tv.own.owntv.core.settings.SettingsRepository>()
             tv.own.owntv.player.PlaybackSettings.of(settings)
@@ -148,7 +169,7 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
     /**
      * App-wide Coil loader that fetches images through the app's OkHttpClient — so posters/logos get
      * the same player-style User-Agent and connection pooling our IPTV requests use (some panels reject
-     * default UAs). Crossfade smooths the grid as images stream in. The memory cache is capped well
+     * default UAs). The memory cache is capped well
      * below Coil's default ~25% — on a 4K TV every megabyte belongs to the video pipeline, not to
      * channel-logo bitmaps.
      */
@@ -194,7 +215,7 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
             // Opaque poster art doesn't need an alpha channel; RGB_565 halves bitmap memory
             // under the deliberately small memory cap.
             .allowRgb565(true)
-            .crossfade(true)
+            .crossfade(false)
             .build()
     }
 

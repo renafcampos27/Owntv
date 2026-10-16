@@ -1,7 +1,5 @@
 package tv.own.owntv.ui.components
 
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -18,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import tv.own.owntv.ui.theme.OwnTVTheme
-import tv.own.owntv.ui.theme.ownTvTween
 
 /**
  * The single 4-state visual "ladder" shared by every top-level navigation surface (the [Sidebar]
@@ -34,7 +31,7 @@ import tv.own.owntv.ui.theme.ownTvTween
  *     bar: a persistent, colour-independent marker of the active section while focus is elsewhere.
  *  4. **idle** — transparent, muted [onSurfaceVariant] content.
  *
- * Colours animate on the shared [ownTvTween]. [showAccentBar] and [focusBorder] are booleans/nullable
+ * Colours switch immediately with focus. [showAccentBar] and [focusBorder] are booleans/nullable
  * the call site draws itself (bar via [NavAccentBar], outline via `Modifier.border`).
  */
 data class NavLadderColors(
@@ -54,39 +51,24 @@ fun rememberNavLadderColors(
     val colors = OwnTVTheme.colors
     val activeSelected = selected && focused
 
-    val container by animateColorAsState(
-        when {
-            activeSelected -> colors.primaryContainer
-            focused -> colors.card
-            selected -> colors.secondaryContainer.copy(alpha = 0.45f)
-            else -> Color.Transparent
-        },
-        // Both navigation rails can move their rows while focus changes. Their container must switch
-        // immediately in every material mode or the old fill follows the scrolling item as a dark
-        // plate. Foreground/icon colour easing remains for visual polish.
-        animationSpec = ownTvTween(0),
-        label = "navLadderBg",
-    )
-    val content by animateColorAsState(
-        when {
-            activeSelected -> colors.onPrimaryContainer
-            focused -> colors.onSurface       // bright white = "where the remote is"
-            selected -> colors.accent         // accent cyan = "this is active"
-            else -> colors.onSurfaceVariant
-        },
-        animationSpec = ownTvTween(140),
-        label = "navLadderFg",
-    )
-    val icon by animateColorAsState(
-        when {
-            activeSelected -> colors.onPrimaryContainer
-            focused -> colors.onSurface
-            selected -> colors.accent
-            else -> colors.onSurfaceVariant
-        },
-        animationSpec = ownTvTween(140),
-        label = "navLadderIcon",
-    )
+    val container = when {
+        activeSelected -> colors.primaryContainer
+        focused -> colors.card
+        selected -> colors.secondaryContainer.copy(alpha = 0.45f)
+        else -> Color.Transparent
+    }
+    val content = when {
+        activeSelected -> colors.onPrimaryContainer
+        focused -> colors.onSurface       // bright white = "where the remote is"
+        selected -> colors.accent         // accent cyan = "this is active"
+        else -> colors.onSurfaceVariant
+    }
+    val icon = when {
+        activeSelected -> colors.onPrimaryContainer
+        focused -> colors.onSurface
+        selected -> colors.accent
+        else -> colors.onSurfaceVariant
+    }
 
     return NavLadderColors(
         container = container,
@@ -100,17 +82,13 @@ fun rememberNavLadderColors(
 /**
  * The persistent left accent bar drawn on a [selected][NavLadderColors.showAccentBar] nav surface —
  * a thin vertical accent-coloured pill on the left edge that marks the active section regardless of
- * colour contrast (a spatial/shape cue for low-contrast panels and colour-blind users). Animates its
- * width so it slides in/out instead of popping. Must be called inside a [Box].
+ * colour contrast (a spatial/shape cue for low-contrast panels and colour-blind users). Changes its
+ * width immediately with selection. Must be called inside a [Box].
  */
 @Composable
 fun BoxScope.NavAccentBar(visible: Boolean, height: Dp = 22.dp, modifier: Modifier = Modifier) {
     val colors = OwnTVTheme.colors
-    val width by animateDpAsState(
-        if (visible) 3.dp else 0.dp,
-        animationSpec = ownTvTween(160),
-        label = "navAccentBar",
-    )
+    val width = if (visible) 3.dp else 0.dp
     if (width > 0.dp) {
         Box(
             modifier = modifier

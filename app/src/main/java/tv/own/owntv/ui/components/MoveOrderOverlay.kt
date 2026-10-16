@@ -8,7 +8,6 @@ import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.input.KeyboardType
 import tv.own.owntv.R
-import tv.own.owntv.ui.theme.animationsOn
 import androidx.compose.foundation.background
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.focusGroup
@@ -73,7 +72,6 @@ fun MoveOrderOverlay(
 
     val panelScroll = rememberScrollState()
 
-    val animated = animationsOn
     var position by remember(activeIndex) { mutableStateOf((activeIndex + 1).toString()) }
     var confirmRestore by remember { mutableStateOf(false) }
     var arrowMoveMode by remember { mutableStateOf(true) }
@@ -84,10 +82,10 @@ fun MoveOrderOverlay(
             if (runCatching { focus.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
         }
     }
-    LaunchedEffect(activeIndex, animated) {
+    LaunchedEffect(activeIndex) {
         if (itemNames.isNotEmpty()) {
             val index = activeIndex.coerceIn(0, itemNames.lastIndex)
-            if (animated) listState.animateScrollToItem(index) else listState.scrollToItem(index)
+            listState.scrollToItem(index)
         }
     }
     androidx.activity.compose.BackHandler { if (!saving) onCancel() }
