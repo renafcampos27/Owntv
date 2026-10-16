@@ -26,6 +26,13 @@ internal class GuideRowCache<K, V>(
     fun peek(key: K): List<V>? = synchronized(lock) { rows[key] }
     fun size(): Int = synchronized(lock) { rows.size }
     fun itemCount(): Int = synchronized(lock) { items }
+    /** Navigation drops obsolete work, but preserves completed LRU blocks for the return trip. */
+    fun cancelPendingOutside(keep: (K) -> Boolean) {
+        val obsolete = synchronized(lock) {
+            pending.keys.filterNot(keep).mapNotNull { pending.remove(it) }
+        }
+        obsolete.forEach { it.cancel() }
+    }
     /** Failed reads may be displayed with eligible older data, but never become cached successes. */
     suspend fun getOrFallback(key: K, loader: suspend () -> List<V>, fallback: (Exception) -> List<V>): List<V> {
         val owner = synchronized(lock) { generation }
@@ -74,7 +81,10 @@ internal class GuideRowCache<K, V>(
                         }
                         result
                     } finally {
-                        synchronized(lock) { if (owner == generation) pending.remove(key) }
+                        val completed = currentCoroutineContext()[kotlinx.coroutines.Job]
+                        synchronized(lock) {
+                            if (owner == generation && pending[key] === completed) pending.remove(key)
+                        }
                     }
                 }.also { pending[key] = it }
             }

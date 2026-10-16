@@ -17,6 +17,7 @@ class BaselineProfileGenerator {
     ) {
         pressHome()
         startActivityAndWait()
-        exerciseIptvJourney(remote = remoteDevice())
+        exerciseIptvJourney()
+        exerciseRepeatChannels()
     }
 }

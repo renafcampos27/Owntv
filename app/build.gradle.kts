@@ -22,9 +22,8 @@ val packagedLocaleQualifiers: Set<String> = run {
 
 plugins {
     alias(libs.plugins.android.application)
-    // Kotlin is provided by AGP 9's built-in Kotlin support. KSP 2.3.6+ is compatible with it.
+    // Kotlin is provided by AGP 9's built-in Kotlin support.
     alias(libs.plugins.compose.compiler)
-    alias(libs.plugins.ksp)
     // Consumes :baselineprofile's output and packages it as baseline.prof (audit ST1).
     alias(libs.plugins.baselineprofile)
 }
@@ -47,9 +46,9 @@ android {
         applicationId = "tv.own.owntv"
         minSdk = 26
         targetSdk = 36
-        // Release version 105.1.0.1 (versionCode 10510001) so it installs directly over legacy builds.
-        versionCode = (System.getenv("VERSION_CODE") ?: "10510001").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "105.1.0.1"
+        // Release version 105.1.0.3 (versionCode 10510003) so it installs directly over legacy builds.
+        versionCode = (System.getenv("VERSION_CODE") ?: "10510003").toInt()
+        versionName = System.getenv("VERSION_NAME") ?: "105.1.0.3"
 
         // Opt-in local diagnostic APKs keep the rolling playback trace enabled even when they are
         // release-signed (so they can update an installed production build without changing its data).
@@ -375,7 +374,6 @@ dependencies {
     // Lifecycle / Navigation
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.lifecycle.viewmodel.compose)
-    implementation(libs.androidx.navigation.compose)
 
     // Preferences
     implementation(libs.androidx.datastore.preferences)
@@ -400,7 +398,6 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
-    ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
 
@@ -412,9 +409,6 @@ dependencies {
     implementation(libs.androidx.media3.exoplayer)
     implementation(libs.androidx.media3.ui)
 
-    // In-app YouTube trailer playback (plan §7.3) — WebView-backed IFrame player; the only ToS-clean
-    // way to play YouTube trailers inside the app. Falls back to an "Open in YouTube" intent.
-    implementation(libs.youtube.player)
 
     // Image loading
     implementation(libs.coil.compose)

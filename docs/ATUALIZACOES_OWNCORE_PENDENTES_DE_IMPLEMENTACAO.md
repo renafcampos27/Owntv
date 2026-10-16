@@ -1,6 +1,28 @@
 # Atualizações OwnCore pendentes de implementação
 
-Última atualização: 06/10/2026.
+Última atualização: 12/10/2026.
+
+## Implementado — recomendações não opcionais do Core 1.0.67
+
+Autorizados e implementados os lotes A/B/C: classificação das falhas de backup e rejeição de uploads truncados; disponibilidade transitória de gravações/USB/permissões, com verificação antes de reproduzir; limpeza de URL HTML e reconhecimento confirmado de get.php em novas importações, preservando modo só TV, HLS e identidade da origem. Reutilizados os motivos locais de gravação; sem migração da base de dados v50. Não implementadas as opções de paralelismo, arbitragem adicional, restauro de categoria, novos filtros, ClearKey ou vídeo por software acima de 1080p. Compilação release, lint vital e 1 573 testes aprovados; validação física pendente. Consultar [implementação e limites](IMPLEMENTACAO_CORE_1.0.67_2026-10-12.md). A análise seguinte é preservada como histórico anterior à autorização; os lotes A/B/C já não estão pendentes.
+
+## Analisado — Core 1.0.67, sem implementação
+
+Comparado o código da tag core-1.0.67 com core-1.0.66 e com o Core TV local, incluindo os lotes recentes. Recomendada integração seletiva: classificação correta dos erros de backup e rejeição de upload HTTP truncado; disponibilidade de ficheiros/USB e lacunas de diagnóstico de gravações; limpeza de URL HTML e reconhecimento de get.php em novas importações. Arbitragem de reprodução/captura deve reutilizar o registo local, com fecho confirmado. ClearKey inline e restauro de categoria são opcionais. Não ativar downloads paralelos nem software de vídeo acima de 1080p globalmente. Leitura de ZIP com menos memória e limpeza de buffering ao parar já existem localmente. O esquema local é v50; não substituir pelo v48 upstream. Esta análise não demonstra resolução do bloqueio A–B–A e não autoriza implementação. Consultar [comparação e plano seletivo](ANALISE_CORE_1.0.67_2026-10-12.md).
+
+## Implementado — integração seletiva Core 1.0.66 e libmpv 2026.10.3
+
+Autorizados e concluídos quatro lotes: atualização nativa, migração do áudio FFmpeg do ExoPlayer para a ponte partilhada, avaliação de áudio e alterações da saída, recuperação mpv com margem limitada para cache em crescimento e timeout de direto de 10 s, Play/Pause com ACTION_UP isolado e pesquisa com separadores. Mantidos o misturador estéreo local, volume a 100%, motores exclusivos, HLS estrito, reserva/atraso independentes e limite superior de 70 s. Não se importaram regras globais HLS, retries próprios de TS, WakeLock de background ou funcionalidades de smartphone/filmes/séries. Esta é integração seletiva, sem declarar equivalência integral à 1.0.66.
+
+Compilação, 1 961 testes, lint, junção de bibliotecas e R8 aprovados; nomes JNI confirmados no mapeamento efetivamente gerado. Reprodução física e bloqueio A–B–A continuam por validar. Consultar [implementação e critérios de teste](IMPLEMENTACAO_CORE_1.0.66_LIBMPV_2026.10.3_2026-10-11.md). Os registos seguintes preservam as decisões das versões anteriores.
+
+## Implementado — integração seletiva Core 1.0.65
+
+O utilizador autorizou as recomendações e foram integrados os quatro lotes seletivos. Consultar [implementação e limites](IMPLEMENTACAO_CORE_1.0.65_2026-10-09.md). Compilação e testes aprovados; validação física pendente. Não equivale a copiar integralmente a release. Mantêm-se as personalizações TV e libmpv 2026.10.2; funcionalidades excluídas e propostas opcionais não foram ativadas globalmente. O texto da análise abaixo conserva a decisão anterior à autorização.
+
+## Análise Core 1.0.65 — 09/10/2026
+
+Analisada a nova release e comparada com o código local, sem implementação. Consultar [integração seletiva proposta](ANALISE_CORE_1.0.65_2026-10-09.md). Candidatos prioritários: identificação correta dos codecs mpv, preservar identidade de diferido no retry/background e ativar perfil só no fim do restauro. Rede/DNS/prazos HTTP e associação de Surface exigem adaptação às proteções locais. Gravação AES-128 é funcionalidade nova útil; master playlists já têm suporte local e não devem ser substituídas pela implementação upstream mais simples. libmpv 2026.10.2 já foi atualizado separadamente. A referência seletiva 1.0.64 permanece: esta análise não estabelece equivalência 1.0.65 nem autoriza implementação.
 
 ## Versão upstream de referência
 

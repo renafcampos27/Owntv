@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_complete_password_message">O backup completo inclui os endereços, utilizadores, palavras-passe, intervalos de atualização das listas e as preferências selecionadas. Defina uma palavra-passe para proteger o backup; será necessária para o restaurar.</string>
+</resources>

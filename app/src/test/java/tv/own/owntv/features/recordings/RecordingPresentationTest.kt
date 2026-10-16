@@ -17,4 +17,15 @@ class RecordingPresentationTest {
             Locale.setDefault(previous)
         }
     }
+
+    @Test fun `estimated storage duration splits hours and minutes correctly`() {
+        assertEquals(Pair(0L, 0L), splitEstimatedDuration(-1000L))
+        assertEquals(Pair(0L, 0L), splitEstimatedDuration(0L))
+        assertEquals(Pair(0L, 0L), splitEstimatedDuration(59_000L))
+        assertEquals(Pair(0L, 1L), splitEstimatedDuration(60_000L))
+        assertEquals(Pair(0L, 59L), splitEstimatedDuration(3_540_000L))
+        assertEquals(Pair(1L, 0L), splitEstimatedDuration(3_600_000L))
+        assertEquals(Pair(1L, 30L), splitEstimatedDuration(5_400_000L))
+        assertEquals(Pair(24L, 15L), splitEstimatedDuration((24 * 3600 + 15 * 60) * 1000L))
+    }
 }

@@ -61,6 +61,7 @@ fun SortChip(
                     SortMode.ALPHA -> stringResource(CoreR.string.settings_sort_alpha)
                     SortMode.RATING -> stringResource(CoreR.string.settings_sort_rating)
                     SortMode.DATE_ADDED -> stringResource(CoreR.string.settings_sort_date_added)
+                    SortMode.CUSTOM -> stringResource(tv.own.owntv.R.string.live_sort_custom)
                 },
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,

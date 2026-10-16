@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="epg_reminder_set">Lembrar</string>
+    <string name="epg_reminder_cancel">Cancelar lembrete</string>
+    <string name="epg_reminder_due_title">Começa em breve em %1$s</string>
+    <string name="epg_reminder_due_protected_note">Mudar para este canal em direto vai interromper a reprodução atual em diferido ou gravação.</string>
+    <string name="epg_reminder_dismiss">Ignorar</string>
+</resources>

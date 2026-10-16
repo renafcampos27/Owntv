@@ -105,7 +105,7 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val addFocus = remember { FocusRequester() }
     val errorFocus = remember { FocusRequester() }
 
-    // Per-row focus restore (mirrors MoviesScreen): track the row the user is acting on so, when
+    // Per-row focus restore (restores the acted-on row): track the row the user is acting on so, when
     // edit/re-sync/delete closes, focus lands back inside the list — on the same row if it survived,
     // else the nearest neighbour that slid into its slot, else the first row, else "Add Source".
     var contextId by remember { mutableStateOf<Long?>(null) }

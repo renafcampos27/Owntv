@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="epg_reminder_set">Remind me</string>
+    <string name="epg_reminder_cancel">Cancel reminder</string>
+    <string name="epg_reminder_due_title">Starting soon on %1$s</string>
+    <string name="epg_reminder_due_protected_note">Switching to this live channel will stop your current replay or recording playback.</string>
+    <string name="epg_reminder_dismiss">Dismiss</string>
+</resources>

@@ -30,7 +30,9 @@ class GuideViewportTest {
         assertTrue(visibleGuideSlots(10, 0, 0, 120f).isEmpty())
     }
     @Test fun cellLookupUsesHalfOpenBoundsAndPreservesGaps() {
-        val cells = listOf(GuideProgrammeCells.Cell(0, 0, 10), GuideProgrammeCells.Cell(1, 20, 30), GuideProgrammeCells.Cell(2, 30, 40))
+        val cells = listOf(0L to 10L, 20L to 30L, 30L to 40L).mapIndexed { index, (start, stop) ->
+            GuideProgrammeCells.Cell(index, start, stop, GuideProgrammeCells.FragmentKey(1, "test", start, start))
+        }
         assertTrue(GuideProgrammeCells.visible(cells, 10, 20).isEmpty())
         assertEquals(1..1, GuideProgrammeCells.visible(cells, 20, 30))
         assertEquals(1..2, GuideProgrammeCells.visible(cells, 29, 31))

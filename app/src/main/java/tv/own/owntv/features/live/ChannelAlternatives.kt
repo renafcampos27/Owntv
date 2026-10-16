@@ -101,6 +101,7 @@ internal suspend fun runWithBackoffAwareTimeout(
     val pollStepMs = 50L
     var elapsedActiveMs = 0L
     var totalElapsedMs = 0L
+    var scheduledWaitMs = 0L
     val startupGrace = LiveStartupGrace()
     var grantedGraceMs = 0L
     var previousTickNs = System.nanoTime()
@@ -110,7 +111,13 @@ internal suspend fun runWithBackoffAwareTimeout(
         previousTickNs = tickNs
         grantedGraceMs += startupGrace.observe(startupProgress?.invoke())
         val backingOff = isBackingOff?.invoke() == true || (backoffRemainingMs?.invoke() ?: 0L) > 0L
-        if (!backingOff && isWaitingForHandover?.invoke() != true) {
+        val scheduledWait = isWaitingForHandover?.invoke() == true
+        if (scheduledWait) {
+            // Credit at most the configurable maximum; a stuck flag cannot wait forever.
+            scheduledWaitMs = (scheduledWaitMs + elapsedMs).coerceAtMost(
+                tv.own.owntv.core.settings.ChannelReopenInterval.MAX_SECONDS * 1000L)
+        }
+        if (!backingOff && !scheduledWait) {
             elapsedActiveMs += elapsedMs
             if (elapsedActiveMs >= timeoutMs + grantedGraceMs) {
                 attemptJob.cancel()
@@ -118,7 +125,7 @@ internal suspend fun runWithBackoffAwareTimeout(
             }
         }
         totalElapsedMs += elapsedMs
-        if (totalElapsedMs >= maxWaitCeilingMs) {
+        if (totalElapsedMs - scheduledWaitMs >= maxWaitCeilingMs) {
             attemptJob.cancel()
             return@coroutineScope false
         }

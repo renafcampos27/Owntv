@@ -40,3 +40,12 @@ Na Xiaomi/Thomson fazer também 100 mudanças A/B/C e regressos a canais, 30–6
 Ativar registo detalhado apenas durante a recolha. Correlacionar `audio_underrun`, `audio_output_created/released`, formato/codec, tempos HTTP/segmentos, reserva disponível e estado da superfície pela mesma sintonia/fonte. `first_frame_metadata` significa envio para renderização; `first_frame` vem do callback de primeiro frame do renderer. Nenhum deles certifica apresentação física no painel.
 
 Volume interno permanece a 100%. Buffer, qualidade e número de threads não devem ser alterados automaticamente com base apenas num corte observado. Perfil térmico e prioridades de I/O exigem medição no aparelho antes de mudar o comportamento.
+
+
+## Percursos separados acrescentados em 7 de outubro de 2026
+
+`warmListNavigation` mede os frames da navegação na lista com a abertura/retorno do canal e a preparação de foco fora da medição. O teste exige foco numa linha antes de continuar. `repeatedChannelHandover` abre os mesmos três IDs duas vezes, confirma reprodução em cada abertura e regressa à lista. O percurso anterior de arranque/guia/gravações continua disponível. A gravação do baseline profile inclui as reaberturas.
+
+Os testes foram compilados; não foram executados num dispositivo e não foi gravado um novo baseline profile. O módulo mantém o alvo x86_64 e API mínima 28 para Macrobenchmark. Para as boxes ARM, aplicar também a validação manual e a recolha de diagnóstico descritas acima; os resultados do emulador não substituem os do aparelho.
+
+Para comparação reproduzível, desativar preview, escolher arranque na lista, manter a mesma ordenação e usar a fixture com nomes diferentes entre canais. Guardar separadamente métricas de lista, arranque e reabertura; não atribuir ao scrolling o tempo de espera da origem HLS.

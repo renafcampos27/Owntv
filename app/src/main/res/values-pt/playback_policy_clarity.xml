@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_video_decoder_preference">Preferência de descodificação do vídeo</string>
+    <string name="settings_video_decoder_preference_description">Ativa: prefere hardware. Desativada: o ExoPlayer prefere software, mas pode recorrer a hardware se necessário; o mpv desativa hardware. As informações da transmissão mostram o descodificador utilizado. Em programas em diferido e gravações no ExoPlayer, a alteração do descodificador aplica-se na próxima abertura.</string>
+    <string name="settings_software_audio_application_description">Automático usa o áudio do Android e recorre ao FFmpeg quando o formato não é suportado. Ativa para preferir áudio por software; o vídeo mantém-se independente. Não afeta mpv nem leitores externos. Em programas em diferido e gravações no ExoPlayer, a alteração do descodificador aplica-se na próxima abertura.</string>
+    <string name="settings_video_decoder_hardware_preferred">Preferir hardware</string>
+    <string name="settings_video_decoder_software_preferred">Preferir software</string>
+    <string name="settings_hdr_mpv_hint">Sinalização HDR — mpv</string>
+    <string name="settings_hdr_mpv_hint_description">Permite ao mpv sinalizar o espaço de cor do vídeo ao ecrã. Não afeta ExoPlayer nem leitores externos. Desativar não garante conversão de HDR para SDR.</string>
+    <string name="settings_live_engine_policy">Pedido: %1$s. Motor de base: %2$s. As escolhas por canal podem substituir esta definição.</string>
+    <string name="settings_live_engine_hls_policy">Pedido: %1$s. Motor de base: ExoPlayer, porque Apenas HLS está ativo. A exceção é escolher mpv explicitamente por canal; as escolhas de motor por lista ficam guardadas.</string>
+    <string name="settings_live_engine_hls_chip">ExoPlayer · Apenas HLS</string>
+    <string name="multiview_playback_wait_expired">Sem reprodução após 12 segundos. Prima OK para escolher novamente o canal.</string>
+</resources>

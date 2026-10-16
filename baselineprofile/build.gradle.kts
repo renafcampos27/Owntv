@@ -27,14 +27,14 @@ android {
         minSdk = 28
         targetSdk = 36
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        missingDimensionStrategy("abi", "x86_64")
+        val benchmarkAbi = providers.gradleProperty("owntv.benchmarkAbi").orElse("x86_64").get()
+        require(benchmarkAbi in setOf("standard", "x86_64")) { "Use standard for ARM TV boxes or x86_64 for the emulator." }
+        missingDimensionStrategy("abi", benchmarkAbi)
     }
 
-    // :app is multi-flavor (abi), but recording only ever happens on an x86_64 emulator: collection
-    // needs API 33+ and the arm TV boxes this app targets are older, while the arm `standard` APK
-    // can't install on an x86_64 emulator. So this module always drives :app's x86_64 flavor.
-    // `mergeIntoMain = true` in :app writes the result to src/main, so the arm APK still ships it —
-    // the profile is a list of code paths, not machine code, so one recording serves every ABI.
+    // Default profile collection stays on the x86_64 emulator. UI benchmarks on ARM TV boxes use
+    // -Powntv.benchmarkAbi=standard; the selected target must match the connected device.
+    // `mergeIntoMain` still makes the collected profile available to every app ABI.
     targetProjectPath = ":app"
 }
 

@@ -33,9 +33,18 @@ class LiveReserveDraftTest {
         repeat(100) { draft = draft.adjustMinimum(-1) }
         assertEquals(1, draft.minimum)
         repeat(100) { draft = draft.adjustMaximum(1) }
-        assertEquals(11, draft.maximum)
+        assertEquals(70, draft.maximum)
         repeat(100) { draft = draft.adjustMinimum(1) }
         assertEquals(60, draft.minimum)
+        assertEquals(70, draft.maximum)
+    }
+
+    @Test fun `upper threshold can reach sixty without raising eight second lower threshold`() {
+        var draft = LiveReserveDraft.from(8, 2)
+        repeat(50) { draft = draft.adjustMaximum(1) }
+        assertEquals(8, draft.minimum)
         assertEquals(60, draft.maximum)
+        assertEquals(draft, LiveReserveDraft.from(draft.minimum, draft.maximum - draft.minimum))
+        assertEquals(60, draft.adjustMinimum(-1).maximum)
     }
 }

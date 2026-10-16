@@ -104,8 +104,12 @@ class LocalSyncViewModel(
         found = emptyList()
         discovery?.cancel()
         discovery = viewModelScope.launch {
-            sync.discover().collect { device ->
-                if (found.none { it.address == device.address }) found = found + device
+            sync.discover(
+                onServiceLost = { lostName ->
+                    found = removeLostDevice(found, lostName)
+                },
+            ).collect { device ->
+                found = upsertDiscoveredDevice(found, device)
             }
         }
     }
@@ -221,7 +225,23 @@ class LocalSyncViewModel(
     private fun reason(): SyncFailure =
         (sync.progress.value as? tv.own.owntv.core.sync.local.SyncProgress.Failed)?.reason ?: SyncFailure.Unknown
 
-    private companion object {
+    internal companion object {
         const val STOP_TIMEOUT_MS = 5_000L
+
+        internal fun upsertDiscoveredDevice(
+            current: List<DiscoveredDevice>,
+            device: DiscoveredDevice,
+        ): List<DiscoveredDevice> =
+            current.filterNot {
+                it.address == device.address ||
+                    it.name == device.name ||
+                    (device.deviceId.isNotBlank() && it.deviceId == device.deviceId)
+            } + device
+
+        internal fun removeLostDevice(
+            current: List<DiscoveredDevice>,
+            lostServiceName: String,
+        ): List<DiscoveredDevice> =
+            current.filterNot { it.name == lostServiceName }
     }
 }

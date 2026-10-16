@@ -1,0 +1,25 @@
+<resources>
+    <string name="ui_save_failed">Could not save. Try again.</string>
+    <string name="ui_load_failed">Could not load. Try again.</string>
+    <string name="ui_versions_draft">Changes are saved only when you select Save. Adding or unlinking a channel takes effect immediately.</string>
+    <string name="ui_diagnostic_details">Details</string>
+    <string name="ui_diagnostic_summary">Summary</string>
+    <string name="ui_diagnostic_toggle_hint">OK: summary/details · ↑↓: scroll</string>
+    <string name="ui_attempts_title">Previous failed attempts</string>
+    <string name="ui_attempt_failed">Playback did not start</string>
+    <string name="ui_connecting_channel">Connecting to %1$s…</string>
+    <string name="ui_alternative_channel">Trying %1$s…</string>
+    <string name="ui_setting_inherited">%1$s · inherited</string>
+    <string name="ui_setting_custom">%1$s · channel</string>
+    <string name="ui_setting_playlist">%1$s · playlist</string>
+    <string name="ui_epg_loading_period">Loading programmes for this period…</string>
+    <string name="ui_epg_empty_period">No programmes in this period</string>
+    <string name="ui_epg_outside_archive">Replay unavailable for this programme</string>
+    <string name="ui_not_available">Not available</string>
+    <string name="ui_settings_requested_hint">Requested settings. Check diagnostics for the decoder and engine actually in use.</string>
+    <string name="ui_duration_seconds">%1$s s</string>
+    <string name="ui_buffer_limits">Load below %1$s · stop above %2$s</string>
+    <string name="ui_attempt_line">%1$s · %2$s · %3$s</string>
+    <string name="ui_http_status">HTTP %1$d</string>
+    <string name="ui_current_channel">Current channel</string>
+</resources>

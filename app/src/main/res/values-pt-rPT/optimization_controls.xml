@@ -1,0 +1,84 @@
+<resources>
+    <string name="order_position">Posição</string>
+    <string name="order_move">Mover</string>
+    <string name="order_first">Início</string>
+    <string name="order_last">Fim</string>
+    <string name="order_undo">Desfazer</string>
+    <string name="order_restore">Restaurar ordem da lista</string>
+    <string name="order_confirm_restore">Confirmar reposição</string>
+    <string name="settings_group_channels_new">Canais</string>
+    <string name="settings_group_channels_hint">Listas, ordem, visibilidade e canal de arranque</string>
+    <string name="settings_group_playback_new">Reprodução</string>
+    <string name="settings_group_playback_hint">Reprodutor, reserva e áudio</string>
+    <string name="settings_group_guide_new">Guia e diferidos</string>
+    <string name="settings_group_guide_hint">Origens do guia, horários e programas em diferido</string>
+    <string name="settings_group_recordings_new">Gravações e armazenamento</string>
+    <string name="settings_group_recordings_hint">Agendamento, destino e limites de armazenamento</string>
+    <string name="settings_group_app_new">Aplicação</string>
+    <string name="settings_group_app_hint">Apresentação, idioma, perfis e manutenção</string>
+    <string name="settings_advanced_new">Avançado</string>
+    <string name="settings_advanced_hide_new">Ocultar opções avançadas</string>
+    <string name="channel_general_settings">Usa as definições gerais</string>
+    <string name="channel_own_settings">Definições próprias; as restantes opções usam as gerais</string>
+    <string name="playback_session_title">Diagnóstico da sessão de reprodução</string>
+    <string name="playback_session_hint">Reprodutor atual, tempo de abertura e falhas recentes; exportar relatório</string>
+    <string name="playback_session_version">App %1$s (%2$d)</string>
+    <string name="playback_session_status">Reprodutor: %1$s · Estado: %2$s · Abertura: %3$s ms</string>
+    <string name="playback_session_unknown">Indisponível</string>
+    <string name="order_controls_hint">Setas ↑↓: mover o canal. →: aceder às opções de posição e ordem.</string>
+    <string name="order_arrow_mode">Mover com as setas</string>
+    <string name="playback_session_details">Detalhes da sessão</string>
+    <string name="playback_session_identity">ID do canal: %1$s · ID da lista: %2$s</string>
+    <string name="playback_session_previous">Estado anterior: %1$s · Última falha: %2$s</string>
+    <string name="order_save_failed">Não foi possível guardar a ordem. As alterações estão mantidas; tenta novamente.</string>
+    <string name="order_saving">A guardar…</string>
+
+    <string name="settings_channel_batch_button">Ajustes em lote</string>
+    <string name="settings_channel_batch_title">Aplicar ajustes a múltiplos canais</string>
+    <string name="settings_channel_batch_hint">Seleciona os canais e indica os campos a alterar. Os restantes campos e a herança das definições globais são preservados.</string>
+    <plurals name="settings_channel_batch_category_all">
+        <item quantity="one">Todas as categorias (%1$d canal)</item>
+        <item quantity="other">Todas as categorias (%1$d canais)</item>
+    </plurals>
+    <plurals name="settings_channel_batch_category_filter">
+        <item quantity="one">Categoria: %1$s (%2$d canal)</item>
+        <item quantity="other">Categoria: %1$s (%2$d canais)</item>
+    </plurals>
+    <string name="settings_channel_batch_field_keep">(Não alterar)</string>
+    <plurals name="settings_channel_batch_selected_count">
+        <item quantity="one">%1$d canal selecionado</item>
+        <item quantity="other">%1$d canais selecionados</item>
+    </plurals>
+    <plurals name="settings_channel_batch_apply_confirm">
+        <item quantity="one">Aplicar a %1$d canal</item>
+        <item quantity="other">Aplicar a %1$d canais</item>
+    </plurals>
+    <string name="settings_channel_batch_preview_fields">Campos a alterar: %1$s</string>
+    <string name="settings_channel_batch_preview_none">Nenhum campo selecionado para alteração</string>
+    <string name="settings_channel_batch_select_all">Selecionar todos</string>
+    <string name="settings_channel_batch_deselect_all">Desmarcar todos</string>
+    <string name="settings_channel_batch_choose_channels">Escolher canais</string>
+    <string name="settings_channel_batch_select_channels_title">Selecionar canais</string>
+    <string name="settings_channel_batch_success">Ajustes aplicados com sucesso</string>
+    <string name="settings_channel_batch_field_item">%1$s: %2$s</string>
+    <string name="settings_channel_batch_separator">; </string>
+
+    <string name="recording_storage_usable">Espaço utilizável: %1$s GB</string>
+    <string name="recording_storage_estimated_capacity">Capacidade estimada: ~%1$s</string>
+    <string name="recording_storage_hours_minutes">%1$d h %2$d min</string>
+    <string name="recording_storage_hours">%1$d h</string>
+    <string name="recording_storage_minutes">%1$d min</string>
+    <string name="recording_storage_disclaimer">Estimativa aproximada baseada em transmissão HD (~5 Mbps); sujeita a variações de bitrate e da quota do armazenamento.</string>
+
+    <string name="channel_press_hint_hold">2s: Versões · 3s: Menu</string>
+    <string name="channel_press_hint_versions">Soltar agora: Versões do Canal</string>
+    <string name="channel_press_hint_menu">Menu de Opções do Canal</string>
+    <string name="catchup_format_title">Formato dos diferidos</string>
+    <string name="catchup_format_hint">Arquivos Xtream: Automático tenta TS, um endereço alternativo e HLS se a abertura falhar. TS e HLS usam o formato escolhido. A disponibilidade depende do fornecedor.</string>
+    <string name="catchup_format_auto">Automático</string>
+    <string name="catchup_format_ts">TS</string>
+    <string name="catchup_format_hls">HLS</string>
+    <string name="settings_channel_reopen_interval">Intervalo para reabrir o mesmo canal</string>
+    <string name="settings_channel_reopen_interval_description">Aguarda apenas o tempo restante desde a saída desse canal. Canais novos abrem sem esta espera. Predefinido: 20 segundos; ajustável entre 10 e 50. Esta espera não conta para o prazo de abertura.</string>
+    <string name="stream_info_scroll_hint">↑ / ↓ Mais informação · Voltar: fechar</string>
+</resources>

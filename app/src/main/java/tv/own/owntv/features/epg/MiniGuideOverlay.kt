@@ -63,7 +63,10 @@ fun MiniGuideOverlay(
     val focus = remember { FocusRequester() }
     val formatTime = rememberSystemTimeFormatter()
     val formatDate = rememberBestDateFormatter("EEEdMMM")
-    val programme = rows?.let { GuideProgrammeCells.at(it, cursor, window.first, window.second) }
+    val programmeRow = remember(rows, channel, contextKey, window) {
+        rows?.let { GuideProgrammeRow.prepare(it, window.first, window.second) }
+    }
+    val programme = programmeRow?.at(cursor)
     BackHandler { onDismiss() }
     LaunchedEffect(Unit) {
         repeat(3) {
@@ -87,7 +90,7 @@ fun MiniGuideOverlay(
                         Key.ChannelDown -> onZap(1)
                         Key.DirectionLeft, Key.DirectionRight -> {
                             val delta = if (event.key == Key.DirectionLeft) -1 else 1
-                            val next = rows?.let { GuideProgrammeCells.adjacentTime(it, cursor, delta, window.first, window.second) }
+                            val next = programmeRow?.adjacentTime(cursor, delta)
                             cursor = if (next == null || (delta < 0 && next >= cursor) || (delta > 0 && next <= cursor))
                                 (cursor + delta * 3_600_000L).coerceIn(oldest, latest - 1) else next.coerceIn(oldest, latest - 1)
                         }

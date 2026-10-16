@@ -23,16 +23,13 @@ import tv.own.owntv.features.search.SearchViewModel
 import tv.own.owntv.features.series.SeriesViewModel
 import tv.own.owntv.features.settings.LocalSyncViewModel
 import tv.own.owntv.features.settings.BackupViewModel
-import tv.own.owntv.features.settings.DeleteSubtitlesViewModel
 import tv.own.owntv.features.settings.EpgSourcesViewModel
 import tv.own.owntv.features.settings.HomeSettingsViewModel
 import tv.own.owntv.features.settings.LanguageSettingsViewModel
-import tv.own.owntv.features.settings.OpenSubtitlesViewModel
 import tv.own.owntv.features.settings.SettingsViewModel
 import tv.own.owntv.features.setup.DisplaySizeViewModel
 import tv.own.owntv.features.setup.SetupViewModel
 import tv.own.owntv.features.shell.ShellViewModel
-import tv.own.owntv.features.subtitles.SubtitleSearchViewModel
 
 /**
  * Root Koin module. Each feature will contribute its own bindings as the app grows;
@@ -146,9 +143,6 @@ val appModule = module {
     viewModelOf(::LocalSyncViewModel)
     viewModelOf(::HomeSettingsViewModel)
     viewModelOf(::LanguageSettingsViewModel)
-    viewModelOf(::OpenSubtitlesViewModel)
-    viewModelOf(::DeleteSubtitlesViewModel)
-    viewModelOf(::SubtitleSearchViewModel)
     viewModelOf(::DownloadsViewModel)
     viewModelOf(::RecordingsViewModel)
     viewModelOf(::EpgViewModel)

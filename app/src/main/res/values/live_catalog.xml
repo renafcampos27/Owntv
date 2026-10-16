@@ -22,12 +22,12 @@
     <string name="settings_afr_pause_description">For recorded video, wait after a display mode change so playback does not begin during the HDMI transition. Seamless changes do not pause.</string>
     <string name="settings_afr_resolution_description">Allow display resolution changes during recorded video playback.</string>
     <string name="settings_reset_player_choices_description">Reset saved player choices to the recorded-video default. Live channel choices are kept.</string>
-    <string name="settings_reset_saved_zoom_description">Reset saved zoom choices to the default zoom.</string>
-    <string name="settings_reset_saved_zoom_confirm_description">Saved zoom choices return to the default. Saved volumes are kept.</string>
+    <string name="settings_reset_saved_zoom_description">Clear saved zoom choices for future openings. The current picture stays as it is.</string>
+    <string name="settings_reset_saved_zoom_confirm_description">Saved zoom choices are cleared for future openings, which use the default zoom. The current picture stays as it is. A new zoom choice in the player saves this item again. Saved volumes are kept.</string>
     <string name="settings_reset_saved_volume_description">Reset saved volume choices to the default volume.</string>
     <string name="settings_reset_saved_volume_confirm_description">Saved volumes return to the default. Saved zoom settings are kept.</string>
-    <string name="settings_reset_saved_audio_delay_description">Reset saved audio delays to the configured audio sync.</string>
-    <string name="settings_reset_saved_audio_delay_confirm_description">Saved audio delays return to the configured default. Zoom and volume settings are kept.</string>
+    <string name="settings_reset_saved_audio_delay_description">Clear saved audio delays for future openings. The current audio sync stays as it is.</string>
+    <string name="settings_reset_saved_audio_delay_confirm_description">Saved audio delays are cleared for future openings, which follow the channel or global setting. Current playback stays as it is. A new HUD adjustment with Remember enabled can save this item again. Zoom and volume settings are kept.</string>
     <string name="settings_seek_step_description">Rewind and forward step for video that supports seeking.</string>
     <string name="settings_resume_playback_description">Choose what happens when a video has a saved playback position.</string>
     <string name="settings_android_tv_home_description">Show recent live channels on the TV home screen.</string>

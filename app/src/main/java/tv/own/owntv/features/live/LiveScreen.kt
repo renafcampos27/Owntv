@@ -1,5 +1,9 @@
 package tv.own.owntv.features.live
 
+import tv.own.owntv.core.live.serialize
+
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import tv.own.owntv.core.R as CoreR
 
 import androidx.compose.ui.input.key.Key
@@ -41,25 +45,30 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
+import tv.own.owntv.ui.components.ChannelPressFeedbackBar
+import tv.own.owntv.ui.components.ChannelPressStage
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
@@ -68,7 +77,6 @@ import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -165,39 +173,25 @@ fun LiveScreen(
     val providerNames by vm.providerNames.collectAsStateWithLifecycle()
     val railFocus = remember { FocusRequester() }
     val selectedKey by vm.selectedKey.collectAsStateWithLifecycle()
-    val count by vm.count.collectAsStateWithLifecycle()
     val favoriteIds by vm.favoriteIds.collectAsStateWithLifecycle()
     val showChannelNumbers by vm.showChannelNumbers.collectAsStateWithLifecycle()
     val externalPlayerOn by vm.externalPlayerOn.collectAsStateWithLifecycle()
     val catchupPlayer by vm.catchupPlayer.collectAsStateWithLifecycle()
+    val currentPlayingChannel by vm.playingChannel.collectAsStateWithLifecycle()
     val previewChannel by vm.previewChannel.collectAsStateWithLifecycle()
     val previewCategoryName by vm.previewCategoryName.collectAsStateWithLifecycle()
     val previewArmed by vm.previewArmed.collectAsStateWithLifecycle()
-    val previewBlockedSingleSession by vm.previewBlockedSingleSession.collectAsStateWithLifecycle()
-    val browseGuide by vm.browseNowNext.collectAsStateWithLifecycle()
-    val nowNext = browseGuide.second.takeIf { browseGuide.first == previewChannel?.id }
     val searchQuery by vm.searchQuery.collectAsStateWithLifecycle()
     val categoryQuery by vm.categoryQuery.collectAsStateWithLifecycle()
     val sortMode by vm.sortMode.collectAsStateWithLifecycle()
     val livePreviewSetting by vm.livePreviewEnabled.collectAsStateWithLifecycle()
     val channels = vm.channels.collectAsLazyPagingItems()
-    val moveState by vm.moveState.collectAsStateWithLifecycle()
-    val categoryMoveState by vm.categoryMoveState.collectAsStateWithLifecycle()
+    val moveOpen by remember(vm) { vm.moveState.map { it != null }.distinctUntilChanged() }.collectAsStateWithLifecycle(false)
+    val categoryMoveOpen by remember(vm) { vm.categoryMoveState.map { it != null }.distinctUntilChanged() }.collectAsStateWithLifecycle(false)
 
-    // Current programme title for each loaded channel (id → title), against the stored guide. Drives
-    // the small "now playing" subtitle on each channel row. Channels with no guide are absent from the
-    // map → their row shows no second line.
-    //
-    // An appended page asks only about the channels it added; the view model keeps the rest. This
-    // used to re-query every loaded channel on every append and again every 60 seconds, which deep
-    // in a large category was a dozen chunked queries a minute to learn nothing new.
-    val nowPlaying by vm.nowPlaying.collectAsStateWithLifecycle()
     // Preview runs only when the player isn't busy (previewEnabled) AND the user hasn't turned it off.
-    val compactWindow = tv.own.owntv.ui.components.rememberCompactLayout()
-    val effectivePreview = previewEnabled && livePreviewSetting && !externalPlayerOn && !channelsOnly && !compactWindow
-    LaunchedEffect(compactWindow, previewEnabled) {
-        if (compactWindow && previewEnabled) vm.stopPreview()
-    }
+
+    val effectivePreview = previewEnabled && livePreviewSetting && !externalPlayerOn && !channelsOnly
 
     // NOTE: do NOT stop the player when LiveScreen leaves composition — going fullscreen disposes
     // this screen, and stopping here would abort the stream that was just started. Playback is
@@ -247,16 +241,27 @@ fun LiveScreen(
     val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
     LaunchedEffect(channels, lifecycleOwner, effectiveListState) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
-            suspend fun visibleChannels(): List<ChannelEntity> {
+            fun visibleBounds(): IntRange {
+                val items = effectiveListState.layoutInfo.visibleItemsInfo
+                if (items.isEmpty()) return 0..0
+                var first = Int.MAX_VALUE
+                var last = Int.MIN_VALUE
+                for (item in items) {
+                    first = minOf(first, item.index)
+                    last = maxOf(last, item.index)
+                }
+                return first..last
+            }
+            suspend fun visibleChannels(): List<ChannelEntity> =
+                tv.own.owntv.diagnostics.UiWorkDiagnostics.measure(tv.own.owntv.diagnostics.UiWorkWindow.Operation.LIVE_VISIBLE_ROWS) {
                 val loaded = channels.itemSnapshotList
-                val visible = effectiveListState.layoutInfo.visibleItemsInfo.map { it.index }
-                val rows = liveMetadataWindow(visible, channels.itemCount).mapNotNull { loaded.getOrNull(it) }
-                return (rows + listOfNotNull(previewChannel)).distinctBy { it.id }
+                val bounds = visibleBounds()
+                val rows = liveMetadataWindow(bounds.first, bounds.last, channels.itemCount).mapNotNull { loaded.getOrNull(it) }
+                (rows + listOfNotNull(previewChannel)).distinctBy { it.id }
             }
             launch {
                 snapshotFlow {
-                    Triple(effectiveListState.layoutInfo.visibleItemsInfo.map { it.index },
-                        channels.itemSnapshotList.items, previewChannel?.id)
+                    Triple(visibleBounds(), channels.itemSnapshotList, previewChannel?.id)
                 }.distinctUntilChanged().collect { vm.ensureNowPlaying(visibleChannels()) }
             }
             while (true) {
@@ -266,8 +271,10 @@ fun LiveScreen(
             }
         }
     }
-    LaunchedEffect(effectiveListState.firstVisibleItemIndex) {
-        vm.saveScrollIndex(selectedKey, effectiveListState.firstVisibleItemIndex)
+    LaunchedEffect(effectiveListState, selectedKey) {
+        snapshotFlow { effectiveListState.firstVisibleItemIndex }
+            .distinctUntilChanged()
+            .collect { vm.saveScrollIndex(selectedKey, it) }
     }
     LaunchedEffect(selectedKey, rememberLive) {
         if (!rememberLive) runCatching { listState.scrollToItem(0) }
@@ -301,6 +308,7 @@ fun LiveScreen(
     var catchupDetail by remember {
         mutableStateOf<Pair<ChannelEntity, tv.own.owntv.core.database.entity.EpgProgrammeEntity>?>(null)
     }
+    var manualRecordingChannel by remember { mutableStateOf<ChannelEntity?>(null) }
     var contextChannel by remember { mutableStateOf<ChannelEntity?>(null) } // long-press quick menu
     LaunchedEffect(catchupContext) {
         if (catchupOwner?.let { !vm.acceptsCatchup(it) } == true) {
@@ -342,7 +350,7 @@ fun LiveScreen(
     val contextFocus = remember { FocusRequester() }
     val focusInteractionRevision = remember { java.util.concurrent.atomic.AtomicLong() }
     var enteringMoveMode by remember { mutableStateOf(false) }
-    LaunchedEffect(moveState) { if (moveState != null) enteringMoveMode = false }
+    LaunchedEffect(moveOpen) { if (moveOpen) enteringMoveMode = false }
     // Land focus back on the long-pressed channel's row (or a sensible fallback if it's gone).
     suspend fun restoreToContextRow(expectedRevision: Long = focusInteractionRevision.get()): Boolean {
         // A newer command/gesture wins over the dialog that already closed.
@@ -410,8 +418,8 @@ fun LiveScreen(
     }
     // Channel reorder restoration.
     var reorderWasOpen by remember { mutableStateOf(false) }
-    LaunchedEffect(moveState) {
-        if (moveState != null) { reorderWasOpen = true; return@LaunchedEffect }
+    LaunchedEffect(moveOpen) {
+        if (moveOpen) { reorderWasOpen = true; return@LaunchedEffect }
         if (!reorderWasOpen) return@LaunchedEffect
         reorderWasOpen = false
         restoreToContextRow()
@@ -451,18 +459,18 @@ fun LiveScreen(
         contextCategoryKey = null
         if (row != null) railFocusRow = row else runCatching { railFocus.requestFocus() }
     }
-    LaunchedEffect(contextCategory, categoryMoveState) {
+    LaunchedEffect(contextCategory, categoryMoveOpen) {
         if (contextCategory != null) contextCategoryWasOpen = true
-        if (categoryMoveState != null) categoryMoveWasOpen = true
+        if (categoryMoveOpen) categoryMoveWasOpen = true
 
-        if (contextCategory == null && contextCategoryWasOpen && categoryMoveState == null) {
+        if (contextCategory == null && contextCategoryWasOpen && !categoryMoveOpen) {
             contextCategoryWasOpen = false
             if (!categoryMoveWasOpen) {
                 kotlinx.coroutines.delay(60)
                 restoreToContextCategory()
             }
         }
-        if (categoryMoveState == null && categoryMoveWasOpen) {
+        if (!categoryMoveOpen && categoryMoveWasOpen) {
             categoryMoveWasOpen = false
             kotlinx.coroutines.delay(60)
             restoreToContextCategory()
@@ -545,7 +553,8 @@ fun LiveScreen(
             // over the wallpaper next to a second one.
             .then(
                 if (lockedKey == null) {
-                    Modifier.roundedPanel(fillColor = ContentPanelFill).padding(BrowseContainerPadding)
+                    Modifier.roundedPanel(fillColor = ContentPanelFill)
+                        .padding(start = BrowseContainerPadding, end = BrowseContainerPadding, top = 6.dp, bottom = 8.dp)
                 } else {
                     Modifier
                 },
@@ -564,7 +573,7 @@ fun LiveScreen(
             }
             .onFocusChanged { if (it.hasFocus) onChildFocused() },
     ) {
-    val compact = compactWindow || maxWidth < 600.dp
+    val compact = maxWidth < 600.dp
     var showCompactCategories by remember { mutableStateOf(false) }
     val previewVisible = !compact && !channelsOnly && panelShares?.preview != 0
     val innerGapTotal = browsePanelGapTotal(previewVisible)
@@ -586,13 +595,14 @@ fun LiveScreen(
                     it.icon,
                     showGenreDot = it.key is LiveKey.Folder,
                     providerName = it.providerName,
+                    stableId = it.key.serialize(),
                 )
             },
             selectedIndex = selectedIndex,
             focusRowIndex = railFocusRow,
             onRowFocused = { railFocusRow = null },
             onSelect = { idx -> railItems.getOrNull(idx)?.let { vm.select(it.key) } },
-            onLongSelect = { idx -> 
+            onLongSelect = { idx ->
                 railItems.getOrNull(idx)?.let { item ->
                     if (item.key is LiveKey.Folder || item.key is LiveKey.Custom) {
                         contextCategory = item
@@ -752,20 +762,13 @@ fun LiveScreen(
                 }
             }
             Text(
-                stringResource(CoreR.string.content_section_category, stringResource(CoreR.string.common_nav_live_tv), selectedLabel),
+                stringResource(tv.own.owntv.R.string.live_list_title),
                 style = MaterialTheme.typography.headlineMedium,
                 color = OwnTVTheme.colors.onSurface,
                 maxLines = 2,
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(4.dp))
-            Text(
-                pluralStringResource(CoreR.plurals.content_count_channels, count, selectedLabel, count),
-                style = MaterialTheme.typography.titleMedium,
-                color = OwnTVTheme.colors.primary,
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.height(14.dp))
 
             Row(verticalAlignment = Alignment.CenterVertically) {
                 SearchBar(
@@ -777,7 +780,7 @@ fun LiveScreen(
                 Spacer(Modifier.size(10.dp))
                 SortChip(mode = sortMode, onToggle = vm::toggleSort)
             }
-            Spacer(Modifier.height(14.dp))
+            Spacer(Modifier.height(6.dp))
 
             if (channels.itemCount == 0) {
                 Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -837,15 +840,11 @@ fun LiveScreen(
                                     Modifier.focusRequester(returnChannelFocus)
                                 else Modifier
                             )
-                            val rowNowTitle = if (isFocusedChannel) {
-                                nowNext?.now?.title?.takeIf { it.isNotBlank() } ?: nowPlaying[chId]
-                            } else {
-                                nowPlaying[chId]
-                            }
                             ChannelRow(
                                 channel = channel,
                                 isFavorite = favoriteIds.contains(chId),
-                                nowTitle = rowNowTitle,
+                                vm = vm, isFocusedChannel = isFocusedChannel,
+                                isCurrentChannel = currentPlayingChannel?.let { vm.matchesChannelRow(channel, it) } == true,
                                 showNumber = showChannelNumbers,
                                 providerName = providerNames[channel.sourceId],
                                 modifier = rowModifier.testTag("owntv_channel_$chId").onPreviewKeyEvent { event ->
@@ -878,10 +877,8 @@ fun LiveScreen(
                 LivePreviewPane(
                     channel = previewChannel,
                     categoryName = previewCategoryName,
-                    nowNext = nowNext,
-                    previewEngine = vm.previewEngine,
+                    vm = vm,
                     showVideo = effectivePreview,
-                    singleSessionBlocked = previewBlockedSingleSession,
                 )
             }
         }
@@ -954,24 +951,31 @@ fun LiveScreen(
     }
 
     matchingEpg?.let { ch ->
+        val editOwner = remember(ch) { vm.captureEpgEdit(ch) }
         EpgMatchDialog(
             channelName = ch.name,
             currentMatch = vm.currentEpgMatch(ch),
             loadChannels = { q -> vm.availableEpgChannels(ch.name, q) },
-            onPick = { epgId -> vm.setEpgMatch(ch, epgId); matchingEpg = null },
-            onClear = { vm.setEpgMatch(ch, null); matchingEpg = null },
+            onPick = { epgId -> vm.setEpgMatch(ch, epgId, editOwner); matchingEpg = null },
+            onClear = { vm.setEpgMatch(ch, null, editOwner); matchingEpg = null },
             onDismiss = { matchingEpg = null },
         )
     }
 
     offsettingEpg?.let { ch ->
+        val editOwner = remember(ch) { vm.captureEpgEdit(ch) }
         EpgOffsetDialog(
             channelName = ch.name,
             currentMinutes = vm.currentEpgShift(ch),
             globalMinutes = vm.globalEpgShift(),
-            onSet = { vm.setEpgShift(ch, it) },
+            onSet = { vm.setEpgShift(ch, it, editOwner) },
             onDismiss = { offsettingEpg = null },
         )
+    }
+
+    manualRecordingChannel?.let { ch ->
+        ManualRecordingDialog(ch.name, onSave = { start, end -> vm.scheduleManualRecording(ch, start, end) },
+            onDismiss = { manualRecordingChannel = null })
     }
 
     // Long-press a channel → quick actions.
@@ -980,7 +984,7 @@ fun LiveScreen(
             channelName = ch.name,
             isFavorite = favoriteIds.contains(ch.id),
             hasCatchup = ch.catchup,
-            canMove = selectedKey is LiveKey.Folder || selectedKey is LiveKey.Custom || selectedKey == LiveKey.Favorites,
+            canMove = selectedKey is LiveKey.Folder || selectedKey is LiveKey.Custom || selectedKey == LiveKey.Favorites || selectedKey == LiveKey.All || selectedKey == LiveKey.Catchup,
             isHistory = selectedKey == LiveKey.History,
             onToggleFavorite = { vm.toggleFavorite(ch); contextChannel = null },
             onRename = { renaming = ch; contextChannel = null },
@@ -990,6 +994,7 @@ fun LiveScreen(
             onEpgOffset = { offsettingEpg = ch; contextChannel = null },
             onCatchup = { catchupOwner = vm.catchupOwner(ch); catchupChannel = ch; contextChannel = null },
             onRecord = { vm.recordNow(ch); contextChannel = null },
+            onScheduleRecording = { manualRecordingChannel = ch; contextChannel = null },
             onLocalTimeshift = { vm.watchWithLocalTimeshift(ch); contextChannel = null; onFullscreen() },
             onPlayExternal = { vm.playExternal(ch); contextChannel = null },
             // Only offered once Multiview is switched on. Adding is silent apart from the toast: the
@@ -1050,7 +1055,7 @@ fun LiveScreen(
                     if (!externalPlayerOn) onFullscreen()
                 }
             },
-            onSaveOrder = { order -> if (versionOwner?.let(vm::acceptsCatchup) == true) vm.saveChannelVersionOrder(channel, order) },
+            onSaveOrder = { order -> if (versionOwner?.let(vm::acceptsCatchup) == true) vm.saveChannelVersionOrder(channel, order) else false },
             onDismiss = { versionChannel = null })
     }
 
@@ -1083,31 +1088,8 @@ fun LiveScreen(
         }
     }
 
-    // Move mode overlay — intercepts D-pad Up/Down/OK/Back while reordering.
-    moveState?.let { ms ->
-        MoveOrderOverlay(
-            title = stringResource(CoreR.string.content_reorder_channel),
-            itemNames = ms.items.map { it.name },
-            activeIndex = ms.activeIndex,
-            onMoveUp = vm::moveUp,
-            onMoveDown = vm::moveDown,
-            onCommit = vm::commitMove,
-            onCancel = vm::cancelMove,
-        )
-    }
-
-    // Category Move mode overlay — intercepts D-pad Up/Down/OK/Back while reordering.
-    categoryMoveState?.let { ms ->
-        MoveOrderOverlay(
-            title = stringResource(CoreR.string.content_move),
-            itemNames = ms.items,
-            activeIndex = ms.activeIndex,
-            onMoveUp = vm::moveCategoryUp,
-            onMoveDown = vm::moveCategoryDown,
-            onCommit = vm::commitCategoryMove,
-            onCancel = vm::cancelCategoryMove,
-        )
-    }
+    ChannelOrderOverlay(vm)
+    CategoryOrderOverlay(vm)
 
     contextCategory?.let { item ->
         CategoryContextMenu(
@@ -1129,16 +1111,33 @@ private fun ChannelRow(
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
     onMediumClick: (() -> Unit)? = null,
-    nowTitle: String? = null,
+    vm: LiveViewModel,
+    isFocusedChannel: Boolean,
+    isCurrentChannel: Boolean = false,
     showNumber: Boolean = true,
     providerName: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    val nowTitle by remember(vm, channel.id, isFocusedChannel) {
+        if (isFocusedChannel) kotlinx.coroutines.flow.combine(vm.nowPlaying, vm.browseNowNext) { titles, guide ->
+            guide.second?.now?.title?.takeIf { guide.first == channel.id && it.isNotBlank() } ?: titles[channel.id]
+        }.distinctUntilChanged()
+        else vm.nowPlaying.map { it[channel.id] }.distinctUntilChanged()
+    }.collectAsStateWithLifecycle(initialValue = vm.nowPlaying.value[channel.id])
     val colors = OwnTVTheme.colors
+    val currentChannelLabel = stringResource(tv.own.owntv.R.string.ui_current_channel)
+    var pressStage by remember(channel.id) { mutableStateOf(ChannelPressStage.IDLE) }
+    var pressProgress by remember(channel.id) { mutableFloatStateOf(0f) }
+    var pressElapsedMs by remember(channel.id) { mutableLongStateOf(0L) }
     FocusableSurface(
         onClick = onClick,
         onLongClick = onLongClick,
         onMediumClick = onMediumClick,
+        onPressProgress = { progress, elapsed, stage ->
+            pressProgress = progress
+            pressElapsedMs = elapsed
+            pressStage = stage
+        },
         modifier = modifier
             .fillMaxWidth()
             .onFocusChanged { if (it.hasFocus) onFocus() },
@@ -1146,49 +1145,65 @@ private fun ChannelRow(
         surface = GlassSurface.CARDS,
         contentAlignment = Alignment.CenterStart,
     ) { focused ->
-        Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(14.dp),
-        ) {
-            tv.own.owntv.ui.components.ChannelLogoTile(
-                logoUrl = channel.displayLogoUrl,
-                modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(14.dp),
             ) {
-                OwnTVIcon(OwnTVIcon.LIVE_TV, tint = colors.onSurfaceVariant, modifier = Modifier.size(24.dp))
-            }
-            // Provider channel number, in a fixed-width strip so every name below starts at the same x
-            // however many digits the number has. Hidden entirely when the setting is off.
-            if (showNumber) {
-                tv.own.owntv.ui.components.ChannelNumberColumn(
-                    number = channel.number,
-                    color = colors.onSurfaceVariant,
-                )
-            }
-            // Name + (optional) current programme. The subtitle is rendered only when guide data exists,
-            // so channels without EPG look exactly as before — single line.
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    channel.name,
-                    style = MaterialTheme.typography.titleSmall,
-                    color = if (focused) colors.primary else colors.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                if (nowTitle != null) {
-                    Text(
-                        nowTitle,
-                        style = MaterialTheme.typography.bodySmall,
+                tv.own.owntv.ui.components.ChannelLogoTile(
+                    logoUrl = channel.displayLogoUrl,
+                    modifier = Modifier.size(48.dp).clip(RoundedCornerShape(8.dp)),
+                ) {
+                    OwnTVIcon(OwnTVIcon.LIVE_TV, tint = colors.onSurfaceVariant, modifier = Modifier.size(24.dp))
+                }
+                // Provider channel number, in a fixed-width strip so every name below starts at the same x
+                // however many digits the number has. Hidden entirely when the setting is off.
+                if (showNumber) {
+                    tv.own.owntv.ui.components.ChannelNumberColumn(
+                        number = channel.number,
                         color = colors.onSurfaceVariant,
+                    )
+                }
+                // Name + (optional) current programme. The subtitle is rendered only when guide data exists,
+                // so channels without EPG look exactly as before — single line.
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        channel.name,
+                        style = MaterialTheme.typography.titleSmall,
+                        color = if (focused) colors.primary else colors.onSurface,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
+                    if (nowTitle != null) {
+                        Text(
+                            nowTitle.orEmpty(),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = colors.onSurfaceVariant,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
                 }
+                if (isCurrentChannel) {
+                    OwnTVIcon(OwnTVIcon.PLAY, tint = colors.primary, modifier = Modifier.size(18.dp)
+                        .semantics { contentDescription = currentChannelLabel })
+                }
+                if (isFavorite) {
+                    OwnTVIcon(OwnTVIcon.FAVORITE, tint = colors.favorite, filled = true, modifier = Modifier.size(20.dp))
+                }
+                providerName?.let { ProviderChip(name = it) }
             }
-            if (isFavorite) {
-                OwnTVIcon(OwnTVIcon.FAVORITE, tint = colors.favorite, filled = true, modifier = Modifier.size(20.dp))
+            if (pressStage != ChannelPressStage.IDLE && pressElapsedMs >= 150L) {
+                ChannelPressFeedbackBar(
+                    stage = pressStage,
+                    progress = pressProgress,
+                    modifier = Modifier
+                        .align(Alignment.BottomCenter)
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 2.dp),
+                )
             }
-            providerName?.let { ProviderChip(name = it) }
         }
     }
 }
@@ -1209,6 +1224,7 @@ private fun ChannelContextMenu(
     onEpgOffset: () -> Unit,
     onCatchup: () -> Unit,
     onRecord: () -> Unit,
+    onScheduleRecording: () -> Unit,
     onLocalTimeshift: () -> Unit,
     onPlayExternal: () -> Unit,
     // Null unless Multiview is switched on: keep this channel for the grid (Plan D, B5).
@@ -1249,6 +1265,7 @@ private fun ChannelContextMenu(
                 // Record this channel from now. The guide's Record needs a programme, so a channel
                 // the provider publishes no guide for can only be recorded from here.
                 add(MenuAction("record", stringResource(CoreR.string.recording_record), OwnTVIcon.LIVE_TV, group = 1, onClick = onRecord))
+                add(MenuAction("schedule_recording", stringResource(CoreR.string.recording_schedule_manual), OwnTVIcon.EPG, group = 1, onClick = onScheduleRecording))
                 add(MenuAction("local_timeshift", stringResource(CoreR.string.local_timeshift_start), OwnTVIcon.HISTORY, group = 1, onClick = onLocalTimeshift))
                 // Always offered, regardless of the Live TV external-player default — this is the per-channel
                 // escape hatch for a stream neither in-app engine can open (same as Movies/Series/Downloads).
@@ -1332,16 +1349,17 @@ private fun ChannelMenuAction(
     }
 }
 
-
 @Composable
 private fun LivePreviewPane(
     channel: ChannelEntity?,
     categoryName: String?,
-    nowNext: EpgNowNext?,
-    previewEngine: tv.own.owntv.player.LivePreviewEngine,
+    vm: LiveViewModel,
     showVideo: Boolean,
-    singleSessionBlocked: Boolean = false,
 ) {
+    val previewEngine = vm.previewEngine
+    val guide by vm.browseNowNext.collectAsStateWithLifecycle()
+    val nowNext = guide.second.takeIf { guide.first == channel?.id }
+    val singleSessionBlocked by vm.previewBlockedSingleSession.collectAsStateWithLifecycle()
     val colors = OwnTVTheme.colors
     val previewState by previewEngine.state.collectAsStateWithLifecycle()
     val previewHeight by previewEngine.videoHeight.collectAsStateWithLifecycle()
@@ -1684,7 +1702,7 @@ private fun CatchupDialog(
         Column(Modifier.dialogPanel(width = 460.dp, corner = 16.dp, padding = 18.dp, scroll = false)) {
             Text(stringResource(CoreR.string.content_catchup_title, channelName), style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             Spacer(Modifier.height(2.dp))
-            val noGuide = list?.isEmpty() == true && jumpOffsetsSec.isNotEmpty()
+            val noGuide = list?.isEmpty() == jumpOffsetsSec.isNotEmpty()
             Text(
                 stringResource(if (noGuide) CoreR.string.content_catchup_jump_prompt else CoreR.string.content_catchup_prompt),
                 style = MaterialTheme.typography.bodySmall,
@@ -1735,7 +1753,7 @@ private fun CatchupDialog(
             }
             Spacer(Modifier.height(14.dp))
             OwnTVButton(stringResource(CoreR.string.content_close), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY,
-                modifier = if (list?.isEmpty() == true && jumpOffsetsSec.isEmpty()) Modifier.focusRequester(firstFocus) else Modifier)
+                modifier = if (list?.isEmpty() == jumpOffsetsSec.isEmpty()) Modifier.focusRequester(firstFocus) else Modifier)
         }
         }
     } // PopupFontTheme
@@ -1947,6 +1965,35 @@ private fun liveEpgShiftLabel(minutes: Int): String {
             sign,
             number.format(hours),
             number.format(remainder),
+        )
+    }
+}
+
+/** Isolate frequently changing edit state from the channel list and preview. */
+@Composable
+private fun ChannelOrderOverlay(vm: LiveViewModel) {
+    val state by vm.moveState.collectAsStateWithLifecycle()
+    state?.let { edit ->
+        MoveOrderOverlay(
+            title = stringResource(CoreR.string.content_reorder_channel),
+            itemNames = remember(edit.items) { edit.items.map { it.name } },
+            activeIndex = edit.activeIndex,
+            onMoveUp = vm::moveUp, onMoveDown = vm::moveDown,
+            onCommit = vm::commitMove, onCancel = vm::cancelMove,
+            onMoveTo = vm::moveTo, onUndo = vm::undoMove, onRestore = vm::restoreProviderOrder,
+            saving = edit.saving, saveFailed = edit.saveFailed,
+        )
+    }
+}
+
+@Composable
+private fun CategoryOrderOverlay(vm: LiveViewModel) {
+    val state by vm.categoryMoveState.collectAsStateWithLifecycle()
+    state?.let { edit ->
+        MoveOrderOverlay(
+            title = stringResource(CoreR.string.content_move), itemNames = edit.items,
+            activeIndex = edit.activeIndex, onMoveUp = vm::moveCategoryUp, onMoveDown = vm::moveCategoryDown,
+            onCommit = vm::commitCategoryMove, onCancel = vm::cancelCategoryMove,
         )
     }
 }

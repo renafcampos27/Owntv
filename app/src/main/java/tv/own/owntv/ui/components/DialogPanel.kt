@@ -22,7 +22,7 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.ui.theme.glass
 
 internal val LocalPopupMaxWidth = compositionLocalOf<Dp?> { null }
-internal fun popupBaseScale(remote: Boolean): Float = if (remote) 0.70f else 1f
+internal fun popupBaseScale(): Float = 0.70f
 internal fun popupPanelWidth(requested: Float, available: Float?): Float =
     if (available == null) requested else minOf(requested, available.coerceAtLeast(1f))
 

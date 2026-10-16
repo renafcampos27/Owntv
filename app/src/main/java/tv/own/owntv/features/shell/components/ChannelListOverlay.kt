@@ -80,14 +80,14 @@ fun ChannelListOverlay(
     val initialScrollIndex = (currentIndex - 2).coerceAtLeast(0)
     val listState = rememberLazyListState(initialFirstVisibleItemIndex = initialScrollIndex)
     val focusCurrent = remember { FocusRequester() }
-    LaunchedEffect(currentId) {
-        if (currentIndex > 0) {
-            runCatching { listState.scrollToItem(initialScrollIndex) }
-        }
-        withFrameNanos { }
-        if (runCatching { focusCurrent.requestFocus() }.isFailure) {
+    val channelIds = remember(channels) { channels.map { it.id } }
+    LaunchedEffect(channelIds, currentId) {
+        if (channels.isEmpty()) return@LaunchedEffect
+        runCatching { listState.scrollToItem(initialScrollIndex) }
+        repeat(5) {
+            withFrameNanos { }
+            if (runCatching { focusCurrent.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
             delay(50)
-            runCatching { focusCurrent.requestFocus() }
         }
     }
     BackHandler { onDismiss() }
@@ -123,7 +123,7 @@ fun ChannelListOverlay(
             ) {
                 items(channels, key = { it.id }, contentType = { "channel" }) { ch ->
                     val isCurrent = ch.id == currentId
-                    val onRowClick = remember(ch.id) { { onSelect(ch) } }
+                    val onRowClick = remember(ch, onSelect) { { onSelect(ch) } }
                     ChannelRow(
                         channel = ch,
                         isCurrent = isCurrent,

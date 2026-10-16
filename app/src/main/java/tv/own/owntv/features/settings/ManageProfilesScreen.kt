@@ -24,6 +24,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -39,6 +42,9 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.core.database.entity.ProfileEntity
 import tv.own.owntv.features.profiles.ProfileEditorDialog
+import tv.own.owntv.features.profiles.PinDialog
+import tv.own.owntv.core.profile.ProfileAuthorizationGrant
+import tv.own.owntv.core.profile.ProfileAuthorizationRequired
 import tv.own.owntv.features.profiles.ProfileGateSessionViewModel
 import tv.own.owntv.features.profiles.ProfilesViewModel
 import tv.own.owntv.ui.components.OwnTVAvatar
@@ -57,13 +63,17 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val activeProfileId by vm.activeProfileId.collectAsStateWithLifecycle()
     val defaultProfileName = stringResource(CoreR.string.profiles_default_name)
     val colors = OwnTVTheme.colors
+    val scope = rememberCoroutineScope()
+    val context = LocalContext.current
+    var busy by remember { mutableStateOf(false) }
+    var authorizationPending by remember { mutableStateOf<ProfileOperation?>(null) }
 
     var editing by remember { mutableStateOf<ProfileEntity?>(null) }
     var creating by remember { mutableStateOf(false) }
     var confirmDelete by remember { mutableStateOf<ProfileEntity?>(null) }
     val addFocus = remember { FocusRequester() }
 
-    // Per-row focus restore (mirrors ManageSourcesScreen / MoviesScreen): after create/edit/delete
+    // Per-row focus restore (mirrors ManageSourcesScreen): after create/edit/delete
     // closes, focus lands back INSIDE the list — on the acted-on row if it survived, else the nearest
     // neighbour, else the first row, else "Add Profile" (empty list). The previous version always
     // refocused "Add Profile", which threw focus out of the menu.
@@ -71,6 +81,29 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var contextIndex by remember { mutableStateOf(-1) }
     val contextFocus = remember { FocusRequester() }
     val firstRowFocus = remember { FocusRequester() }
+    suspend fun execute(operation: ProfileOperation, grant: ProfileAuthorizationGrant? = null) {
+        val activeBefore = activeProfileId
+        try {
+            when (operation) {
+                is ProfileOperation.Edit -> {
+                    vm.edit(operation.profile, operation.name, operation.avatar, operation.kids, operation.pin, grant)
+                    editing = null
+                }
+                is ProfileOperation.Delete -> {
+                    if (vm.delete(operation.profile, grant)) {
+                        gateSession.invalidateIfDeletingActiveProfile(operation.profile.id, activeBefore)
+                    }
+                    confirmDelete = null
+                }
+            }
+            authorizationPending = null
+        } catch (_: ProfileAuthorizationRequired) {
+            authorizationPending = operation
+        } catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) {
+            android.widget.Toast.makeText(context, CoreR.string.common_something_went_wrong, android.widget.Toast.LENGTH_LONG).show()
+        } finally { busy = false }
+    }
 
     LaunchedEffect(editing, creating, confirmDelete) {
         if (editing != null || creating || confirmDelete != null) return@LaunchedEffect
@@ -103,7 +136,7 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         runCatching { contextFocus.requestFocus() }
     }
 
-    BackHandler { onBack() }
+    BackHandler { if (!busy) onBack() }
 
     Column(
         modifier = modifier
@@ -141,8 +174,8 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         index == 0 -> Modifier.focusRequester(firstRowFocus)
                         else -> Modifier
                     },
-                    onEdit = { contextId = p.id; contextIndex = index; editing = p },
-                    onDelete = { contextId = p.id; contextIndex = index; confirmDelete = p },
+                    onEdit = { if (!busy) { contextId = p.id; contextIndex = index; editing = p } },
+                    onDelete = { if (!busy) { contextId = p.id; contextIndex = index; confirmDelete = p } },
                 )
             }
         }
@@ -160,8 +193,13 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     editing?.let { p ->
         ProfileEditorDialog(
             initial = p,
-            onConfirm = { name, avatarId, isKids, pin -> vm.edit(p, name, avatarId, isKids, pin); editing = null },
-            onDismiss = { editing = null },
+            onConfirm = { name, avatarId, isKids, pin ->
+                if (!busy) {
+                    busy = true
+                    scope.launch { execute(ProfileOperation.Edit(p, name, avatarId, isKids, pin)) }
+                }
+            },
+            onDismiss = { if (!busy) editing = null },
             takenNames = profiles.filter { it.id != p.id }.map { it.name.trim().lowercase() }.toSet(),
         )
     }
@@ -170,16 +208,44 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             title = stringResource(CoreR.string.profiles_delete_title, p.name),
             message = stringResource(CoreR.string.profiles_delete_message),
             onConfirm = {
-                // Only an active-profile deletion changes the identity authenticated by this
-                // Activity. Deleting an unrelated profile must not reopen the gate for the profile
-                // the user is still viewing.
-                gateSession.invalidateIfDeletingActiveProfile(p.id, activeProfileId)
-                vm.delete(p)
-                confirmDelete = null
+                if (!busy) {
+                    busy = true
+                    scope.launch { execute(ProfileOperation.Delete(p)) }
+                }
             },
-            onDismiss = { confirmDelete = null },
+            onDismiss = { if (!busy) confirmDelete = null },
         )
     }
+    authorizationPending?.let { operation ->
+        PinDialog(
+            title = stringResource(tv.own.owntv.R.string.profiles_confirm_current_pin, operation.profile.name),
+            onSubmit = { currentPin ->
+                if (!busy) {
+                    busy = true
+                    scope.launch {
+                        try {
+                            val grant = when (operation) {
+                                is ProfileOperation.Edit -> vm.authorizeEdit(operation.profile.id, currentPin, operation.kids, operation.pin)
+                                is ProfileOperation.Delete -> vm.authorizeDelete(operation.profile.id, currentPin)
+                            }
+                            if (grant == null) {
+                                android.widget.Toast.makeText(context, CoreR.string.profiles_wrong_pin, android.widget.Toast.LENGTH_SHORT).show()
+                                busy = false
+                            } else execute(operation, grant)
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) { busy = false; throw cancelled }
+                        catch (_: Exception) { busy = false; android.widget.Toast.makeText(context, CoreR.string.common_something_went_wrong, android.widget.Toast.LENGTH_LONG).show() }
+                    }
+                }
+            },
+            onDismiss = { if (!busy) authorizationPending = null },
+        )
+    }
+}
+
+private sealed interface ProfileOperation {
+    val profile: ProfileEntity
+    data class Edit(override val profile: ProfileEntity, val name: String, val avatar: Int, val kids: Boolean, val pin: String?) : ProfileOperation
+    data class Delete(override val profile: ProfileEntity) : ProfileOperation
 }
 
 @Composable

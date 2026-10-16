@@ -45,7 +45,9 @@ import tv.own.owntv.core.model.MediaType
 import tv.own.owntv.core.metadata.MetadataImages
 import tv.own.owntv.core.metadata.MetadataRepository
 import tv.own.owntv.core.settings.SettingsRepository
+import tv.own.owntv.core.stalker.StreamUrlResolver
 import tv.own.owntv.player.HeroPreviewEngine
+import tv.own.owntv.player.LiveStreamQuirks
 
 @Immutable
 data class HomeHeroMetadata(
@@ -106,6 +108,15 @@ data class ContinueTarget(
     val positionMs: Long = 0L,
 )
 
+private fun createHomeViewModelScope(): kotlinx.coroutines.CoroutineScope {
+    val dispatcher = if (android.os.Looper.getMainLooper() != null) {
+        Dispatchers.Main.immediate
+    } else {
+        Dispatchers.Unconfined
+    }
+    return kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + dispatcher)
+}
+
 class HomeViewModel(
     private val feed: HomeFeedReader,
     private val movieDao: MovieDao,
@@ -120,7 +131,8 @@ class HomeViewModel(
     private val progressDao: tv.own.owntv.core.database.dao.ProgressDao,
     private val metadata: MetadataRepository,
     private val trendingDao: TrendingDao,
-) : ViewModel() {
+    private val streamUrlResolver: StreamUrlResolver,
+) : ViewModel(createHomeViewModelScope()) {
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
@@ -161,6 +173,14 @@ class HomeViewModel(
                 reloadRequests.emit(null)
             }
         }
+        viewModelScope.launch {
+            settings.heroPreviewEnabled.collect { enabled ->
+                heroPreviewSettingEnabled = enabled
+                if (!enabled) {
+                    stopPreview()
+                }
+            }
+        }
     }
 
     // --- Batch 7: the single most-recent resumable item, for the shared top-bar Continue chip. ---
@@ -196,7 +216,20 @@ class HomeViewModel(
     }
 
     private val _heroFocused = MutableStateFlow(false)
+    @Volatile
+    private var heroFocusExplicitlySet = false
     private val _previewEnabled = MutableStateFlow(true)
+    @Volatile
+    private var heroPreviewSettingEnabled = true
+    private val _channelTransitionActive = MutableStateFlow(false)
+    val channelTransitionActive: StateFlow<Boolean> = _channelTransitionActive.asStateFlow()
+    private val _selectedPreviewHero = MutableStateFlow<HeroItem?>(null)
+    private val previewGeneration = java.util.concurrent.atomic.AtomicLong(0L)
+    @Volatile
+    private var previewJob: kotlinx.coroutines.Job? = null
+    private val channelOpenGeneration = java.util.concurrent.atomic.AtomicLong(0L)
+    @Volatile
+    private var channelOpenJob: kotlinx.coroutines.Job? = null
     private val _lastHeroInteractionMs = MutableStateFlow(0L)
     private val resolvingHeroKeys = mutableSetOf<String>()
     private val resolvingContinuationArtworkKeys = mutableSetOf<String>()
@@ -204,22 +237,56 @@ class HomeViewModel(
     val lastHeroInteractionMs: StateFlow<Long> = _lastHeroInteractionMs.asStateFlow()
 
     val isPreviewActive: StateFlow<Boolean> =
-        combine(_heroFocused, _previewEnabled, settings.heroPreviewEnabled, _uiState) { focused, enabled, setting, state ->
-            focused && enabled && setting && state.heroItems.isNotEmpty()
+        combine(
+            _heroFocused,
+            _previewEnabled,
+            settings.heroPreviewEnabled,
+            _channelTransitionActive,
+            _uiState,
+        ) { focused, enabled, setting, transitionActive, state ->
+            focused && enabled && setting && !transitionActive && state.heroItems.isNotEmpty()
         }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
     fun setPreviewEnabled(enabled: Boolean) {
         _previewEnabled.value = enabled
+        if (!enabled) {
+            invalidatePendingPreview()
+        } else if (channelOpenJob?.isActive != true) {
+            _channelTransitionActive.value = false
+        }
     }
 
     fun setHeroFocused(focused: Boolean) {
+        heroFocusExplicitlySet = true
         _heroFocused.value = focused
+        if (!focused) {
+            invalidatePendingPreview()
+        }
+    }
+
+    val activeChannelOpenGeneration: Long
+        get() = channelOpenGeneration.get()
+
+    fun isChannelOpenGenerationCurrent(generation: Long): Boolean =
+        channelOpenGeneration.get() == generation
+
+    fun onChannelTransitionFinished(expectedGeneration: Long? = null) {
+        if (expectedGeneration != null && channelOpenGeneration.get() != expectedGeneration) return
+        if (channelOpenJob?.isActive != true) {
+            _channelTransitionActive.value = false
+        }
     }
 
     fun navigateHero(index: Int) {
         val items = _uiState.value.heroItems
         if (index !in items.indices) return
+        val nextHero = items[index]
+        val changed = _uiState.value.activeHeroIndex != index ||
+            (_selectedPreviewHero.value != null && _selectedPreviewHero.value != nextHero)
         _uiState.value = _uiState.value.copy(activeHeroIndex = index)
+        if (changed) {
+            stopPreview()
+        }
     }
 
     fun navigateTrending(index: Int) {
@@ -251,6 +318,9 @@ class HomeViewModel(
     }
 
     fun onHeroUserNavigate(index: Int) {
+        if (channelOpenJob?.isActive != true) {
+            _channelTransitionActive.value = false
+        }
         _lastHeroInteractionMs.value = System.currentTimeMillis()
         navigateHero(index)
         resolveHeroMetadata(index)
@@ -274,20 +344,187 @@ class HomeViewModel(
         }
     }
 
-    fun stopPreview() {
-        heroPreviewEngine.stop()
+    private fun invalidatePendingPreview(): Long {
+        val gen = previewGeneration.incrementAndGet()
+        _selectedPreviewHero.value = null
+        previewJob?.cancel()
+        previewJob = null
+        return gen
     }
+
+    private fun isPreviewAuthorized(): Boolean =
+        (!heroFocusExplicitlySet || _heroFocused.value) &&
+            _previewEnabled.value &&
+            heroPreviewSettingEnabled &&
+            !_channelTransitionActive.value
+
+    private fun isHeroStillSelected(hero: HeroItem): Boolean {
+        if (_selectedPreviewHero.value != hero) return false
+        val state = _uiState.value
+        if (state.heroItems.isNotEmpty()) {
+            val activeHero = state.heroItems.getOrNull(state.activeHeroIndex) ?: return false
+            if (activeHero != hero) return false
+        }
+        return true
+    }
+
+    private suspend fun canStartPreview(
+        generation: Long,
+        hero: HeroItem,
+        canProceed: () -> Boolean,
+    ): Boolean =
+        previewGeneration.get() == generation &&
+            kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]?.isActive != false &&
+            isPreviewAuthorized() &&
+            isHeroStillSelected(hero) &&
+            canProceed()
+
+    fun stopPreview() {
+        invalidatePendingPreview()
+        if (channelOpenJob?.isActive != true) {
+            heroPreviewEngine.stop()
+        }
+    }
+
+    fun hasActivePreview(): Boolean =
+        previewJob?.isActive == true || heroPreviewEngine.hasActiveSession
 
     /**
      * Start the hero preview for [hero] with the SAME request identity the player would use: the
      * playlist's User-Agent plus the item's own headers. Without them a source that needs a custom UA or
      * a Referer had a home screen that 403'd on every preview while the item itself played fine.
      */
-    suspend fun startPreview(hero: HeroItem) {
-        val ua = withContext(Dispatchers.IO) {
-            runCatching { sourceDao.getById(hero.sourceId)?.userAgent }.getOrNull()
+    suspend fun startPreview(
+        hero: HeroItem,
+        dwellDelayMs: Long = 0L,
+        canProceed: () -> Boolean = { true },
+    ): Boolean {
+        if (!isPreviewAuthorized() || !canProceed()) return false
+        val initialItems = _uiState.value.heroItems
+        if (initialItems.isNotEmpty() && initialItems.getOrNull(_uiState.value.activeHeroIndex) != hero) {
+            return false
         }
-        heroPreviewEngine.play(hero.streamUrl, hero.seekToMs, ua, hero.httpHeaders)
+        val generation = invalidatePendingPreview()
+        _selectedPreviewHero.value = hero
+        val callerJob = kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]
+        val job = kotlinx.coroutines.SupervisorJob(callerJob)
+        previewJob = job
+        return try {
+            withContext(job) {
+                if (!canStartPreview(generation, hero, canProceed)) return@withContext false
+                if (dwellDelayMs > 0L) {
+                    delay(dwellDelayMs)
+                    if (!canStartPreview(generation, hero, canProceed)) return@withContext false
+                }
+                val (src, resolvedUrl) = withContext(Dispatchers.IO) {
+                    val source = runCatching { sourceDao.getById(hero.sourceId) }.getOrNull()
+                    val url = when (hero) {
+                        is HeroItem.LiveHero -> try {
+                            streamUrlResolver.resolve(hero.channel, preferHls = true, source = source)
+                        } catch (c: kotlinx.coroutines.CancellationException) {
+                            throw c
+                        } catch (_: Throwable) {
+                            null
+                        }
+                        else -> hero.streamUrl
+                    }
+                    source to url
+                }
+                if (resolvedUrl.isNullOrBlank()) return@withContext false
+                if (!canStartPreview(generation, hero, canProceed)) return@withContext false
+                val singleSession = (src?.maxConnections ?: Int.MAX_VALUE) <= 1 ||
+                    LiveStreamQuirks.needsCleanSessionTeardown(resolvedUrl)
+                if (!canStartPreview(generation, hero, canProceed)) return@withContext false
+                heroPreviewEngine.play(
+                    url = resolvedUrl,
+                    seekToMs = hero.seekToMs,
+                    userAgent = src?.userAgent,
+                    httpHeaders = hero.httpHeaders,
+                    sourceId = hero.sourceId,
+                    singleSession = singleSession,
+                )
+                true
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            if (callerJob != null && !callerJob.isActive) throw e
+            false
+        } finally {
+            if (previewJob === job) {
+                previewJob = null
+            }
+            job.complete()
+        }
+    }
+
+    private fun beginChannelTransition(): Long {
+        val openGen = channelOpenGeneration.incrementAndGet()
+        _channelTransitionActive.value = true
+        invalidatePendingPreview()
+        return openGen
+    }
+
+    private suspend fun awaitPreviewStopForChannel(channelId: Long, openGen: Long): Boolean {
+        val currentJob = kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]
+        channelOpenJob = currentJob
+        return try {
+            if (channelOpenGeneration.get() != openGen) return false
+            if (!heroPreviewEngine.hasActiveSession) {
+                heroPreviewEngine.stop()
+                return channelOpenGeneration.get() == openGen
+            }
+            val singleSession = heroPreviewEngine.hasSingleSessionPreview || withContext(Dispatchers.IO) {
+                val channel = runCatching { channelDao.getById(channelId) }.getOrNull()
+                val src = channel?.let { runCatching { sourceDao.getById(it.sourceId) }.getOrNull() }
+                (src?.maxConnections ?: Int.MAX_VALUE) <= 1 ||
+                    (channel != null && LiveStreamQuirks.needsCleanSessionTeardown(channel.streamUrl))
+            }
+            if (channelOpenGeneration.get() != openGen) return false
+            val confirmed = heroPreviewEngine.stopAndAwaitRelease(requireConfirmation = singleSession)
+            if (!confirmed) {
+                if (channelOpenGeneration.get() == openGen) {
+                    _channelTransitionActive.value = false
+                }
+                return false
+            }
+            channelOpenGeneration.get() == openGen
+        } finally {
+            if (channelOpenJob === currentJob && channelOpenGeneration.get() == openGen) {
+                channelOpenJob = null
+            }
+        }
+    }
+
+    /**
+     * Stops any active Home hero preview and awaits confirmation before opening [channelId].
+     * For single-session providers (either the currently playing preview or the target channel),
+     * opening the full player requires confirmed teardown so the server does not reject the second
+     * connection; if teardown fails to confirm within the timeout, returns `false` to block opening.
+     */
+    suspend fun stopPreviewBeforeChannel(channelId: Long): Boolean {
+        val openGen = beginChannelTransition()
+        return awaitPreviewStopForChannel(channelId, openGen)
+    }
+
+    fun requestOpenChannel(
+        channelId: Long,
+        zapChannels: List<ChannelEntity>,
+        scope: kotlinx.coroutines.CoroutineScope = viewModelScope,
+        onPlayChannel: (Long, List<ChannelEntity>) -> Unit,
+    ) {
+        val openGen = beginChannelTransition()
+        scope.launch {
+            val currentJob = kotlinx.coroutines.currentCoroutineContext()[kotlinx.coroutines.Job]
+            channelOpenJob = currentJob
+            try {
+                if (awaitPreviewStopForChannel(channelId, openGen) && channelOpenGeneration.get() == openGen) {
+                    onPlayChannel(channelId, zapChannels)
+                }
+            } finally {
+                if (channelOpenJob === currentJob && channelOpenGeneration.get() == openGen) {
+                    channelOpenJob = null
+                }
+            }
+        }
     }
 
     /**
@@ -309,6 +546,10 @@ class HomeViewModel(
     private suspend fun loadHomeData(profileId: Long) {
         val previous = _uiState.value
         val data = feed.load(profileId, liveOnly = true)
+        val selectedHero = _selectedPreviewHero.value
+        if (selectedHero != null && data.heroItems.firstOrNull() != selectedHero) {
+            stopPreview()
+        }
         _uiState.value = HomeUiState(
             trendingItems = data.trendingItems,
             activeTrendingIndex = previous.activeTrendingIndex
@@ -396,4 +637,7 @@ class HomeViewModel(
         return if (preferred >= 0) profileDao.resolveExistingProfileId(preferred) else null
     }
 
+    companion object {
+        const val PREVIEW_DWELL_MS = 520L
+    }
 }

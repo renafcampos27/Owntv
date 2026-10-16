@@ -10,7 +10,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 
-/** Run on a prepared TV emulator and phone emulator, then compare release before/after. */
+/** Run on a prepared Android TV emulator, then compare release before/after. */
 @RunWith(AndroidJUnit4::class)
 class IptvPerformanceBenchmark {
     @get:Rule val rule = MacrobenchmarkRule()
@@ -24,6 +24,25 @@ class IptvPerformanceBenchmark {
         setupBlock = { pressHome() },
     ) {
         startActivityAndWait()
-        exerciseIptvJourney(remote = remoteDevice())
+        exerciseIptvJourney()
     }
+
+    @Test fun warmListNavigation() = rule.measureRepeated(
+        packageName = IPTV_PACKAGE, metrics = listOf(FrameTimingMetric()),
+        compilationMode = CompilationMode.Partial(), iterations = 5,
+        setupBlock = { startActivityAndWait(); prepareListNavigation() },
+    ) { exerciseListNavigation() }
+
+    @Test fun repeatedChannelHandover() = rule.measureRepeated(
+        packageName = IPTV_PACKAGE, metrics = listOf(FrameTimingMetric()),
+        compilationMode = CompilationMode.Partial(), iterations = 5,
+        setupBlock = { startActivityAndWait() },
+    ) { exerciseRepeatChannels() }
+
+    /** Guide-only movement; startup/import and entering the first programme are outside measurement. */
+    @Test fun warmGuideTimelineNavigation() = rule.measureRepeated(
+        packageName = IPTV_PACKAGE, metrics = listOf(FrameTimingMetric()),
+        compilationMode = CompilationMode.Partial(), iterations = 5,
+        setupBlock = { startActivityAndWait(); prepareGuideNavigation() },
+    ) { exerciseGuideNavigation() }
 }

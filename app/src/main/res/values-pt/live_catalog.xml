@@ -22,12 +22,12 @@
     <string name="settings_afr_pause_description">No vídeo gravado, aguardar após mudar o modo do ecrã para evitar iniciar durante a transição HDMI. Mudanças sem interrupção não fazem pausa.</string>
     <string name="settings_afr_resolution_description">Permitir mudanças de resolução do ecrã durante a reprodução de vídeo gravado.</string>
     <string name="settings_reset_player_choices_description">Repor as escolhas guardadas do reprodutor de vídeo gravado. As escolhas dos canais em direto são mantidas.</string>
-    <string name="settings_reset_saved_zoom_description">Repor as escolhas de zoom guardadas para o zoom predefinido.</string>
-    <string name="settings_reset_saved_zoom_confirm_description">As escolhas de zoom guardadas voltam à predefinição. Os volumes guardados são mantidos.</string>
+    <string name="settings_reset_saved_zoom_description">Limpar as escolhas de zoom guardadas para as próximas aberturas. A imagem atual mantém-se.</string>
+    <string name="settings_reset_saved_zoom_confirm_description">As escolhas guardadas são limpas para as próximas aberturas, que usam o zoom predefinido. A imagem atual mantém-se. Uma nova escolha de zoom no leitor volta a guardar este item. Os volumes guardados são mantidos.</string>
     <string name="settings_reset_saved_volume_description">Repor os volumes guardados para o volume predefinido.</string>
     <string name="settings_reset_saved_volume_confirm_description">Os volumes guardados voltam à predefinição. As definições de zoom guardadas são mantidas.</string>
-    <string name="settings_reset_saved_audio_delay_description">Repor os atrasos de áudio guardados para a sincronização configurada.</string>
-    <string name="settings_reset_saved_audio_delay_confirm_description">Os atrasos de áudio guardados voltam à predefinição configurada. O zoom e o volume são mantidos.</string>
+    <string name="settings_reset_saved_audio_delay_description">Limpar os atrasos de áudio guardados para as próximas aberturas. A sincronização atual mantém-se.</string>
+    <string name="settings_reset_saved_audio_delay_confirm_description">Os atrasos guardados são limpos para as próximas aberturas, que seguem a definição do canal ou global. A reprodução atual mantém-se. Um novo ajuste no leitor com Memorizar ativo pode voltar a guardar este item. O zoom e o volume são mantidos.</string>
     <string name="settings_seek_step_description">Intervalo de retrocesso e avanço em vídeo que permite deslocar a reprodução.</string>
     <string name="settings_resume_playback_description">Escolher o que acontece quando um vídeo tem uma posição de reprodução guardada.</string>
     <string name="settings_android_tv_home_description">Mostrar canais recentes no ecrã inicial da TV.</string>

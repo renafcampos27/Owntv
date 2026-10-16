@@ -70,6 +70,16 @@ fun RecordingSettingsScreen(
     val internalQuota by vm.internalMediaQuotaGiB.collectAsStateWithLifecycle()
     val externalQuota by vm.externalMediaQuotaGiB.collectAsStateWithLifecycle()
     val storage by recordingsVm.storage.collectAsStateWithLifecycle()
+    val timersAreExact by recordingsVm.timersAreExact.collectAsStateWithLifecycle()
+    val lifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    androidx.compose.runtime.DisposableEffect(lifecycle, recordingsVm) {
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            if (event == androidx.lifecycle.Lifecycle.Event.ON_RESUME) recordingsVm.refreshAlarmPermission()
+        }
+        lifecycle.addObserver(observer)
+        recordingsVm.refreshAlarmPermission()
+        onDispose { lifecycle.removeObserver(observer) }
+    }
     var showStorageBrowser by remember { mutableStateOf(false) }
     var browserOpened by remember { mutableStateOf(false) }
     val destinationFocus = remember { FocusRequester() }
@@ -128,7 +138,7 @@ fun RecordingSettingsScreen(
         // Said here and nowhere else, because this is the screen where a user wonders why a
         // recording began at 20:03. Not a setting — the app cannot grant itself the permission —
         // but the one place the consequence belongs.
-        if (!recordingsVm.timersAreExact) {
+        if (!timersAreExact) {
             Spacer(Modifier.height(12.dp))
             Text(
                 stringResource(CoreR.string.settings_recording_timers_inexact),

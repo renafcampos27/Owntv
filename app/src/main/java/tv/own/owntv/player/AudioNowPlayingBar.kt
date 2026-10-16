@@ -68,9 +68,10 @@ import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.ui.theme.OwnTVTheme
 import tv.own.owntv.ui.theme.LocalPopupFontFamily
+import tv.own.owntv.ui.theme.animationsOn
 
 /**
- * The wide "now-playing" bar shown in the top bar (left of the weather chip) while [PlayerMode.AUDIO]
+ * The wide "now-playing" bar shown in the top bar while [PlayerMode.AUDIO]
  * is active — Audio Mode plan §6. Video is stopped; only audio plays.
  *
  * **Two-stage focus (owner spec):**
@@ -259,7 +260,7 @@ fun AudioNowPlayingBar(
                                 StationDot(colors.onSurfaceVariant.copy(alpha = 0.5f))
                             }
                             if (isLive) {
-                                LiveRow(colors.favorite)
+                                LiveRow(colors.favorite, playing = isPlaying)
                             } else if (hasTime) {
                                 Text(
                                     stringResource(CoreR.string.player_time_progress, fmtTime(position), fmtTime(duration)),
@@ -345,14 +346,17 @@ private fun StationDot(color: Color) {
 }
 
 @Composable
-private fun LiveRow(dotColor: Color) {
+private fun LiveRow(dotColor: Color, playing: Boolean) {
     val colors = OwnTVTheme.colors
-    val transition = rememberInfiniteTransition(label = "liveDot")
-    val a by transition.animateFloat(
-        initialValue = 0.35f, targetValue = 1f,
-        animationSpec = infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Reverse),
-        label = "liveDotAlpha",
-    )
+    val a = if (animationsOn && playing) {
+        val transition = rememberInfiniteTransition(label = "liveDot")
+        val alpha by transition.animateFloat(
+            initialValue = 0.35f, targetValue = 1f,
+            animationSpec = infiniteRepeatable(tween(700, easing = LinearEasing), RepeatMode.Reverse),
+            label = "liveDotAlpha",
+        )
+        alpha
+    } else 1f
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp)) {
         Box(Modifier.size(6.dp).clip(CircleShape).background(dotColor).alpha(a))
         Text(stringResource(CoreR.string.player_live), style = MaterialTheme.typography.labelSmall, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold)
@@ -366,19 +370,21 @@ private fun LiveRow(dotColor: Color) {
 @Composable
 internal fun Equalizer(playing: Boolean, color: Color, modifier: Modifier) {
     val bars = 5
-    val transition = rememberInfiniteTransition(label = "eq")
-    val heights = (0 until bars).map { i ->
-        transition.animateFloat(
-            initialValue = 0.25f, targetValue = 1f,
-            animationSpec = infiniteRepeatable(tween(420 + i * 90, easing = LinearEasing), RepeatMode.Reverse),
-            label = "eqBar$i",
-        )
-    }
+    val heights = if (animationsOn && playing) {
+        val transition = rememberInfiniteTransition(label = "eq")
+        List(bars) { i ->
+            transition.animateFloat(
+                initialValue = 0.25f, targetValue = 1f,
+                animationSpec = infiniteRepeatable(tween(420 + i * 90, easing = LinearEasing), RepeatMode.Reverse),
+                label = "eqBar$i",
+            )
+        }
+    } else null
     Canvas(modifier) {
         val gap = size.width * 0.12f
         val barW = (size.width - gap * (bars - 1)) / bars
         for (i in 0 until bars) {
-            val h = if (playing) heights[i].value else 0.18f
+            val h = heights?.get(i)?.value ?: if (playing) 0.55f else 0.18f
             val bh = size.height * h
             drawRoundRect(
                 color = color,

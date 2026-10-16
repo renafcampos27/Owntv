@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import android.content.Context
 import android.graphics.Rect
 import android.util.Log
@@ -8,9 +10,7 @@ import android.view.ViewTreeObserver
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.compositionLocalOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import kotlin.math.roundToInt
@@ -38,7 +38,7 @@ internal object TvImeDefaults {
 }
 
 @Stable
-internal class TvImeWatcher(private val hostView: View, private val allowEstimate: Boolean = true) {
+internal class TvImeWatcher(private val hostView: View) {
     var metrics by mutableStateOf(TvImeMetrics())
         private set
     var imeRequested by mutableStateOf(false)
@@ -50,8 +50,7 @@ internal class TvImeWatcher(private val hostView: View, private val allowEstimat
     )
     private val rect = Rect()
     private var baselineVisibleBottom = -1
-    private val windowBaseline = ImeWindowBaseline()
-    private val windowLocation = IntArray(2)
+
     private var attached = false
     private val globalLayoutListener = ViewTreeObserver.OnGlobalLayoutListener { recompute("layout") }
 
@@ -98,12 +97,11 @@ internal class TvImeWatcher(private val hostView: View, private val allowEstimat
     private fun captureBaseline() {
         if (imeRequested || hostView.height <= 0) return
         hostView.getWindowVisibleDisplayFrame(rect)
-        if (allowEstimate && rect.bottom > 0) baselineVisibleBottom = maxOf(baselineVisibleBottom, rect.bottom)
+        if (rect.bottom > 0) baselineVisibleBottom = maxOf(baselineVisibleBottom, rect.bottom)
     }
 
     private fun recompute(trigger: String) {
         val displayHeight = imeHostHeight(
-            remote = allowEstimate,
             displayHeight = hostView.resources.displayMetrics.heightPixels,
             rootHeight = hostView.rootView.height,
             hostHeight = hostView.height,
@@ -116,15 +114,7 @@ internal class TvImeWatcher(private val hostView: View, private val allowEstimat
 
         hostView.getWindowVisibleDisplayFrame(rect)
         if (!imeRequested && !imeInsetVisible) captureBaseline()
-        hostView.rootView.getLocationOnScreen(windowLocation)
-        val localVisibleBottom = (rect.bottom - windowLocation[1]).coerceIn(0, displayHeight)
-        windowBaseline.update(
-            hostView.rootView.width, displayHeight, windowLocation[1], localVisibleBottom,
-            imeRequested || imeInsetVisible,
-        )
-        val frameObscured = if (!allowEstimate) {
-            windowBaseline.obscured(localVisibleBottom)
-        } else if (baselineVisibleBottom > 0 && rect.bottom > 0) {
+        val frameObscured = if (baselineVisibleBottom > 0 && rect.bottom > 0) {
             (baselineVisibleBottom - rect.bottom).coerceAtLeast(0)
         } else 0
 
@@ -134,11 +124,11 @@ internal class TvImeWatcher(private val hostView: View, private val allowEstimat
             frameObscured >= minKeyboard -> frameObscured to TvImeMetrics.Source.VISIBLE_FRAME
             else -> null
         }
-        if (measured != null && allowEstimate) {
+        if (measured != null) {
             prefs.edit().putInt(KEY_CALIBRATED_HEIGHT, measured.first).apply()
         }
 
-        val obstruction = measured?.first ?: if (imeRequested && allowEstimate) {
+        val obstruction = measured?.first ?: if (imeRequested) {
             prefs.getInt(KEY_CALIBRATED_HEIGHT, 0).takeIf { it >= minKeyboard }
                 ?: (displayHeight * TvImeDefaults.FALLBACK_KEYBOARD_FRACTION).roundToInt()
         } else 0

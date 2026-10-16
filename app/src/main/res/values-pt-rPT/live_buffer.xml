@@ -18,9 +18,9 @@
     <string name="settings_live_reserve_low">Reserva baixa anterior</string>
     <string name="settings_live_reserve_custom">Personalizada (avançado)</string>
     <string name="settings_live_reserve_custom_title">Reserva de reprodução personalizada</string>
-    <string name="settings_live_reserve_custom_description">Escolher os objetivos de reserva mínima e máxima, por exemplo 8 e 12 segundos. A máxima pode ficar até 10 segundos acima da mínima. Aplica-se na próxima abertura de um canal.</string>
-    <string name="settings_live_reserve_minimum">Reserva mínima</string>
-    <string name="settings_live_reserve_maximum">Reserva máxima</string>
+    <string name="settings_live_reserve_custom_description">Escolher quando retomar o carregamento e o limiar superior, por exemplo 8–30 ou 8–60 segundos. O limiar superior pode chegar a 70 segundos. Os segmentos HLS podem ultrapassá-lo; a memória e a disponibilidade do direto podem impedir que seja atingido. Aplica-se na próxima abertura de um canal.</string>
+    <string name="settings_live_reserve_minimum">Retomar carregamento abaixo de</string>
+    <string name="settings_live_reserve_maximum">Limiar superior de carregamento</string>
     <string name="settings_live_reserve_range">%1$d–%2$d s</string>
     <string name="settings_live_offset_title">Atraso face ao direto</string>
     <string name="settings_live_offset_description">Atraso do direto para ExoPlayer/HLS, independente da reserva. Automático segue o HLS; outros reprodutores usam o valor da origem. Aplica-se na próxima abertura de um canal.</string>

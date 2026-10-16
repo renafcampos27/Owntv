@@ -31,8 +31,6 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.core.live.LiveKey
 import tv.own.owntv.features.live.LiveScreen
-import tv.own.owntv.features.movies.MoviesScreen
-import tv.own.owntv.features.series.SeriesScreen
 import tv.own.owntv.features.settings.SettingsViewModel
 import tv.own.owntv.features.shell.components.ClearHistoryDialog
 import tv.own.owntv.features.settings.data.BrowseContainerPadding
@@ -44,25 +42,7 @@ import tv.own.owntv.ui.components.roundedPanel
 import tv.own.owntv.ui.components.trapVerticalFocusExit
 import tv.own.owntv.ui.theme.OwnTVTheme
 
-/** Which of the three types the stage is showing. */
-private enum class UserDataTab { LIVE, MOVIES, SERIES }
-
-/**
- * **Favourites** and **Watch history** — the two screens the television never had.
- *
- * Until now there was a Favorites entry inside Live TV, another inside Movies and another inside
- * Series, and nothing that answered "what have I starred". This is it: three tabs over one stage,
- * the same three the phone uses, so the two apps stay one product.
- *
- * Under each tab is **the pane that type already has**, pinned to this folder — the channel list
- * with its now/next line, the Movies grid at the user's own fixed column count, the Series grid —
- * not a second copy of any of them. The context menus are theirs too, un-favourite included, so a
- * row leaves this list the moment the star does.
- *
- * A tab whose count is zero is still shown, with that type's own empty state: a user who has
- * starred only channels and series must see *why* Movies is empty rather than wonder whether it
- * broke.
- */
+/** Live channel favourites; legacy saved movie/series data remains in storage. */
 @Composable
 fun FavoritesScreen(
     onFullscreen: () -> Unit,
@@ -114,7 +94,6 @@ private fun UserDataScreen(
     settingsVm: SettingsViewModel = koinViewModel(),
 ) {
     val history = key == LiveKey.History
-    val tab = UserDataTab.LIVE
     var showClear by remember { mutableStateOf(false) }
     val counted by (if (history) counts.history else counts.favorites).collectAsStateWithLifecycle()
 
@@ -164,16 +143,11 @@ private fun UserDataScreen(
                 color = OwnTVTheme.colors.onSurface,
                 modifier = Modifier.padding(end = 10.dp),
             )
-            listOf(UserDataTab.LIVE).forEach { entry ->
-                OwnTVButton(
-                    label = entry.label(counted),
-                    onClick = { },
-                    style = if (entry == tab) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
-                    selected = entry == tab,
-                    compact = true,
-                    modifier = if (entry == UserDataTab.LIVE) Modifier.focusRequester(tabFocus) else Modifier,
-                )
-            }
+            OwnTVButton(
+                label = stringResource(CoreR.string.common_nav_live_tv) + stringResource(CoreR.string.content_epg_bits_separator) + counted.live,
+                onClick = { }, style = OwnTVButtonStyle.PRIMARY, selected = true, compact = true,
+                modifier = Modifier.focusRequester(tabFocus),
+            )
             if (history) {
                 Spacer(Modifier.weight(1f))
                 OwnTVButton(
@@ -186,26 +160,10 @@ private fun UserDataScreen(
             }
         }
         Spacer(Modifier.height(10.dp))
-        when (tab) {
-            UserDataTab.LIVE -> LiveScreen(
-                onFullscreen = onFullscreen,
-                onChildFocused = onChildFocused,
-                lockedKey = key,
-                modifier = Modifier.fillMaxSize(),
-            )
-            UserDataTab.MOVIES -> MoviesScreen(
-                onFullscreen = onFullscreen,
-                onChildFocused = onChildFocused,
-                lockedKey = key,
-                modifier = Modifier.fillMaxSize(),
-            )
-            UserDataTab.SERIES -> SeriesScreen(
-                onFullscreen = onFullscreen,
-                onChildFocused = onChildFocused,
-                lockedKey = key,
-                modifier = Modifier.fillMaxSize(),
-            )
-        }
+        LiveScreen(
+            onFullscreen = onFullscreen, onChildFocused = onChildFocused,
+            lockedKey = key, modifier = Modifier.fillMaxSize(),
+        )
     }
 
     if (showClear) {
@@ -216,23 +174,4 @@ private fun UserDataScreen(
             )
         }
     }
-}
-
-/** "Live TV · 28" — the type's own name and how many of it there are. */
-@Composable
-private fun UserDataTab.label(counts: TypeCounts): String {
-    val name = stringResource(
-        when (this) {
-            UserDataTab.LIVE -> CoreR.string.common_nav_live_tv
-            UserDataTab.MOVIES -> CoreR.string.common_nav_movies
-            UserDataTab.SERIES -> CoreR.string.common_nav_series
-        },
-    )
-    val count = when (this) {
-        UserDataTab.LIVE -> counts.live
-        UserDataTab.MOVIES -> counts.movies
-        UserDataTab.SERIES -> counts.series
-    }
-    // The app's own "a · b" joiner, so one separator serves every screen and cannot drift.
-    return name + stringResource(CoreR.string.content_epg_bits_separator) + count
 }

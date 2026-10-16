@@ -49,4 +49,33 @@ class ChannelPressGestureTest {
     @Test fun orphanKeyUpDoesNothing() {
         assertNull(ChannelPressGesture().release(10_000))
     }
+
+    @Test fun stageProgressionFollowsThresholds() {
+        assertEquals(ChannelPressStage.IDLE, stageForElapsed(-500L))
+        assertEquals(ChannelPressStage.IDLE, stageForElapsed(0L))
+        assertEquals(ChannelPressStage.HOLDING_TO_VERSIONS, stageForElapsed(1L))
+        assertEquals(ChannelPressStage.HOLDING_TO_VERSIONS, stageForElapsed(1_999L))
+        assertEquals(ChannelPressStage.VERSIONS_THRESHOLD, stageForElapsed(2_000L))
+        assertEquals(ChannelPressStage.VERSIONS_THRESHOLD, stageForElapsed(2_999L))
+        assertEquals(ChannelPressStage.MENU_THRESHOLD, stageForElapsed(3_000L))
+        assertEquals(ChannelPressStage.MENU_THRESHOLD, stageForElapsed(5_000L))
+    }
+
+    @Test fun boundaryReleaseTimings() {
+        val press = ChannelPressGesture()
+        press.begin(0)
+        assertEquals(ChannelPressAction.PLAY, press.release(0))
+
+        press.begin(0)
+        assertEquals(ChannelPressAction.PLAY, press.release(1_999))
+
+        press.begin(0)
+        assertEquals(ChannelPressAction.VERSIONS, press.release(2_000))
+
+        press.begin(0)
+        assertEquals(ChannelPressAction.VERSIONS, press.release(2_999))
+
+        press.begin(0)
+        assertEquals(ChannelPressAction.MENU, press.release(3_000))
+    }
 }

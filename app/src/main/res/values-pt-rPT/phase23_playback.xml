@@ -1,0 +1,6 @@
+<resources>
+    <string name="phase23_load_more">Carregar mais canais</string>
+    <string name="phase23_all_categories">Todas as categorias</string>
+    <string name="phase23_no_search">Nenhuma</string>
+    <string name="phase23_batch_scope">Lista: %1$s · Total: %2$d · Visíveis: %3$d\nCategoria: %4$s · Pesquisa: %5$s\nCorrespondências: %6$d · Excluídos: %7$d</string>
+</resources>

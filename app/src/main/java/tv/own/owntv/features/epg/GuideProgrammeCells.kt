@@ -4,7 +4,8 @@ import tv.own.owntv.core.database.entity.EpgProgrammeEntity
 
 /** Drawing boundaries: a newer programme wins where two guide entries overlap. */
 internal object GuideProgrammeCells {
-    data class Cell(val programmeIndex: Int, val startMs: Long, val stopMs: Long)
+    data class FragmentKey(val sourceId: Long, val channel: String, val programmeStartMs: Long, val fragmentStartMs: Long)
+    data class Cell(val programmeIndex: Int, val startMs: Long, val stopMs: Long, val key: FragmentKey)
 
     /** Sorted, non-overlapping cells: seek once, then visit only the viewport. */
     fun visible(cells: List<Cell>, from: Long, to: Long): IntRange {
@@ -20,34 +21,50 @@ internal object GuideProgrammeCells {
         return first until low
     }
 
-    /** Selection uses the same clipped intervals as drawing; a gap has no programme. */
-    fun at(programmes: List<EpgProgrammeEntity>, timeMs: Long, windowStart: Long, windowEnd: Long): EpgProgrammeEntity? =
-        layout(programmes, windowStart, windowEnd)
-            .firstOrNull { timeMs >= it.startMs && timeMs < it.stopMs }
-            ?.let { programmes[it.programmeIndex] }
-
-    /** Navigate visible cells, including across gaps, without selecting a hidden overlap. */
-    fun adjacentTime(programmes: List<EpgProgrammeEntity>, timeMs: Long, delta: Int, windowStart: Long, windowEnd: Long): Long? {
-        val cells = layout(programmes, windowStart, windowEnd)
-        if (cells.isEmpty()) return null
-        val current = cells.indexOfFirst { timeMs >= it.startMs && timeMs < it.stopMs }
-        val target = if (current >= 0) {
-            (current + delta).coerceIn(0, cells.lastIndex)
-        } else if (delta < 0) {
-            cells.indexOfLast { it.stopMs <= timeMs }.coerceAtLeast(0)
-        } else {
-            cells.indexOfFirst { it.startMs > timeMs }.let { if (it < 0) cells.lastIndex else it }
-        }
-        return cells[target].startMs
-    }
-
-    fun layout(programmes: List<EpgProgrammeEntity>, windowStart: Long, windowEnd: Long): List<Cell> {
-        if (windowEnd <= windowStart) return emptyList()
+    fun layout(programmes: List<EpgProgrammeEntity>, windowStart: Long, windowEnd: Long): List<Cell> =
+        tv.own.owntv.diagnostics.UiWorkDiagnostics.measure(tv.own.owntv.diagnostics.UiWorkWindow.Operation.EPG_LAYOUT) {
+        if (windowEnd <= windowStart) return@measure emptyList()
         val ordered = programmes.withIndex().filter { it.value.stopMs > it.value.startMs }.sortedBy { it.value.startMs }
-        return ordered.mapIndexedNotNull { index, entry ->
-            val start = maxOf(entry.value.startMs, windowStart)
-            val stop = minOf(entry.value.stopMs, windowEnd, ordered.getOrNull(index + 1)?.value?.startMs ?: windowEnd)
-            if (stop <= start) null else Cell(entry.index, start, stop)
+        if (ordered.isEmpty()) return@measure emptyList()
+        // Sweep interval boundaries rather than truncate each row permanently at its successor.
+        // A shorter/newer listing temporarily wins; the older programme can resume afterwards.
+        val boundaries = LongArray(ordered.size * 2)
+        ordered.forEachIndexed { i, entry -> boundaries[i * 2] = entry.value.startMs; boundaries[i * 2 + 1] = entry.value.stopMs }
+        boundaries.sort()
+        val active = java.util.PriorityQueue(compareByDescending<IndexedValue<EpgProgrammeEntity>> { it.value.startMs }
+            .thenByDescending { it.value.stopMs }.thenBy { it.value.sourceId }.thenBy { it.value.id }
+            .thenBy { it.value.title }.thenBy { it.index })
+        val fragments = ArrayList<Cell>()
+        var next = 0
+        var previousWinner = -1
+        var fragmentStart = 0L
+        for (i in 0 until boundaries.lastIndex) {
+            val time = boundaries[i]
+            val stop = boundaries[i + 1]
+            if (stop <= time) continue
+            while (next < ordered.size && ordered[next].value.startMs <= time) {
+                if (ordered[next].value.stopMs > time) active.add(ordered[next])
+                next++
+            }
+            while (true) {
+                val head = active.peek() ?: break
+                if (head.value.stopMs > time) break
+                active.remove()
+            }
+            val winner = active.peek()
+            if (winner == null) { previousWinner = -1; continue }
+            if (previousWinner != winner.index) { previousWinner = winner.index; fragmentStart = time }
+            val start = maxOf(time, windowStart)
+            val end = minOf(stop, windowEnd)
+            if (end <= start) continue
+            val last = fragments.lastOrNull()
+            if (last?.programmeIndex == winner.index && last.stopMs == start) {
+                fragments[fragments.lastIndex] = last.copy(stopMs = end)
+            } else {
+                fragments += Cell(winner.index, start, end, FragmentKey(winner.value.sourceId,
+                    winner.value.epgChannelId, winner.value.startMs, fragmentStart))
+            }
         }
+        fragments
     }
 }

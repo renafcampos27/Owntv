@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="archive_addresses_title">Archive alternative addresses</string>
+    <string name="archive_addresses_playlist">Edit this playlist</string>
+    <string name="archive_addresses_channel_search">Search for a channel override</string>
+    <string name="archive_addresses_hint">Use archive templates supplied by your provider. Up to three addresses, tried after the normal address. The channel configuration overrides the playlist. Use {utc} or {start}, {end} or {duration}, {streamId}, {username} and {password}. This does not create missing recordings.</string>
+    <string name="archive_addresses_url">Address %1$d</string>
+    <string name="archive_addresses_type">Format of these alternative addresses</string>
+    <string name="archive_addresses_hls">HLS</string>
+    <string name="archive_addresses_dash">DASH</string>
+    <string name="archive_addresses_auto">Automatic (including MP4)</string>
+    <string name="archive_addresses_save">Save</string>
+    <string name="archive_addresses_delete">Delete override</string>
+    <string name="archive_addresses_back">Back</string>
+    <string name="archive_addresses_invalid">Use valid HTTP/HTTPS archive addresses with start and end/duration placeholders. Saving failed or an address is invalid.</string>
+    <string name="archive_addresses_backup_hint">To include these addresses in a backup, use password protection.</string>
+</resources>

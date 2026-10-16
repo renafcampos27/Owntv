@@ -28,7 +28,7 @@ class SettingsSearchCoverageTest {
     /** Just the search-results block, so a tab opened from a normal row does not count as covered. */
     private val searchBlock: String by lazy {
         val from = source.indexOf("val searchResults")
-        val to = source.indexOf("val tokens = searchQuery", from)
+        val to = source.indexOf("val tokens =", from)
         assertTrue("could not find the search block — has it been renamed?", from in 0 until to)
         source.substring(from, to)
     }

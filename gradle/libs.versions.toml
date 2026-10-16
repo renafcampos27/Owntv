@@ -59,7 +59,6 @@ koin = "4.2.2"
 # Android platform support (TLS socket adapter, cert chain cleaner) and consumer R8 rules.
 # Brings Happy Eyeballs (fastFallback) on by default — parallel IPv4/IPv6 connect.
 okhttp = "5.5.0"
-youtubePlayer = "13.0.0"
 
 # --- Test ---
 junit = "4.13.2"
@@ -70,10 +69,9 @@ junitExt = "1.3.0"
 espressoCore = "3.7.0"
 
 # --- OwnTV core library (https://github.com/renatofc27/OwnTV_Core) ---
-# Both artifacts always ship on the same version; never split them. Bumping this is how the TV app
-# takes a core change. For local work, owntv.corePath in ~/.gradle/gradle.properties substitutes
-# core's source for these artifacts, and this number is then ignored.
-owntvCore = "1.0.57"
+# Both modules are resolved from the customized source snapshot recorded in core-source-lock.json.
+# A local override must match that snapshot. This is a fork version, not an upstream equivalence.
+owntvCore = "1.0.57-own.20261011"
 
 [libraries]
 # The shared engine, from its own repository
@@ -132,8 +130,6 @@ coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp"
 
 # Networking (M3U/Xtream fetch)
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
-# In-app YouTube trailer playback (WebView IFrame wrapper) — plan §7.3; ToS-clean, exposes currentSecond/duration
-youtube-player = { group = "com.pierfrancescosoffritti.androidyoutubeplayer", name = "core", version.ref = "youtubePlayer" }
 
 # Media3 / ExoPlayer
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }

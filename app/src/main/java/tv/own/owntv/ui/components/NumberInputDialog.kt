@@ -44,8 +44,8 @@ import tv.own.owntv.ui.theme.OwnTVTheme
  * [StepperDialog]'s chrome but adds a real text field (so big values like 100 are one tap, not 100
  * stepper presses) and an advisory warning when the value exceeds [warnAbove].
  *
- * The [onSet] callback fires live as the value changes (typed or stepped), exactly like
- * [StepperDialog] — so the caller persists immediately and the chip behind the dialog stays in sync.
+ * Steps/reset apply immediately, exactly like [StepperDialog]. Typed text is committed on Done.
+ * There is no draft rollback: Done is labelled accordingly rather than promising Save/Cancel.
  *
  * Validation:
  *  - The text field only accepts digits; on Done it is parsed, clamped to [min]..[max], and committed.
@@ -166,7 +166,7 @@ fun NumberInputDialog(
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OwnTVButton(stringResource(CoreR.string.common_reset), onClick = onReset, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(CoreR.string.common_save), onClick = {
+                    OwnTVButton(stringResource(CoreR.string.common_done), onClick = {
                         commitText()
                         keyboard?.hide()
                         onDismiss()

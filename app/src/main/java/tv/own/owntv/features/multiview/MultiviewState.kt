@@ -2,9 +2,14 @@ package tv.own.owntv.features.multiview
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.media3.common.util.UnstableApi
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.live.OpenStreamRegistry
 import tv.own.owntv.core.live.StreamGrant
@@ -27,13 +32,12 @@ data class MultiviewTile(
     val channel: ChannelEntity? = null,
     /** Set when the playlist had no connection to spare — the tile shows this instead of a picture. */
     val refusal: StreamGrant.Refused? = null,
-    /**
-     * Set when the *device* could not carry this tile: the provider had already allowed it, and the
-     * picture stopped anyway. Four simultaneous 4K streams is the real-world case.
-     */
-    val deviceLimit: Boolean = false,
+    /** No playback within the tile budget; this does not identify a hardware or provider cause. */
+    val waitExpired: Boolean = false,
+    val retiring: Boolean = false,
+    val retirementFailed: Boolean = false,
 ) {
-    val isEmpty: Boolean get() = channel == null && refusal == null && !deviceLimit
+    val isEmpty: Boolean get() = channel == null && refusal == null && !waitExpired && !retiring && !retirementFailed
 }
 
 /**
@@ -66,6 +70,8 @@ class MultiviewState(
         repeat(openingTileCount(maxTiles)) { add(MultiviewTile()) }
     }
 
+    var primaryRetiring by mutableStateOf(false)
+
     /** Room for one more? */
     val canAddTile: Boolean get() = tiles.size < maxTiles
 
@@ -79,10 +85,13 @@ class MultiviewState(
         private set
 
     /** Which tile has the sound. Kept here as well as in the pool so the badge can be drawn. */
-    var audible by mutableIntStateOf(0)
+    var audible by mutableIntStateOf(-1)
         private set
 
     private val claims = HashMap<Int, OpenStreamRegistry.Claim>()
+    private var released = false
+    private val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
+    private val revisions = HashMap<Int, Long>()
 
     /**
      * Tiles playing sound with no picture — the owner's background-audio case (§2.4): watch one
@@ -94,7 +103,9 @@ class MultiviewState(
     val soundOnly = mutableStateListOf<Int>()
 
     fun setSoundOnly(tile: Int, value: Boolean) {
+        if (released) return
         if (tiles.getOrNull(tile)?.channel == null) return
+        if (tiles[tile].retiring || tiles[tile].retirementFailed) return
         pool.setSoundOnly(tile, value)
         if (value) {
             if (tile !in soundOnly) soundOnly.add(tile)
@@ -114,18 +125,24 @@ class MultiviewState(
      * it, and move the sound to a tile that is actually showing something.
      */
     fun silenceFailed(tile: Int) {
+        if (released) return
+        if (tile in soundOnly) pool.setSoundOnly(tile, false)
         pool.peek(tile)?.setMuted(true)
+        soundOnly.remove(tile)
         if (audible != tile) return
         val next = tiles.indices.firstOrNull { it != tile && tiles[it].channel != null && !failed(it) }
-        if (next != null) giveSoundTo(next) else pool.giveSoundTo(null)
+        if (next != null) giveSoundTo(next) else { audible = -1; pool.giveSoundTo(null) }
     }
 
     private fun failed(tile: Int): Boolean =
-        pool.peek(tile)?.state?.value == tv.own.owntv.player.LivePreviewEngine.State.ERROR
+        tiles.getOrNull(tile)?.let { it.retiring || it.retirementFailed } == true ||
+            pool.peek(tile)?.state?.value == tv.own.owntv.player.LivePreviewEngine.State.ERROR
 
     /** Give the sound to a filled tile. An empty one keeps whatever had it — there is nothing to hear. */
     fun giveSoundTo(tile: Int) {
+        if (released) return
         if (tiles.getOrNull(tile)?.channel == null) return
+        if (tiles[tile].retiring || tiles[tile].retirementFailed) return
         // A failed tile has no sound to give, so handing it the sound would only un-mute the audio of
         // a channel that is not on screen.
         if (failed(tile)) return
@@ -141,58 +158,49 @@ class MultiviewState(
      * what it held first, so swapping a channel never counts as two.
      */
     fun fill(tile: Int, channel: ChannelEntity) {
+        if (released || primaryRetiring) return
         if (tile !in tiles.indices) return
-        releaseClaim(tile)
-        val source = live.sourceOf(channel)
-        when (val grant = connectionBudget(source, registry.openOn(channel.sourceId), StreamPurpose.WATCHING)) {
-            is StreamGrant.Refused -> {
-                live.cancelTile(tile)
-                pool.release(tile)
-                soundOnly.remove(tile)
-                tiles[tile] = MultiviewTile(refusal = grant)
-                return
+        val retired = retireTile(tile)
+        val revision = revisions.getValue(tile)
+        tiles[tile] = MultiviewTile(channel = channel, retiring = true)
+        soundOnly.remove(tile)
+        cleanupScope.launch {
+            val closed = retired.await() && pool.retryTileRetirements(tile) && pool.retryRetirements(channel.sourceId)
+            if (released || revisions[tile] != revision || tile !in tiles.indices) return@launch
+            if (!closed) {
+                tiles[tile] = MultiviewTile(channel = channel, retirementFailed = true)
+                return@launch
             }
-            StreamGrant.Allowed -> Unit
+            val source = live.sourceOf(channel)
+            when (val admission = registry.admit(channel.sourceId, source, StreamPurpose.WATCHING)) {
+                is OpenStreamRegistry.Admission.Refused -> {
+                    tiles[tile] = MultiviewTile(refusal = admission.grant)
+                    return@launch
+                }
+                is OpenStreamRegistry.Admission.Allowed -> claims[tile] = admission.claim
+            }
+            val takesSound = tiles.indices.none { it != tile && tiles[it].channel != null && !tiles[it].retiring && !tiles[it].retirementFailed }
+            val engine = pool.engineFor(tile)
+            tiles[tile] = MultiviewTile(channel = channel)
+            live.tuneTile(tile = tile, engine = engine, channel = channel,
+                muted = !takesSound && audible != tile,
+                isStillActive = { !released && revisions[tile] == revision && pool.peek(tile) === engine &&
+                    !engine.isDisposed && tiles.getOrNull(tile)?.channel?.id == channel.id })
+            if (takesSound) giveSoundTo(tile) else if (audible == tile) pool.giveSoundTo(tile)
         }
-        claims[tile] = registry.claim(channel.sourceId, StreamPurpose.WATCHING)
-        tiles[tile] = MultiviewTile(channel = channel)
-        // The first channel to arrive takes the sound; after that the user decides.
-        val takesSound = tiles.none { it.channel != null && it != tiles[tile] }
-        val engine = pool.engineFor(tile)
-        live.tuneTile(
-            tile = tile,
-            engine = engine,
-            channel = channel,
-            muted = !takesSound && audible != tile,
-            isStillActive = { pool.peek(tile) === engine && !engine.isDisposed && tiles.getOrNull(tile)?.channel?.id == channel.id },
-        )
-        if (takesSound) giveSoundTo(tile) else if (audible == tile) pool.giveSoundTo(tile)
     }
 
-    /**
-     * A tile that was playing has stopped, while other tiles from the same playlist carry on.
-     *
-     * **It does not blame the provider, and it used to.** That version was built on the belief that
-     * this portal silently cut the oldest stream; measuring the account directly disproved it — four
-     * of its streams run side by side for as long as you like. Every time the old rule fired it was
-     * wrong, most visibly when it told the owner his provider allowed three streams while three of
-     * its streams were playing in front of him.
-     *
-     * What is left is the honest reading. The connection budget had already established the provider
-     * allows this many, so a picture that stops after that is the television reaching its own limit —
-     * decoders, bandwidth or video planes — and that is what the tile says.
-     */
-    fun refuseDeviceLimit(tile: Int) {
+    /** Release an unresponsive tile after its bounded wait without guessing why it failed. */
+    fun expirePlaybackWait(tile: Int) {
+        if (released) return
         if (tiles.getOrNull(tile)?.channel == null) return
-        live.cancelTile(tile)
-        releaseClaim(tile)
-        pool.release(tile)
+        retireTile(tile)
         soundOnly.remove(tile)
-        tiles[tile] = MultiviewTile(deviceLimit = true)
+        tiles[tile] = MultiviewTile(waitExpired = true)
         // The sound cannot stay on a tile that has none. Hand it to a tile that still plays.
         if (audible == tile) {
-            val next = tiles.indexOfFirst { it.channel != null }
-            if (next >= 0) giveSoundTo(next) else pool.giveSoundTo(null)
+            val next = tiles.indices.firstOrNull { tiles[it].channel != null && !failed(it) }
+            if (next != null) giveSoundTo(next) else { audible = -1; pool.giveSoundTo(null) }
         }
     }
 
@@ -204,30 +212,49 @@ class MultiviewState(
      * index and no engine is silently handed to a different channel.
      */
     fun clear(tile: Int) {
+        if (released) return
         if (tile !in tiles.indices) return
-        live.cancelTile(tile)
-        releaseClaim(tile)
-        pool.release(tile)
+        retireTile(tile)
         soundOnly.remove(tile)
         tiles[tile] = MultiviewTile()
         while (tiles.size > openingTileCount(maxTiles) && tiles.last().isEmpty) {
-            live.cancelTile(tiles.lastIndex)
-            pool.release(tiles.lastIndex)
+            retireTile(tiles.lastIndex)
             tiles.removeAt(tiles.lastIndex)
         }
         if (focused > tiles.lastIndex) focused = tiles.lastIndex
-        if (audible == tile) audible = tiles.indexOfFirst { it.channel != null }.coerceAtLeast(0)
+        if (audible == tile) {
+            val next = tiles.indices.firstOrNull {
+                val survivor = tiles[it]
+                survivor.channel != null && survivor.refusal == null && !survivor.waitExpired && !failed(it)
+            }
+            if (next != null) giveSoundTo(next) else {
+                audible = -1
+                pool.giveSoundTo(null)
+            }
+        }
     }
 
     /** Leaving the grid. Every engine and every claim goes, or the next tile is refused for a ghost. */
     fun releaseAll() {
+        // An outgoing composition can dispose after its successor starts using the shared pool.
+        // Release this owner's resources once; never tear down a later grid from a stale callback.
+        if (released) return
+        released = true
         live.releaseAllTiles()
-        claims.values.forEach { registry.release(it) }
-        claims.clear()
+        (tiles.indices.toList() + claims.keys).distinct().forEach { retireTile(it) }
         pool.releaseAll()
+        audible = -1
+        soundOnly.clear()
+        tiles.indices.forEach { tiles[it] = MultiviewTile() }
     }
 
-    private fun releaseClaim(tile: Int) {
-        claims.remove(tile)?.let { registry.release(it) }
+    /** A transition to the main reader checks this after releaseAll; false does not authorize a new stream. */
+    suspend fun awaitRetirement(): Boolean = pool.awaitRetirements()
+
+    private fun retireTile(tile: Int): kotlinx.coroutines.Deferred<Boolean> {
+        revisions[tile] = (revisions[tile] ?: 0L) + 1L
+        live.cancelTile(tile)
+        val claim = claims.remove(tile)
+        return pool.retire(tile, claim?.sourceId) { if (claim != null) registry.release(claim) }
     }
 }

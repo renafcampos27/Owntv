@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="epg_row_loading">A carregar programação…</string>
+    <string name="epg_row_empty">Sem programas neste período</string>
+    <string name="epg_row_error_retry">Programação indisponível · Tentar novamente</string>
+</resources>

@@ -1,0 +1,4 @@
+<resources>
+    <string name="player_reopen_wait">A aguardar reabertura: %1$d s</string>
+    <string name="player_loading_stream">A carregar transmissão…</string>
+</resources>

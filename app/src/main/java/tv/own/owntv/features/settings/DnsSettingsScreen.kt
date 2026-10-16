@@ -195,7 +195,7 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 Spacer(Modifier.height(12.dp))
                 OwnTVTextField(
                     value = server,
-                    onValueChange = { server = it },
+                    onValueChange = { server = it; vm.resetDnsTest() },
                     label = stringResource(CoreR.string.settings_dns_server),
                     placeholder = stringResource(CoreR.string.settings_dns_server_hint),
                     focusRequester = serverFieldFocus,

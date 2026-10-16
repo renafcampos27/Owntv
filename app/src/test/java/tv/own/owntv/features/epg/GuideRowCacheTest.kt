@@ -5,6 +5,66 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class GuideRowCacheTest {
+    @Test fun deactivationCancelsPendingReadsButKeepsCompletedRowsAndAllowsReentry() = runBlocking {
+        val scope = CoroutineScope(coroutineContext + SupervisorJob())
+        try {
+            val cache = GuideRowCache<String, Int>(scope, 4, 10)
+            cache.get("ready") { listOf(7) }
+            val started = CompletableDeferred<Unit>()
+            val pending = async { cache.get("pending") { started.complete(Unit); awaitCancellation() } }
+            started.await()
+            cache.cancelPendingOutside { false }
+            try { pending.await(); fail("Inactive read completed") } catch (_: CancellationException) { }
+            assertEquals(listOf(7), cache.peek("ready"))
+            assertNull(cache.peek("pending"))
+            assertEquals(listOf(8), cache.get("pending") { listOf(8) })
+        } finally { scope.cancel() }
+    }
+
+    @Test fun obsoleteReadCannotRemoveReplacementAfterQuickReturn() = runBlocking {
+        val scope = CoroutineScope(coroutineContext + SupervisorJob())
+        try {
+            val cache = GuideRowCache<String, Int>(scope, 4, 10)
+            cache.get("completed") { listOf(8) }
+            val started = CompletableDeferred<Unit>()
+            val oldRelease = CompletableDeferred<Unit>()
+            val old = async {
+                cache.get("old") { withContext(NonCancellable) { started.complete(Unit); oldRelease.await(); listOf(1) } }
+            }
+            started.await()
+            cache.cancelPendingOutside { it != "old" }
+            val newStarted = CompletableDeferred<Unit>()
+            val newRelease = CompletableDeferred<Unit>()
+            val replacement = async { cache.get("old") { newStarted.complete(Unit); newRelease.await(); listOf(2) } }
+            newStarted.await()
+            oldRelease.complete(Unit)
+            try { old.await(); fail("Obsolete read returned") } catch (_: CancellationException) { }
+            val shared = async(start = CoroutineStart.UNDISPATCHED) { cache.get("old") { error("Replacement lost") } }
+            newRelease.complete(Unit)
+            assertEquals(listOf(2), replacement.await())
+            assertEquals(listOf(2), shared.await())
+            assertEquals(listOf(8), cache.peek("completed"))
+        } finally { scope.cancel() }
+    }
+
+    @Test fun adjacentTimeBlocksRemainReusableWhileOldBlockIsLoading() = runBlocking {
+        val scope = CoroutineScope(coroutineContext + SupervisorJob())
+        try {
+            val cache = GuideRowCache<Pair<Long, Long>, Int>(scope, 4, 10)
+            val older = 0L to 6L
+            val newer = 6L to 12L
+            val started = CompletableDeferred<Unit>()
+            val release = CompletableDeferred<Unit>()
+            val oldRead = async { cache.get(older) { started.complete(Unit); release.await(); listOf(1) } }
+            started.await()
+            assertEquals(listOf(2), cache.get(newer) { listOf(2) })
+            release.complete(Unit)
+            assertEquals(listOf(1), oldRead.await())
+            assertEquals(listOf(1), cache.get(older) { error("Duplicate history fetch") })
+            assertEquals(listOf(2), cache.peek(newer))
+        } finally { scope.cancel() }
+    }
+
     @Test fun unavailableFallbackIsNotCachedAndNextReadCanRecover() = runBlocking {
         val scope = CoroutineScope(coroutineContext + SupervisorJob())
         try {

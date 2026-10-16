@@ -33,6 +33,13 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+enum class ChannelPressStage {
+    IDLE,
+    HOLDING_TO_VERSIONS,
+    VERSIONS_THRESHOLD,
+    MENU_THRESHOLD,
+}
+
 /** Shared touch/remote timings; cancellation and repeats never play the channel on release. */
 internal fun Modifier.channelPressInput(
     interaction: MutableInteractionSource,
@@ -41,10 +48,12 @@ internal fun Modifier.channelPressInput(
     onPlay: () -> Unit,
     onVersions: () -> Unit,
     onMenu: () -> Unit,
+    onProgress: ((progress: Float, elapsedMs: Long, stage: ChannelPressStage) -> Unit)? = null,
 ): Modifier = composed {
     val play by rememberUpdatedState(onPlay)
     val versions by rememberUpdatedState(onVersions)
     val menu by rememberUpdatedState(onMenu)
+    val progressCallback by rememberUpdatedState(onProgress)
     val scope = rememberCoroutineScope()
     val gesture = remember { ChannelPressGesture() }
     val pending = remember { ChannelPressPending() }
@@ -59,6 +68,7 @@ internal fun Modifier.channelPressInput(
     fun finish(cancelled: Boolean, now: Long = SystemClock.uptimeMillis()) {
         pending.timer?.cancel()
         pending.timer = null
+        progressCallback?.invoke(0f, 0L, ChannelPressStage.IDLE)
         pending.press?.let {
             interaction.tryEmit(if (cancelled) PressInteraction.Cancel(it) else PressInteraction.Release(it))
         }
@@ -69,8 +79,19 @@ internal fun Modifier.channelPressInput(
         if (!gesture.begin(now)) return
         pending.press = PressInteraction.Press(position).also { interaction.tryEmit(it) }
         pending.timer = scope.launch {
-            delay(ChannelPressGesture.MENU_MS)
-            dispatch(gesture.menuDeadline())
+            val startUptime = now
+            while (true) {
+                val current = SystemClock.uptimeMillis()
+                val elapsed = (current - startUptime).coerceAtLeast(0L)
+                val progress = (elapsed.toFloat() / ChannelPressGesture.MENU_MS).coerceIn(0f, 1f)
+                val stage = stageForElapsed(elapsed)
+                progressCallback?.invoke(progress, elapsed, stage)
+                if (elapsed >= ChannelPressGesture.MENU_MS) {
+                    dispatch(gesture.menuDeadline())
+                    break
+                }
+                delay(32L)
+            }
         }
     }
     DisposableEffect(enabled) { onDispose { finish(cancelled = true) } }
@@ -114,4 +135,11 @@ internal fun Modifier.channelPressInput(
 private class ChannelPressPending {
     var timer: Job? = null
     var press: PressInteraction.Press? = null
+}
+
+internal fun stageForElapsed(elapsedMs: Long): ChannelPressStage = when {
+    elapsedMs >= ChannelPressGesture.MENU_MS -> ChannelPressStage.MENU_THRESHOLD
+    elapsedMs >= ChannelPressGesture.VERSIONS_MS -> ChannelPressStage.VERSIONS_THRESHOLD
+    elapsedMs > 0L -> ChannelPressStage.HOLDING_TO_VERSIONS
+    else -> ChannelPressStage.IDLE
 }

@@ -94,7 +94,23 @@ data class RailCategory(
     // that combine every provider category — those aren't a real provider genre, so no dot.
     val showGenreDot: Boolean = true,
     val providerName: String? = null,
+    /** Persisted/virtual identity when supplied; renaming a label must not move its focus owner. */
+    val stableId: String? = null,
 )
+
+internal fun railCategoryKeys(categories: List<RailCategory>): List<Triple<String, String?, Int>> {
+    val occurrences = mutableMapOf<Pair<String, String?>, Int>()
+    return categories.map { category ->
+        val stable = category.stableId
+        if (stable != null) Triple(stable, null, 0)
+        else {
+            val identity = category.fullName to category.providerName
+            val ordinal = occurrences[identity] ?: 0
+            occurrences[identity] = ordinal + 1
+            Triple(category.fullName, category.providerName, ordinal)
+        }
+    }
+}
 
 /**
  * Layer 2 — the vertical folder rail.
@@ -158,7 +174,10 @@ fun CategoryRail(
         else categories.indices.filter { categories[it].fullName.contains(q, ignoreCase = true) }
     }
     val searchFocus = remember { FocusRequester() }
-    val rowFocusers = remember(visible.size) { List(visible.size) { FocusRequester() } }
+    val categoryKeys = remember(categories) { railCategoryKeys(categories) }
+    val rowFocusByKey = remember { mutableMapOf<Triple<String, String?, Int>, FocusRequester>() }
+    val rowFocusers = visible.map { index -> rowFocusByKey.getOrPut(categoryKeys[index]) { FocusRequester() } }
+    LaunchedEffect(categoryKeys) { rowFocusByKey.keys.retainAll(categoryKeys.toSet()) }
     // Return the cursor to a specific row (see [focusRowIndex]). The row is addressed by its original
     // category index, so a rail filtered by the search box still resolves to the right focuser.
     LaunchedEffect(focusRowIndex, visible) {
@@ -189,7 +208,7 @@ fun CategoryRail(
     // Keep the selected category in view when the selection changes — both for the initial load /
     // restored state (rail not yet focused) AND when CH+- paging selects a far-away category while the
     // rail IS focused.
-    LaunchedEffect(selectedIndex, categories.size) {
+    LaunchedEffect(categoryKeys.getOrNull(selectedIndex), visible) {
         if (selectedIndex in categories.indices) {
             val targetPos = visible.indexOf(selectedIndex)
             if (targetPos >= 0) {
@@ -297,7 +316,7 @@ fun CategoryRail(
                         ),
                 )
             }
-            items(count = visible.size, key = { visible[it] }) { i ->
+            items(count = visible.size, key = { categoryKeys[visible[it]] }) { i ->
                 val index = visible[i]
                 RailPill(
                     category = categories[index],

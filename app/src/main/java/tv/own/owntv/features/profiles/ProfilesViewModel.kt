@@ -7,10 +7,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.async
 import tv.own.owntv.core.database.dao.ProfileDao
 import tv.own.owntv.core.database.entity.ProfileEntity
 import tv.own.owntv.core.profile.ProfileManager
-import tv.own.owntv.core.util.Pin
+import tv.own.owntv.core.profile.ProfileAuthorizationGrant
 import tv.own.owntv.core.settings.SettingsRepository
 
 /**
@@ -66,25 +67,16 @@ class ProfilesViewModel(
     }
 
     /** Apply edits from the editor dialog. [pin]: null = keep the existing PIN, "" = remove it. */
-    fun edit(profile: ProfileEntity, name: String, avatarId: Int, isKids: Boolean, pin: String?) {
-        viewModelScope.launch { manager.edit(profile, name, avatarId, isKids, pin) }
-    }
+    suspend fun edit(profile: ProfileEntity, name: String, avatarId: Int, isKids: Boolean, pin: String?, grant: ProfileAuthorizationGrant? = null) =
+        viewModelScope.async { manager.edit(profile, name, avatarId, isKids, pin, grant) }.await()
 
-    fun rename(profile: ProfileEntity, name: String) {
-        viewModelScope.launch { profileDao.update(profile.copy(name = name.ifBlank { profile.name })) }
-    }
+    suspend fun authorizeEdit(profileId: Long, currentPin: String, isKids: Boolean, pin: String?) =
+        manager.authorizeEdit(profileId, currentPin, isKids, pin)
 
-    fun setKids(profile: ProfileEntity, isKids: Boolean) {
-        viewModelScope.launch { profileDao.update(profile.copy(isKids = isKids)) }
-    }
+    suspend fun authorizeDelete(profileId: Long, currentPin: String) = manager.authorizeDelete(profileId, currentPin)
 
-    fun setPin(profile: ProfileEntity, pin: String?) {
-        viewModelScope.launch { profileDao.setPin(profile.id, pin?.takeIf { it.isNotBlank() }?.let { Pin.hash(it) }) }
-    }
-
-    fun delete(profile: ProfileEntity) {
-        viewModelScope.launch { manager.delete(profile) }
-    }
+    suspend fun delete(profile: ProfileEntity, grant: ProfileAuthorizationGrant? = null) =
+        viewModelScope.async { manager.delete(profile, grant) }.await()
 }
 
 /** Room has not emitted yet versus a completed query, including a legitimately empty result. */

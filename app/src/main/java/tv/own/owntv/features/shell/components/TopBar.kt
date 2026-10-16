@@ -4,7 +4,6 @@ import tv.own.owntv.core.R as CoreR
 
 import android.text.format.DateFormat
 import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.basicMarquee
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,13 +23,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.BlendMode
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.StrokeJoin
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.FocusRequester
@@ -44,7 +36,6 @@ import androidx.compose.ui.layout.layout
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import kotlinx.coroutines.delay
-import tv.own.owntv.core.weather.WeatherInfo
 import tv.own.owntv.ui.components.FocusableSurface
 import tv.own.owntv.ui.components.OwnTVIcon
 import tv.own.owntv.core.theme.GlassSurface
@@ -62,12 +53,10 @@ private const val TopBarFrost = 0.45f
 @Composable
 fun TopBar(
     playlistName: String,
-    weatherInfo: WeatherInfo? = null,
-    weatherFahrenheit: Boolean = false,
     playlistInteractive: Boolean = false,
     onPlaylistClick: () -> Unit = {},
     playlistDownFocusRequester: FocusRequester? = null,
-    // Audio Mode (plan §8): the now-playing bar, shown left of the weather chip while PlayerMode.AUDIO
+    // Audio Mode (plan §8): the now-playing bar, shown while PlayerMode.AUDIO
     // is active. Null = not in Audio Mode.
     audioBar: (@Composable () -> Unit)? = null,
     /** The audio capsule has taken focus and grown; the strip grows with it so content is pushed, not covered. */
@@ -115,7 +104,6 @@ fun TopBar(
 
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             audioBar?.invoke()
-            if (weatherInfo != null) WeatherChip(info = weatherInfo, fahrenheit = weatherFahrenheit)
             ClockChip()
             if (playlistName.isNotBlank()) {
                 PlaylistChip(
@@ -137,7 +125,7 @@ private fun ClockChip() {
     LaunchedEffect(Unit) { while (true) { delay(15_000); now = System.currentTimeMillis() } }
     val timeFormat = remember(context) { DateFormat.getTimeFormat(context) }
     val formatted = remember(now, timeFormat) { timeFormat.format(Date(now)) }
-    // Display-only (non-focusable) and neutral (no accent), matching the weather chip. Frosts in
+    // Display-only (non-focusable) and neutral (no accent), matching the other chips. Frosts in
     // glass mode (TOPBAR surface) so it reads as glass like the focusable chips.
     val shape = RoundedCornerShape(TopBarChipCorner)
     Box(Modifier.clip(shape).glass(GlassSurface.TOPBAR, colors.surfaceContainer.copy(alpha = 0.6f), shape, frostScale = TopBarFrost, condenseChrome = true).padding(horizontal = 14.dp, vertical = 7.dp)) {
@@ -202,87 +190,6 @@ private fun PlaylistChip(
                 ),
             )
             OwnTVIcon(icon = OwnTVIcon.CHEVRON, tint = fg, modifier = Modifier.size(16.dp))
-        }
-    }
-}
-
-@Composable
-private fun WeatherChip(info: WeatherInfo, fahrenheit: Boolean) {
-    val colors = OwnTVTheme.colors
-    val temp = if (fahrenheit) {
-        stringResource(CoreR.string.common_weather_fahrenheit, (info.temperatureC * 9 / 5 + 32).toInt())
-    } else {
-        stringResource(CoreR.string.common_weather_celsius, info.temperatureC.toInt())
-    }
-    val location = if (info.city.isNotBlank()) stringResource(CoreR.string.common_weather_city, temp, info.city) else temp
-    val shape = RoundedCornerShape(TopBarChipCorner)
-    Box(Modifier.clip(shape).glass(GlassSurface.TOPBAR, colors.surfaceContainer.copy(alpha = 0.6f), shape, frostScale = TopBarFrost, condenseChrome = true).padding(horizontal = 14.dp, vertical = 7.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            WeatherConditionIcon(info = info, Modifier.size(16.dp))
-            Text(location, style = MaterialTheme.typography.labelLarge, color = colors.onSurfaceVariant, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-        }
-    }
-}
-
-private val WeatherSunColor = Color(0xFFFFD166)
-private val WeatherMoonColor = Color(0xFFDDF8FF)
-private val WeatherMoonCraterColor = Color(0xFFDDF8FF).copy(alpha = 0.55f)
-private val WeatherCloudColor = Color(0xFFDDEFE9)
-private val WeatherRainColor = Color(0xFF76A7FF)
-private val WeatherRainDrizzleColor = Color(0xFF76A7FF).copy(alpha = 0.72f)
-private val WeatherSnowColor = Color(0xFFF0FCFF)
-
-private val WeatherFogLineColor = Color(0xFFDDF8FF).copy(alpha = 0.74f)
-private val WeatherThunderColor = Color(0xFFFFD166)
-
-@Composable
-private fun WeatherConditionIcon(info: WeatherInfo, modifier: Modifier = Modifier) {
-    val key = info.symbolKey()
-
-    Canvas(modifier) {
-        val s = size.minDimension / 100f
-        val fill = androidx.compose.ui.graphics.drawscope.Fill
-        val stk = Stroke(width = 4f * s, cap = StrokeCap.Round, join = StrokeJoin.Round)
-        fun o(x: Float, y: Float) = Offset(x * s, y * s)
-
-        fun sun(cx: Float, cy: Float, r: Float) {
-            for (i in 0 until 10) { val a = i * kotlin.math.PI.toFloat() / 5f; drawLine(WeatherSunColor, o(cx + kotlin.math.cos(a) * (r + 8f), cy + kotlin.math.sin(a) * (r + 8f)), o(cx + kotlin.math.cos(a) * (r + 20f), cy + kotlin.math.sin(a) * (r + 20f)), strokeWidth = 4f * s, cap = StrokeCap.Round) }
-            drawCircle(WeatherSunColor, r * s, o(cx, cy))
-        }
-        fun moon(cx: Float, cy: Float, r: Float) {
-            drawCircle(WeatherMoonColor, r * s, o(cx, cy))
-            drawCircle(Color.Black, (r * 0.92f * s), o(cx + r * 0.45f * s, cy - r * 0.20f * s), style = fill, blendMode = BlendMode.Clear)
-            listOf(-0.42f to -0.28f, -0.20f to 0.25f, 0.02f to -0.06f).forEach { (dx, dy) -> drawCircle(WeatherMoonCraterColor, 2.2f * s, o(cx + dx * r, cy + dy * r)) }
-        }
-        fun cloud(cx: Float, cy: Float, k: Float) {
-            drawCircle(WeatherCloudColor, 16f * k * s, o(cx - 19f * k, cy + 5f * k))
-            drawCircle(WeatherCloudColor, 23f * k * s, o(cx, cy - 9f * k))
-            drawCircle(WeatherCloudColor, 18f * k * s, o(cx + 24f * k, cy + 2f * k))
-            drawCircle(WeatherCloudColor, 13f * k * s, o(cx + 39f * k, cy + 10f * k))
-        }
-        fun drops(cx: Float, cy: Float, n: Int, c: Color) {
-            for (i in 0 until n) drawLine(c, o(cx + i * 18f, cy), o(cx - 5f + i * 18f, cy + 18f), strokeWidth = 4f * s, cap = StrokeCap.Round)
-        }
-        fun snow(cx: Float, cy: Float) {
-            for (i in 0 until 3) { val x = cx + i * 20f; val y = cy + (i % 2) * 4f; val w = 3f * s; val c = StrokeCap.Round; drawLine(WeatherSnowColor, o(x - 7f, y), o(x + 7f, y), w, c); drawLine(WeatherSnowColor, o(x, y - 7f), o(x, y + 7f), w, c); drawLine(WeatherSnowColor, o(x - 5f, y - 5f), o(x + 5f, y + 5f), w, c); drawLine(WeatherSnowColor, o(x + 5f, y - 5f), o(x - 5f, y + 5f), w, c) }
-        }
-        fun fog(cx: Float, cy: Float) {
-            for (i in 0 until 4) drawLine(WeatherFogLineColor, o(cx - 38f, cy + i * 12f), o(cx + 38f, cy + i * 12f), strokeWidth = 5f * s, cap = StrokeCap.Round)
-        }
-        fun bolt(cx: Float, cy: Float) { val p = Path().apply { moveTo(cx * s, cy * s); lineTo((cx - 12f) * s, (cy + 26f) * s); lineTo((cx + 1f) * s, (cy + 23f) * s); lineTo((cx - 8f) * s, (cy + 48f) * s); lineTo((cx + 18f) * s, (cy + 15f) * s); lineTo((cx + 4f) * s, (cy + 18f) * s); close() }; drawPath(p, WeatherThunderColor, style = fill) }
-
-        when (key) {
-            "sunny" -> sun(50f, 50f, 23f)
-            "clearNight" -> moon(50f, 50f, 28f)
-            "partlyDay" -> { sun(36f, 36f, 17f); cloud(56f, 60f, 1f) }
-            "partlyNight" -> { moon(36f, 35f, 20f); cloud(56f, 60f, 1f) }
-            "cloudy" -> { cloud(46f, 48f, 1.15f); cloud(60f, 62f, 0.82f) }
-            "fog" -> { cloud(50f, 36f, 0.9f); fog(50f, 58f) }
-            "drizzle" -> { cloud(50f, 38f, 1f); drops(35f, 62f, 3, WeatherRainDrizzleColor) }
-            "rain" -> { cloud(50f, 36f, 1.05f); drops(30f, 60f, 4, WeatherRainColor) }
-            "snow" -> { cloud(50f, 36f, 1.05f); snow(32f, 65f) }
-            "thunder" -> { cloud(50f, 35f, 1.05f); bolt(52f, 48f); drops(28f, 66f, 2, WeatherRainColor) }
-            else -> cloud(46f, 48f, 1.15f)
         }
     }
 }

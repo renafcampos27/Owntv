@@ -7,18 +7,21 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import tv.own.owntv.core.database.dao.CategoryDao
 import tv.own.owntv.core.database.dao.FavoriteDao
@@ -75,15 +78,32 @@ class SearchViewModel(
 
     private val _query = MutableStateFlow("")
     val query: StateFlow<String> = _query.asStateFlow()
-    val results: StateFlow<SearchResults> = _query
+    private val debouncedQuery = _query
         .map { it.trim() }
-        .debounce(300)
         .distinctUntilChanged()
-        .flatMapLatest { q ->
-            if (q.length < 2) {
+        .debounce { q -> if (q.length < 2) 0L else 300L }
+        .distinctUntilChanged()
+
+    private var lastSearchedContext: ActiveProfileSources? = null
+
+    val results: StateFlow<SearchResults> = combine(debouncedQuery, ctx) { q, context ->
+        q to context
+    }
+        .distinctUntilChanged()
+        .flatMapLatest { (q, context) ->
+            if (q.length < 2 || context.profileId < 0L) {
                 flowOf(SearchResults())
             } else {
-                flowOf(search(q))
+                flow {
+                    if (lastSearchedContext != null && lastSearchedContext != context) {
+                        emit(SearchResults())
+                    }
+                    val searchResults = searchReader.search(context.profileId, context, q)
+                    if (currentCoroutineContext().isActive && ctx.value == context) {
+                        lastSearchedContext = context
+                        emit(searchResults)
+                    }
+                }
             }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchResults())
@@ -113,17 +133,33 @@ class SearchViewModel(
         if (i != null) _query.value = ""
     }
 
+    private var lastCuratedContext: ActiveProfileSources? = null
+
     /** Curated results for the active empty-state intent (bounded; reuses favourites/history queries). */
     val curatedResults: StateFlow<SearchResults> = combine(_intent, ctx) { i, c -> i to c }
+        .distinctUntilChanged()
         .flatMapLatest { (i, c) ->
-            if (i == null) flowOf(SearchResults())
-            else flowOf(searchReader.curated(c.profileId, c, i))
+            if (i == null || c.profileId < 0L) {
+                flowOf(SearchResults())
+            } else {
+                flow {
+                    if (lastCuratedContext != null && lastCuratedContext != c) {
+                        emit(SearchResults())
+                    }
+                    val res = searchReader.curated(c.profileId, c, i)
+                    if (currentCoroutineContext().isActive && ctx.value == c && _intent.value == i) {
+                        lastCuratedContext = c
+                        emit(res)
+                    }
+                }
+            }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SearchResults())
 
-    private suspend fun search(q: String): SearchResults {
-        val pid = currentProfileId() ?: return SearchResults()
-        return searchReader.search(pid, ctx.value, q)
+    internal suspend fun search(q: String): SearchResults {
+        val context = ctx.value
+        if (context.profileId < 0L) return SearchResults()
+        return searchReader.search(context.profileId, context, q.trim())
     }
 
     /** Live channels this profile has favourited — so a search result can show a star and toggle it. */

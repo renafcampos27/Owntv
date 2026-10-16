@@ -243,7 +243,7 @@ class MovieViewModel(
                     SettingsRepository.SortMode.PLAYLIST -> SettingsRepository.SortMode.ALPHA
                     SettingsRepository.SortMode.ALPHA -> SettingsRepository.SortMode.RATING
                     SettingsRepository.SortMode.RATING -> SettingsRepository.SortMode.DATE_ADDED
-                    SettingsRepository.SortMode.DATE_ADDED -> SettingsRepository.SortMode.PLAYLIST
+                    SettingsRepository.SortMode.DATE_ADDED, SettingsRepository.SortMode.CUSTOM -> SettingsRepository.SortMode.PLAYLIST
                 },
             )
         }

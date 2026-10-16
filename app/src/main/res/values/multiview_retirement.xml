@@ -1,0 +1,5 @@
+<resources>
+    <string name="multiview_retiring">Closing the previous connection…</string>
+    <string name="multiview_retirement_failed">The previous connection has not finished closing. Press OK to check again.</string>
+    <string name="playback_retirement_failed">The previous playback has not finished closing. Try opening the channel again.</string>
+</resources>

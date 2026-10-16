@@ -381,6 +381,13 @@ class SettingsViewModel(
     val catchupPlayer: StateFlow<SettingsRepository.CatchupPlayer> = settings.catchupPlayer
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SettingsRepository.CatchupPlayer.INTERNAL)
 
+    val catchupFormat = settings.catchupFormat
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.epg.CatchupFormat.AUTO)
+
+    fun setCatchupFormat(mode: tv.own.owntv.core.epg.CatchupFormat) {
+        viewModelScope.launch { settings.setCatchupFormat(mode) }
+    }
+
     fun setCatchupPlayer(mode: SettingsRepository.CatchupPlayer) {
         viewModelScope.launch { settings.setCatchupPlayer(mode) }
     }
@@ -514,15 +521,73 @@ class SettingsViewModel(
     val measuredStreamStats: StateFlow<Boolean> = settings.measuredStreamStats.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     fun setMeasuredStreamStats(enabled: Boolean) { viewModelScope.launch { settings.setMeasuredStreamStats(enabled) } }
 
+    val archivePlaybackConfigs = settings.archivePlaybackConfigs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    suspend fun saveArchivePlaybackConfig(config: tv.own.owntv.core.epg.ArchivePlaybackConfig): Boolean =
+        runCatching { settings.setArchivePlaybackConfig(config); true }.getOrDefault(false)
+
     val channelPlaybackConfigs = settings.channelPlaybackConfigs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+    // A nullable, profile-tagged emission distinguishes loading from a genuinely empty store.
+    internal val phase23ChannelPlaybackLoaded = settings.activeProfileId.flatMapLatest { profileId ->
+        settings.channelPlaybackConfigs.map { rows -> Phase23LoadedPlayback(profileId, rows) as Phase23LoadedPlayback? }
+            .onStart { emit(null) }
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+    suspend fun saveChannelPlaybackOptions(channel: tv.own.owntv.core.database.entity.ChannelEntity, options: tv.own.owntv.core.settings.ChannelPlaybackOptions, expectedProfileId: Long? = null): Boolean =
+        runCatching {
+            settings.setChannelPlaybackConfig(tv.own.owntv.core.settings.ManualTsChannel.of(channel), options, expectedProfileId)
+            true
+        }.getOrDefault(false)
+
     fun setChannelPlaybackOptions(channel: tv.own.owntv.core.database.entity.ChannelEntity, options: tv.own.owntv.core.settings.ChannelPlaybackOptions) {
-        viewModelScope.launch { settings.setChannelPlaybackConfig(tv.own.owntv.core.settings.ManualTsChannel.of(channel), options) }
+        viewModelScope.launch { saveChannelPlaybackOptions(channel, options) }
     }
     suspend fun searchChannelPlaybackChannels(sourceId: Long, query: String): List<tv.own.owntv.core.database.entity.ChannelEntity> {
         val profileId = profileDao.resolveExistingProfileId(settings.activeProfileId.first()) ?: return emptyList()
         return loadStartupChannelResults(profileId, query, sourceId)
     }
 
+    suspend fun applyBatchChannelPlayback(
+        channels: List<tv.own.owntv.core.database.entity.ChannelEntity>,
+        patch: (tv.own.owntv.core.settings.ChannelPlaybackOptions) -> tv.own.owntv.core.settings.ChannelPlaybackOptions,
+    ): Boolean = runCatching {
+        val targets = channels.map { tv.own.owntv.core.settings.ManualTsChannel.of(it) }
+            .distinctBy { it.sourceId to (it.remoteId ?: it.name) }
+        settings.applyBatchChannelPlaybackOptions(targets, patch)
+        true
+    }.getOrDefault(false)
+
+    suspend fun loadLiveCategoriesForSource(sourceId: Long): List<tv.own.owntv.core.database.entity.CategoryEntity> {
+        return categoryDao.observe(listOf(sourceId), tv.own.owntv.core.model.MediaType.LIVE).first()
+    }
+
+    internal suspend fun phase23LoadBatchScope(sourceId: Long): Phase23BatchScope? {
+        val activeId = settings.activeProfileId.first()
+        val profileId = profileDao.resolveExistingProfileId(activeId) ?: return null
+        if (sourceDao.observeForProfile(profileId).first().none { it.id == sourceId && it.syncLive }) return null
+        val customization = customizationStore.observe(profileId, MediaType.LIVE).first()
+        val hiddenCategories = tv.own.owntv.core.content.AdultCategoryClassifier.hiddenCategoryIds(
+            categoryDao.observe(listOf(sourceId), MediaType.LIVE).first(),
+            customization.hiddenCategories, profileDao.getById(profileId)?.isKids == true,
+        )
+        val rows = channelDao.phase23PlaybackScope(sourceId)
+        if (settings.activeProfileId.first() != activeId) return null
+        return Phase23BatchScope(activeId, rows.filter {
+            (it.categoryId == null || it.categoryId !in hiddenCategories) &&
+                "${it.sourceId}:${it.remoteId ?: it.name}" !in customization.hiddenItems
+        }, rows.size)
+    }
+
+    suspend fun phase23ApplyBatch(
+        profileId: Long,
+        targets: List<tv.own.owntv.core.database.dao.Phase23PlaybackChannel>,
+        patch: (tv.own.owntv.core.settings.ChannelPlaybackOptions) -> tv.own.owntv.core.settings.ChannelPlaybackOptions,
+    ): Boolean = runCatching {
+        settings.applyBatchChannelPlaybackOptions(targets.map {
+            tv.own.owntv.core.settings.ManualTsChannel(it.sourceId, it.remoteId?.takeIf(String::isNotBlank), it.name)
+        }, patch, expectedProfileId = profileId)
+        true
+    }.getOrDefault(false)
+
+    internal val playbackSnapshot = tv.own.owntv.player.PlaybackSettings.of(settings)
     val liveHlsOnly = settings.liveHlsOnly.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     fun setLiveHlsOnly(enabled: Boolean) { viewModelScope.launch { settings.setLiveHlsOnly(enabled) } }
     val detailedDiagnostics: StateFlow<Boolean> = settings.detailedDiagnostics.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
@@ -915,6 +980,12 @@ class SettingsViewModel(
     }
 
     /** "Give up on a channel after": the whole-tune budget in seconds (0 = Never). */
+    val channelReopenIntervalSecs: StateFlow<Int> =
+        settings.channelReopenIntervalSecs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.ChannelReopenInterval.DEFAULT_SECONDS)
+    fun setChannelReopenIntervalSecs(secs: Int) {
+        viewModelScope.launch { settings.setChannelReopenIntervalSecs(secs) }
+    }
+
     val liveTuneTimeoutSecs: StateFlow<Int> =
         settings.liveTuneTimeoutSecs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.player.LiveLadder.DEFAULT_BUDGET_SECS)
     fun setLiveTuneTimeoutSecs(secs: Int) {
@@ -949,10 +1020,6 @@ class SettingsViewModel(
     val uiDiagnostics = settings.uiDiagnostics.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
     fun setUiDiagnostics(enabled: Boolean) { viewModelScope.launch { settings.setUiDiagnostics(enabled) } }
 
-    val animationLevel: StateFlow<tv.own.owntv.core.theme.AnimationLevel> =
-        settings.requestedAnimationLevel.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.theme.AnimationLevel.OFF)
-    fun setAnimationLevel(level: tv.own.owntv.core.theme.AnimationLevel) { viewModelScope.launch { settings.setAnimationLevel(level) } }
-
     /** Separate panels (the default) or the Cinematic frame, shared by Movies and Series. */
     val vodLayout: StateFlow<tv.own.owntv.core.settings.SettingsRepository.VodLayout> =
         settings.vodLayout.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.SettingsRepository.VodLayout.SEPARATE)
@@ -965,17 +1032,6 @@ class SettingsViewModel(
     val ambientGlowPulse: StateFlow<Boolean> =
         settings.ambientGlowPulse.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     fun setAmbientGlowPulse(enabled: Boolean) { viewModelScope.launch { settings.setAmbientGlowPulse(enabled) } }
-
-    // Weather chip: visibility toggle + manual location override (for VPN users).
-    val weatherEnabled: StateFlow<Boolean> =
-        settings.weatherEnabled.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-    fun setWeatherEnabled(enabled: Boolean) { viewModelScope.launch { settings.setWeatherEnabled(enabled) } }
-    val weatherLocation: StateFlow<String> =
-        settings.weatherLocation.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
-    fun setWeatherLocation(location: String) { viewModelScope.launch { settings.setWeatherLocation(location) } }
-    val weatherFahrenheit: StateFlow<Boolean> =
-        settings.weatherFahrenheit.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-    fun setWeatherFahrenheit(fahrenheit: Boolean) { viewModelScope.launch { settings.setWeatherFahrenheit(fahrenheit) } }
 
     // Per-section "remember last item per category" (default OFF). OFF resets the browse list to the top
     // when switching category; ON keeps a separate scroll position per category. The Live toggle also
@@ -1395,6 +1451,10 @@ class SettingsViewModel(
     val proxyConfig: StateFlow<tv.own.owntv.core.network.ProxyConfig> = settings.proxyConfig
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.network.ProxyConfig())
 
+    val proxyEditorConfig: StateFlow<tv.own.owntv.core.network.ProxyConfig?> = settings.proxyConfig
+        .map { it as tv.own.owntv.core.network.ProxyConfig? }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
     fun saveProxy(enabled: Boolean, host: String, port: Int, username: String, password: String) {
         viewModelScope.launch { settings.saveProxy(enabled, host, port, username, password) }
     }
@@ -1418,7 +1478,15 @@ class SettingsViewModel(
     private val _proxyTest = MutableStateFlow<ProxyTestState>(ProxyTestState.Idle)
     val proxyTest: StateFlow<ProxyTestState> = _proxyTest.asStateFlow()
 
-    fun resetProxyTest() { _proxyTest.value = ProxyTestState.Idle }
+    private val proxyTestOwnership = SettingsTestOwnership()
+    private var proxyTestJob: Job? = null
+
+    fun resetProxyTest() {
+        proxyTestOwnership.invalidate()
+        proxyTestJob?.cancel()
+        proxyTestJob = null
+        _proxyTest.value = ProxyTestState.Idle
+    }
 
     fun testProxy(host: String, port: Int, username: String, password: String) {
         if (_proxyTest.value == ProxyTestState.Testing) return
@@ -1427,8 +1495,9 @@ class SettingsViewModel(
             _proxyTest.value = ProxyTestState.Fail(ProxyFailure.InvalidAddress)
             return
         }
+        val owner = proxyTestOwnership.begin()
         _proxyTest.value = ProxyTestState.Testing
-        viewModelScope.launch {
+        proxyTestJob = viewModelScope.launch {
             val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 runCatching {
                     val proxy = java.net.Proxy(
@@ -1455,7 +1524,9 @@ class SettingsViewModel(
                         .head()
                         .build()
                     val start = System.currentTimeMillis()
-                    client.newCall(request).execute().use { resp ->
+                    val call = client.newCall(request)
+                    proxyTestOwnership.attach(owner) { call.cancel() }
+                    call.execute().use { resp ->
                         if (!resp.isSuccessful && resp.code != 204) {
                             throw ProxyHttpException(resp.code)
                         }
@@ -1463,6 +1534,8 @@ class SettingsViewModel(
                     System.currentTimeMillis() - start
                 }
             }
+            if (!proxyTestOwnership.isCurrent(owner)) return@launch
+            proxyTestOwnership.finish(owner)
             _proxyTest.value = result.fold(
                 onSuccess = { ProxyTestState.Ok(it) },
                 onFailure = { ProxyTestState.Fail(proxyFailure(it)) },
@@ -1500,7 +1573,15 @@ class SettingsViewModel(
     private val _dnsTest = MutableStateFlow<DnsTestState>(DnsTestState.Idle)
     val dnsTest: StateFlow<DnsTestState> = _dnsTest.asStateFlow()
 
-    fun resetDnsTest() { _dnsTest.value = DnsTestState.Idle }
+    private val dnsTestOwnership = SettingsTestOwnership()
+    private var dnsTestJob: Job? = null
+
+    fun resetDnsTest() {
+        dnsTestOwnership.invalidate()
+        dnsTestJob?.cancel()
+        dnsTestJob = null
+        _dnsTest.value = DnsTestState.Idle
+    }
 
     fun testDns(enabled: Boolean, host: String, port: Int, dohUrl: String) {
         if (_dnsTest.value == DnsTestState.Testing) return
@@ -1511,8 +1592,9 @@ class SettingsViewModel(
             return
         }
         val testHost = "dns.google" // a reliable hostname for testing DNS
+        val owner = dnsTestOwnership.begin()
         _dnsTest.value = DnsTestState.Testing
-        viewModelScope.launch {
+        dnsTestJob = viewModelScope.launch {
             val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 runCatching {
                     val cfg = tv.own.owntv.core.network.DnsConfig(
@@ -1536,6 +1618,8 @@ class SettingsViewModel(
                     ms
                 }
             }
+            if (!dnsTestOwnership.isCurrent(owner)) return@launch
+            dnsTestOwnership.finish(owner)
             _dnsTest.value = result.fold(
                 onSuccess = { DnsTestState.Ok(it) },
                 onFailure = { DnsTestState.Fail(classifyDnsError(it)) },
@@ -1569,6 +1653,10 @@ class SettingsViewModel(
     val metadataMode: StateFlow<tv.own.owntv.core.metadata.MetadataMode> =
         settings.metadataMode.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.metadata.MetadataMode.PROVIDER_PLUS_TMDB)
     fun setMetadataMode(mode: tv.own.owntv.core.metadata.MetadataMode) { viewModelScope.launch { settings.setMetadataMode(mode) } }
+
+    val metadataEditorConfig: StateFlow<tv.own.owntv.core.metadata.MetadataConfig?> = settings.metadataConfigFlow
+        .map { it as tv.own.owntv.core.metadata.MetadataConfig? }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     val tmdbApiKey: StateFlow<String> =
         settings.tmdbApiKey.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
@@ -1678,6 +1766,12 @@ class SettingsViewModel(
                 onFailure = { MetadataTestState.Fail(MetadataFailure.Unknown(it.message?.takeIf { m -> m.isNotBlank() })) },
             )
         }
+    }
+
+    override fun onCleared() {
+        proxyTestOwnership.invalidate()
+        dnsTestOwnership.invalidate()
+        super.onCleared()
     }
 
     private class ProxyHttpException(val code: Int) : java.io.IOException()

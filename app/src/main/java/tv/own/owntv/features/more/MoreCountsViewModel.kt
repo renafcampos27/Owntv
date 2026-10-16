@@ -95,7 +95,7 @@ class MoreCountsViewModel(
      *
      * Plan Z defect 6 is the reason this is a plain snapshot query and not the pinned pane: the TV
      * app has one Activity and no nav graph, so `koinViewModel()` hands out one shared instance and
-     * a pane borrowing `MoviesScreen` would fight the destination over which folder is pinned. These
+     * a pane borrowing a shared browse screen would fight the destination over which folder is pinned. These
      * DAO calls own no state at all.
      *
      * Re-queried whenever the counts change, which is what makes a snapshot behave: star something

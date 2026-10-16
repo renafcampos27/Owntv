@@ -1,5 +1,7 @@
 package tv.own.owntv.ui.components
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.background
@@ -10,19 +12,17 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.SideEffect
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.draw.shadow
@@ -53,6 +53,7 @@ fun FocusableSurface(
     enabled: Boolean = true,
     onLongClick: (() -> Unit)? = null,
     onMediumClick: (() -> Unit)? = null,
+    onPressProgress: ((Float, Long, ChannelPressStage) -> Unit)? = null,
     shape: Shape = RoundedCornerShape(Dimens.CardCorner),
     focusedContainerColor: Color = OwnTVTheme.colors.card,
     unfocusedContainerColor: Color = Color.Transparent,
@@ -87,7 +88,7 @@ fun FocusableSurface(
     content: @Composable BoxScope.(focused: Boolean) -> Unit,
 ) {
     val colors = OwnTVTheme.colors
-    val touchTarget = if (rememberRemoteTextInput()) Modifier else Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val pressed by interaction.collectIsPressedAsState()
@@ -160,7 +161,7 @@ fun FocusableSurface(
         animationSpec = tv.own.owntv.ui.theme.ownTvTween(if (pressed) 80 else if (compactFocusableRow) 0 else 170),
         label = "focusScale",
     )
-    val container by animateColorAsState(
+    val containerState = animateColorAsState(
         when {
             focused && lit -> focusLight.copy(alpha = 0.22f)
             focused && useSolidTonalLadder -> solidFocusedContainer
@@ -184,14 +185,9 @@ fun FocusableSurface(
     // Focus border honors the user's chosen highlight colour and width in both standard and glass
     // modes, framing the focused card on top of the frosted glass material plate.
     val borderColor = if (focused) colors.focusBorder else colors.focusBorder.copy(alpha = 0.28f)
-    val glassMaterialContainer = if (glassy && visuallySelected && !focused) {
-        colors.surfaceContainerHigh
-    } else {
-        container
-    }
 
     Box(
-        modifier = touchTarget.then(modifier)
+        modifier = modifier
             .then(
                 if (motion != null && motionEnabled && focused) Modifier.onGloballyPositioned { coordinates ->
                     val center = coordinates.boundsInRoot().center
@@ -228,16 +224,16 @@ fun FocusableSurface(
             .then(
                 // Frosted glass fill when this surface is glassy (glass() skips transparent idle
                 // fills); plain tonal fill otherwise. When surface is null, behaviour is unchanged.
-                if (surface != null) Modifier.glass(
+                if (glassy) Modifier.glass(
                     surface = surface,
-                    baseFill = glassMaterialContainer,
+                    baseFill = if (visuallySelected && !focused) colors.surfaceContainerHigh else containerState.value,
                     shape = shape,
                     frostScale = effectiveFrostScale,
                     interaction = visualState,
                     idleRimAlpha = glassIdleRimAlpha,
                     condenseChrome = glassCondensesWithContent,
                 )
-                else Modifier.background(container)
+                else Modifier.drawBehind { drawRect(containerState.value) }
             )
             .then(
                 if (glassy && visuallySelected && !focused) {
@@ -301,7 +297,7 @@ fun FocusableSurface(
             )
             .then(
                 if (onMediumClick != null && onLongClick != null) {
-                    Modifier.channelPressInput(interaction, enabled, selected, onClick, onMediumClick, onLongClick)
+                    Modifier.channelPressInput(interaction, enabled, selected, onClick, onMediumClick, onLongClick, onPressProgress)
                 } else if (onLongClick != null) {
                     Modifier.combinedClickable(
                         interactionSource = interaction,

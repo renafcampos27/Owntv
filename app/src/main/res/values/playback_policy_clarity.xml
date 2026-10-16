@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_video_decoder_preference">Video decoder preference</string>
+    <string name="settings_video_decoder_preference_description">Hardware is preferred when enabled. When disabled, ExoPlayer prefers software but may fall back to hardware if needed; mpv disables hardware decoding. The stream information shows the decoder actually used. For catch-up programmes and recordings in ExoPlayer, decoder changes apply on the next opening.</string>
+    <string name="settings_software_audio_application_description">Automatic uses Android audio decoding and FFmpeg when the format is unsupported. Enable to prefer FFmpeg software audio; video decoding remains independent. Does not affect mpv or external players. For catch-up programmes and recordings in ExoPlayer, decoder changes apply on the next opening.</string>
+    <string name="settings_video_decoder_hardware_preferred">Prefer hardware</string>
+    <string name="settings_video_decoder_software_preferred">Prefer software</string>
+    <string name="settings_hdr_mpv_hint">HDR signalling — mpv</string>
+    <string name="settings_hdr_mpv_hint_description">Allows mpv to signal the video colour space to the display. Does not affect ExoPlayer or external players. Turning it off does not guarantee HDR-to-SDR conversion.</string>
+    <string name="settings_live_engine_policy">Requested: %1$s. Base engine: %2$s. Channel-specific choices can override this.</string>
+    <string name="settings_live_engine_hls_policy">Requested: %1$s. Base engine: ExoPlayer because HLS only is enabled. An explicit mpv choice for a channel is the exception; playlist engine choices remain saved.</string>
+    <string name="settings_live_engine_hls_chip">ExoPlayer · HLS only</string>
+    <string name="multiview_playback_wait_expired">No playback after 12 seconds. Press OK to choose the channel again.</string>
+</resources>

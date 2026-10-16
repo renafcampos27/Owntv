@@ -152,6 +152,7 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
      * below Coil's default ~25% — on a 4K TV every megabyte belongs to the video pipeline, not to
      * channel-logo bitmaps.
      */
+    @OptIn(coil3.annotation.ExperimentalCoilApi::class)
     override fun newImageLoader(context: PlatformContext): ImageLoader {
         // The shared client deliberately disables connection retries so catalog/EPG sync owns its retry
         // policy. That setting is harmful for CDN images, though: hosts such as image.tmdb.org publish
@@ -172,14 +173,15 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
                 val response = chain.proceed(chain.request())
                 // IPTV providers often return "no-cache" or no cache headers for channel logos.
                 // Force a 180-day client-side cache so logos are cached on disk and never compete with live streams.
-                response.newBuilder()
+                if (response.isSuccessful) response.newBuilder()
                     .header("Cache-Control", "public, max-age=15552000")
                     .removeHeader("Pragma")
-                    .build()
+                    .build() else response
             }
             .build()
         return ImageLoader.Builder(context)
-            .components { add(OkHttpNetworkFetcherFactory(callFactory = { imageHttpClient })) }
+            .components { add(OkHttpNetworkFetcherFactory(callFactory = { imageHttpClient },
+                cacheStrategy = { tv.own.owntv.ui.images.SuccessfulImageCacheStrategy })) }
             .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.10).build() }
             // Explicit bounded disk cache: posters/logos survive across sessions instead of
             // re-downloading, capped so a 220k-item catalog can't eat the box's storage.

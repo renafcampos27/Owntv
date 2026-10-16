@@ -1,6 +1,9 @@
 package tv.own.owntv.features.recordings
 
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.getValue
 import tv.own.owntv.core.R as CoreR
+import tv.own.owntv.R
 
 import androidx.compose.ui.platform.testTag
 
@@ -11,8 +14,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -25,11 +26,10 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -86,12 +86,39 @@ fun RecordingsScreen(
     embedded: Boolean = false,
     vm: RecordingsViewModel = koinViewModel(),
 ) {
-    val compactLayout = tv.own.owntv.ui.components.rememberCompactLayout()
+
     val rows by vm.rows.collectAsStateWithLifecycle()
+    val unarmedIds by vm.unarmedRecordingIds.collectAsStateWithLifecycle()
+    val rearmingIds by vm.rearmingIds.collectAsStateWithLifecycle()
+    val deletingIds by vm.deletingIds.collectAsStateWithLifecycle()
     val storage by vm.storage.collectAsStateWithLifecycle()
+    val unavailableFiles by vm.unavailableFiles.collectAsStateWithLifecycle()
     val externalPlayerOn by vm.externalPlayerOn.collectAsStateWithLifecycle()
     val colors = OwnTVTheme.colors
     val context = LocalContext.current
+    LaunchedEffect(vm, context) {
+        vm.fileUnavailable.collect { availability ->
+            tv.own.owntv.core.storage.MediaAvailabilityProbe.text(availability, context.resources)?.let {
+                android.widget.Toast.makeText(context, it, android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+    val playbackLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current.lifecycle
+    DisposableEffect(vm, playbackLifecycle) {
+        vm.onPlaybackForegroundChanged(playbackLifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED))
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_START -> vm.onPlaybackForegroundChanged(true)
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> vm.onPlaybackForegroundChanged(false)
+                else -> Unit
+            }
+        }
+        playbackLifecycle.addObserver(observer)
+        onDispose {
+            playbackLifecycle.removeObserver(observer)
+            vm.onPlaybackForegroundChanged(false)
+        }
+    }
     LaunchedEffect(vm, context) {
         vm.retryUnavailable.collect {
             android.widget.Toast.makeText(context, CoreR.string.recording_retry_unavailable, android.widget.Toast.LENGTH_LONG).show()
@@ -115,6 +142,28 @@ fun RecordingsScreen(
         }
     }
 
+    LaunchedEffect(vm, context) {
+        vm.rearmUnavailable.collect {
+            android.widget.Toast.makeText(context, CoreR.string.recording_rearm_failed, android.widget.Toast.LENGTH_LONG).show()
+        }
+    }
+
+    LaunchedEffect(vm, context) {
+        vm.deleteResult.collect { result ->
+            val messageRes = when (result) {
+                tv.own.owntv.core.recording.RecordingDeleteResult.SUCCESS -> null
+                tv.own.owntv.core.recording.RecordingDeleteResult.IN_USE -> CoreR.string.recording_delete_in_use
+                tv.own.owntv.core.recording.RecordingDeleteResult.STORAGE_UNAVAILABLE -> CoreR.string.recording_delete_storage_unavailable
+                tv.own.owntv.core.recording.RecordingDeleteResult.PERMISSION_DENIED -> CoreR.string.recording_delete_permission_denied
+                tv.own.owntv.core.recording.RecordingDeleteResult.DELETE_FAILED -> CoreR.string.recording_delete_failed
+                tv.own.owntv.core.recording.RecordingDeleteResult.STALE_SELECTION -> CoreR.string.recording_delete_stale
+            }
+            if (messageRes != null) {
+                android.widget.Toast.makeText(context, messageRes, android.widget.Toast.LENGTH_LONG).show()
+            }
+        }
+    }
+
     val recoveries = remember(rows) { tv.own.owntv.core.recording.RecordingIntegrity.latestRecoveries(rows) }
     val listRows = remember(rows) { buildRecordingRows(rows) }
     val firstItemId = listRows.firstNotNullOfOrNull { (it as? RecordingListRow.Item)?.recording?.id }
@@ -133,14 +182,19 @@ fun RecordingsScreen(
     // focus (Stop) was replaced by different ones (Play, Delete) and focus went with it. Comparing
     // the status is what tells the two cases apart: the row survived, but not the thing focused.
     var contextStatus by remember { mutableStateOf<RecordingStatus?>(null) }
-    LaunchedEffect(listRows) {
+    var contextNeedsRearm by remember { mutableStateOf(false) }
+    var contextRearming by remember { mutableStateOf(false) }
+    LaunchedEffect(listRows, unarmedIds, rearmingIds) {
         val target = contextId ?: return@LaunchedEffect
         val items = listRows.filterIsInstance<RecordingListRow.Item>()
         val survivor = items.firstOrNull { it.recording.id == target }
         if (survivor != null) {
             // Only when its buttons have actually changed — the list also updates as bytes arrive,
             // and re-grabbing focus on every tick would drag the user back here mid-navigation.
-            if (survivor.recording.status != contextStatus) {
+            if (survivor.recording.id !in rearmingIds && (survivor.recording.status != contextStatus ||
+                (survivor.recording.id in unarmedIds) != contextNeedsRearm || contextRearming)) {
+                contextRearming = false
+                contextNeedsRearm = survivor.recording.id in unarmedIds
                 contextStatus = survivor.recording.status
                 withFrameNanos { }
                 runCatching { contextFocus.requestFocus() }
@@ -199,7 +253,7 @@ fun RecordingsScreen(
                 if (embedded) {
                     Modifier
                 } else {
-                    Modifier.padding(horizontal = if (compactLayout) 12.dp else Dimens.ScreenPaddingH, vertical = if (compactLayout) 12.dp else Dimens.ScreenPaddingV)
+                    Modifier.padding(horizontal = Dimens.ScreenPaddingH, vertical = Dimens.ScreenPaddingV)
                 },
             ),
     ) {
@@ -244,6 +298,11 @@ fun RecordingsScreen(
                             val recording = r.recording
                             RecordingRow(
                                 recording = recording,
+                                availability = unavailableFiles[recording.id],
+                                needsRearm = recording.id in unarmedIds,
+                                rearming = recording.id in rearmingIds,
+                                onRearm = { contextId = recording.id; contextIndex = index; contextStatus = recording.status;
+                                    contextNeedsRearm = true; contextRearming = true; vm.rearm(recording) },
                                 recovery = recoveries[recording.id],
                                 focusModifier = when {
                                     recording.id == contextId -> Modifier.focusRequester(contextFocus)
@@ -258,6 +317,7 @@ fun RecordingsScreen(
                                 onResume = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.resumeArchive(recording) },
                                 onRetry = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.retry(recording) },
                                 onDelete = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.delete(recording) },
+                                deleting = recording.id in deletingIds,
                             )
                         }
                     }
@@ -349,10 +409,13 @@ private fun SectionHeader(group: RecordingGroup, count: Int) {
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun RecordingRow(
     recording: RecordingEntity,
+    availability: tv.own.owntv.core.storage.MediaAvailability?,
+    needsRearm: Boolean,
+    rearming: Boolean,
+    onRearm: () -> Unit,
     focusModifier: Modifier,
     recovery: RecordingEntity?,
     onPlay: () -> Unit,
@@ -363,9 +426,10 @@ private fun RecordingRow(
     onPause: () -> Unit,
     onResume: () -> Unit,
     onDelete: () -> Unit,
+    deleting: Boolean = false,
 ) {
     val colors = OwnTVTheme.colors
-    val compactLayout = tv.own.owntv.ui.components.rememberCompactLayout()
+
     val growing = allowInProgress && recording.status == RecordingStatus.RECORDING &&
         !recording.archivePaused && recording.hlsCheckpoint != null && recording.capturedDurationMs > 0
     val information: @Composable RowScope.() -> Unit = {
@@ -388,18 +452,21 @@ private fun RecordingRow(
                 recording.title,
                 style = MaterialTheme.typography.titleMedium,
                 color = colors.onSurface,
-                maxLines = if (compactLayout) 2 else 1,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
                 recording.channelName,
                 style = MaterialTheme.typography.labelSmall,
                 color = colors.onSurfaceVariant,
-                maxLines = if (compactLayout) 2 else 1,
+                maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Spacer(Modifier.height(6.dp))
-            StatusLine(recording)
+            if (availability == null) StatusLine(recording, needsRearm)
+            else tv.own.owntv.core.storage.MediaAvailabilityProbe.text(availability, LocalContext.current.resources)?.let {
+                Text(it, style = MaterialTheme.typography.labelMedium, color = colors.onSurfaceVariant)
+            }
             IntegrityDetails(recording, recovery)
             // The whole path, not a crumb. "TV" says which folder inside the download root; it does
             // not say which disk, and on a television with an internal drive and a USB stick that is
@@ -434,12 +501,16 @@ private fun RecordingRow(
                 style = OwnTVButtonStyle.SECONDARY,
                 modifier = focusModifier,
             )
-            RecordingStatus.SCHEDULED -> OwnTVButton(
-                stringResource(CoreR.string.common_cancel),
-                onClick = onCancel,
-                style = OwnTVButtonStyle.SECONDARY,
-                modifier = focusModifier,
-            )
+            RecordingStatus.SCHEDULED -> {
+                if (needsRearm) {
+                    OwnTVButton(stringResource(CoreR.string.recording_rearm), onClick = onRearm,
+                        enabled = !rearming, modifier = focusModifier)
+                    Spacer(Modifier.width(10.dp))
+                }
+                OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onCancel,
+                    enabled = !rearming, style = OwnTVButtonStyle.SECONDARY,
+                    modifier = if (needsRearm) Modifier else focusModifier)
+            }
             RecordingStatus.FAILED, RecordingStatus.MISSED -> OwnTVButton(
                 stringResource(if (recording.programmeStopMs <= System.currentTimeMillis()) CoreR.string.recording_recover_archive else CoreR.string.common_retry),
                 onClick = onRetry,
@@ -449,19 +520,19 @@ private fun RecordingRow(
             RecordingStatus.CANCELLED -> Unit
         }
         if (growing) {
-            if (!compactLayout) Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(10.dp))
             OwnTVButton(stringResource(CoreR.string.recording_stop), onClick = onStop, style = OwnTVButtonStyle.SECONDARY)
         }
         if (recording.archivePaused && recording.status == RecordingStatus.PARTIAL && recording.failure != RecordingFailure.NONE) {
-            if (!compactLayout) Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(10.dp))
             OwnTVButton(stringResource(CoreR.string.recording_recover_archive), onClick = onRetry, style = OwnTVButtonStyle.SECONDARY)
         }
         if (tv.own.owntv.core.recording.ArchiveResumePolicy.canPause(recording)) {
-            if (!compactLayout) Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(10.dp))
             OwnTVButton(stringResource(CoreR.string.recording_archive_pause), onClick = onPause, style = OwnTVButtonStyle.SECONDARY)
         }
         if (recording.status == RecordingStatus.PARTIAL && tv.own.owntv.core.recording.RecordingIntegrity.canPlay(recording)) {
-            if (!compactLayout) Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(10.dp))
             OwnTVButton(
                 stringResource(if (recording.programmeStopMs <= System.currentTimeMillis()) CoreR.string.recording_recover_archive else CoreR.string.common_retry),
                 onClick = onRetry,
@@ -471,34 +542,34 @@ private fun RecordingRow(
         // Nothing to delete while it is only scheduled: there is no file yet, and Cancel is the
         // action that means "do not do this".
         if (recording.status != RecordingStatus.SCHEDULED) {
-            if (!compactLayout) Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(10.dp))
             OwnTVButton(
                 stringResource(CoreR.string.common_delete),
                 onClick = onDelete,
+                enabled = !deleting,
                 style = OwnTVButtonStyle.SECONDARY,
             )
         }
     }
     val rowModifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp))
         .background(colors.surfaceContainerHigh).padding(14.dp)
-    if (compactLayout) {
-        Column(rowModifier, verticalArrangement = Arrangement.spacedBy(12.dp)) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, content = information)
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)) { actions() }
-        }
-    } else {
-        Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
+    Row(rowModifier, verticalAlignment = Alignment.CenterVertically) {
             information()
             Spacer(Modifier.width(12.dp))
             actions()
         }
-    }
 }
 
 /** The line that says where this recording got to, or why it never did. */
 @Composable
-private fun StatusLine(recording: RecordingEntity) {
+private fun StatusLine(recording: RecordingEntity, needsRearm: Boolean) {
+    if (needsRearm && recording.status == RecordingStatus.SCHEDULED) {
+        Text(stringResource(CoreR.string.recording_needs_rearm), style = MaterialTheme.typography.bodySmall,
+            color = OwnTVTheme.colors.primary, fontWeight = FontWeight.SemiBold)
+        Text(stringResource(CoreR.string.recording_scheduled_for, whenText(recording.startMs)),
+            style = MaterialTheme.typography.labelSmall, color = OwnTVTheme.colors.onSurfaceVariant)
+        return
+    }
     if (recording.archivePaused && recording.status == RecordingStatus.PARTIAL) {
         Text(stringResource(CoreR.string.recording_archive_paused), style = MaterialTheme.typography.labelSmall)
         Text(stringResource(CoreR.string.recording_archive_retained), style = MaterialTheme.typography.labelSmall)
@@ -620,21 +691,38 @@ private fun sizeMb(bytes: Long): String =
         maximumFractionDigits = 1
     }.format(bytes / 1_048_576.0)
 
+internal fun splitEstimatedDuration(durationMs: Long): Pair<Long, Long> {
+    val totalMinutes = durationMs.coerceAtLeast(0) / 60_000L
+    val hours = totalMinutes / 60L
+    val minutes = totalMinutes % 60L
+    return Pair(hours, minutes)
+}
+
+@Composable
+private fun estimatedDurationText(durationMs: Long): String {
+    val (hours, minutes) = splitEstimatedDuration(durationMs)
+    return when {
+        hours > 0L && minutes > 0L -> stringResource(R.string.recording_storage_hours_minutes, hours, minutes)
+        hours > 0L -> stringResource(R.string.recording_storage_hours, hours)
+        else -> stringResource(R.string.recording_storage_minutes, minutes)
+    }
+}
+
 @Composable
 private fun StorageBar(info: RecordingStorageInfo) {
     val colors = OwnTVTheme.colors
-    val compactLayout = tv.own.owntv.ui.components.rememberCompactLayout()
+
     val used = (info.totalBytes - info.freeBytes).coerceAtLeast(0L)
     val fraction = if (info.totalBytes > 0) (used.toFloat() / info.totalBytes).coerceIn(0f, 1f) else 0f
     Column(Modifier.fillMaxWidth()) {
-        RecordingStorageHeader(compactLayout) {
+        RecordingStorageHeader() {
             Text(
                 stringResource(CoreR.string.content_downloads_storage),
                 style = MaterialTheme.typography.labelLarge,
                 color = colors.onSurfaceVariant,
                 fontWeight = FontWeight.SemiBold,
             )
-            if (!compactLayout) Spacer(Modifier.weight(1f))
+            Spacer(Modifier.weight(1f))
             Text(
                 if (info.known) stringResource(
                     CoreR.string.content_downloads_storage_free,
@@ -662,6 +750,35 @@ private fun StorageBar(info: RecordingStorageInfo) {
                     .background(colors.primary),
             )
         }
+        if (info.known) {
+            Spacer(Modifier.height(6.dp))
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    stringResource(R.string.recording_storage_usable, gigabytes(info.writableBytes)),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (info.writableBytes > 0L) colors.onSurfaceVariant else MaterialTheme.colorScheme.error,
+                )
+                Text(
+                    stringResource(
+                        R.string.recording_storage_estimated_capacity,
+                        estimatedDurationText(info.estimatedRemainingMs),
+                    ),
+                    style = MaterialTheme.typography.labelMedium,
+                    color = if (info.writableBytes > 0L) colors.primary else colors.onSurfaceVariant,
+                    fontWeight = FontWeight.Medium,
+                )
+            }
+            Spacer(Modifier.height(2.dp))
+            Text(
+                stringResource(R.string.recording_storage_disclaimer),
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant.copy(alpha = 0.75f),
+            )
+        }
     }
 }
 
@@ -684,13 +801,7 @@ private fun decimal(value: Double): String = NumberFormat.getNumberInstance(Loca
 
 private fun gigabytes(bytes: Long): String = decimal(bytes.coerceAtLeast(0) / 1_073_741_824.0)
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun RecordingStorageHeader(compact: Boolean, content: @Composable RowScope.() -> Unit) {
-    if (compact) {
-        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(4.dp)) { content() }
-    } else {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, content = content)
-    }
+private fun RecordingStorageHeader(content: @Composable RowScope.() -> Unit) {
+    Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, content = content)
 }

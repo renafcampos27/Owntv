@@ -1,0 +1,25 @@
+<resources>
+    <string name="ui_save_failed">Não foi possível guardar. Tenta novamente.</string>
+    <string name="ui_load_failed">Não foi possível carregar. Tenta novamente.</string>
+    <string name="ui_versions_draft">A ordem só é guardada ao escolher Guardar. Adicionar ou desassociar um canal tem efeito imediato.</string>
+    <string name="ui_diagnostic_details">Detalhes</string>
+    <string name="ui_diagnostic_summary">Resumo</string>
+    <string name="ui_diagnostic_toggle_hint">OK: resumo/detalhes · ↑↓: deslocar</string>
+    <string name="ui_attempts_title">Tentativas anteriores que falharam</string>
+    <string name="ui_attempt_failed">A reprodução não arrancou</string>
+    <string name="ui_connecting_channel">A ligar a %1$s…</string>
+    <string name="ui_alternative_channel">A tentar %1$s…</string>
+    <string name="ui_setting_inherited">%1$s · herdado</string>
+    <string name="ui_setting_custom">%1$s · canal</string>
+    <string name="ui_setting_playlist">%1$s · lista</string>
+    <string name="ui_epg_loading_period">A carregar programas deste período…</string>
+    <string name="ui_epg_empty_period">Sem programação neste período</string>
+    <string name="ui_epg_outside_archive">Diferido indisponível para este programa</string>
+    <string name="ui_not_available">Não disponível</string>
+    <string name="ui_settings_requested_hint">Configurações pedidas. Consulta o diagnóstico para confirmar o motor e descodificador em uso.</string>
+    <string name="ui_duration_seconds">%1$s s</string>
+    <string name="ui_buffer_limits">Carregar abaixo de %1$s · parar acima de %2$s</string>
+    <string name="ui_attempt_line">%1$s · %2$s · %3$s</string>
+    <string name="ui_http_status">HTTP %1$d</string>
+    <string name="ui_current_channel">Canal atual</string>
+</resources>

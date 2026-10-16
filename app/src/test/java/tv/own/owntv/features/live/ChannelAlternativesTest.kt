@@ -166,4 +166,20 @@ class ChannelAlternativesTest {
         assertTrue(result)
     }
 
+    @Test fun scheduledWaitDoesNotConsumeTheOverallSafetyCeiling() = runBlocking {
+        var waiting = true
+        val result = runWithBackoffAwareTimeout(
+            timeoutMs = 500L,
+            isBackingOff = { false }, backoffRemainingMs = { 0L },
+            maxWaitCeilingMs = 150L,
+            isWaitingForHandover = { waiting },
+        ) {
+            delay(300)
+            waiting = false
+            delay(50)
+            true
+        }
+        assertTrue(result)
+    }
+
 }

@@ -48,8 +48,15 @@ import tv.own.owntv.ui.theme.OwnTVTheme
 fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val colors = OwnTVTheme.colors
     val vm: SettingsViewModel = koinViewModel()
-    val config by vm.proxyConfig.collectAsStateWithLifecycle()
+    val loadedConfig by vm.proxyEditorConfig.collectAsStateWithLifecycle()
     val testState by vm.proxyTest.collectAsStateWithLifecycle()
+
+    BackHandler { onBack() }
+    val config = loadedConfig
+    if (config == null) {
+        Text(stringResource(CoreR.string.settings_loading), modifier = modifier.padding(40.dp))
+        return
+    }
 
     var seeded by remember { mutableStateOf(false) }
     var enabled by remember { mutableStateOf(false) }
@@ -68,9 +75,13 @@ fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         }
     }
 
+    if (!seeded) {
+        Text(stringResource(CoreR.string.settings_loading), modifier = modifier.padding(40.dp))
+        return
+    }
+
     val firstFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
-    BackHandler { onBack() }
 
     val portInt = port.trim().toIntOrNull() ?: 0
     val save = {
@@ -104,7 +115,7 @@ fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         Spacer(Modifier.height(12.dp))
         OwnTVTextField(
             value = host,
-            onValueChange = { host = it },
+            onValueChange = { host = it; vm.resetProxyTest() },
             label = stringResource(CoreR.string.settings_host),
             placeholder = stringResource(CoreR.string.settings_proxy_host_hint),
             modifier = Modifier.fillMaxWidth(),
@@ -112,7 +123,7 @@ fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         Spacer(Modifier.height(12.dp))
         OwnTVTextField(
             value = port,
-            onValueChange = { port = it.filter { c -> c.isDigit() }.take(5) },
+            onValueChange = { port = it.filter { c -> c.isDigit() }.take(5); vm.resetProxyTest() },
             label = stringResource(CoreR.string.settings_port),
             placeholder = stringResource(CoreR.string.settings_proxy_port_hint),
             keyboardType = KeyboardType.Number,
@@ -121,7 +132,7 @@ fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         Spacer(Modifier.height(12.dp))
         OwnTVTextField(
             value = user,
-            onValueChange = { user = it },
+            onValueChange = { user = it; vm.resetProxyTest() },
             label = stringResource(CoreR.string.settings_username_optional),
             placeholder = "",
             modifier = Modifier.fillMaxWidth(),
@@ -129,7 +140,7 @@ fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         Spacer(Modifier.height(12.dp))
         OwnTVTextField(
             value = pass,
-            onValueChange = { pass = it },
+            onValueChange = { pass = it; vm.resetProxyTest() },
             label = stringResource(CoreR.string.settings_password_optional),
             placeholder = "",
             isPassword = true,

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="backup_complete_password_message">A complete backup includes playlist URLs, usernames, passwords, update intervals and selected preferences. Set a password to protect the backup; you will need it to restore.</string>
+</resources>

@@ -18,9 +18,9 @@
     <string name="settings_live_reserve_low">Legacy low reserve</string>
     <string name="settings_live_reserve_custom">Custom (advanced)</string>
     <string name="settings_live_reserve_custom_title">Custom playback reserve</string>
-    <string name="settings_live_reserve_custom_description">Choose minimum and maximum reserve targets, for example 8 and 12 seconds. Maximum can be up to 10 seconds above minimum. Applies when you next open a channel.</string>
-    <string name="settings_live_reserve_minimum">Minimum reserve</string>
-    <string name="settings_live_reserve_maximum">Maximum reserve</string>
+    <string name="settings_live_reserve_custom_description">Choose when to resume loading and the upper loading threshold, for example 8–30 or 8–60 seconds. The upper threshold can reach 70 seconds. HLS segments may overshoot it; memory and live availability may prevent reaching it. Applies when you next open a channel.</string>
+    <string name="settings_live_reserve_minimum">Resume loading below</string>
+    <string name="settings_live_reserve_maximum">Upper loading threshold</string>
     <string name="settings_live_reserve_range">%1$d–%2$d s</string>
     <string name="settings_live_offset_title">Delay behind live</string>
     <string name="settings_live_offset_description">Live delay for ExoPlayer/HLS, separate from playback reserve. Automatic follows HLS; other players use the source default. Applies on the next channel open.</string>

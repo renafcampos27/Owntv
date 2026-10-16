@@ -20,9 +20,10 @@ internal class UiPerformanceMonitor(private val window: Window) : AutoCloseable 
     private lateinit var handler: Handler
     private var lastCpuMs = 0L
     private var lastWallMs = 0L
-    private var lastGcCount = 0L
-    private var lastGcMs = 0L
+    private var lastGcCount: Long? = null
+    private var lastGcMs: Long? = null
     @Volatile private var closed = false
+    private var workEpoch = 0L
     private val displayManager = window.context.getSystemService(DisplayManager::class.java)
     private val displayId = window.decorView.display?.displayId ?: Display.DEFAULT_DISPLAY
     @Volatile private var fallbackDeadlineNs = (1_000_000_000.0 /
@@ -50,20 +51,34 @@ internal class UiPerformanceMonitor(private val window: Window) : AutoCloseable 
         override fun run() {
             if (closed) return
             val snapshot = samples.take()
-            UiPerformanceSummary.publish(snapshot)
             val cpuMs = Process.getElapsedCpuTime()
             val wallMs = SystemClock.elapsedRealtime()
             val gcCount = gcStat("art.gc.gc-count")
             val gcMs = gcStat("art.gc.gc-time")
             val runtime = Runtime.getRuntime()
-            LiveDiagnosticsLog.event("ui_perf windowMs=${wallMs - lastWallMs} frames=${snapshot.frames} slow=${snapshot.slowFrames} " +
+            val process = Phase4DiagnosticsProcessSample(
+                windowMs = phase4diagnosticsDelta(wallMs, lastWallMs)?.takeIf { it > 0 },
+                cpuMs = phase4diagnosticsDelta(cpuMs, lastCpuMs),
+                javaHeapBytes = runtime.totalMemory() - runtime.freeMemory(),
+                nativeHeapBytes = Debug.getNativeHeapAllocatedSize(),
+                gcCount = phase4diagnosticsDelta(gcCount, lastGcCount),
+                gcMs = phase4diagnosticsDelta(gcMs, lastGcMs),
+            )
+            UiPerformanceSummary.publish(snapshot, process)
+            UiWorkDiagnostics.window.take(workEpoch).forEach { work ->
+                LiveDiagnosticsLog.event("ui_work operation=${work.operation} calls=${work.calls} " +
+                    "completed=${work.completed} cancelled=${work.cancelled} failed=${work.failed} " +
+                    "totalUs=${work.totalNs / 1000} maxUs=${work.maxNs / 1000} " +
+                    "p95BucketMs=${work.p95BucketMs} overflowBucketMs=1000")
+            }
+            LiveDiagnosticsLog.event("ui_perf windowMs=${process.windowMs} frames=${snapshot.frames} slow=${snapshot.slowFrames} " +
                 "frameP95BucketMs=${snapshot.frameP95BucketMs} reportsDropped=${snapshot.reportsDropped} " +
                 "deadlineMode=${if (Build.VERSION.SDK_INT >= 31) "platform-or-display" else "display"} " +
                 "keys=${snapshot.keys} keyQueueP95BucketMs=${snapshot.keyQueueP95BucketMs} " +
-                "processCpuMs=${(cpuMs - lastCpuMs).coerceAtLeast(0)} " +
-                "javaHeapMiB=${(runtime.totalMemory() - runtime.freeMemory()) / MIB} " +
-                "nativeHeapMiB=${Debug.getNativeHeapAllocatedSize() / MIB} " +
-                "gcCount=${(gcCount - lastGcCount).coerceAtLeast(0)} gcMs=${(gcMs - lastGcMs).coerceAtLeast(0)}")
+                "processCpuMs=${process.cpuMs} " +
+                "javaHeapMiB=${process.javaHeapBytes?.div(MIB)} " +
+                "nativeHeapMiB=${process.nativeHeapBytes?.div(MIB)} " +
+                "gcCount=${process.gcCount} gcMs=${process.gcMs}")
             lastCpuMs = cpuMs; lastWallMs = wallMs; lastGcCount = gcCount; lastGcMs = gcMs
             handler.postDelayed(this, 10_000)
         }
@@ -72,6 +87,7 @@ internal class UiPerformanceMonitor(private val window: Window) : AutoCloseable 
     fun start() {
         UiPerformanceSummary.reset()
         thread.start()
+        workEpoch = UiWorkDiagnostics.window.start()
         handler = Handler(thread.looper)
         lastCpuMs = Process.getElapsedCpuTime()
         lastWallMs = SystemClock.elapsedRealtime()
@@ -90,13 +106,16 @@ internal class UiPerformanceMonitor(private val window: Window) : AutoCloseable 
 
     override fun close() {
         closed = true
+        UiWorkDiagnostics.window.stop(workEpoch)
         runCatching { window.removeOnFrameMetricsAvailableListener(listener) }
         runCatching { displayManager?.unregisterDisplayListener(displayListener) }
         if (::handler.isInitialized) handler.removeCallbacksAndMessages(null)
         thread.quitSafely()
     }
 
-    private fun gcStat(key: String): Long = runCatching { Debug.getRuntimeStat(key)?.toLongOrNull() ?: 0 }.getOrDefault(0)
+    private fun gcStat(key: String): Long? = runCatching {
+        Debug.getRuntimeStat(key)?.toLongOrNull()?.takeIf { it >= 0 }
+    }.getOrNull()
 
     private companion object { const val MIB = 1024L * 1024 }
 }

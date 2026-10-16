@@ -193,6 +193,9 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     if (s.invalidLocale) {
                         Text(stringResource(CoreR.string.settings_backup_invalid_locale), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                     }
+                    if (s.skippedSettings > 0) {
+                        Text(pluralStringResource(CoreR.plurals.settings_backup_unmatched_settings, s.skippedSettings, s.skippedSettings), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    }
                 }
             }
             is BackupViewModel.State.Error -> Text(
@@ -266,13 +269,13 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
     }
 
-    // Export step 3: ask whether to protect passwords with a backup passphrase (or export without them).
+    // Export step 3: a complete backup requires a passphrase to retain playlist credentials.
     exportFolder?.let { folder ->
         BackupPasswordDialog(
             title = stringResource(CoreR.string.settings_backup_encrypt_title),
-            message = stringResource(CoreR.string.settings_backup_encrypt_message),
+            message = stringResource(R.string.backup_complete_password_message),
             confirmLabel = stringResource(CoreR.string.settings_backup_encrypt_export),
-            skipLabel = stringResource(CoreR.string.settings_backup_export_unencrypted),
+            skipLabel = null,
             onConfirm = { pass -> exportFolder = null; vm.export(folder, exportSections, pass, exportProfiles) },
             onSkip = { exportFolder = null; vm.export(folder, exportSections, null, exportProfiles) },
             onDismiss = { exportFolder = null },
@@ -317,9 +320,9 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     if (showRemoteExportPassword) {
         BackupPasswordDialog(
             title = stringResource(CoreR.string.settings_backup_encrypt_title),
-            message = stringResource(CoreR.string.settings_backup_encrypt_message),
+            message = stringResource(R.string.backup_complete_password_message),
             confirmLabel = stringResource(CoreR.string.settings_backup_encrypt_prepare),
-            skipLabel = stringResource(CoreR.string.settings_backup_prepare_unencrypted),
+            skipLabel = null,
             onConfirm = { pass -> showRemoteExportPassword = false; showRemoteExport = true; vm.exportRemote(exportSections, pass, exportProfiles) },
             onSkip = { showRemoteExportPassword = false; showRemoteExport = true; vm.exportRemote(exportSections, null, exportProfiles) },
             onDismiss = { showRemoteExportPassword = false },

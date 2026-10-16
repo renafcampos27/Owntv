@@ -1,6 +1,5 @@
 package tv.own.owntv.ui.components
 
-import tv.own.owntv.core.R as CoreR
 
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
@@ -23,7 +22,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -57,61 +55,6 @@ fun OwnTVSpinner(
             size = Size(d - stroke, d - stroke),
             style = Stroke(width = stroke, cap = StrokeCap.Round),
         )
-    }
-}
-
-/** Centered loading state: spinner + message (e.g. "Importing channels…"). */
-@Composable
-fun LoadingState(
-    message: String,
-    modifier: Modifier = Modifier,
-) {
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        OwnTVSpinner()
-        Spacer(Modifier.height(16.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            color = OwnTVTheme.colors.textSecondary,
-            textAlign = TextAlign.Center,
-        )
-    }
-}
-
-/** Centered error state: title + message + an optional Retry action. Used for failed loads/syncs. */
-@Composable
-fun ErrorState(
-    message: String,
-    modifier: Modifier = Modifier,
-    title: String? = null,
-    retryLabel: String? = null,
-    onRetry: (() -> Unit)? = null,
-) {
-    val colors = OwnTVTheme.colors
-    val resolvedTitle = title ?: stringResource(CoreR.string.common_something_went_wrong)
-    val resolvedRetryLabel = retryLabel ?: stringResource(CoreR.string.common_retry)
-    Column(
-        modifier = modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(text = resolvedTitle, style = MaterialTheme.typography.titleLarge, color = colors.textPrimary, textAlign = TextAlign.Center)
-        Spacer(Modifier.height(8.dp))
-        Text(
-            text = message,
-            style = MaterialTheme.typography.bodyMedium,
-            color = colors.textSecondary,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.widthIn(max = 460.dp),
-        )
-        if (onRetry != null) {
-            Spacer(Modifier.height(20.dp))
-            OwnTVButton(label = resolvedRetryLabel, onClick = onRetry, icon = OwnTVIcon.HISTORY)
-        }
     }
 }
 

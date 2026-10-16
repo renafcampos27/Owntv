@@ -1,0 +1,5 @@
+<resources>
+    <string name="multiview_retiring">A fechar a ligação anterior…</string>
+    <string name="multiview_retirement_failed">A ligação anterior ainda não terminou de fechar. Carrega em OK para verificar novamente.</string>
+    <string name="playback_retirement_failed">A reprodução anterior ainda não terminou de fechar. Tenta abrir o canal novamente.</string>
+</resources>

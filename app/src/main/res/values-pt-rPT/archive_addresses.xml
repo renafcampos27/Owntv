@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="archive_addresses_title">Endereços alternativos dos diferidos</string>
+    <string name="archive_addresses_playlist">Editar esta lista</string>
+    <string name="archive_addresses_channel_search">Pesquisar canal para personalizar</string>
+    <string name="archive_addresses_hint">Use modelos de endereço de arquivo fornecidos pelo fornecedor. Até três endereços, tentados após o endereço normal. A configuração do canal substitui a da lista. Use {utc} ou {start}, {end} ou {duration}, {streamId}, {username} e {password}. Isto não cria gravações em falta.</string>
+    <string name="archive_addresses_url">Endereço %1$d</string>
+    <string name="archive_addresses_type">Formato destes endereços alternativos</string>
+    <string name="archive_addresses_hls">HLS</string>
+    <string name="archive_addresses_dash">DASH</string>
+    <string name="archive_addresses_auto">Automático (inclui MP4)</string>
+    <string name="archive_addresses_save">Guardar</string>
+    <string name="archive_addresses_delete">Apagar personalização</string>
+    <string name="archive_addresses_back">Voltar</string>
+    <string name="archive_addresses_invalid">Use endereços HTTP/HTTPS de arquivo válidos, com parâmetros de início e fim/duração. Não foi possível guardar ou existe um endereço inválido.</string>
+    <string name="archive_addresses_backup_hint">Para incluir estes endereços no backup, use proteção por palavra-passe.</string>
+</resources>

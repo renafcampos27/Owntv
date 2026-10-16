@@ -121,7 +121,8 @@ fun MultiviewScreen(
 
     menuFor?.let { tile ->
         MultiviewTileMenu(
-            filled = state.tiles[tile].channel != null,
+            filled = state.tiles[tile].channel != null && !state.tiles[tile].retiring &&
+                !state.tiles[tile].retirementFailed && state.pool.peek(tile) != null,
             soundOnly = tile in state.soundOnly,
             onAddTile = if (state.canAddTile) {
                 { menuFor = null; state.addTile(); state.focus(state.tiles.lastIndex) }
@@ -129,7 +130,12 @@ fun MultiviewScreen(
                 null
             },
             onChangeChannel = { menuFor = null; onPickChannel(tile) },
-            onFullscreen = { menuFor = null; state.tiles[tile].channel?.let(onFullscreen) },
+            onFullscreen = {
+                menuFor = null
+                val selected = state.tiles.getOrNull(tile)
+                if (selected != null && !selected.retiring && !selected.retirementFailed && state.pool.peek(tile) != null)
+                    selected.channel?.let(onFullscreen)
+            },
             onSound = { menuFor = null; state.giveSoundTo(tile) },
             onSoundOnly = { menuFor = null; state.setSoundOnly(tile, tile !in state.soundOnly) },
             onRemove = { menuFor = null; state.clear(tile) },
@@ -169,6 +175,7 @@ private fun Tile(
             .focusable()
             .onKeyEvent { event ->
                 when {
+                    state.primaryRetiring && (event.key == Key.Menu || event.key == Key.DirectionCenter || event.key == Key.Enter) -> true
                     event.key == Key.Menu && event.type == KeyEventType.KeyDown -> { onMenu(); true }
                     event.key != Key.DirectionCenter && event.key != Key.Enter -> false
                     event.type == KeyEventType.KeyDown -> {
@@ -181,6 +188,8 @@ private fun Tile(
                         when {
                             // Held: the menu, on a filled tile or an empty one, exactly as MENU did.
                             held >= LongPressMs -> onMenu()
+                            tile.retirementFailed && tile.channel != null -> state.fill(index, tile.channel)
+                            tile.retiring -> Unit
                             tile.channel == null -> onPickChannel()
                             else -> state.giveSoundTo(index)
                         }
@@ -192,17 +201,25 @@ private fun Tile(
     ) {
         val channel = tile.channel
         val refusal = tile.refusal
+        val engine = state.pool.peek(index)
         when {
-            channel != null -> {
+            tile.retirementFailed -> Text(
+                text = stringResource(tv.own.owntv.R.string.multiview_retirement_failed),
+                style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant,
+                textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.Center).padding(24.dp),
+            )
+            state.primaryRetiring || tile.retiring || (channel != null && engine == null) -> Text(
+                text = stringResource(tv.own.owntv.R.string.multiview_retiring),
+                style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant,
+                textAlign = TextAlign.Center, modifier = Modifier.align(Alignment.Center).padding(24.dp),
+            )
+            channel != null && engine != null -> {
                 // A sound-only tile has no picture to draw by design, so the tile says what it is
                 // instead of showing the black rectangle that would otherwise read as a fault.
-                val engine = state.pool.engineFor(index)
                 val engineState by engine.state.collectAsState()
                 val failure by engine.error.collectAsState()
-                // A tile whose picture stops while the rest of the grid plays on. The provider was
-                // already asked and said yes, so this is the television running out of what it has —
-                // and the tile says that, rather than the eighty seconds of silent black the engine's
-                // own reconnect ladder would spend before admitting anything.
+                // Bound an undiagnosed wait without guessing whether the cause is network or decoder.
+                // Explicit engine failures keep their specific explanation below.
                 LaunchedEffect(index, channel.id) {
                     engine.isPlaying.collectLatest { playing ->
                         if (playing) return@collectLatest
@@ -210,7 +227,7 @@ private fun Tile(
                         // An engine that has diagnosed itself is left alone: the ERROR branch below
                         // prints its own words, which are more specific than anything guessed here.
                         if (engine.error.value != null) return@collectLatest
-                        if (!engine.isPlaying.value) state.refuseDeviceLimit(index)
+                        if (!engine.isPlaying.value) state.expirePlaybackWait(index)
                     }
                 }
                 // The picture failing does not stop the audio track, so a tile showing its failure
@@ -247,9 +264,9 @@ private fun Tile(
                 }
                 TileCaption(name = channel.name, audible = state.audible == index)
             }
-            // The television, not the provider: it had already allowed this stream.
-            tile.deviceLimit -> Text(
-                text = stringResource(CoreR.string.multiview_decoder_exhausted),
+            // This flag records expiry of the local wait, not proof of exhausted device resources.
+            tile.waitExpired -> Text(
+                text = stringResource(tv.own.owntv.R.string.multiview_playback_wait_expired),
                 style = MaterialTheme.typography.bodyMedium,
                 color = colors.onSurfaceVariant,
                 textAlign = TextAlign.Center,

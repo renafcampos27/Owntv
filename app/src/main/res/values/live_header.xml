@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="live_list_title">LIVE TV</string>
+    <string name="live_sort_custom">Custom</string>
+</resources>

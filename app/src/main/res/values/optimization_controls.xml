@@ -1,0 +1,84 @@
+<resources>
+    <string name="order_position">Position</string>
+    <string name="order_move">Move</string>
+    <string name="order_first">First</string>
+    <string name="order_last">Last</string>
+    <string name="order_undo">Undo</string>
+    <string name="order_restore">Restore playlist order</string>
+    <string name="order_confirm_restore">Confirm restore</string>
+    <string name="settings_group_channels_new">Channels</string>
+    <string name="settings_group_channels_hint">Lists, order, visibility and startup channel</string>
+    <string name="settings_group_playback_new">Playback</string>
+    <string name="settings_group_playback_hint">Player, buffering and audio</string>
+    <string name="settings_group_guide_new">Guide and catch-up</string>
+    <string name="settings_group_guide_hint">Guide sources, programme times and catch-up</string>
+    <string name="settings_group_recordings_new">Recordings and storage</string>
+    <string name="settings_group_recordings_hint">Recording schedules, destinations and storage limits</string>
+    <string name="settings_group_app_new">Application</string>
+    <string name="settings_group_app_hint">Appearance, language, profiles and maintenance</string>
+    <string name="settings_advanced_new">Advanced</string>
+    <string name="settings_advanced_hide_new">Hide advanced settings</string>
+    <string name="channel_general_settings">Uses general settings</string>
+    <string name="channel_own_settings">Own settings; remaining options inherit general settings</string>
+    <string name="playback_session_title">Playback session diagnostics</string>
+    <string name="playback_session_hint">Current player, opening time and recent failures; export the report</string>
+    <string name="playback_session_version">App %1$s (%2$d)</string>
+    <string name="playback_session_status">Player: %1$s · State: %2$s · Opening: %3$s ms</string>
+    <string name="playback_session_unknown">Unavailable</string>
+    <string name="order_controls_hint">Up/down moves the channel. Right opens position and order controls.</string>
+    <string name="order_arrow_mode">Move with arrows</string>
+    <string name="playback_session_details">Session details</string>
+    <string name="playback_session_identity">Channel ID: %1$s · Source ID: %2$s</string>
+    <string name="playback_session_previous">Previous state: %1$s · Last failure: %2$s</string>
+    <string name="order_save_failed">Could not save the order. Your changes are still here; try again.</string>
+    <string name="order_saving">Saving…</string>
+
+    <string name="settings_channel_batch_button">Batch adjustments</string>
+    <string name="settings_channel_batch_title">Apply adjustments to multiple channels</string>
+    <string name="settings_channel_batch_hint">Select channels and specify which fields to change. Untouched fields and global inheritance are preserved.</string>
+    <plurals name="settings_channel_batch_category_all">
+        <item quantity="one">All categories (%1$d channel)</item>
+        <item quantity="other">All categories (%1$d channels)</item>
+    </plurals>
+    <plurals name="settings_channel_batch_category_filter">
+        <item quantity="one">Category: %1$s (%2$d channel)</item>
+        <item quantity="other">Category: %1$s (%2$d channels)</item>
+    </plurals>
+    <string name="settings_channel_batch_field_keep">(Do not change)</string>
+    <plurals name="settings_channel_batch_selected_count">
+        <item quantity="one">%1$d channel selected</item>
+        <item quantity="other">%1$d channels selected</item>
+    </plurals>
+    <plurals name="settings_channel_batch_apply_confirm">
+        <item quantity="one">Apply to %1$d channel</item>
+        <item quantity="other">Apply to %1$d channels</item>
+    </plurals>
+    <string name="settings_channel_batch_preview_fields">Fields to change: %1$s</string>
+    <string name="settings_channel_batch_preview_none">No fields selected to change</string>
+    <string name="settings_channel_batch_select_all">Select all</string>
+    <string name="settings_channel_batch_deselect_all">Deselect all</string>
+    <string name="settings_channel_batch_choose_channels">Choose channels</string>
+    <string name="settings_channel_batch_select_channels_title">Select channels</string>
+    <string name="settings_channel_batch_success">Adjustments applied successfully</string>
+    <string name="settings_channel_batch_field_item">%1$s: %2$s</string>
+    <string name="settings_channel_batch_separator">; </string>
+
+    <string name="recording_storage_usable">Usable space: %1$s GB</string>
+    <string name="recording_storage_estimated_capacity">Estimated capacity: ~%1$s</string>
+    <string name="recording_storage_hours_minutes">%1$d h %2$d min</string>
+    <string name="recording_storage_hours">%1$d h</string>
+    <string name="recording_storage_minutes">%1$d min</string>
+    <string name="recording_storage_disclaimer">Approximate estimate based on ~5 Mbps HD stream; subject to bitrate variations and storage quota.</string>
+
+    <string name="channel_press_hint_hold">2s: Versions · 3s: Menu</string>
+    <string name="channel_press_hint_versions">Release now: Channel Versions</string>
+    <string name="channel_press_hint_menu">Channel Options Menu</string>
+    <string name="catchup_format_title">Archive playback format</string>
+    <string name="catchup_format_hint">Xtream archives: Automatic tries TS, an alternate address and HLS only when opening fails. TS and HLS use the chosen format. Availability depends on the provider.</string>
+    <string name="catchup_format_auto">Automatic</string>
+    <string name="catchup_format_ts">TS</string>
+    <string name="catchup_format_hls">HLS</string>
+    <string name="settings_channel_reopen_interval">Interval before reopening the same channel</string>
+    <string name="settings_channel_reopen_interval_description">Waits only for the remaining time since leaving that channel. New channels open without this wait. Default: 20 seconds; adjustable from 10 to 50. This wait does not count towards the opening timeout.</string>
+    <string name="stream_info_scroll_hint">↑ / ↓ More information · Back: close</string>
+</resources>

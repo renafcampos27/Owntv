@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="epg_row_loading">Loading guide…</string>
+    <string name="epg_row_empty">No programmes in this period</string>
+    <string name="epg_row_error_retry">Guide unavailable · Retry</string>
+</resources>

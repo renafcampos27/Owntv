@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="phase4diagnostics_unavailable">N/A</string>
+    <string name="phase4diagnostics_ui_summary">UI: frames %1$d · slow %2$d · p95 %3$s ms\nKeys: %4$d · queue p95 %5$s ms</string>
+    <string name="phase4diagnostics_cpu_summary">Process CPU: %1$s ms / %2$s s window</string>
+    <string name="phase4diagnostics_heap_summary">Allocated heaps: Java %1$s MiB · native %2$s MiB</string>
+    <string name="phase4diagnostics_gc_summary">GC: %1$s collections · %2$s ms in window</string>
+</resources>

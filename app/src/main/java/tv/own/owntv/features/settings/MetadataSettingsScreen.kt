@@ -135,8 +135,9 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val colors = OwnTVTheme.colors
     val vm: SettingsViewModel = koinViewModel()
     val mode by vm.metadataMode.collectAsStateWithLifecycle()
-    val storedKey by vm.tmdbApiKey.collectAsStateWithLifecycle()
-    val storedUrl by vm.metadataServerUrl.collectAsStateWithLifecycle()
+    val editorConfig by vm.metadataEditorConfig.collectAsStateWithLifecycle()
+    val storedKey = editorConfig?.tmdbApiKey.orEmpty()
+    val storedUrl = editorConfig?.customServerUrl.orEmpty()
     val tier by vm.metadataTier.collectAsStateWithLifecycle()
     val testState by vm.metadataTest.collectAsStateWithLifecycle()
     val language by vm.metadataLanguage.collectAsStateWithLifecycle()
@@ -164,8 +165,8 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var confirmClearAdvanced by remember { mutableStateOf(false) }
     var showModePicker by remember { mutableStateOf(false) }
     var showRemoteHandover by remember { mutableStateOf(false) }
-    LaunchedEffect(storedKey, storedUrl) {
-        if (!seeded) {
+    LaunchedEffect(editorConfig) {
+        if (!seeded && editorConfig != null) {
             key = storedKey; url = storedUrl
             seeded = true
         }
@@ -323,7 +324,8 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             icon = OwnTVIcon.GEAR,
             title = stringResource(CoreR.string.settings_metadata_remote_advanced),
             desc = stringResource(CoreR.string.settings_metadata_remote_advanced_description),
-            chip = if (tier == MetadataConfig.Tier.DEFAULT_WORKER) stringResource(CoreR.string.settings_shared)
+            chip = if (!seeded) stringResource(CoreR.string.settings_loading)
+                else if (tier == MetadataConfig.Tier.DEFAULT_WORKER) stringResource(CoreR.string.settings_shared)
                 else stringResource(metadataTierLabelRes(tier)),
             primaryChip = tier != MetadataConfig.Tier.DEFAULT_WORKER,
             chevron = true,
@@ -333,7 +335,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             // means what it says: confirm, then delete the key and URL and fall back to the shared
             // service. Confirmation because a key is real user data and a stray D-pad press must not
             // destroy it.
-            onClick = { showAdvanced = true },
+            onClick = { if (seeded) showAdvanced = true },
         )
 
         Spacer(Modifier.height(20.dp))
@@ -466,7 +468,7 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
     }
     // Return focus to the language row after the dialog closes, rather than letting it fall to the
-    // screen's first mode row (same pattern as WeatherSettingsScreen's location dialog). Gated on
+    // screen's first mode row. Gated on
     // langPickerWasOpen so this doesn't fire on first composition and steal focus from firstFocus.
     LaunchedEffect(showLangPicker) {
         if (showLangPicker) {

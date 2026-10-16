@@ -92,7 +92,7 @@ fun EpgSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier, startOnA
     var editingGuideDays by remember { mutableStateOf(false) }
     val addFocus = remember { FocusRequester() }
 
-    // Per-row focus restore (mirrors ManageSourcesScreen / MoviesScreen): track the row the user is
+    // Per-row focus restore (mirrors ManageSourcesScreen): track the row the user is
     // acting on so edit/re-sync/delete returns focus INSIDE the list — same row if it survived, else
     // the nearest neighbour, else the first row, else "Add EPG". Without this the old code always
     // refocused the "Add EPG" button, which is why focus escaped the menu.

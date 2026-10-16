@@ -76,14 +76,15 @@ internal object GuideGridDefaults {
 
 @Composable
 internal fun ProgrammeStripCanvas(
-    programmes: List<EpgProgrammeEntity>,
-    windowStart: Long,
-    windowEnd: Long,
+    row: GuideProgrammeRow,
     now: Long,
     highlightTime: Long?,
     catchupIds: Set<Long>,
     hScroll: androidx.compose.foundation.ScrollState,
 ) {
+    val programmes = row.programmes
+    val windowStart = row.windowStart
+    val windowEnd = row.windowEnd
     val colors = OwnTVTheme.colors
     val density = androidx.compose.ui.platform.LocalDensity.current
     val measurer = rememberTextMeasurer(cacheSize = 64)
@@ -119,7 +120,7 @@ internal fun ProgrammeStripCanvas(
     val nowTemplate = stringResource(CoreR.string.content_epg_now)
     var viewportWidth by remember { androidx.compose.runtime.mutableIntStateOf(0) }
     val scrollPx = hScroll.value.toFloat()
-    val cells = remember(programmes, windowStart, windowEnd) { GuideProgrammeCells.layout(programmes, windowStart, windowEnd) }
+    val cells = row.cells
     val visible = GuideProgrammeCells.visible(cells,
         windowStart + (scrollPx / pxPerMin * 60_000).toLong(),
         windowStart + ((scrollPx + viewportWidth) / pxPerMin * 60_000).toLong())
@@ -242,6 +243,10 @@ internal fun ProgrammeDetailDialog(
     seriesRuleActive: Boolean = false,
     onRecordSeries: () -> Unit = {},
     onStopSeries: () -> Unit = {},
+    /** Whether a start reminder can be scheduled for this future programme (I3). */
+    canRemind: Boolean = false,
+    reminderActive: Boolean = false,
+    onToggleReminder: () -> Unit = {},
 ) {
     val colors = OwnTVTheme.colors
     val formatTime = rememberSystemTimeFormatter()
@@ -386,6 +391,18 @@ internal fun ProgrammeDetailDialog(
                             ),
                             onClick = if (seriesRuleActive) onStopSeries else onRecordSeries,
                             style = OwnTVButtonStyle.SECONDARY,
+                            compact = compact,
+                        )
+                    }
+                    if (canRemind || reminderActive) {
+                        OwnTVButton(
+                            stringResource(
+                                if (reminderActive) R.string.epg_reminder_cancel
+                                else R.string.epg_reminder_set,
+                            ),
+                            onClick = onToggleReminder,
+                            style = OwnTVButtonStyle.SECONDARY,
+                            icon = OwnTVIcon.HISTORY,
                             compact = compact,
                         )
                     }
