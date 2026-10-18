@@ -133,6 +133,7 @@ class LiveViewModel(
     private val httpClient: okhttp3.OkHttpClient,
     private val streams: tv.own.owntv.core.live.OpenStreamRegistry,
     private val epgReader: LiveEpgReader,
+    private val connectivity: tv.own.owntv.core.network.ConnectivityObserver,
 ) : ViewModel() {
 
     private var localSession: tv.own.owntv.core.timeshift.LocalTimeshiftSession? = null
@@ -172,8 +173,9 @@ class LiveViewModel(
         val owner = localOwner
         val position = localAbsolutePositionMs
         val oldCopy = retainedLocalCopy
-        val copy = if (retain && session != null && owner != null && position != null &&
+        val copy = if (retain && session != null && owner != null && position != null && session.retainedDurationMs() > 0 &&
             session.status.value in listOf(tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.READY,
+                tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.RECONNECTING,
                 tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.ENDED)) LocalCopy(session,
             tv.own.owntv.core.timeshift.LocalTimeshiftBookmark(owner.profileId, owner.sourceId, owner.channelId,
                 position, android.os.SystemClock.elapsedRealtime())) else null
@@ -306,7 +308,9 @@ class LiveViewModel(
                 if (headers.keys.none { it.equals("User-Agent", true) }) source.userAgent?.let { headers["User-Agent"] = it }
                 localOwner = owner
                 localClaim = requireNotNull(streams.tryClaim(source, tv.own.owntv.core.live.StreamPurpose.WATCHING))
-                val session = tv.own.owntv.core.timeshift.LocalTimeshiftSession(directory, httpClient, raw, headers)
+                val session = tv.own.owntv.core.timeshift.LocalTimeshiftSession(directory, httpClient, raw, headers,
+                    networkAvailable = { connectivity.isOnlineNow() },
+                    awaitNetwork = { connectivity.isOnline.first { it } })
                 localSession = session
                 checkCatchup(owner)
                 session.awaitReady()
@@ -339,6 +343,8 @@ class LiveViewModel(
         // Search filters belong to this foreground session, not the next app opening.
         _search.value = ""
         _categoryQuery.value = ""
+        lastZapPressMs = null
+        tv.own.owntv.player.ZapTiming.shared.clear()
         rememberLocalPosition()
         cancelChannelRecovery()
         if (localSession != null) { disposeLocalTimeshift(); liveTuner.stopExo(); player.stop() }
@@ -1727,24 +1733,37 @@ class LiveViewModel(
      * fallback ladder can help, because the stream the user actually wants is refused too.
      *
      * So the *decision* stays instant — the channel changes on screen, history and the zap anchor move,
-     * and the next press steps from here — while the network work waits [ZAP_TUNE_DELAY_MS] and is
-     * cancelled by the next press. Ten channels passed at speed cost one stream open instead of ten.
+     * and the next press steps from here. An isolated press starts immediately; subsequent rapid
+     * presses wait [ZAP_TUNE_DELAY_MS] and cancel the pending tune. A burst opens its first and final
+     * selection instead of opening a stream for every channel crossed.
      *
      * Deliberately NOT applied to deliberate picks ([ensurePlaying] from the channel list, Guide, Home
      * or a deep link): those are a single considered choice and must open immediately.
      */
+    private var lastZapPressMs: Long? = null
     private fun zapTo(channel: ChannelEntity) {
+        val now = android.os.SystemClock.elapsedRealtime()
+        val tuneDelay = zapTuneDelayMs(lastZapPressMs, now)
+        lastZapPressMs = now
+        tv.own.owntv.player.ZapTiming.shared.mark(
+            tv.own.owntv.core.player.enginePinKey(channel.sourceId, "LIVE", channel.remoteId), now)
+
         rememberLocalPosition()
         if (liveOnExo.value) previewEngine.deferCurrentTune()
         _previewChannel.value = channel
         _playingChannel.value = channel
         pendingZapTuneJob?.cancel()
+        if (tuneDelay == 0L) {
+            pendingZapTuneJob = null
+            startSelectedChannel(channel)
+            return
+        }
         pendingZapTuneJob = viewModelScope.launch {
-            delay(ZAP_TUNE_DELAY_MS)
-            // Cleared before handing over, so this tune's own [ensurePlaying] doesn't cancel the job
+            delay(tuneDelay)
+            // Cleared before handing over, so [startSelectedChannel] does not cancel its own job
             // it is running inside.
             pendingZapTuneJob = null
-            ensurePlaying(channel)
+            startSelectedChannel(channel)
         }
     }
 
@@ -1995,6 +2014,11 @@ class LiveViewModel(
      *  because it's still loading (clicking OK before the preview is ready used to drop to mpv and
      *  stick on a black screen for HLS). */
     fun ensurePlaying(channel: ChannelEntity, explicitVersion: Boolean = false) {
+        tv.own.owntv.player.ZapTiming.shared.clear()
+        startSelectedChannel(channel, explicitVersion)
+    }
+
+    private fun startSelectedChannel(channel: ChannelEntity, explicitVersion: Boolean = false) {
         rememberLocalPosition()
         if (liveOnExo.value) previewEngine.deferCurrentTune()
         fullscreenTuneRequested = true
@@ -2449,6 +2473,8 @@ class LiveViewModel(
                     return@launch
                 }
                 val url = archive.url
+                tv.own.owntv.player.LiveDiagnosticsLog.event(
+                    "archive_clock sourceId=${ch.sourceId} zone=${archive.clockZoneId} correctionMin=${archive.requestCorrectionMinutes} requestMs=${archive.requestStartMs} displayMs=${archive.displayStartMs}")
                 checkCatchup(owner)
                 val sourceUa = withContext(Dispatchers.IO) { sourceDao.getById(ch.sourceId)?.userAgent }
                 checkCatchup(owner)
@@ -2470,6 +2496,7 @@ class LiveViewModel(
                 checkCatchup(owner)
                 player.play(url, title = ch.name, subtitle = programme.title, logoUrl = ch.displayLogoUrl,
                     isLive = false, isArchive = true, userAgent = sourceUa, httpHeaders = ch.httpHeaders,
+                    contentKey = tv.own.owntv.core.player.catchupPinKey(ch), reconnectProvider = archive.reconnect,
                     manifestType = archive.manifestTypes[url], archiveAlternatives = archive.alternatives,
                     archiveManifestTypes = archive.manifestTypes)
                 _catchupActive.value = true
@@ -2478,7 +2505,7 @@ class LiveViewModel(
                 // The picture is this programme's own airtime, not the present — drive the "watching" clock
                 // from its start, exactly as the rewind path does from the archive's start. The offset stays
                 // null: a fixed programme is not the live rewind, so the HUD keeps its VOD chrome.
-                timeshift.followArchiveFrom(programme.startMs)
+                timeshift.followArchiveFrom(archive.displayStartMs ?: programme.startMs)
                 // Watching a programme from a channel's archive is watching that channel — the external
                 // catch-up path above has always recorded it, and this one silently did not, so the channel
                 // never reached History or Recently watched when catch-up played in-app.
@@ -2631,11 +2658,11 @@ class LiveViewModel(
      * Returns false when no archive URL can be built, or when the user reached the live edge while it
      * was being resolved.
      */
-    private suspend fun loadArchiveStream(ch: ChannelEntity, startMs: Long, offsetSec: Int): Boolean {
-        val owner = pendingCatchupFailure?.owner ?: return false
-        if (owner.channelId != ch.id || owner.sourceId != ch.sourceId) return false
+    private suspend fun loadArchiveStream(ch: ChannelEntity, startMs: Long, offsetSec: Int): Long? {
+        val owner = pendingCatchupFailure?.owner ?: return null
+        if (owner.channelId != ch.id || owner.sourceId != ch.sourceId) return null
         checkCatchup(owner)
-        if (!tv.own.owntv.core.content.AdultCategoryClassifier.allows(owner.profileId, ch.categoryId, profileDao, categoryDao)) return false
+        if (!tv.own.owntv.core.content.AdultCategoryClassifier.allows(owner.profileId, ch.categoryId, profileDao, categoryDao)) return null
         checkCatchup(owner)
         val tz = withContext(Dispatchers.IO) { settings.resolveCatchupTimeZone() }
         val (archive, sourceUa) = withContext(Dispatchers.IO) {
@@ -2643,11 +2670,13 @@ class LiveViewModel(
             archiveUrls.resolveTimeshift(ch, source, startMs, offsetSec, tz)?.let { it to source.userAgent }
         } ?: run {
             checkCatchup(owner)
-            return false
+            return null
         }
         val url = archive.url
+        tv.own.owntv.player.LiveDiagnosticsLog.event(
+            "archive_clock sourceId=${ch.sourceId} zone=${archive.clockZoneId} correctionMin=${archive.requestCorrectionMinutes} requestMs=${archive.requestStartMs} displayMs=${archive.displayStartMs}")
         checkCatchup(owner)
-        if (timeshift.offsetSec.value == null) return false // user jumped back to live meanwhile
+        if (timeshift.offsetSec.value == null) return null // user jumped back to live meanwhile
         // Keep the rewind instant semantic. The player HUD formats it with the current
         // localized context, so an in-session locale switch updates an already-visible subtitle.
         player.awaitPlaybackSettings()
@@ -2665,13 +2694,15 @@ class LiveViewModel(
             isArchive = true,
             userAgent = sourceUa,
             httpHeaders = ch.httpHeaders,
-            rewindStartMs = startMs,
+            rewindStartMs = archive.displayStartMs ?: startMs,
+            contentKey = tv.own.owntv.core.player.catchupPinKey(ch),
+            reconnectProvider = archive.reconnect,
             manifestType = archive.manifestTypes[url],
             archiveAlternatives = archive.alternatives,
             archiveManifestTypes = archive.manifestTypes,
         )
         recordLiveHistory(ch, immediate = true)
-        return true
+        return archive.displayStartMs ?: startMs
     }
 
     fun toggleFavorite(channel: ChannelEntity) {
@@ -2905,10 +2936,7 @@ class LiveViewModel(
         // → All Channels fallback so a huge playlist can't be pulled into memory on every tune.
         const val ZAP_LIST_LIMIT = 2_000
 
-        /** How long a CH+/- step waits before it actually opens the stream. Comfortably longer than the
-         *  ~170 ms D-pad repeat, so a held key resolves to one tune, and short enough that a single
-         *  deliberate step still feels immediate. */
-        const val ZAP_TUNE_DELAY_MS = 500L
+        /** Upper bound for the retained history rail, independent of zapping timing. */
         const val HISTORY_LIST_LIMIT = 30
         val defaultRail = listOf(
             LiveRailItem(LiveKey.Favorites, icon = OwnTVIcon.FAVORITE),

@@ -10,6 +10,13 @@ import java.util.Locale
 import java.util.TimeZone
 
 class TimeFormatTest {
+    @Test
+    fun `recording skeleton already containing time uses exactly one hour cycle`() {
+        assertEquals("EEEdMMMHm", combinedDateTimeSkeleton("EEEdMMMjm", true))
+        assertEquals("EEEdMMMhm", combinedDateTimeSkeleton("EEEdMMMjm", false))
+        assertEquals("yMdHm", combinedDateTimeSkeleton("yMdhhmmssa", true))
+    }
+
     private val utc = TimeZone.getTimeZone("UTC")
     private val instant = Date(1_704_110_400_000L) // 2024-01-01 12:00:00 UTC
 

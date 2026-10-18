@@ -528,6 +528,7 @@ fun SettingsScreen(
             chip = when (catchupTz) {
                 SettingsRepository.CatchupTimezone.DEVICE -> stringResource(CoreR.string.settings_device)
                 SettingsRepository.CatchupTimezone.MANUAL -> utcOffsetLabel(catchupOffset)
+                SettingsRepository.CatchupTimezone.AUTO -> stringResource(CoreR.string.settings_catchup_timezone_automatic)
             },
             chipTone = TileTone.PRIMARY,
             focus = catchupRowFocus,
@@ -982,6 +983,7 @@ fun SettingsScreen(
                 chip = when (catchupTz) {
                     SettingsRepository.CatchupTimezone.DEVICE -> stringResource(CoreR.string.settings_device)
                     SettingsRepository.CatchupTimezone.MANUAL -> utcOffsetLabel(catchupOffset)
+                SettingsRepository.CatchupTimezone.AUTO -> stringResource(CoreR.string.settings_catchup_timezone_automatic)
                 }) { saveScroll(); dialogReturn = searchFieldFocus; showCatchupTime = true },
             SettingsSearchEntry(stringResource(CoreR.string.settings_group_playback), stringResource(CoreR.string.settings_video_player), stringResource(CoreR.string.settings_search_keywords_video), OwnTVIcon.VIDEO, TileTone.TERTIARY) { open(SettingsTab.VIDEO) },
             // Four screens that had no entry at all, so nothing on them could be found by name.
@@ -3538,7 +3540,8 @@ private fun CatchupTimeDialog(
         contentAlignment = Alignment.Center,
     ) {
         Column(
-            modifier = Modifier.dialogPanel(width = 480.dp, padding = 28.dp),
+            modifier = Modifier.heightIn(max = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp * 0.9f)
+                .dialogPanel(width = 480.dp, padding = 28.dp).verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(stringResource(CoreR.string.settings_catchup), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
@@ -3564,7 +3567,7 @@ private fun CatchupTimeDialog(
                 OwnTVButton(
                     stringResource(CoreR.string.settings_catchup_timezone_device),
                     onClick = { onSetMode(SettingsRepository.CatchupTimezone.DEVICE) },
-                    style = if (!manual) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
+                    style = if (mode == SettingsRepository.CatchupTimezone.DEVICE) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
                     modifier = Modifier.focusRequester(firstFocus),
                 )
                 OwnTVButton(
@@ -3572,6 +3575,16 @@ private fun CatchupTimeDialog(
                     onClick = { onSetMode(SettingsRepository.CatchupTimezone.MANUAL) },
                     style = if (manual) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
                 )
+            }
+            OwnTVButton(
+                stringResource(CoreR.string.settings_catchup_timezone_automatic),
+                onClick = { onSetMode(SettingsRepository.CatchupTimezone.AUTO) },
+                style = if (mode == SettingsRepository.CatchupTimezone.AUTO) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
+                modifier = Modifier.fillMaxWidth(),
+            )
+            if (mode == SettingsRepository.CatchupTimezone.AUTO) {
+                Text(stringResource(CoreR.string.settings_catchup_timezone_automatic_note),
+                    style = MaterialTheme.typography.bodySmall, color = colors.onSurfaceVariant)
             }
             if (manual) {
                 Spacer(Modifier.height(22.dp))
@@ -4521,7 +4534,8 @@ private fun CatchupSourceClockDialog(vm: SettingsViewModel, onDismiss: () -> Uni
     BackHandler { if (sourceId != null) sourceId = null else onDismiss() }
     LaunchedEffect(sourceId) { withFrameNanos { }; runCatching { focus.requestFocus() } }
     Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
-        Column(Modifier.dialogPanel(width = 480.dp, padding = 24.dp),
+        Column(Modifier.heightIn(max = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp * 0.9f)
+            .dialogPanel(width = 480.dp, padding = 24.dp).verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(10.dp)) {
             Text(source?.name ?: stringResource(R.string.catchup_clock_by_playlist),
                 style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
@@ -4535,12 +4549,15 @@ private fun CatchupSourceClockDialog(vm: SettingsViewModel, onDismiss: () -> Uni
                 OwnTVButton(stringResource(R.string.catchup_clock_follow_global),
                     onClick = { vm.setSourceCatchupClock(source.id, null, null) }, compact = true,
                     modifier = Modifier.fillMaxWidth().focusRequester(focus))
+                OwnTVButton(stringResource(CoreR.string.settings_catchup_timezone_automatic),
+                    onClick = { vm.setSourceCatchupClock(source.id, SettingsRepository.CatchupTimezone.AUTO.name, null) }, compact = true, modifier = Modifier.fillMaxWidth())
                 OwnTVButton(stringResource(CoreR.string.settings_catchup_timezone_device),
                     onClick = { vm.setSourceCatchupClock(source.id, SettingsRepository.CatchupTimezone.DEVICE.name, null) }, compact = true, modifier = Modifier.fillMaxWidth())
                 OwnTVButton(stringResource(CoreR.string.settings_manual),
                     onClick = { vm.setSourceCatchupClock(source.id, SettingsRepository.CatchupTimezone.MANUAL.name, source.catchupOffsetMin ?: 0) }, compact = true, modifier = Modifier.fillMaxWidth())
                 val offset = source.catchupOffsetMin ?: 0
                 Text(when (source.catchupTimezone) {
+                    SettingsRepository.CatchupTimezone.AUTO.name -> stringResource(CoreR.string.settings_catchup_timezone_automatic)
                     SettingsRepository.CatchupTimezone.DEVICE.name -> stringResource(CoreR.string.settings_catchup_timezone_device)
                     SettingsRepository.CatchupTimezone.MANUAL.name -> stringResource(R.string.catchup_clock_source_offset, utcOffsetLabel(offset))
                     else -> stringResource(R.string.catchup_clock_follow_global)

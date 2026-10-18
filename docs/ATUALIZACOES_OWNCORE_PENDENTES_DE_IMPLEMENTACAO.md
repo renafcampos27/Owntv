@@ -1,6 +1,10 @@
 # Atualizações OwnCore pendentes de implementação
 
-Última atualização: 12/10/2026.
+Última atualização: 18/10/2026.
+
+## Integração seletiva — Core 1.0.68 / OwnTV 5.2.0
+
+Recomendações A–D autorizadas e implementadas: relógios e convenções de diferidos, fuso automático opcional, identidade/renovação de arquivo, proteção de memória, recuperação offline do timeshift, zapping isolado e correções de backup/EPG/leitor externo. Migração própria v50→v51; não substituir pelo schema v49 upstream. Mantêm-se Media3 1.11.1 e libmpv 2026.10.3. Sports, VOD/Stage e upscaling não foram incluídos. Consultar o [registo de implementação e validação](IMPLEMENTACAO_OWNTV_5.2.0_CORE_1.0.68_2026-10-18.md). A análise da release anterior permanece como histórico.
 
 ## Implementado — recomendações não opcionais do Core 1.0.67
 

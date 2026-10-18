@@ -1,6 +1,10 @@
 # Atualizações OwnTV — referência e pendências
 
-Última atualização: 06/10/2026.
+Última atualização: 18/10/2026.
+
+## Integração mais recente — OwnTV 5.2.0 / Core 1.0.68
+
+Integradas seletivamente as recomendações A–D aprovadas pelo utilizador, preservando a apresentação TV e o Core personalizado. A v5.1.0 abaixo é a referência histórica registada anteriormente; as próximas comparações devem também consultar a [integração 5.2.0/1.0.68](IMPLEMENTACAO_OWNTV_5.2.0_CORE_1.0.68_2026-10-18.md) e o código atual. Não corresponde à importação integral de funcionalidades da v5.2.0 nem altera a versão comercial da App.
 
 ## Versão upstream de referência
 

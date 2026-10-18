@@ -71,7 +71,7 @@ fun formatBestDateTime(
 }
 
 internal fun combinedDateTimeSkeleton(dateSkeleton: String, is24Hour: Boolean): String =
-    dateSkeleton + if (is24Hour) "Hm" else "hm"
+    dateSkeleton.filterNot { it in "hHkKjJCmsabB" } + if (is24Hour) "Hm" else "hm"
 
 private fun bestDateFormatter(
     locale: Locale,

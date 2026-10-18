@@ -205,6 +205,9 @@ class MainActivity : ComponentActivity() {
             repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
                 databaseStartup.state.collect { state ->
                     if (state is DatabaseStartupViewModel.State.Ready) {
+                        get<tv.own.owntv.player.PlaybackMemoryMonitor>().also {
+                            (application as OwnTVApp).playbackMemoryMonitor = it
+                        }.start()
                         Perf.stamp("db-probed")
                         if (!liveViewModel.hasFixedStartupChannel() && pendingDeepLink == null) {
                             player.onAppForegrounded()

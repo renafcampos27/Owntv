@@ -236,6 +236,8 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
      * Memory-pressure airbag: when the OS warns we're a kill candidate, drop the image cache and
      * shrink the player's stream cache live instead of waiting for the low-memory killer.
      */
+    internal var playbackMemoryMonitor: tv.own.owntv.player.PlaybackMemoryMonitor? = null
+
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
         // TRIM_MEMORY_RUNNING_LOW is deprecated on API 34+ but still the only signal on TV devices
@@ -246,6 +248,6 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         }
         // The engines judge the level themselves: UI_HIDDEN (every Home press) is not pressure for them,
         // and used to leave mpv on a trimmed cache for the rest of the session.
-        runCatching { GlobalContext.getOrNull()?.getOrNull<tv.own.owntv.player.OwnTVPlayer>()?.onTrimMemory(level) }
+        runCatching { playbackMemoryMonitor?.onTrimMemory(level) }
     }
 }

@@ -8,6 +8,12 @@ import tv.own.owntv.player.OwnTVPlayer
 
 /** App-wide libmpv player. */
 val playerModule = module {
+    single {
+        val context = androidContext()
+        tv.own.owntv.player.PlaybackMemoryMonitor(context, get(), get(), get()) {
+            coil3.SingletonImageLoader.get(context).memoryCache?.clear()
+        }
+    }
     // Tails own-process logcat for MediaCodec/AudioTrack errors the engines can't expose.
     single { tv.own.owntv.player.PlayerDiagnostics() }
     // Named, because nine consecutive get() calls silently depend on parameter ORDER: reorder the

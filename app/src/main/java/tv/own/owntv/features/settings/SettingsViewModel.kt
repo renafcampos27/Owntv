@@ -1009,7 +1009,7 @@ class SettingsViewModel(
     }
 
     fun setSourceCatchupClock(sourceId: Long, mode: String?, offsetMinutes: Int?) {
-        if (mode != null && mode !in setOf(SettingsRepository.CatchupTimezone.DEVICE.name, SettingsRepository.CatchupTimezone.MANUAL.name)) return
+        if (mode != null && mode !in SettingsRepository.CatchupTimezone.entries.map { it.name }) return
         viewModelScope.launch {
             sourceDao.updateCatchupClock(sourceId, mode, if (mode == SettingsRepository.CatchupTimezone.MANUAL.name) (offsetMinutes ?: 0).coerceIn(-720, 840) else null)
         }

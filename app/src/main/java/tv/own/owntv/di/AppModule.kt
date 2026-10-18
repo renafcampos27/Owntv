@@ -92,6 +92,7 @@ val appModule = module {
             get(),
             get(),
             get(),
+            get(), // shared network observer for local-timeshift recovery
         )
     }
     viewModelOf(::MovieViewModel)
