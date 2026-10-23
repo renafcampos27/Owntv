@@ -1,4 +1,5 @@
 package tv.own.owntv.features.setup
+import tv.own.owntv.R
 
 import tv.own.owntv.core.R as CoreR
 
@@ -169,6 +170,8 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
                 onBack = { vm.stopRemoteListener(); step = Step.ADD_SOURCE_CHOOSER },
             )
             Step.ADD_SOURCE -> AddSourceScreen(
+                initial = vm.lastDraft,
+                initialAutoRefresh = vm.draftAutoRefresh,
                 onStartXtream = { name, server, user, pass, ua, epg, refresh, live, movies, series, _, preferHls ->
                     vm.startXtream(name.ifBlank { defaultIptvName }, server, user, pass, ua, epg, refresh, live, movies, series, preferHls)
                     importOrigin = Step.ADD_SOURCE
@@ -186,7 +189,7 @@ fun Onboarding(firstRun: Boolean, onDone: (Long?) -> Unit, onCancel: () -> Unit,
                 // Submissions from the Remote screen land here pre-filled (type + fields).
                 remotePayload = vm.remotePayload,
                 onRemotePayloadConsumed = { vm.consumeRemotePayload() },
-                onBack = { step = Step.ADD_SOURCE_CHOOSER },
+                onBack = { vm.cancelImport(); step = Step.ADD_SOURCE_CHOOSER },
                 showDefaultToggle = false, // first playlist in setup: nothing to be "default" over yet
             )
             Step.IMPORTING -> ImportProgressScreen(
@@ -828,12 +831,12 @@ private fun ImportProgressScreen(
     val bgFr = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { bgFr.requestFocus() } }
     LaunchedEffect(state) {
-        if (state is SourceImporter.ImportState.Success || state is SourceImporter.ImportState.Failed) runCatching { fr.requestFocus() }
+        if (state is SourceImporter.ImportState.Success || state is SourceImporter.ImportState.Failed || state is SourceImporter.ImportState.Idle) runCatching { fr.requestFocus() }
     }
     BackHandler(enabled = state is SourceImporter.ImportState.Running || state is SourceImporter.ImportState.Idle) { onCancel() }
     Centered {
         when (state) {
-            SourceImporter.ImportState.Running, SourceImporter.ImportState.Idle,
+            SourceImporter.ImportState.Running,
             is SourceImporter.ImportState.NeedPassword -> {
                 val display = progress?.importProgressDisplay()
                 OwnTVSpinner(sizeDp = 56)
@@ -891,6 +894,11 @@ private fun ImportProgressScreen(
                 }
                 Spacer(Modifier.height(28.dp))
                 OwnTVButton(stringResource(CoreR.string.setup_continue), onClick = onContinue, icon = OwnTVIcon.PLAY, modifier = Modifier.focusRequester(fr))
+            }
+            SourceImporter.ImportState.Idle -> {
+                Text(stringResource(R.string.phase2_import_interrupted), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+                Spacer(Modifier.height(20.dp))
+                OwnTVButton(stringResource(CoreR.string.setup_try_again_caps), onClick = onRetry, modifier = Modifier.focusRequester(fr))
             }
             is SourceImporter.ImportState.Failed -> {
                 Text(stringResource(CoreR.string.setup_import_failed), style = MaterialTheme.typography.headlineLarge, color = colors.onSurface)

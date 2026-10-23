@@ -432,6 +432,8 @@ internal fun EpgSourceForm(
     modifier: Modifier = Modifier,
 ) {
     val colors = OwnTVTheme.colors
+    val validationVm: EpgSourcesViewModel = koinViewModel()
+    val existingSources by validationVm.sources.collectAsStateWithLifecycle()
     var name by remember { mutableStateOf(initial?.name ?: "") }
     var url by remember { mutableStateOf(initial?.url ?: "") }
     var ua by remember { mutableStateOf(initial?.userAgent ?: "") }
@@ -446,6 +448,9 @@ internal fun EpgSourceForm(
 
     // Both pickers here open from controls further down the form, so closing one used to drop focus
     // back on the Name field at the top and scroll the form with it.
+    val validLocation = tv.own.owntv.core.network.NetworkConfigInput.sourceLocation(url) ||
+        tv.own.owntv.core.repository.EpgRepository.stalkerSourceIdOf(url) != null
+    val duplicate = existingSources.any { it.id != initial?.id && it.url.trim() == url.trim() }
     val scrollState = rememberScrollState()
     val dialogFocus = rememberDialogFocusRestore(showPlaylistPicker || showAutoRefreshPicker, scrollState)
     val autoRefreshRowFocus = remember { FocusRequester() }
@@ -477,10 +482,14 @@ internal fun EpgSourceForm(
         // Per-feed logo override: this guide's <icon src> replaces the playlist's channel logos.
         EpgUseLogosRow(enabled = useLogos) { useLogos = !useLogos }
 
+        if (url.isNotBlank() && !validLocation) Text(stringResource(tv.own.owntv.R.string.source_location_invalid),
+            style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color(0xFFEF4444))
+        if (duplicate) Text(stringResource(tv.own.owntv.R.string.source_duplicate_warning),
+            style = MaterialTheme.typography.bodyMedium, color = colors.primary)
         Spacer(Modifier.height(24.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onCancel, style = OwnTVButtonStyle.SECONDARY)
-            OwnTVButton(stringResource(if (initial == null) CoreR.string.settings_epg_sources_add_sync else CoreR.string.settings_epg_sources_save_sync), onClick = { onSave(name, url, ua, autoRefresh, useLogos) }, enabled = url.isNotBlank())
+            OwnTVButton(stringResource(if (initial == null) CoreR.string.settings_epg_sources_add_sync else CoreR.string.settings_epg_sources_save_sync), onClick = { onSave(name, url, ua, autoRefresh, useLogos) }, enabled = validLocation)
         }
     }
 

@@ -12,6 +12,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
@@ -160,7 +164,7 @@ if (focused && glassy && surface == GlassSurface.CARDS) {
     val borderColor = if (focused) colors.focusBorder else colors.focusBorder.copy(alpha = 0.28f)
 
     Box(
-        modifier = modifier
+        modifier = modifier.semantics { this.selected = selected; role = Role.Button }
             .graphicsLayer {
                 val s = scaleState
                 scaleX = s

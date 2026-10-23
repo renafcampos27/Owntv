@@ -83,10 +83,17 @@ fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val firstFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
 
-    val portInt = port.trim().toIntOrNull() ?: 0
+    var attempted by remember { mutableStateOf(false) }
+    val portInt = tv.own.owntv.core.network.NetworkConfigInput.port(port) ?: 0
+    val parsed = tv.own.owntv.core.network.NetworkConfigInput.proxy(host, portInt, user, pass)
+    val dirty = enabled != config.enabled || (enabled && parsed != config)
+
     val save = {
-        vm.saveProxy(enabled, host, portInt, user, pass)
-        vm.resetProxyTest()
+        attempted = true
+        if (!enabled || parsed != null) {
+            vm.saveProxy(enabled, host, portInt, user, pass)
+            vm.resetProxyTest()
+        }
     }
 
     Column(
@@ -109,7 +116,12 @@ fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             desc = stringResource(CoreR.string.settings_proxy_description),
             chip = if (enabled) stringResource(CoreR.string.common_on) else stringResource(CoreR.string.common_off), primaryChip = enabled,
             modifier = Modifier.focusRequester(firstFocus),
-            onClick = { enabled = !enabled; save() },
+            onClick = {
+                enabled = !enabled
+                vm.resetProxyTest()
+                attempted = false
+                if (!enabled) vm.saveProxy(false, config.host, config.port, config.username, config.password)
+            },
         )
 
         Spacer(Modifier.height(12.dp))
@@ -147,12 +159,17 @@ fun NetworkSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             modifier = Modifier.fillMaxWidth(),
         )
 
+        if (enabled && attempted && parsed == null) Text(
+            stringResource(CoreR.string.settings_proxy_invalid_address),
+            style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color(0xFFEF4444))
+        if (dirty) Text(stringResource(tv.own.owntv.R.string.network_unsaved),
+            style = MaterialTheme.typography.bodyMedium, color = colors.primary)
         Spacer(Modifier.height(20.dp))
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             OwnTVButton(stringResource(CoreR.string.common_save), onClick = { save() })
             OwnTVButton(
                 label = if (testState is SettingsViewModel.ProxyTestState.Testing) stringResource(CoreR.string.settings_testing) else stringResource(CoreR.string.settings_test_proxy),
-                onClick = { vm.testProxy(host, portInt, user, pass) },
+                onClick = { attempted = true; vm.testProxy(host, portInt, user, pass) },
                 style = OwnTVButtonStyle.SECONDARY,
             )
             ProxyTestLabel(testState)

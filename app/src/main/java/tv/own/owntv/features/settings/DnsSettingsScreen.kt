@@ -45,58 +45,33 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val colors = OwnTVTheme.colors
     val vm: SettingsViewModel = koinViewModel()
 
-    val dnsConfig by vm.dnsConfig.collectAsStateWithLifecycle()
+    val loadedConfig by vm.dnsEditorConfig.collectAsStateWithLifecycle()
+    val dnsConfig = loadedConfig
+    BackHandler { onBack() }
+    if (dnsConfig == null) {
+        Text(stringResource(CoreR.string.settings_loading), modifier = modifier.padding(40.dp))
+        return
+    }
     val dnsTestState by vm.dnsTest.collectAsStateWithLifecycle()
 
-    fun dnsToServerText(cfg: tv.own.owntv.core.network.DnsConfig): String {
-        if (cfg.dohUrl.isNotBlank()) return cfg.dohUrl
-        if (cfg.host.isNotBlank()) {
-            val p = if (cfg.port > 0 && cfg.port != 53) ":${cfg.port}" else ""
-            return "${cfg.host}$p"
-        }
-        return ""
-    }
+    var toggleOn by remember { mutableStateOf(dnsConfig.enabled) }
+    var server by remember { mutableStateOf(tv.own.owntv.core.network.NetworkConfigInput.dnsText(dnsConfig)) }
+    var attempted by remember { mutableStateOf(false) }
+    val parsed = tv.own.owntv.core.network.NetworkConfigInput.dns(server, toggleOn)
+    val serverConfigured = parsed != null
+    val effectiveEnabled = toggleOn
+    val dirty = if (toggleOn) parsed != dnsConfig else dnsConfig.enabled
 
-    // DataStore can emit after the screen's initial empty value. Synchronize only when persisted
-    // DNS fields change so restored values do not overwrite normal editing.
-    val hasServer = dnsConfig.host.isNotBlank() || dnsConfig.dohUrl.isNotBlank()
-    var toggleOn by remember { mutableStateOf(dnsConfig.enabled || hasServer) }
-    var server by remember { mutableStateOf(dnsToServerText(dnsConfig)) }
-
-    LaunchedEffect(dnsConfig.enabled, dnsConfig.host, dnsConfig.port, dnsConfig.dohUrl) {
-        toggleOn = dnsConfig.enabled || dnsConfig.host.isNotBlank() || dnsConfig.dohUrl.isNotBlank()
-        server = dnsToServerText(dnsConfig)
-    }
-
-    val serverConfigured = server.trim().isNotBlank()
-    val effectiveEnabled = toggleOn && serverConfigured
-
-    // Toggle: ON = show fields (no persistence needed). OFF = hide fields + immediately persist disabled.
     fun applyToggle(on: Boolean) {
         toggleOn = on
-        if (!on) {
-            // Immediately disable DNS — fire and forget, no waiting for response.
-            vm.saveDns(enabled = false, host = "", port = 53, dohUrl = "")
-            vm.resetDnsTest()
-        }
+        attempted = false
+        vm.resetDnsTest()
+        if (!on) vm.saveDns(false, dnsConfig.host, dnsConfig.port, dnsConfig.dohUrl)
     }
-
-    // Save: persist the server URL. DNS is enabled only when a server is configured.
     fun applySave() {
-        val s = server.trim()
-        val (host, port, doh) = if (s.startsWith("https://", ignoreCase = true)) {
-            Triple("", 53, s)
-        } else {
-            val colon = s.lastIndexOf(':')
-            if (colon > 0 && s.indexOf(':') == colon) {
-                val h = s.substring(0, colon).trim()
-                val p = s.substring(colon + 1).trim().toIntOrNull() ?: 53
-                Triple(h, p, "")
-            } else {
-                Triple(s, 53, "")
-            }
-        }
-        vm.saveDns(enabled = s.isNotBlank(), host, port, doh)
+        attempted = true
+        val cfg = parsed ?: return
+        vm.saveDns(toggleOn, cfg.host, cfg.port, cfg.dohUrl)
         vm.resetDnsTest()
     }
 
@@ -106,19 +81,6 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     val saveFocus = remember { FocusRequester() }
 
     LaunchedEffect(Unit) { runCatching { toggleFocus.requestFocus() } }
-
-    // When toggle turns ON, move focus to the first preset button after layout.
-    // When toggle turns OFF, return focus to the toggle row.
-    LaunchedEffect(toggleOn) {
-        kotlinx.coroutines.delay(60)
-        if (toggleOn) {
-            runCatching { firstPresetFocus.requestFocus() }
-        } else {
-            runCatching { toggleFocus.requestFocus() }
-        }
-    }
-
-    BackHandler { onBack() }
 
     Column(
         modifier = modifier
@@ -147,10 +109,10 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
 
         // Red warning: toggle is on but no server configured
-        if (toggleOn && !serverConfigured) {
+        if (toggleOn && attempted && !serverConfigured) {
             Spacer(Modifier.height(8.dp))
             Text(
-                stringResource(CoreR.string.settings_dns_server_missing),
+                stringResource(tv.own.owntv.R.string.network_input_invalid),
                 style = MaterialTheme.typography.bodyMedium,
                 color = Color(0xFFEF4444),
             )
@@ -179,7 +141,8 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             onClick = {
                                 server = url
                                 toggleOn = true
-                                applySave()
+                                attempted = false
+                                vm.resetDnsTest()
                             },
                             style = if (isActive) OwnTVButtonStyle.PRIMARY else OwnTVButtonStyle.SECONDARY,
                             modifier = if (first) {
@@ -195,7 +158,7 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 Spacer(Modifier.height(12.dp))
                 OwnTVTextField(
                     value = server,
-                    onValueChange = { server = it; vm.resetDnsTest() },
+                    onValueChange = { server = it; attempted = false; vm.resetDnsTest() },
                     label = stringResource(CoreR.string.settings_dns_server),
                     placeholder = stringResource(CoreR.string.settings_dns_server_hint),
                     focusRequester = serverFieldFocus,
@@ -220,9 +183,8 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                             else CoreR.string.settings_dns_test,
                         ),
                         onClick = {
-                            val s = server.trim()
-                            val doh = if (s.startsWith("https://", ignoreCase = true)) s else ""
-                            vm.testDns(toggleOn, s, 53, doh)
+                            attempted = true
+                            parsed?.let { vm.testDns(toggleOn, it.host, it.port, it.dohUrl) }
                         },
                         style = OwnTVButtonStyle.SECONDARY,
                     )
@@ -231,6 +193,8 @@ fun DnsSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             }
         }
 
+        if (dirty) Text(stringResource(tv.own.owntv.R.string.network_unsaved),
+            style = MaterialTheme.typography.bodyMedium, color = colors.primary)
         Spacer(Modifier.height(20.dp))
         Text(
             stringResource(CoreR.string.settings_dns_explanation),

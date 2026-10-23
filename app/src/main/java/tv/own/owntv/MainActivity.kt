@@ -125,6 +125,19 @@ class MainActivity : ComponentActivity() {
     // The sole locale authority (SharedPreferences-backed; see docs/internationalization.md 0b).
     private val localeStore: tv.own.owntv.core.i18n.LocaleStore by inject()
     private var pendingDeepLink by mutableStateOf<LauncherDeepLink?>(null)
+    private var deepLinkRevision by mutableStateOf(0L)
+    private var launchDelivery = LaunchDelivery()
+    private fun consumeDeepLink(revision: Long): () -> Unit = {
+        if (launchDelivery.consume(revision)) {
+            pendingDeepLink = null
+            intent.data = null
+        }
+    }
+    override fun onSaveInstanceState(outState: android.os.Bundle) {
+        outState.putBoolean("owntv.deepLinkConsumed", launchDelivery.consumed)
+        super.onSaveInstanceState(outState)
+    }
+
 
     /**
      * Wrap the Activity base with the selected locale so its own `Resources` resolve correctly —
@@ -140,6 +153,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        deepLinkRevision = launchDelivery.receive()
         pendingDeepLink = LauncherDeepLink.parse(intent.data)
         Log.d(TAG, "onNewIntent deepLinkHost=${intent.data?.host} deepLinkType=${pendingDeepLink?.javaClass?.simpleName ?: "none"}")
     }
@@ -199,7 +213,9 @@ class MainActivity : ComponentActivity() {
         }
         val splashDeadline = SystemClock.uptimeMillis() + SPLASH_TIMEOUT_MS
         splash.setKeepOnScreenCondition { !contentReady && SystemClock.uptimeMillis() < splashDeadline }
-        pendingDeepLink = LauncherDeepLink.parse(intent.data)
+        launchDelivery = LaunchDelivery(savedInstanceState?.getBoolean("owntv.deepLinkConsumed") == true)
+        pendingDeepLink = if (launchDelivery.consumed) null else LauncherDeepLink.parse(intent.data)
+        if (launchDelivery.consumed) intent.data = null
         Log.d(TAG, "onCreate deepLinkHost=${intent.data?.host} deepLinkType=${pendingDeepLink?.javaClass?.simpleName ?: "none"}")
         lifecycleScope.launch {
             repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
@@ -209,7 +225,9 @@ class MainActivity : ComponentActivity() {
                             (application as OwnTVApp).playbackMemoryMonitor = it
                         }.start()
                         Perf.stamp("db-probed")
-                        if (!liveViewModel.hasFixedStartupChannel() && pendingDeepLink == null) {
+                        val fixedStartup = liveViewModel.hasFixedStartupChannel()
+                        liveViewModel.onForeground(fixedStartup || pendingDeepLink != null)
+                        if (!fixedStartup && pendingDeepLink == null) {
                             player.onAppForegrounded()
                             previewEngine.onAppForegrounded()
                         }
@@ -477,7 +495,8 @@ class MainActivity : ComponentActivity() {
                                 onSelectPlaylist = viewModel::setActivePlaylist,
                                 activeProfileId = activeProfileId,
                                 pendingDeepLink = pendingDeepLink,
-                                onDeepLinkConsumed = { pendingDeepLink = null },
+                                deepLinkRevision = deepLinkRevision,
+                                onDeepLinkConsumed = consumeDeepLink(deepLinkRevision),
                                 isOffline = !isOnline,
                                 onExitApp = { finish() },
                                 onSwitchProfile = {

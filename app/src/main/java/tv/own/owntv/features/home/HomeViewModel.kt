@@ -4,6 +4,7 @@ import androidx.compose.runtime.Immutable
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.channels.BufferOverflow
@@ -544,10 +545,16 @@ class HomeViewModel(
      * hero carousel's position.
      */
     private suspend fun loadHomeData(profileId: Long) {
-        val previous = _uiState.value
+        val profileBeforeLoad = settings.activeProfileId.first()
+        // A caller may already hold a validated profile (including first-entry setup). Preserve that
+        // contract, while refusing a genuinely different active owner or a switch during the query.
+        if (profileBeforeLoad >= 0L && profileBeforeLoad != profileId && currentProfileId() != profileId) return
         val data = feed.load(profileId, liveOnly = true)
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+        if (settings.activeProfileId.first() != profileBeforeLoad) return
+        val previous = _uiState.value
         val selectedHero = _selectedPreviewHero.value
-        if (selectedHero != null && data.heroItems.firstOrNull() != selectedHero) {
+        if (selectedHero != null && data.heroItems.none { it.homeKey == selectedHero.homeKey }) {
             stopPreview()
         }
         _uiState.value = HomeUiState(
@@ -557,7 +564,8 @@ class HomeViewModel(
             trendingPreferredLanguage = data.trendingPreferredLanguage,
             trendingSeasonCounts = data.trendingSeasonCounts,
             heroItems = data.heroItems,
-            activeHeroIndex = 0,
+            activeHeroIndex = retainedItemIndex(previous.heroItems.map { it.homeKey },
+                previous.activeHeroIndex, data.heroItems.map { it.homeKey }),
             continueMovies = data.continueMovies,
             continueSeries = data.continueSeries,
             heroMetadata = previous.heroMetadata.filterKeys { key -> data.heroItems.any { it.homeKey == key } },

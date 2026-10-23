@@ -496,10 +496,27 @@ class HomePreviewHandoverTest {
         }
     }
 
+    @Test(timeout = 10_000)
+    fun `feed completing after active profile changes cannot publish the previous profile`() = runBlocking {
+        val loaded = CompletableDeferred<Unit>()
+        val engine = HeroPreviewEngine(context = context, streamingHttp = streamingHttp, settings = null,
+            streamInUse = { false }, openStreams = registry, playerFactory = { _, _ -> null })
+        val vm = buildHomeViewModel(engine, listOf(heroA), onResolveChannel = { _, _ -> "http://portal.example.invalid/live/101.m3u8" },
+            beforeFeed = { settings.setActiveProfile(2L); loaded.complete(Unit) })
+        try {
+            vm.refresh(1L)
+            loaded.await()
+            kotlinx.coroutines.yield()
+            assertTrue("Stale feed must not finish loading the previous profile", vm.uiState.value.isLoading)
+            assertTrue(vm.uiState.value.heroItems.isEmpty())
+        } finally { engine.dispose() }
+    }
+
     private fun buildHomeViewModel(
         engine: HeroPreviewEngine,
         heroItems: List<HeroItem>,
         onResolveChannel: suspend (ChannelEntity, SourceEntity?) -> String,
+        beforeFeed: suspend () -> Unit = {},
     ): HomeViewModel {
         val channelsById = listOf(channelA, channelB, channelC).associateBy { it.id }
         val sourcesById = mapOf(stalkerSource.id to stalkerSource)
@@ -598,10 +615,10 @@ class HomePreviewHandoverTest {
             trendingDao = trendingDao,
             guide = guideReader,
         ) {
-            override suspend fun load(profileId: Long, liveOnly: Boolean): HomeFeed = HomeFeed(
-                heroItems = heroItems,
-                recentLive = listOf(channelA, channelB, channelC),
-            )
+            override suspend fun load(profileId: Long, liveOnly: Boolean): HomeFeed {
+                beforeFeed()
+                return HomeFeed(heroItems = heroItems, recentLive = listOf(channelA, channelB, channelC))
+            }
         }
         val metadataRepository = MetadataRepository(
             provider = metadataProvider,

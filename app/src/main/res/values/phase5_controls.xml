@@ -1,0 +1,6 @@
+<resources>
+    <string name="network_input_invalid">Invalid server or port. Use a host, [IPv6]:port, or an HTTPS address for DNS.</string>
+    <string name="network_unsaved">Changes not saved</string>
+    <string name="source_location_invalid">Enter a valid HTTP(S) address or a local file/content address.</string>
+    <string name="source_duplicate_warning">This source already exists. You can continue to add it separately.</string>
+</resources>

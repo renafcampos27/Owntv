@@ -811,7 +811,8 @@ fun LiveScreen(
                             }
                             val onClickRow = remember(chId, externalPlayerOn) {
                                 {
-                                    vm.watchFullscreen(currentChannel, channels.itemSnapshotList.items)
+                                    vm.watchFullscreen(currentChannel, channels.itemSnapshotList.items,
+                                        pagedBrowse = !(channels.loadState.prepend.endOfPaginationReached && channels.loadState.append.endOfPaginationReached))
                                     if (!externalPlayerOn) onFullscreen()
                                 }
                             }

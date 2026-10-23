@@ -42,6 +42,7 @@ import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.R
+import tv.own.owntv.core.repository.catalogConfigurationKey
 import tv.own.owntv.core.database.entity.SourceEntity
 import tv.own.owntv.core.model.SourceType
 import tv.own.owntv.core.sync.SyncCounts
@@ -232,9 +233,11 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                         onRemotePayloadConsumed = { vm.consumeRemotePayload() },
                         // A newly-added playlist can be made default only when others already exist.
                         showDefaultToggle = sources.isNotEmpty(),
-                        onBack = { addMode = null },
+                        onBack = { vm.cancelImport(); addMode = null },
                         modifier = Modifier,
-                        initial = vm.lastFailedSource, // pre-fill on retry — no re-typing after a typo
+                        initial = vm.lastFailedSource,
+                        initialAutoRefresh = vm.draftAutoRefresh,
+                        initialIsDefault = vm.draftIsDefault,
                     )
                 }
                 SettingsViewModel.ImportState.Running -> CenterStatus {
@@ -283,7 +286,7 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     Text(s.failure.displayText(), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                     Spacer(Modifier.height(20.dp))
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OwnTVButton(stringResource(CoreR.string.common_back), onClick = { showAdd = false; vm.resetImport() }, style = OwnTVButtonStyle.SECONDARY)
+                        OwnTVButton(stringResource(CoreR.string.common_back), onClick = { showAdd = false; vm.cancelImport() }, style = OwnTVButtonStyle.SECONDARY)
                         OwnTVButton(stringResource(CoreR.string.settings_sources_try_again), onClick = { vm.resetImport() }, modifier = Modifier.focusRequester(errorFocus))
                     }
                 }
@@ -373,7 +376,7 @@ fun ManageSourcesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                 state = state,
                 onDismiss = { vm.dismissSourceTest() },
                 // Only for a playlist that exists; the measurement is stored against its row.
-                onRetest = sources.firstOrNull { it.name == state.sourceName }?.let { src ->
+                onRetest = sources.firstOrNull { it.id == state.sourceId && it.catalogConfigurationKey() == state.revision }?.let { src ->
                     { confirmRetest = src }
                 },
                 onSkip = { vm.skipConnectionMeasurement() },

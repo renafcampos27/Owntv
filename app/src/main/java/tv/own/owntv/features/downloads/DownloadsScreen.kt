@@ -23,6 +23,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import tv.own.owntv.ui.components.FocusRequestGuard
+import tv.own.owntv.ui.components.cancelPendingFocusOnInput
+import tv.own.owntv.ui.components.requestBoundedFocus
+import tv.own.owntv.ui.components.listFocusTarget
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
@@ -136,9 +140,15 @@ fun DownloadsScreen(
     // download row instead of letting it escape to the sidebar.
     var contextId by remember { mutableStateOf<Long?>(null) }
     var contextIndex by remember { mutableStateOf(-1) }
+    val actionFocusGuard = remember { FocusRequestGuard() }
+    var contextRevision by remember { mutableStateOf(0L) }
     val contextFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     LaunchedEffect(rows) {
         val targetId = contextId ?: return@LaunchedEffect
+        if (contextIndex < 0 || contextRevision != actionFocusGuard.revision) {
+            contextIndex = -1
+            return@LaunchedEffect
+        }
         // The acted-on row's index inside `rows` (headers included). If it's still there, the row's
         // focusRequester keeps focus on it — nothing to do. Only act when it has vanished.
         val stillPresent = rows.any { it is DownloadListRow.Item && it.download.id == targetId }
@@ -148,26 +158,26 @@ fun DownloadsScreen(
         val items = rows.filterIsInstance<DownloadListRow.Item>()
         if (items.isEmpty()) {
             contextId = null; contextIndex = -1
-            runCatching { firstFocus.requestFocus() }
+            tabFocus.requestBoundedFocus(actionFocusGuard, contextRevision)
             return@LaunchedEffect
         }
-        val neighbor = items.getOrNull(contextIndex.coerceAtLeast(0)) ?: items.last()
-        contextId = neighbor.download.id
-        val neighborIdx = rows.indexOfFirst { it is DownloadListRow.Item && it.download.id == neighbor.download.id }
-        contextIndex = neighborIdx
-        runCatching { listState.scrollToItem(neighborIdx.coerceAtLeast(0)) }
-        withFrameNanos { }
-        runCatching { contextFocus.requestFocus() }
+        val neighbor = listFocusTarget(rows.map { (it as? DownloadListRow.Item)?.download?.id }, targetId, contextIndex)
+            ?: return@LaunchedEffect
+        contextId = neighbor.id
+        listState.scrollToItem(neighbor.visualIndex)
+        contextFocus.requestBoundedFocus(actionFocusGuard, contextRevision)
+        contextIndex = -1
     }
     // Returning from the player: scroll to and focus the download you just played (index within the
     // grouped rows, so headers don't throw the target off).
-    LaunchedEffect(restoreFocus, rows.size) {
-        if (!restoreFocus || shown.isEmpty()) return@LaunchedEffect
+    LaunchedEffect(restoreFocus, rows) {
+        if (!restoreFocus) return@LaunchedEffect
+        if (shown.isEmpty()) { tabFocus.requestBoundedFocus(actionFocusGuard); onRestored(); return@LaunchedEffect }
+        val restoreRevision = actionFocusGuard.revision
         val idx = lastPlayedId?.let { id -> rows.indexOfFirst { it is DownloadListRow.Item && it.download.id == id } } ?: -1
         if (idx >= 0) {
             runCatching { listState.scrollToItem(idx) }
-            kotlinx.coroutines.delay(60)
-            runCatching { selFocus.requestFocus() }
+            selFocus.requestBoundedFocus(actionFocusGuard, restoreRevision)
         }
         onRestored()
     }
@@ -181,7 +191,7 @@ fun DownloadsScreen(
     }
 
     Column(
-        modifier = modifier.fillMaxSize().roundedPanel(fillColor = ContentPanelFill)
+        modifier = modifier.cancelPendingFocusOnInput(actionFocusGuard).fillMaxSize().roundedPanel(fillColor = ContentPanelFill)
             // Route spatial D-pad entries to the tab strip rather than to whatever row happens to be
             // horizontally aligned. It used to be the first download row, which on the Live TV tab
             // does not exist at all — so entry landed nowhere and the tabs and the folder button
@@ -294,7 +304,7 @@ fun DownloadsScreen(
                                 onResume = { vm.resume(d) },
                                 // Capture the row's identity BEFORE the delete so the LaunchedEffect(rows)
                                 // above can move focus to the nearest surviving neighbour.
-                                onDelete = { contextId = d.id; contextIndex = index; vm.delete(d) },
+                                onDelete = { contextId = d.id; contextIndex = index; contextRevision = actionFocusGuard.revision; vm.delete(d) },
                             )
                         }
                     }

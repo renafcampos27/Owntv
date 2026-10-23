@@ -1,5 +1,9 @@
 package tv.own.owntv.features.recordings
 
+import tv.own.owntv.ui.components.FocusRequestGuard
+import tv.own.owntv.ui.components.cancelPendingFocusOnInput
+import tv.own.owntv.ui.components.requestBoundedFocus
+import tv.own.owntv.ui.components.listFocusTarget
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.getValue
 import tv.own.owntv.core.R as CoreR
@@ -8,6 +12,7 @@ import tv.own.owntv.R
 import androidx.compose.ui.platform.testTag
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -120,14 +125,12 @@ fun RecordingsScreen(
         }
     }
     LaunchedEffect(vm, context) {
-        vm.retryUnavailable.collect {
-            android.widget.Toast.makeText(context, CoreR.string.recording_retry_unavailable, android.widget.Toast.LENGTH_LONG).show()
-        }
-    }
-
-    LaunchedEffect(vm, context) {
-        vm.archiveActionUnavailable.collect {
-            android.widget.Toast.makeText(context, CoreR.string.recording_archive_resume_unavailable, android.widget.Toast.LENGTH_LONG).show()
+        vm.actionFailures.collect { notice ->
+            if (vm.acceptsActionNotice(notice)) {
+                tv.own.owntv.core.recording.RecordingRules.displayTextOf(notice.reason, context.resources)?.let { text ->
+                    android.widget.Toast.makeText(context, text, android.widget.Toast.LENGTH_LONG).show()
+                }
+            }
         }
     }
 
@@ -168,6 +171,7 @@ fun RecordingsScreen(
     val listRows = remember(rows) { buildRecordingRows(rows) }
     val firstItemId = listRows.firstNotNullOfOrNull { (it as? RecordingListRow.Item)?.recording?.id }
 
+    val focusProfileId by vm.focusProfileId.collectAsStateWithLifecycle()
     val listState = rememberLazyListState()
     val firstFocus = remember { FocusRequester() }
     val contextFocus = remember { FocusRequester() }
@@ -175,8 +179,10 @@ fun RecordingsScreen(
     // Acting on a row can remove it — stopping a recording moves it out of "Recording now", deleting
     // takes it away entirely. Without this, focus escapes to the sidebar every time. Same shape as
     // the Downloads screen's restore.
-    var contextId by remember { mutableStateOf<Long?>(null) }
-    var contextIndex by remember { mutableStateOf(-1) }
+    var contextId by remember(focusProfileId) { mutableStateOf<Long?>(null) }
+    var contextIndex by remember(focusProfileId) { mutableStateOf(-1) }
+    val actionFocusGuard = remember { FocusRequestGuard() }
+    var contextRevision by remember { mutableStateOf(0L) }
     // The status the acted-on row had when it was acted on. Stop does not remove a row — it moves it
     // from "Recording now" to "Recorded" — so the restore below never ran, while the button that had
     // focus (Stop) was replaced by different ones (Play, Delete) and focus went with it. Comparing
@@ -184,8 +190,12 @@ fun RecordingsScreen(
     var contextStatus by remember { mutableStateOf<RecordingStatus?>(null) }
     var contextNeedsRearm by remember { mutableStateOf(false) }
     var contextRearming by remember { mutableStateOf(false) }
-    LaunchedEffect(listRows, unarmedIds, rearmingIds) {
+    LaunchedEffect(listRows, unarmedIds, rearmingIds, focusProfileId) {
         val target = contextId ?: return@LaunchedEffect
+        if (contextIndex < 0 || contextRevision != actionFocusGuard.revision) {
+            contextIndex = -1
+            return@LaunchedEffect
+        }
         val items = listRows.filterIsInstance<RecordingListRow.Item>()
         val survivor = items.firstOrNull { it.recording.id == target }
         if (survivor != null) {
@@ -196,8 +206,8 @@ fun RecordingsScreen(
                 contextRearming = false
                 contextNeedsRearm = survivor.recording.id in unarmedIds
                 contextStatus = survivor.recording.status
-                withFrameNanos { }
-                runCatching { contextFocus.requestFocus() }
+                contextFocus.requestBoundedFocus(actionFocusGuard, contextRevision)
+                contextIndex = -1
             }
             return@LaunchedEffect
         }
@@ -205,17 +215,15 @@ fun RecordingsScreen(
         if (items.isEmpty()) {
             contextId = null
             contextIndex = -1
-            runCatching { firstFocus.requestFocus() }
+            firstFocus.requestBoundedFocus(actionFocusGuard, contextRevision)
             return@LaunchedEffect
         }
-        val neighbour = items.getOrNull(contextIndex.coerceAtLeast(0)) ?: items.last()
-        contextId = neighbour.recording.id
-        contextIndex = listRows.indexOfFirst {
-            it is RecordingListRow.Item && it.recording.id == neighbour.recording.id
-        }
-        runCatching { listState.scrollToItem(contextIndex.coerceAtLeast(0)) }
-        withFrameNanos { }
-        runCatching { contextFocus.requestFocus() }
+        val neighbour = listFocusTarget(listRows.map { (it as? RecordingListRow.Item)?.recording?.id }, target, contextIndex)
+            ?: return@LaunchedEffect
+        contextId = neighbour.id
+        listState.scrollToItem(neighbour.visualIndex)
+        contextFocus.requestBoundedFocus(actionFocusGuard, contextRevision)
+        contextIndex = -1
     }
 
     // Arriving on the screen has to land focus on the first row itself. The `onEnter` below only
@@ -225,14 +233,16 @@ fun RecordingsScreen(
     // it, and stands aside once a row has been acted on, which the restore above already owns.
     // Embedded, the host owns arrival focus — it lands on its tab strip, and grabbing focus down
     // into this list from here would pull the user past the tabs and the folder button every time.
+    var arrivalDone by remember { mutableStateOf(false) }
     LaunchedEffect(firstItemId, embedded) {
-        if (embedded || firstItemId == null || contextId != null) return@LaunchedEffect
+        if (arrivalDone || embedded || firstItemId == null || contextId != null) return@LaunchedEffect
+        arrivalDone = true
         withFrameNanos { }
         runCatching { firstFocus.requestFocus() }
     }
 
     Column(
-        modifier = modifier.testTag("owntv_recordings_screen")
+        modifier = modifier.cancelPendingFocusOnInput(actionFocusGuard).testTag("owntv_recordings_screen")
             .fillMaxSize()
             .then(if (embedded) Modifier else Modifier.roundedPanel(fillColor = ContentPanelFill))
             // Both of these belong to whoever owns the screen, and embedded that is Downloads. Kept
@@ -278,7 +288,7 @@ fun RecordingsScreen(
         }
 
         if (listRows.isEmpty()) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Box(Modifier.fillMaxSize().focusRequester(firstFocus).focusable(), contentAlignment = Alignment.Center) {
                 Text(
                     stringResource(CoreR.string.recording_empty),
                     color = colors.onSurfaceVariant,
@@ -301,7 +311,7 @@ fun RecordingsScreen(
                                 availability = unavailableFiles[recording.id],
                                 needsRearm = recording.id in unarmedIds,
                                 rearming = recording.id in rearmingIds,
-                                onRearm = { contextId = recording.id; contextIndex = index; contextStatus = recording.status;
+                                onRearm = { contextId = recording.id; contextIndex = index; contextRevision = actionFocusGuard.revision; contextStatus = recording.status;
                                     contextNeedsRearm = true; contextRearming = true; vm.rearm(recording) },
                                 recovery = recoveries[recording.id],
                                 focusModifier = when {
@@ -311,12 +321,12 @@ fun RecordingsScreen(
                                 },
                                 onPlay = { vm.play(recording) { if (!externalPlayerOn) onFullscreen() } },
                                 allowInProgress = !externalPlayerOn,
-                                onStop = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.stop(recording) },
-                                onCancel = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.cancel(recording) },
-                                onPause = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.pauseArchive(recording) },
-                                onResume = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.resumeArchive(recording) },
-                                onRetry = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.retry(recording) },
-                                onDelete = { contextId = recording.id; contextIndex = index; contextStatus = recording.status; vm.delete(recording) },
+                                onStop = { contextId = recording.id; contextIndex = index; contextRevision = actionFocusGuard.revision; contextStatus = recording.status; vm.stop(recording) },
+                                onCancel = { contextId = recording.id; contextIndex = index; contextRevision = actionFocusGuard.revision; contextStatus = recording.status; vm.cancel(recording) },
+                                onPause = { contextId = recording.id; contextIndex = index; contextRevision = actionFocusGuard.revision; contextStatus = recording.status; vm.pauseArchive(recording) },
+                                onResume = { contextId = recording.id; contextIndex = index; contextRevision = actionFocusGuard.revision; contextStatus = recording.status; vm.resumeArchive(recording) },
+                                onRetry = { contextId = recording.id; contextIndex = index; contextRevision = actionFocusGuard.revision; contextStatus = recording.status; vm.retry(recording) },
+                                onDelete = { contextId = recording.id; contextIndex = index; contextRevision = actionFocusGuard.revision; contextStatus = recording.status; vm.delete(recording) },
                                 deleting = recording.id in deletingIds,
                             )
                         }

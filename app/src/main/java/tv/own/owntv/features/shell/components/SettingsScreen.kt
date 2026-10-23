@@ -33,6 +33,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import tv.own.owntv.ui.components.FocusRequestGuard
+import tv.own.owntv.ui.components.cancelPendingFocusOnInput
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -289,12 +291,16 @@ fun SettingsScreen(
     // requestsFocus (only for directional entry) — so dialogReturn must be cleared HERE, not in onEnter.
     // If it's left set, the next directional entry (e.g. sidebar→here) would re-route to a stale row.
     var dialogReturn by remember { mutableStateOf<FocusRequester?>(null) }
+    val settingsFocusGuard = remember { FocusRequestGuard() }
+    val searchRowFocus = remember { mutableMapOf<String, FocusRequester>() }
+    var searchReturnFocus by remember { mutableStateOf<FocusRequester?>(null) }
     LaunchedEffect(showSessionDiagnostics, showCategories, showVisualProfile, showZoom, showPopupSize, showFontCustomization, showTheme, showAccent, showUpdate, showCatchupTime, showCatchupSourceClock, showEpgOffset, showStartup, showStartupChannelPicker, showAfrWarning, showLivePreviewPanelWarning, showBgImageChooser, showBgPicker, showBrowsing, showFocusHighlight, showBgRemote, showVodLayout) {
         if (!anyDialogOpen) {
             // Focus back on the opener row, with the scroll offset held still the whole way — see
             // [restoreAfterDialogClose] for why doing those two in sequence made the highlight travel.
-            tv.own.owntv.ui.components.restoreAfterDialogClose(dialogReturn, listState, savedIndex, savedOffset)
+            tv.own.owntv.ui.components.restoreAfterDialogClose(searchReturnFocus ?: dialogReturn, listState, savedIndex, savedOffset)
             dialogReturn = null
+            searchReturnFocus = null
         }
     }
     val settingsVm: SettingsViewModel = koinViewModel()
@@ -826,7 +832,7 @@ fun SettingsScreen(
     // runs. Fresh entry is handled separately below — it used to be left to the sidebar, which
     // Settings no longer has a slot on.
     val returningRowFocus = when {
-        searchQuery.isNotBlank() && (deepReturnKey != null || lastTab != null) -> searchFieldFocus
+        searchQuery.isNotBlank() && (deepReturnKey != null || lastTab != null) -> searchReturnFocus ?: searchFieldFocus
         deepReturnKey != null -> deepRowFocus
         else -> lastTab?.let { rowFocus[it] }
     }
@@ -843,9 +849,17 @@ fun SettingsScreen(
         // Wait by frames rather than showing another focus target for fixed delays. A lazy row may need
         // a layout pass after its group is selected; once it lands, hold it for a few frames so a late
         // focus-group entry cannot move the cursor to the category column.
+        val revision = settingsFocusGuard.revision
         var settledFrames = 0
         repeat(10) {
             withFrameNanos { }
+            if (settingsFocusGuard.revision != revision || settingsFocusGuard.pointerActive) {
+                lastTab = null; deepReturnKey = null; searchReturnFocus = null
+                return@LaunchedEffect
+            }
+            if (searchQuery.isNotBlank()) {
+                if (savedIndex < listState.layoutInfo.totalItemsCount) listState.scrollToItem(savedIndex, savedOffset)
+            }
             if (searchQuery.isBlank() && group != null) {
                 val index = categories[group].second.filter { it.key !in advancedKeys || categories[group].first.key in expandedAdvanced }.indexOfFirst { it.key == key }
                 if (index >= 0 && listState.layoutInfo.visibleItemsInfo.none { it.index == index }) {
@@ -857,12 +871,17 @@ fun SettingsScreen(
                 if (settledFrames >= 3) {
                     lastTab = null
                     deepReturnKey = null
+                    searchReturnFocus = null
                     return@LaunchedEffect
                 }
             } else {
                 settledFrames = 0
             }
         }
+        if (settingsFocusGuard.revision == revision) runCatching {
+            (if (searchQuery.isNotBlank()) searchFieldFocus else selectedCategoryFocus).requestFocus()
+        }
+        lastTab = null; deepReturnKey = null; searchReturnFocus = null
     }
 
     // Plan Z — a fresh entry has nothing to fall back on any more. Settings used to be a sidebar
@@ -1088,11 +1107,14 @@ fun SettingsScreen(
                 row.onClick()
             }
         } }
-        val catalogueTitles = catalogueEntries.map { it.title }.toSet()
-        (catalogueEntries + (entries + videoEntries + specificEntries).filter { it.title !in catalogueTitles }).filter { e -> tokens.all { t -> e.haystack.contains(t) } }.distinctBy { it.group to it.title }
+        // Specific actions carry the target section/row; a generic catalogue row must not replace them.
+        (specificEntries + videoEntries + entries + catalogueEntries).filter { e -> tokens.all { t -> e.haystack.contains(t) } }.distinctBy { it.group to it.title }
+    }
+    LaunchedEffect(searchResults.map { it.group + it.title }) {
+        searchRowFocus.keys.retainAll(searchResults.map { it.group + it.title }.toSet())
     }
     Column(
-        modifier = modifier
+        modifier = modifier.cancelPendingFocusOnInput(settingsFocusGuard)
             .fillMaxSize()
             .roundedPanel(fillColor = ContentPanelFill)
             // onEnter fires ONLY for directional entry into this group (sidebar D-pad, etc.), NOT for
@@ -1283,14 +1305,20 @@ fun SettingsScreen(
                         ) {
                             if (searching) {
                                 items(searchResults, key = { it.group + it.title }) { e ->
+                                    val entryFocus = searchRowFocus.getOrPut(e.group + e.title) { FocusRequester() }
                                     SettingsRow(
+                                        modifier = Modifier.focusRequester(entryFocus),
                                         dense = true,
                                         valueColumn = valueColumn,
                                         tone = e.tone, icon = e.icon,
                                         title = stringResource(CoreR.string.settings_breadcrumb, e.group, e.title),
                                         chip = e.chip, chipTone = e.chipTone,
                                         showChevron = e.showChevron,
-                                        onClick = e.onClick,
+                                        onClick = {
+                                            saveScroll()
+                                            e.onClick()
+                                            searchReturnFocus = entryFocus
+                                        },
                                     )
                                 }
                             } else {

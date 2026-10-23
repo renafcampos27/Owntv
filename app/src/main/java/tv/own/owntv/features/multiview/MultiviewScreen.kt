@@ -54,6 +54,9 @@ import tv.own.owntv.player.PlaybackFailure
 import tv.own.owntv.player.describe
 import tv.own.owntv.player.LivePreviewEngine
 import tv.own.owntv.ui.components.OwnTVIcon
+import tv.own.owntv.ui.components.FocusRequestGuard
+import tv.own.owntv.ui.components.cancelPendingFocusOnInput
+import tv.own.owntv.ui.components.requestBoundedFocus
 import tv.own.owntv.ui.theme.OwnTVTheme
 
 /**
@@ -87,12 +90,16 @@ fun MultiviewScreen(
     modifier: Modifier = Modifier,
 ) {
     var menuFor by remember { mutableStateOf<Int?>(null) }
-    val focusRequesters = remember(state.tiles.size) { List(state.tiles.size) { FocusRequester() } }
-
-    LaunchedEffect(Unit) { runCatching { focusRequesters[state.focused].requestFocus() } }
+    val focusRequesters = remember(state) { mutableMapOf<Int, FocusRequester>() }
+    state.tiles.indices.forEach { focusRequesters.getOrPut(it) { FocusRequester() } }
+    val focusGuard = remember(state) { FocusRequestGuard() }
+    LaunchedEffect(state, state.focusRequest) {
+        val target = state.focused
+        focusRequesters[target]?.requestBoundedFocus(focusGuard)
+    }
     BackHandler(enabled = menuFor == null) { onExit() }
 
-    Box(modifier.fillMaxSize().background(Color.Black)) {
+    Box(modifier.fillMaxSize().cancelPendingFocusOnInput(focusGuard).background(Color.Black)) {
         // Two rows of two. With two tiles the second row is empty and never drawn, which is the
         // side-by-side layout the plan asks for without a second code path.
         Column(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(TileGap)) {
@@ -105,7 +112,7 @@ fun MultiviewScreen(
                         Tile(
                             state = state,
                             index = index,
-                            focusRequester = focusRequesters[index],
+                            focusRequester = focusRequesters.getValue(index),
                             onPickChannel = { onPickChannel(index) },
                             onMenu = { menuFor = index },
                             modifier = Modifier.weight(1f).fillMaxSize(),
@@ -125,7 +132,7 @@ fun MultiviewScreen(
                 !state.tiles[tile].retirementFailed && state.pool.peek(tile) != null,
             soundOnly = tile in state.soundOnly,
             onAddTile = if (state.canAddTile) {
-                { menuFor = null; state.addTile(); state.focus(state.tiles.lastIndex) }
+                { menuFor = null; state.addTile(); state.requestFocus(state.tiles.lastIndex) }
             } else {
                 null
             },
@@ -221,13 +228,14 @@ private fun Tile(
                 // Bound an undiagnosed wait without guessing whether the cause is network or decoder.
                 // Explicit engine failures keep their specific explanation below.
                 LaunchedEffect(index, channel.id) {
-                    engine.isPlaying.collectLatest { playing ->
-                        if (playing) return@collectLatest
+                    kotlinx.coroutines.flow.combine(engine.isPlaying, engine.playbackRequested) { playing, requested -> playing || !requested }
+                        .collectLatest { settledOrPaused ->
+                        if (settledOrPaused) return@collectLatest
                         delay(StreamLostGraceMs)
                         // An engine that has diagnosed itself is left alone: the ERROR branch below
                         // prints its own words, which are more specific than anything guessed here.
                         if (engine.error.value != null) return@collectLatest
-                        if (!engine.isPlaying.value) state.expirePlaybackWait(index)
+                        if (!engine.isPlaying.value && engine.playbackRequested.value) state.expirePlaybackWait(index)
                     }
                 }
                 // The picture failing does not stop the audio track, so a tile showing its failure

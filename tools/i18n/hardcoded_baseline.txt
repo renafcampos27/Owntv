@@ -26,10 +26,6 @@
 1	app/src/main/java/tv/own/owntv/features/customize/MoveToCategoryDialog.kt	☑
 2	app/src/main/java/tv/own/owntv/features/epg/EpgScreen.kt	\0
 1	app/src/main/java/tv/own/owntv/features/epg/MiniGuideOverlay.kt	EEEdMMM
-8	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	\0
-1	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	${cfg.host}$p
-1	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	:${cfg.port}
-2	app/src/main/java/tv/own/owntv/features/settings/DnsSettingsScreen.kt	https://
 1	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	UnknownHostException
 1	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	dns.google
 1	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	refused

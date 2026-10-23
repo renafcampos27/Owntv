@@ -1,0 +1,6 @@
+<resources>
+    <string name="network_input_invalid">Servidor ou porta inválidos. Use um endereço, [IPv6]:porta ou um endereço HTTPS para DNS.</string>
+    <string name="network_unsaved">Alterações por guardar</string>
+    <string name="source_location_invalid">Introduza um endereço HTTP(S) válido ou um endereço de ficheiro local/content.</string>
+    <string name="source_duplicate_warning">Esta origem já existe. Pode continuar para a adicionar separadamente.</string>
+</resources>

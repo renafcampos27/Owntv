@@ -47,6 +47,7 @@ class RecordingsViewModel(
     private val externalPlayerLauncher: ExternalPlayerLauncher,
 ) : ViewModel() {
 
+    val focusProfileId = settings.activeProfileId.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), -1L)
     val rows: StateFlow<List<RecordingEntity>> = settings.activeProfileId
         .flatMapLatest { pid -> if (pid < 0) flowOf(emptyList()) else recordings.observe(pid) }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
@@ -84,7 +85,10 @@ class RecordingsViewModel(
         _rearmingIds.value = _rearmingIds.value + recording.id
         viewModelScope.launch {
             try {
-                if (!recordings.rearm(recording)) _rearmUnavailable.emit(Unit)
+                rowAction(recording) {
+                    if (recordings.rearm(recording)) tv.own.owntv.core.model.RecordingFailure.NONE
+                    else tv.own.owntv.core.model.RecordingFailure.UNKNOWN
+                }
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
@@ -100,8 +104,6 @@ class RecordingsViewModel(
     /** The recording last asked to play, so returning from the player lands back on its row. */
     val lastPlayedId: StateFlow<Long?> = _lastPlayedId.asStateFlow()
 
-    private val _retryUnavailable = MutableSharedFlow<Unit>()
-    val retryUnavailable = _retryUnavailable.asSharedFlow()
 
     private val _playUnavailable = MutableSharedFlow<Unit>()
     val playUnavailable = _playUnavailable.asSharedFlow()
@@ -257,26 +259,44 @@ class RecordingsViewModel(
     val externalPlayerOn: StateFlow<Boolean> = settings.externalPlayerFor(MediaType.LIVE)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
 
+    private val _actionFailures = MutableSharedFlow<tv.own.owntv.core.recording.RecordingActionNotice>()
+    val actionFailures = _actionFailures.asSharedFlow()
+    suspend fun acceptsActionNotice(notice: tv.own.owntv.core.recording.RecordingActionNotice): Boolean =
+        try { settings.activeProfileId.first() == notice.profileId }
+        catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+        catch (_: Exception) { false }
+
+    private suspend fun rowAction(recording: RecordingEntity,
+        block: suspend () -> tv.own.owntv.core.model.RecordingFailure) {
+        val result = tv.own.owntv.core.recording.runRecordingAction(
+            isCurrent = { settings.activeProfileId.first() == recording.profileId }, operation = block)
+        if (result is tv.own.owntv.core.recording.RecordingActionResult.Failed)
+            _actionFailures.emit(tv.own.owntv.core.recording.RecordingActionNotice(recording.profileId, result.reason))
+    }
+
     /** Ends a running recording and keeps the captured file, including a partial capture. */
     fun stop(recording: RecordingEntity) {
         if (_openingRecordingId.value == recording.id) cancelPlaybackOpening()
         viewModelScope.launch {
-            if (settings.activeProfileId.first() == recording.profileId) recordings.stopAndAwait(recording)
+            rowAction(recording) { recordings.stopAndAwait(recording); tv.own.owntv.core.model.RecordingFailure.NONE }
         }
     }
 
-    private val _archiveActionUnavailable = MutableSharedFlow<Unit>()
-    val archiveActionUnavailable = _archiveActionUnavailable.asSharedFlow()
 
     fun pauseArchive(recording: RecordingEntity) { viewModelScope.launch {
-        if (settings.activeProfileId.first() == recording.profileId && !recordings.pauseArchive(recording))
-            _archiveActionUnavailable.emit(Unit)
+        rowAction(recording) {
+            if (recordings.pauseArchive(recording)) tv.own.owntv.core.model.RecordingFailure.NONE
+            else tv.own.owntv.core.model.RecordingFailure.UNKNOWN
+        }
     } }
 
     fun resumeArchive(recording: RecordingEntity) { viewModelScope.launch {
-        if (settings.activeProfileId.first() == recording.profileId) {
-            if (_lastPlayedId.value == recording.id && player.hasLocalRecordingPlayback) player.stop()
-            if (!recordings.resumeArchive(recording)) _archiveActionUnavailable.emit(Unit)
+        rowAction(recording) {
+            if (_lastPlayedId.value == recording.id && player.hasLocalRecordingPlayback && !player.stopAndAwaitRelease())
+                return@rowAction tv.own.owntv.core.model.RecordingFailure.UNKNOWN
+            if (settings.activeProfileId.first() != recording.profileId) return@rowAction tv.own.owntv.core.model.RecordingFailure.NONE
+            if (recordings.resumeArchive(recording)) tv.own.owntv.core.model.RecordingFailure.NONE
+            else tv.own.owntv.core.model.RecordingFailure.UNKNOWN
         }
     } }
 
@@ -284,7 +304,7 @@ class RecordingsViewModel(
     fun cancel(recording: RecordingEntity) {
         if (_openingRecordingId.value == recording.id) cancelPlaybackOpening()
         viewModelScope.launch {
-            if (settings.activeProfileId.first() == recording.profileId) recordings.cancel(recording)
+            rowAction(recording) { recordings.cancel(recording); tv.own.owntv.core.model.RecordingFailure.NONE }
         }
     }
 
@@ -302,16 +322,20 @@ class RecordingsViewModel(
         viewModelScope.launch {
             try {
                 if (settings.activeProfileId.first() == recording.profileId) {
-                    if (_lastPlayedId.value == recording.id && player.hasLocalRecordingPlayback) player.stop()
+                    if (_lastPlayedId.value == recording.id && player.hasLocalRecordingPlayback && !player.stopAndAwaitRelease()) {
+                        if (settings.activeProfileId.first() == recording.profileId) _deleteResult.emit(RecordingDeleteResult.IN_USE)
+                        return@launch
+                    }
+                    if (settings.activeProfileId.first() != recording.profileId) return@launch
                     val result = recordings.delete(recording)
-                    if (result != RecordingDeleteResult.SUCCESS) {
+                    if (result != RecordingDeleteResult.SUCCESS && settings.activeProfileId.first() == recording.profileId) {
                         _deleteResult.emit(result)
                     }
                 }
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (_: Exception) {
-                _deleteResult.emit(RecordingDeleteResult.DELETE_FAILED)
+                if (settings.activeProfileId.first() == recording.profileId) _deleteResult.emit(RecordingDeleteResult.DELETE_FAILED)
             } finally {
                 _deletingIds.value = _deletingIds.value - recording.id
             }
@@ -321,8 +345,10 @@ class RecordingsViewModel(
     /** Retry a live window or request a separate archive recovery, keeping the original file. */
     fun retry(recording: RecordingEntity) {
         viewModelScope.launch {
-            if (settings.activeProfileId.first() != recording.profileId) return@launch
-            if (!recordings.retryRecording(recording)) _retryUnavailable.emit(Unit)
+            rowAction(recording) {
+                if (recordings.retryRecording(recording)) tv.own.owntv.core.model.RecordingFailure.NONE
+                else tv.own.owntv.core.model.RecordingFailure.UNKNOWN
+            }
         }
     }
 

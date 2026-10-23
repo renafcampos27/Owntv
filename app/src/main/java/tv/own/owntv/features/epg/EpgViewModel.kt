@@ -837,7 +837,10 @@ class EpgViewModel(
         if (pid >= 0) sourceRepository.observeSources(pid).first()
             .filter { epgRepository.guideUrl(it) != null }
             .forEach { refreshOne { epgRepository.refresh(it) } }
-        epgSourceStore.getAll().forEach { refreshOne { epgRepository.refreshUrl(it.id, it.url, it.userAgent) } }
+        epgSourceStore.getAll().forEach { source -> refreshOne {
+            epgRepository.refreshUrl(source.id, source.url, source.userAgent,
+                acceptsSource = { epgSourceStore.isCurrentRequest(source) })
+        } }
         if (updated) {
             prefetchJob?.cancelAndJoin()
             // Timing changes need fresh rows even when the number of stored programmes is unchanged.
@@ -859,6 +862,8 @@ class EpgViewModel(
     val matching: StateFlow<Boolean> = _matching.asStateFlow()
 
     /** Low-confidence suggestions awaiting the user's accept/skip (high-confidence ones auto-apply). */
+    private var reviewOwners = emptyMap<Long, EpgEditSession.Owner>()
+    private var reviewExpected = emptyMap<String, String>()
     private val _review = MutableStateFlow<List<EpgMatchSuggestion>>(emptyList())
     val review: StateFlow<List<EpgMatchSuggestion>> = _review.asStateFlow()
 
@@ -879,17 +884,23 @@ class EpgViewModel(
                 val playlistIds = if (pid < 0) emptyList() else sourceRepository.observeSources(pid).first().map { it.id }
                 if (playlistIds.isEmpty()) { _matchSummary.value = EpgMatchSummary.AddPlaylist; return@launch }
                 val cust = customize.observe(pid, MediaType.LIVE).first()
+                val ownerSource = activeSourceIds(settings, sourceDao, pid, MediaType.LIVE).firstOrNull() ?: return@launch
+                val owner = epgEdits.capture(pid, ownerSource)
 
                 val outcome = autoMatcher.run(cust, playlistIds)
                 if (!outcome.hadCandidates) { _matchSummary.value = EpgMatchSummary.NoData; return@launch }
 
                 // Persist the confident hits (DataStore writes are cheap, but do them off the scan).
-                for ((key, epgId) in outcome.applied) customize.setEpgMatch(pid, MediaType.LIVE, key, epgId)
+                if (!acceptsEpgEdit(owner)) return@launch
+                val committed = customize.setEpgMatches(pid, outcome.applied.toMap(), cust.epgMatches) { epgEdits.accepts(owner) }
+                if (!acceptsEpgEdit(owner)) return@launch
+                reviewExpected = cust.epgMatches
+                reviewOwners = outcome.review.associate { it.channel.id to epgEdits.capture(pid, it.channel.sourceId) }
 
                 _review.value = outcome.review.map {
                     EpgMatchSuggestion(it.channel, it.epgChannelId, it.displayName, it.score)
                 }
-                val applied = outcome.applied.size
+                val applied = committed.size
                 _matchSummary.value = when {
                     applied == 0 && outcome.review.isEmpty() -> EpgMatchSummary.AllMatched
                     // Everything found pointed at a guide channel with nothing scheduled. Saying
@@ -898,7 +909,7 @@ class EpgViewModel(
                         EpgMatchSummary.MatchedNoProgrammes
                     else -> EpgMatchSummary.AutoMatched(applied, outcome.review.size)
                 }
-                if (applied > 0) fillMatchedInBackground(outcome.applied.map { it.second }) // off the spinner
+                if (applied > 0) fillMatchedInBackground(outcome.applied.filter { it.first in committed }.map { it.second }) // off the spinner
             } finally {
                 _matching.value = false
             }
@@ -912,10 +923,15 @@ class EpgViewModel(
      */
     fun autoMatchOne(channel: ChannelEntity) {
         if (_matching.value) return
+        val owner = captureEpgEdit(channel)
         viewModelScope.launch {
             _matching.value = true
             try {
+                val cust = customize.observe(owner.profile, MediaType.LIVE).first()
                 val best = autoMatcher.one(channel)
+                if (!acceptsEpgEdit(owner)) return@launch
+                reviewOwners = mapOf(channel.id to owner)
+                reviewExpected = cust.epgMatches
                 if (best == null) {
                     _matchSummary.value = EpgMatchSummary.NoMatch(channel.name)
                 } else {
@@ -934,9 +950,12 @@ class EpgViewModel(
 
     /** Accept a reviewed suggestion → persist the match and drop it from the review list. */
     fun acceptSuggestion(s: EpgMatchSuggestion) {
+        val owner = reviewOwners[s.channel.id] ?: return
+        val expected = reviewExpected
         viewModelScope.launch {
-            val pid = settings.activeProfileId.first()
-            customize.setEpgMatch(pid, MediaType.LIVE, CustomizeKeys.channel(s.channel), s.epgChannelId)
+            if (!acceptsEpgEdit(owner)) return@launch
+            val committed = customize.setEpgMatches(owner.profile, mapOf(CustomizeKeys.channel(s.channel) to s.epgChannelId), expected) { epgEdits.accepts(owner) }
+            if (committed.isEmpty()) return@launch
             _review.value = _review.value.filterNot { it.channel.id == s.channel.id }
             fillMatchedInBackground(listOf(s.epgChannelId))
         }
@@ -951,11 +970,17 @@ class EpgViewModel(
     fun acceptAllSuggestions() {
         val all = _review.value
         if (all.isEmpty()) return
+        val owners = reviewOwners
+        val expected = reviewExpected
+        val owner = owners[all.first().channel.id] ?: return
         viewModelScope.launch {
-            val pid = settings.activeProfileId.first()
-            for (s in all) customize.setEpgMatch(pid, MediaType.LIVE, CustomizeKeys.channel(s.channel), s.epgChannelId)
-            _review.value = emptyList()
-            fillMatchedInBackground(all.map { it.epgChannelId })
+            if (!acceptsEpgEdit(owner) || all.any { owners[it.channel.id]?.let(epgEdits::accepts) != true }) return@launch
+            val matches = all.associate { CustomizeKeys.channel(it.channel) to it.epgChannelId }
+            val committed = customize.setEpgMatches(owner.profile, matches, expected) {
+                owners.values.all(epgEdits::accepts)
+            }
+            _review.value = _review.value.filterNot { CustomizeKeys.channel(it.channel) in committed }
+            fillMatchedInBackground(all.filter { CustomizeKeys.channel(it.channel) in committed }.map { it.epgChannelId })
         }
     }
 

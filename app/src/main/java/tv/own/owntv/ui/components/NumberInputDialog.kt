@@ -27,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.platform.SoftwareKeyboardController
@@ -70,6 +71,8 @@ fun NumberInputDialog(
     onDismiss: () -> Unit,
 ) {
     val colors = OwnTVTheme.colors
+    val focusGuard = remember { FocusRequestGuard() }
+    var focusedStep by remember { mutableStateOf<Int?>(null) }
     val fieldFocus = remember { FocusRequester() }
     val minusFocus = remember { FocusRequester() }
     val plusFocus = remember { FocusRequester() }
@@ -87,7 +90,15 @@ fun NumberInputDialog(
     // asking it to would leave the dialog with no focus at all, which is the very complaint this
     // change answers. So land on whichever stepper is live; at 0 of 0..max that is +.
     LaunchedEffect(Unit) {
-        runCatching { (if (value > min) minusFocus else plusFocus).requestFocus() }
+        (if (value > min) minusFocus else if (value < max) plusFocus else fieldFocus).requestBoundedFocus(focusGuard)
+    }
+    LaunchedEffect(value > min, value < max) {
+        val target = when {
+            focusedStep == -1 && value <= min -> if (value < max) plusFocus else fieldFocus
+            focusedStep == 1 && value >= max -> if (value > min) minusFocus else fieldFocus
+            else -> null
+        }
+        target?.requestBoundedFocus(focusGuard)
     }
 
     fun commit(parsed: Int) {
@@ -106,7 +117,7 @@ fun NumberInputDialog(
     }
 
     OwnTVPopup(onDismissRequest = onDismiss) {
-        Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
+        Box(Modifier.fillMaxSize().modalScrim().cancelPendingFocusOnInput(focusGuard).trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
             Column(
                 modifier = Modifier.dialogPanel(width = 320.dp, corner = 16.dp, padding = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -117,7 +128,7 @@ fun NumberInputDialog(
                 // Bottom-align: the text field carries a label above its input box, so it's taller than
                 // the − / + buttons. Aligning to the bottom lines the buttons up with the input box row.
                 Row(verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    StepBtn(stringResource(CoreR.string.common_minus), enabled = value > min, modifier = Modifier.focusRequester(minusFocus)) {
+                    StepBtn(stringResource(CoreR.string.common_minus), enabled = value > min, modifier = Modifier.focusRequester(minusFocus).onFocusChanged { if (it.isFocused) focusedStep = -1 }) {
                         commit(value - step)
                     }
                     // The numeric text field. Numeric keyboard; Done commits + moves focus back to −.
@@ -128,12 +139,12 @@ fun NumberInputDialog(
                             text = raw.filter { it.isDigit() }.take(7) // take(7) guards against paste bombs
                         },
                         label = fieldLabel ?: stringResource(CoreR.string.common_items_per_skip),
-                        modifier = Modifier.width(130.dp),
+                        modifier = Modifier.width(130.dp).onFocusChanged { if (it.hasFocus) focusedStep = null },
                         focusRequester = fieldFocus,
                         placeholder = value.toString(),
                         keyboardType = KeyboardType.Number,
                     )
-                    StepBtn(stringResource(CoreR.string.common_plus), enabled = value < max, modifier = Modifier.focusRequester(plusFocus)) {
+                    StepBtn(stringResource(CoreR.string.common_plus), enabled = value < max, modifier = Modifier.focusRequester(plusFocus).onFocusChanged { if (it.isFocused) focusedStep = 1 }) {
                         commit(value + step)
                     }
                 }
@@ -164,9 +175,9 @@ fun NumberInputDialog(
 
                 Spacer(Modifier.height(14.dp))
                 Row(Modifier.fillMaxSize(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    OwnTVButton(stringResource(CoreR.string.common_reset), onClick = onReset, style = OwnTVButtonStyle.SECONDARY)
+                    OwnTVButton(stringResource(CoreR.string.common_reset), onClick = onReset, modifier = Modifier.onFocusChanged { if (it.hasFocus) focusedStep = null }, style = OwnTVButtonStyle.SECONDARY)
                     Spacer(Modifier.weight(1f))
-                    OwnTVButton(stringResource(CoreR.string.common_done), onClick = {
+                    OwnTVButton(stringResource(CoreR.string.common_done), modifier = Modifier.onFocusChanged { if (it.hasFocus) focusedStep = null }, onClick = {
                         commitText()
                         keyboard?.hide()
                         onDismiss()

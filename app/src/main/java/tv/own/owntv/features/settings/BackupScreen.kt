@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -34,6 +35,7 @@ import androidx.compose.foundation.focusGroup
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
@@ -129,7 +131,8 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     var automaticDialogOpen by remember { mutableStateOf(false) }
     val anyDialogOpen = automaticDialogOpen || showBrowser || showExportPicker || showProfilePicker || pendingFolderBrowser || exportFolder != null ||
         showRestoreChooser || showRemoteRestore || showExportChooser || showRemoteExportPassword || showRemoteExport ||
-        state is BackupViewModel.State.ChooseRestore || state is BackupViewModel.State.NeedPassword
+        state is BackupViewModel.State.ChooseRestore || state is BackupViewModel.State.NeedPassword ||
+        state is BackupViewModel.State.ReviewProtection
     LaunchedEffect(anyDialogOpen) {
         if (!anyDialogOpen) {
             dialogReturn?.let { btn ->
@@ -265,6 +268,11 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
     }
 
+    (state as? BackupViewModel.State.ReviewProtection)?.let { review ->
+        BackupProtectionReviewDialog(review, vm::authorizeProtection, vm::revokeProtection,
+            vm::confirmProtectionReview, vm::reset)
+    }
+
     if (showBrowser) {
         StorageBrowser(
             title = stringResource(if (browser == BrowseMode.FOLDER) CoreR.string.settings_backup_choose_folder else CoreR.string.settings_backup_pick_file),
@@ -283,6 +291,7 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             message = stringResource(R.string.backup_complete_password_message),
             confirmLabel = stringResource(CoreR.string.settings_backup_encrypt_export),
             skipLabel = null,
+            confirmPassword = true,
             onConfirm = { pass -> exportFolder = null; vm.export(folder, exportSections, pass, exportProfiles) },
             onSkip = { exportFolder = null; vm.export(folder, exportSections, null, exportProfiles) },
             onDismiss = { exportFolder = null },
@@ -305,9 +314,9 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             skipLabel = if (need.sealed) null else stringResource(CoreR.string.settings_backup_skip_passwords),
             onConfirm = { pass ->
                 val sections = need.sections
-                if (sections == null) vm.unlock(need.file, pass) else vm.import(need.file, sections, pass)
+                if (sections == null) vm.unlock(need.file, pass) else vm.prepareImport(need.file, sections, pass)
             },
-            onSkip = { need.sections?.let { vm.import(need.file, it, null) } },
+            onSkip = { need.sections?.let { vm.prepareImport(need.file, it, null) } },
             onDismiss = { vm.reset() },
         )
     }
@@ -330,6 +339,7 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             message = stringResource(R.string.backup_complete_password_message),
             confirmLabel = stringResource(CoreR.string.settings_backup_encrypt_prepare),
             skipLabel = null,
+            confirmPassword = true,
             onConfirm = { pass -> showRemoteExportPassword = false; showRemoteExport = true; vm.exportRemote(exportSections, pass, exportProfiles) },
             onSkip = { showRemoteExportPassword = false; showRemoteExport = true; vm.exportRemote(exportSections, null, exportProfiles) },
             onDismiss = { showRemoteExportPassword = false },
@@ -415,6 +425,7 @@ private fun BackupPasswordDialog(
     confirmLabel: String,
     /** Null hides the skip button entirely — a sealed `.own` has nothing to fall back to. */
     skipLabel: String?,
+    confirmPassword: Boolean = false,
     onConfirm: (String) -> Unit,
     onSkip: () -> Unit,
     onDismiss: () -> Unit,
@@ -422,12 +433,14 @@ private fun BackupPasswordDialog(
     OwnTVPopup(onDismissRequest = onDismiss) {
     val colors = OwnTVTheme.colors
     var password by remember { mutableStateOf("") }
+    var repeatedPassword by remember { mutableStateOf("") }
     val firstFocus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { firstFocus.requestFocus() } }
     BackHandler { onDismiss() }
 
     Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
-        Column(Modifier.dialogPanel(width = 560.dp, padding = 28.dp)) {
+        Column(Modifier.heightIn(max = (LocalConfiguration.current.screenHeightDp * 0.88f).dp)
+            .dialogPanel(width = 560.dp, padding = 28.dp).verticalScroll(rememberScrollState())) {
             Text(title, style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
             Spacer(Modifier.height(12.dp))
             Text(message, style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
@@ -439,12 +452,26 @@ private fun BackupPasswordDialog(
                 isPassword = true,
                 focusRequester = firstFocus,
             )
+            if (confirmPassword) {
+                Spacer(Modifier.height(12.dp))
+                OwnTVTextField(
+                    value = repeatedPassword,
+                    onValueChange = { repeatedPassword = it },
+                    label = stringResource(R.string.backup_phase1_repeat_password),
+                    isPassword = true,
+                )
+                if (repeatedPassword.isNotEmpty() && password != repeatedPassword) {
+                    Text(stringResource(R.string.backup_phase1_passwords_differ),
+                        color = Color(0xFFEF4444), style = MaterialTheme.typography.bodyMedium)
+                }
+            }
             Spacer(Modifier.height(20.dp))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OwnTVButton(stringResource(CoreR.string.common_cancel), onClick = onDismiss, style = OwnTVButtonStyle.SECONDARY)
                 Spacer(Modifier.weight(1f))
                 if (skipLabel != null) OwnTVButton(skipLabel, onClick = onSkip, style = OwnTVButtonStyle.SECONDARY)
-                OwnTVButton(confirmLabel, onClick = { onConfirm(password) }, enabled = password.isNotBlank())
+                OwnTVButton(confirmLabel, onClick = { onConfirm(password) },
+                    enabled = password.isNotBlank() && (!confirmPassword || password == repeatedPassword))
             }
         }
     }

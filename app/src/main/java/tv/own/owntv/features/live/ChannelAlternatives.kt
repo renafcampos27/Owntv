@@ -2,8 +2,7 @@ package tv.own.owntv.features.live
 
 import java.util.Locale
 import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeoutOrNull
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.player.LiveStartupGrace
@@ -60,10 +59,12 @@ internal suspend fun <T> tryChannelAlternatives(
     shouldSkipAlternative: ((T) -> Boolean)? = null,
     startupProgress: (() -> LiveStartupProgress?)? = null,
     isWaitingForHandover: (() -> Boolean)? = null,
+    playbackRequested: (() -> Boolean)? = null,
+    awaitPlaybackRequest: (suspend () -> Unit)? = null,
 ): Boolean {
     suspend fun tryOne(item: T): Boolean {
-        val result = if (isBackingOff != null || backoffRemainingMs != null || startupProgress != null || isWaitingForHandover != null) {
-            runWithBackoffAwareTimeout(timeoutMs, isBackingOff, backoffRemainingMs, startupProgress = startupProgress, isWaitingForHandover = isWaitingForHandover) { attempt(item) }
+        val result = if (isBackingOff != null || backoffRemainingMs != null || startupProgress != null || isWaitingForHandover != null || playbackRequested != null) {
+            runWithBackoffAwareTimeout(timeoutMs, isBackingOff, backoffRemainingMs, startupProgress = startupProgress, isWaitingForHandover = isWaitingForHandover, playbackRequested = playbackRequested, awaitPlaybackRequest = awaitPlaybackRequest) { attempt(item) }
         } else {
             withTimeoutOrNull(timeoutMs) { attempt(item) } == true
         }
@@ -95,6 +96,8 @@ internal suspend fun runWithBackoffAwareTimeout(
     maxWaitCeilingMs: Long = 60_000L,
     startupProgress: (() -> LiveStartupProgress?)? = null,
     isWaitingForHandover: (() -> Boolean)? = null,
+    playbackRequested: (() -> Boolean)? = null,
+    awaitPlaybackRequest: (suspend () -> Unit)? = null,
     block: suspend () -> Boolean,
 ): Boolean = kotlinx.coroutines.coroutineScope {
     val attemptJob = async { block() }
@@ -102,6 +105,8 @@ internal suspend fun runWithBackoffAwareTimeout(
     var elapsedActiveMs = 0L
     var totalElapsedMs = 0L
     var scheduledWaitMs = 0L
+    var pausedMs = 0L
+    var previousPaused: Boolean? = null
     val startupGrace = LiveStartupGrace()
     var grantedGraceMs = 0L
     var previousTickNs = System.nanoTime()
@@ -112,12 +117,18 @@ internal suspend fun runWithBackoffAwareTimeout(
         grantedGraceMs += startupGrace.observe(startupProgress?.invoke())
         val backingOff = isBackingOff?.invoke() == true || (backoffRemainingMs?.invoke() ?: 0L) > 0L
         val scheduledWait = isWaitingForHandover?.invoke() == true
-        if (scheduledWait) {
+        val paused = playbackRequested?.invoke() == false
+        // Attribute the elapsed interval to its starting state. A delayed timer resuming after
+        // Play must not charge all the preceding pause as active startup time.
+        val elapsedWhilePaused = previousPaused ?: paused
+        previousPaused = paused
+        if (elapsedWhilePaused) pausedMs += elapsedMs
+        if (scheduledWait && !elapsedWhilePaused) {
             // Credit at most the configurable maximum; a stuck flag cannot wait forever.
             scheduledWaitMs = (scheduledWaitMs + elapsedMs).coerceAtMost(
                 tv.own.owntv.core.settings.ChannelReopenInterval.MAX_SECONDS * 1000L)
         }
-        if (!backingOff && !scheduledWait) {
+        if (!backingOff && !scheduledWait && !elapsedWhilePaused) {
             elapsedActiveMs += elapsedMs
             if (elapsedActiveMs >= timeoutMs + grantedGraceMs) {
                 attemptJob.cancel()
@@ -125,15 +136,33 @@ internal suspend fun runWithBackoffAwareTimeout(
             }
         }
         totalElapsedMs += elapsedMs
-        if (totalElapsedMs - scheduledWaitMs >= maxWaitCeilingMs) {
+        if (totalElapsedMs - scheduledWaitMs - pausedMs >= maxWaitCeilingMs) {
             attemptJob.cancel()
             return@coroutineScope false
         }
-        kotlinx.coroutines.delay(pollStepMs)
+        if (paused && awaitPlaybackRequest != null) {
+            // Deliberate pause is event-driven: no timer polling while parked. A terminal outcome
+            // or cancellation still wins, even if the user never presses Play again.
+            val waitingAtNs = System.nanoTime()
+            val resume = async(start = kotlinx.coroutines.CoroutineStart.UNDISPATCHED) { awaitPlaybackRequest() }
+            try {
+                kotlinx.coroutines.selects.select<Unit> {
+                    resume.onAwait { }
+                    attemptJob.onJoin { }
+                }
+            } finally { resume.cancel() }
+            val endNs = System.nanoTime()
+            val waitedMs = ((endNs - waitingAtNs) / 1_000_000L).coerceAtLeast(0L)
+            totalElapsedMs += waitedMs
+            pausedMs += waitedMs
+            previousTickNs = endNs
+        } else withTimeoutOrNull(pollStepMs) { attemptJob.join() }
     }
     try {
         attemptJob.await()
-    } catch (_: kotlinx.coroutines.CancellationException) {
-        false
+    } catch (cancelled: kotlinx.coroutines.CancellationException) {
+        // A cancelled attempt/owner is not a failed channel. Never start a fallback from it.
+        kotlinx.coroutines.currentCoroutineContext().ensureActive()
+        throw cancelled
     }
 }

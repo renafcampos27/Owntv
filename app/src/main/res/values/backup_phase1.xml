@@ -1,0 +1,12 @@
+<resources>
+    <string name="backup_phase1_authorization_unavailable">Could not check profile protection. Try again.</string>
+    <string name="backup_phase1_repeat_password">Repeat backup password</string>
+    <string name="backup_phase1_passwords_differ">The passwords do not match.</string>
+    <string name="backup_phase1_protection_title">Profile protection</string>
+    <string name="backup_phase1_protection_message">Existing profile PINs and child restrictions are kept. You can explicitly authorize the changes below using each profile’s current PIN. New profiles keep the protection saved in the backup.</string>
+    <string name="backup_phase1_protection_none">There are no protection changes to authorize.</string>
+    <string name="backup_phase1_protection_allow">Authorize protection changes: %1$s</string>
+    <string name="backup_phase1_protection_revoke">Keep current protection: %1$s</string>
+    <string name="backup_phase1_protection_pin">Current profile PIN: %1$s</string>
+    <string name="backup_phase1_protection_details">Child restrictions: %1$s → %2$s · PIN change: %3$s</string>
+</resources>

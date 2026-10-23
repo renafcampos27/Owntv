@@ -104,6 +104,7 @@ fun AudioNowPlayingBar(
     val colors = OwnTVTheme.colors
     val layoutDirection = LocalLayoutDirection.current
     val isPlaying by player.isPlaying.collectAsStateWithLifecycle()
+    val playbackRequested by player.playbackRequested.collectAsStateWithLifecycle()
     val meta by player.currentMeta.collectAsStateWithLifecycle()
     val volume by player.volume.collectAsStateWithLifecycle()
     val position by player.position.collectAsStateWithLifecycle()
@@ -279,7 +280,7 @@ fun AudioNowPlayingBar(
                             if (isLive) onPrev() else player.seekBy(-seekStep)
                         }
                         // Play/pause leads the row visually: one step bigger than the rest (mock proportions).
-                        AudioBtn(1, if (isPlaying) OwnTVIcon.PAUSE else OwnTVIcon.PLAY, active, true, requesters, { focusedSlot = it }, sizeDp = 36, iconDp = 17, glow = true) { player.togglePlayPause() }
+                        AudioBtn(1, if (playbackRequested) OwnTVIcon.PAUSE else OwnTVIcon.PLAY, active, true, requesters, { focusedSlot = it }, sizeDp = 36, iconDp = 17, glow = true) { player.togglePlayPause() }
                         AudioBtn(2, if (isLive) OwnTVIcon.SKIP_NEXT else OwnTVIcon.SEEK_FORWARD, active && enabled[2], enabled[2], requesters, { focusedSlot = it }) {
                             if (isLive) onNext() else player.seekBy(seekStep)
                         }

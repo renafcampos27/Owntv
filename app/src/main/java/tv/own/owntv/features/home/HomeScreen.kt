@@ -32,6 +32,9 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import tv.own.owntv.ui.components.FocusRequestGuard
+import tv.own.owntv.ui.components.cancelPendingFocusOnInput
+import tv.own.owntv.ui.components.requestBoundedFocus
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -173,6 +176,7 @@ fun HomeScreen(
     // (see the dwell effect below). Moving focus — to another card or out of the row — collapses it again.
     var expandedHeroIndex by remember { mutableStateOf(-1) }
     var focusedHeroIndex by remember { mutableStateOf(-1) }
+    val homeFocusGuard = remember { FocusRequestGuard() }
     val orderedRows = state.config.visibleOrder
     val heroVisible = remember(orderedRows) { HomeRow.HERO in orderedRows }
     val hasNonHeroContent = remember(orderedRows, state) {
@@ -243,11 +247,13 @@ fun HomeScreen(
     }
 
     LaunchedEffect(orderedRows, state.trendingItems, state.heroItems, state.recentLive, state.favoriteLive, state.recentGuide, state.favoriteGuide, state.continueMovies, state.continueSeries, restoreFocus, restoreTrendingSearchFocus) {
+        if (!restoreFocus && !restoreTrendingSearchFocus) return@LaunchedEffect
         if (orderedRows.isEmpty()) {
-            if (restoreFocus) onRestored()
+            onRestored()
             return@LaunchedEffect
         }
 
+        val restoreRevision = homeFocusGuard.revision
         val targetRow = when {
             restoreTrendingSearchFocus && state.trendingItems.isNotEmpty() -> HomeRow.TRENDING
             restoreFocus && heroVisible && state.heroItems.isNotEmpty() -> HomeRow.HERO
@@ -269,7 +275,7 @@ fun HomeScreen(
                 firstDataRow != null -> rowFocusRequester(firstDataRow)
                 else -> null
             }
-            if (focusTarget != null) runCatching { focusTarget.requestFocus() }
+            if (focusTarget != null) focusTarget.requestBoundedFocus(homeFocusGuard, restoreRevision)
             onRestored()
         }
     }
@@ -320,7 +326,7 @@ fun HomeScreen(
 
     CompositionLocalProvider(LocalBringIntoViewSpec provides homeBringIntoViewSpec) {
       LazyColumn(
-        modifier = modifier
+        modifier = modifier.cancelPendingFocusOnInput(homeFocusGuard)
             .fillMaxSize()
             .roundedPanel(fillColor = ContentPanelFill)
             .onFocusChanged { if (it.hasFocus) onChildFocused() }
@@ -330,6 +336,9 @@ fun HomeScreen(
         verticalArrangement = Arrangement.spacedBy(Dimens.GapLarge),
       ) {
         itemsIndexed(renderRows, key = { _, row -> row.name }) { index, row ->
+            val liveRowVisible by remember(row, listState) {
+                androidx.compose.runtime.derivedStateOf { listState.layoutInfo.visibleItemsInfo.any { it.key == row.name } }
+            }
             val firstItemFocusRequester = rowFocusRequester(row)
             val nextRowIndex = ((index + 1) until renderRows.size).firstOrNull {
                 rowFocusRequester(renderRows[it]) != null
@@ -461,6 +470,8 @@ fun HomeScreen(
                         mode = state.config.recentLiveMode,
                         channels = state.recentLive,
                         guide = state.recentGuide,
+                        onGuideRefresh = { vm.refresh() },
+                        active = liveRowVisible,
                         onChannelClick = playChannelAfterPreviewStop,
                         onFocus = onNonHeroFocused,
                         firstItemFocusRequester = firstItemFocusRequester,
@@ -475,6 +486,8 @@ fun HomeScreen(
                         mode = state.config.favoriteLiveMode,
                         channels = state.favoriteLive,
                         guide = state.favoriteGuide,
+                        onGuideRefresh = { vm.refresh() },
+                        active = liveRowVisible,
                         onChannelClick = playChannelAfterPreviewStop,
                         onFocus = onNonHeroFocused,
                         firstItemFocusRequester = firstItemFocusRequester,
@@ -1128,7 +1141,6 @@ private fun HeroRowSection(
         if (activeHeroIndex !in items.indices) return@LaunchedEffect
 
         alignToActiveHeroKey = activeHeroKey
-        heroRowState.scrollToItem(activeHeroIndex)
 
         if (activeHeroIndex == 0 && localFocusedIndex >= 0 && localFocusedIndex != activeHeroIndex) {
             localFocusedIndex = activeHeroIndex
@@ -1187,7 +1199,7 @@ private fun HeroRowSection(
                                 requestedFocusDirection == FocusDirection.Up
                             ) {
                                 scope.launch {
-                                    heroRowState.scrollToItem(0)
+                                    heroRowState.scrollToItem(activeHeroIndex.coerceIn(0, (items.size - 1).coerceAtLeast(0)))
                                     runCatching { heroFocusRequester.requestFocus() }
                                 }
                                 cancelFocusChange()
@@ -1244,7 +1256,7 @@ private fun HeroRowSection(
                                 .align(Alignment.BottomStart)
                                 .width(width)
                                 .height(cardHeight)
-                                .then(if (index == 0) Modifier.focusRequester(heroFocusRequester) else Modifier)
+                                .then(if (index == activeHeroIndex) Modifier.focusRequester(heroFocusRequester) else Modifier)
                                 .onFocusChanged { fs ->
                                     val redirectToActiveHero = fs.hasFocus &&
                                         activeHeroIndex == 0 &&

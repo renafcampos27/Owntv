@@ -61,7 +61,7 @@ fun MiniPlayer(
     onBack: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {
-    val isPlaying by player.isPlaying.collectAsStateWithLifecycle()
+    val playbackRequested by player.playbackRequested.collectAsStateWithLifecycle()
     val meta by player.currentMeta.collectAsStateWithLifecycle()
     val volume by player.volume.collectAsStateWithLifecycle()
     val position by player.position.collectAsStateWithLifecycle()
@@ -132,7 +132,7 @@ fun MiniPlayer(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             MiniBtn(
-                if (isPlaying) OwnTVIcon.PAUSE else OwnTVIcon.PLAY,
+                if (playbackRequested) OwnTVIcon.PAUSE else OwnTVIcon.PLAY,
                 lead = true,
                 modifier = entryFocusRequester?.let { Modifier.focusRequester(it) } ?: Modifier,
             ) { player.togglePlayPause() }

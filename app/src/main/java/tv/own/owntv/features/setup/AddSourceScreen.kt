@@ -1,4 +1,5 @@
 package tv.own.owntv.features.setup
+import tv.own.owntv.core.repository.catalogConfigurationKey
 
 import tv.own.owntv.core.R as CoreR
 
@@ -142,7 +143,7 @@ fun AddSourceScreen(
     ) -> Unit)? = null,
 ) {
     val colors = OwnTVTheme.colors
-    val editing = initial != null
+    val editing = initial != null && initial.id > 0
     val settings: SettingsRepository = koinInject()
     val profile by settings.activeProfileId.collectAsStateWithLifecycle(initialValue = null)
     // Only this random identifier is saved; URLs, credentials and draft fields stay in memory.
@@ -204,6 +205,7 @@ fun AddSourceScreen(
     val xtreamClient: XtreamClient = koinInject()
     val channelDao: ChannelDao = koinInject()
     val sourceDao: SourceDao = koinInject()
+    val existingSources by sourceDao.observeAll().collectAsStateWithLifecycle(initialValue = emptyList())
     var hlsTest by remember { mutableStateOf<HlsTestUi>(HlsTestUi.Idle) }
     // A tested verdict outranks whatever the last sync recorded, so the note under the toggle updates
     // right away — including while ADDING, where there is no row to write to yet.
@@ -261,14 +263,19 @@ fun AddSourceScreen(
      * against yet, and the first sync measures it anyway — so doing it here would spend two minutes
      * and two connections producing a number that is thrown away.
      */
+    var sourceTestToken by remember { mutableStateOf<Any?>(null) }
     fun runSourceTest() {
+        val token = Any()
+        sourceTestToken = token
         val probe = formSource()
+        val revision = probe.catalogConfigurationKey()
         val label = name.ifBlank { probe.url }
-        sourceTest = SourceTestUi.Running(label)
+        sourceTest = SourceTestUi.Running(label, probe.id, revision)
         scope.launch {
             val result = sourceTester.test(probe)
             // Dismissed while the request was in flight — don't reopen the dialog behind the user.
-            if (sourceTest != null) sourceTest = SourceTestUi.Done(label, result)
+            if (sourceTestToken === token && sourceTest != null && formSource().catalogConfigurationKey() == revision)
+                sourceTest = SourceTestUi.Done(label, result, sourceId = probe.id, revision = revision)
         }
     }
 
@@ -279,19 +286,22 @@ fun AddSourceScreen(
      * stopped first and the user has already agreed to the warning that says so.
      */
     fun runConnectionMeasurement() {
-        val source = initial ?: return
+        val source = initial?.takeIf { editing } ?: return
+        val revision = source.catalogConfigurationKey()
+        val token = Any()
+        sourceTestToken = token
         val label = name.ifBlank { source.url }
         measureJob?.cancel()
         measureJob = scope.launch {
             runCatching { player.stop() }
             runCatching { livePreview.stop() }
             runCatching { enginePool.releaseAll() }
-            sourceTest = SourceTestUi.Measuring(label, tv.own.owntv.core.live.ProbeProgress(1, 1, tv.own.owntv.core.live.MAX_PROBE_STREAMS))
+            sourceTest = SourceTestUi.Measuring(label, tv.own.owntv.core.live.ProbeProgress(1, 1, tv.own.owntv.core.live.MAX_PROBE_STREAMS), source.id, revision)
             val limit = connectionLimits.measureAndStore(source, force = true) { progress ->
-                if (sourceTest is SourceTestUi.Measuring) sourceTest = SourceTestUi.Measuring(label, progress)
+                if (sourceTestToken === token && sourceTest is SourceTestUi.Measuring) sourceTest = SourceTestUi.Measuring(label, progress, source.id, revision)
             }
             val result = sourceTester.test(source)
-            if (sourceTest != null) sourceTest = SourceTestUi.Done(label, result, limit)
+            if (sourceTestToken === token && sourceTest != null && sourceDao.getById(source.id)?.catalogConfigurationKey() == revision) sourceTest = SourceTestUi.Done(label, result, limit, source.id, revision)
         }
     }
 
@@ -322,6 +332,9 @@ fun AddSourceScreen(
                 hlsTest = HlsTestUi.Failed(e.message ?: e.javaClass.simpleName)
                 return@launch
             }
+            val currentForm = formSource()
+            if (currentForm.url.trim() != probeSource.url || currentForm.username?.trim() != probeSource.username ||
+                currentForm.password != probeSource.password || currentForm.userAgent != probeSource.userAgent) return@launch
             hlsTest = HlsTestUi.Complete(result)
             // Only a decisive probe is worth storing. "Busy" and "couldn't verify" fall back to the
             // panel's claim for the wording, but must not overwrite an earlier proven answer.
@@ -331,7 +344,9 @@ fun AddSourceScreen(
                 else -> null
             }
             testedSupport = proven ?: result.declared?.let(HlsSupport::of) ?: HlsSupport.UNKNOWN
-            if (proven != null && sameAccount && probeSource.id > 0) {
+            if (proven != null && sameAccount && probeSource.id > 0 &&
+                sourceDao.getById(probeSource.id)?.let { it.url.trim() == probeSource.url &&
+                    it.username?.trim() == probeSource.username && it.password == probeSource.password } == true) {
                 sourceDao.updateHlsSupport(probeSource.id, proven)
             }
         }
@@ -381,15 +396,20 @@ fun AddSourceScreen(
     val showContentToggles = kind == SourceKind.XTREAM || kind == SourceKind.STALKER
     val hasAnySectionOn = syncLive != SyncScopeChoice.Off
     val macValid = tv.own.owntv.core.stalker.StalkerClient.canonicalizeMac(mac) != null
+    val enteredLocation = when (kind) { SourceKind.XTREAM -> server; SourceKind.M3U -> m3uUrl; SourceKind.STALKER -> portalUrl }
+    val duplicate = existingSources.any { it.id != initial?.id && it.type.name == kind.name &&
+        it.url.trim() == enteredLocation.trim() &&
+        (kind != SourceKind.XTREAM || it.username.orEmpty() == username.trim()) &&
+        (kind != SourceKind.STALKER || it.mac.orEmpty().equals(mac.trim(), ignoreCase = true)) }
     val canStart = when (kind) {
-        SourceKind.XTREAM -> server.isNotBlank() && username.isNotBlank() && password.isNotBlank() && hasAnySectionOn
-        SourceKind.M3U -> m3uUrl.isNotBlank()
+        SourceKind.XTREAM -> tv.own.owntv.core.network.NetworkConfigInput.sourceLocation(server, allowLocal = false) && username.isNotBlank() && password.isNotBlank() && hasAnySectionOn
+        SourceKind.M3U -> tv.own.owntv.core.network.NetworkConfigInput.sourceLocation(m3uUrl)
         SourceKind.STALKER -> tv.own.owntv.core.stalker.StalkerClient.isValidPortalUrl(portalUrl) && macValid && hasAnySectionOn
     }
 
     val canTest = when (kind) {
-        SourceKind.XTREAM -> server.isNotBlank() && username.isNotBlank() && password.isNotBlank()
-        SourceKind.M3U -> m3uUrl.isNotBlank() && !m3uUrl.startsWith("/")
+        SourceKind.XTREAM -> tv.own.owntv.core.network.NetworkConfigInput.sourceLocation(server, allowLocal = false) && username.isNotBlank() && password.isNotBlank()
+        SourceKind.M3U -> tv.own.owntv.core.network.NetworkConfigInput.sourceLocation(m3uUrl) && !m3uUrl.startsWith("/")
         SourceKind.STALKER -> tv.own.owntv.core.stalker.StalkerClient.isValidPortalUrl(portalUrl) && macValid
     }
 
@@ -589,6 +609,10 @@ fun AddSourceScreen(
                 ) { hidden -> scope.launch { settings.setHideNewCategoriesDefault(hideNewCatsProfile, hidden) } }
             }
 
+            if (enteredLocation.isNotBlank() && !tv.own.owntv.core.network.NetworkConfigInput.sourceLocation(enteredLocation, kind == SourceKind.M3U)) {
+                Text(stringResource(tv.own.owntv.R.string.source_location_invalid), style = MaterialTheme.typography.bodyMedium, color = androidx.compose.ui.graphics.Color(0xFFEF4444))
+            }
+            if (duplicate) Text(stringResource(tv.own.owntv.R.string.source_duplicate_warning), style = MaterialTheme.typography.bodyMedium, color = colors.primary)
             Spacer(Modifier.height(28.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 OwnTVButton(stringResource(CoreR.string.common_back), onClick = onBack, style = OwnTVButtonStyle.SECONDARY)
@@ -678,7 +702,7 @@ fun AddSourceScreen(
               state = state,
               onDismiss = { sourceTest = null },
               // Editing only: an unsaved playlist has nowhere to keep the answer.
-              onRetest = if (initial != null) { { confirmMeasure = true } } else null,
+              onRetest = if (editing) { { confirmMeasure = true } } else null,
               onSkip = { measureJob?.cancel(); measureJob = null; sourceTest = null },
           )
       }

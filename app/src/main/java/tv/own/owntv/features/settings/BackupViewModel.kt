@@ -87,6 +87,15 @@ class BackupViewModel(
             val encrypted: Boolean,
             val password: String? = null,
         ) : State
+        data class ReviewProtection(
+            val file: File,
+            val sections: Set<BackupManager.Section>,
+            val password: String?,
+            val targets: List<BackupManager.ProfileProtectionTarget>,
+            val authorizedPins: Map<Long, String> = emptyMap(),
+            val pinError: Long? = null,
+            val authorizationUnavailable: Boolean = false,
+        ) : State
         data class Done(
             val kind: DoneKind,
             val path: String? = null,
@@ -148,7 +157,7 @@ class BackupViewModel(
         remoteExport.close()
         if (backupPassword.isNullOrBlank()) { _state.value = State.Error(BackupError.EXPORT); return }
         localOperation.start(onFailure = { State.Error(BackupError.EXPORT) }) {
-            backup.export(folder, sections, backupPassword, profileIds).fold(
+            backup.export(folder, sections, backupPassword, profileIds, fileName = manualBackupFilename()).fold(
                 onSuccess = { State.Done(DoneKind.EXPORTED, path = it, passwordsOmitted = false) },
                 onFailure = { State.Error(BackupError.EXPORT) })
         }
@@ -184,18 +193,22 @@ class BackupViewModel(
     }
 
     /** Step 2: serialised import remains owned until its writes complete. */
-    fun import(file: File, sections: Set<BackupManager.Section>, backupPassword: String?) {
+    fun import(file: File, sections: Set<BackupManager.Section>, backupPassword: String?, profileProtectionPins: Map<Long, String> = emptyMap()) {
         if (localOperation.active) return
         remoteExport.close()
         localOperation.start(onFailure = { State.Error(BackupError.IMPORT) }) {
-            backup.import(file, sections, backupPassword).fold(
-                onSuccess = { summary -> State.Done(DoneKind.RESTORED, items = summary.items,
-                    passwordsOmitted = backupPassword.isNullOrBlank(), skippedSources = summary.skippedSources,
-                    invalidLocale = summary.invalidLocale, skippedSettings = summary.skippedSettings) },
-                onFailure = { if (it is BackupManager.WrongPasswordException)
-                    State.NeedPassword(file, sections, retry = true) else State.Error(BackupError.IMPORT) })
+            applyImport(file, sections, backupPassword, profileProtectionPins.toMap())
         }
     }
+
+    private suspend fun applyImport(file: File, sections: Set<BackupManager.Section>, password: String?, pins: Map<Long, String> = emptyMap()): State =
+        backup.import(file, sections, password, profileProtectionPins = pins).fold(
+            onSuccess = { summary -> State.Done(DoneKind.RESTORED, items = summary.items,
+                passwordsOmitted = password.isNullOrBlank(), skippedSources = summary.skippedSources,
+                invalidLocale = summary.invalidLocale, skippedSettings = summary.skippedSettings) },
+            onFailure = { if (it is BackupManager.WrongPasswordException)
+                State.NeedPassword(file, sections, retry = true) else State.Error(BackupError.IMPORT) },
+        )
 
     /** Restore proceeds: import straight away when we already hold the password (sealed container,
      *  unlocked in [unlock]) or nothing is encrypted; otherwise prompt for the optional passphrase. */
@@ -208,10 +221,55 @@ class BackupViewModel(
         if (localOperation.active) return
         remoteExport.close()
         when {
-            password != null -> import(file, sections, password)
+            password != null -> prepareImport(file, sections, password)
             encrypted -> _state.value = State.NeedPassword(file, sections)
-            else -> import(file, sections, null)
+            else -> prepareImport(file, sections, null)
         }
+    }
+
+    /** Review protection changes without treating a backup password as local profile authorization. */
+    fun prepareImport(file: File, sections: Set<BackupManager.Section>, password: String?) {
+        if (localOperation.active) return
+        if (BackupManager.Section.SOURCES !in sections) { import(file, sections, password); return }
+        remoteExport.close()
+        localOperation.start(onFailure = { State.Error(BackupError.READ) }) {
+            backup.profileProtectionTargets(file, password).fold(
+                onSuccess = { if (it.isEmpty()) applyImport(file, sections, password)
+                    else State.ReviewProtection(file, sections, password, it) },
+                onFailure = { if (it is BackupManager.WrongPasswordException) State.NeedPassword(file, sections, true)
+                    else State.Error(BackupError.READ) },
+            )
+        }
+    }
+
+    fun authorizeProtection(profileId: Long, pin: String) {
+        val review = _state.value as? State.ReviewProtection ?: return
+        if (review.targets.none { it.localProfileId == profileId }) return
+        viewModelScope.launch {
+            var unavailable = false
+            val accepted = try {
+                val profile = profileDao.getById(profileId)
+                profile != null && tv.own.owntv.core.util.Pin.verify(pin, profile.pinHash)
+            } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                unavailable = true
+                false
+            }
+            if (_state.value !== review) return@launch
+            _state.value = if (accepted) review.copy(authorizedPins = review.authorizedPins + (profileId to pin), pinError = null, authorizationUnavailable = false)
+                else review.copy(pinError = profileId, authorizationUnavailable = unavailable)
+        }
+    }
+
+    fun revokeProtection(profileId: Long) {
+        val review = _state.value as? State.ReviewProtection ?: return
+        _state.value = review.copy(authorizedPins = review.authorizedPins - profileId, pinError = null)
+    }
+
+    fun confirmProtectionReview() {
+        val review = _state.value as? State.ReviewProtection ?: return
+        import(review.file, review.sections, review.password, review.authorizedPins)
     }
 
     fun reset() {

@@ -121,13 +121,15 @@ object FrameRateController {
             // The pending reset is cancelled only once a mode is actually going to be requested. Cancelling
             // up front killed the restore-to-default even when nothing matched this item's frame rate — so
             // leaving a 24p film for something the panel has no mode for kept the display at 24Hz.
-            val choice = pickMode(activity, fps, videoSize?.takeIf { matchResolution }) ?: return
-            val target = choice.mode
+            val choice = pickMode(activity, fps, videoSize?.takeIf { matchResolution })
+            if (choice == null && displayOf(activity) == null) return
+            val targetId = requestedModeId(choice?.mode?.modeId, activity.window.attributes.preferredDisplayModeId)
+                ?: return
             cancelPendingReset()
-            if (target.modeId == activity.window.attributes.preferredDisplayModeId) return
+            if (targetId == activity.window.attributes.preferredDisplayModeId) return
             val waitMs = MODE_CHANGE_COOLDOWN_MS - (android.os.SystemClock.uptimeMillis() - lastChangeAtMs)
             if (lastChangeAtMs != 0L && waitMs > 0) {
-                Log.i(TAG, "AFR: ${fps}fps -> mode ${target.modeId} deferred ${waitMs}ms (cooldown)")
+                Log.i(TAG, "AFR: ${fps}fps -> mode ${targetId} deferred ${waitMs}ms (cooldown)")
                 // Re-resolve on the way out rather than capturing `target`: by then the fps may have moved
                 // again, and the newest reading is the one worth acting on.
                 val task = Runnable { pendingApply = null; apply(activity, fps, videoSize, matchResolution) }
@@ -135,10 +137,10 @@ object FrameRateController {
                 handler.postDelayed(task, waitMs)
                 return
             }
-            activity.window.attributes = activity.window.attributes.apply { preferredDisplayModeId = target.modeId }
+            activity.window.attributes = activity.window.attributes.apply { preferredDisplayModeId = targetId }
             lastChangeAtMs = android.os.SystemClock.uptimeMillis()
-            Log.i(TAG, "AFR: video ${fps}fps -> display mode ${target.modeId} (${target.physicalWidth}x${target.physicalHeight} ${target.refreshRate}Hz, seamless=${choice.seamless})")
-            onModeSwitched?.invoke(choice.seamless)
+            Log.i(TAG, "AFR: video ${fps}fps -> mode $targetId (seamless=${choice?.seamless ?: false})")
+            onModeSwitched?.invoke(choice?.seamless ?: false)
         }.onFailure { Log.w(TAG, "AFR apply failed: ${it.message}") }
     }
 
@@ -228,7 +230,7 @@ object FrameRateController {
         video: Pair<Int, Int>?,
     ): Chosen? {
         fun isSeamless(mode: ModeSpec) = mode.width == current.width && mode.height == current.height &&
-            seamlessRates.any { abs(it - mode.hz) <= TOLERANCE_HZ }
+            (mode.id == current.id || seamlessRates.any { abs(it - mode.hz) <= 0.01f })
         fun bestAt(width: Int, height: Int): ModeSpec? = modes
             .filter { it.width == width && it.height == height }
             .filter { !seamlessOnly || isSeamless(it) }
@@ -293,6 +295,9 @@ object FrameRateController {
      * A reading that is nowhere near a standard rate is returned untouched — better to let [multipleOf]
      * find no match and leave the display alone than to invent a rate the content isn't at.
      */
+    internal fun requestedModeId(matchingId: Int?, currentRequest: Int): Int? =
+        matchingId ?: 0.takeIf { currentRequest != 0 }
+
     private fun snapFps(fps: Float): Float {
         val nearest = STANDARD_FPS.minByOrNull { abs(it - fps) } ?: return fps
         return if (abs(nearest - fps) <= SNAP_MAX_DELTA_HZ) nearest else fps

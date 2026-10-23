@@ -22,9 +22,15 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -69,6 +75,8 @@ fun HomeLiveRow(
     firstItemFocusRequester: FocusRequester?,
     onContainerDown: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
+    onGuideRefresh: () -> Unit = {},
+    active: Boolean = true,
 ) {
     when (mode) {
         HomeLiveRowMode.CARDS -> ChannelCardsRow(
@@ -87,6 +95,8 @@ fun HomeLiveRow(
             firstItemFocusRequester = firstItemFocusRequester,
             onContainerDown = onContainerDown,
             modifier = modifier,
+            onGuideRefresh = onGuideRefresh,
+            active = active,
         )
     }
 }
@@ -169,18 +179,39 @@ private fun OnNowRow(
     firstItemFocusRequester: FocusRequester?,
     onContainerDown: (() -> Unit)?,
     modifier: Modifier = Modifier,
+    onGuideRefresh: () -> Unit = {},
+    active: Boolean = true,
 ) {
     val colors = OwnTVTheme.colors
     val rows = guide.channels
+    var now by remember { mutableLongStateOf(System.currentTimeMillis()) }
+    val lifecycle = LocalLifecycleOwner.current.lifecycle
+    LaunchedEffect(lifecycle, guide.windowEnd, active, rows.isEmpty()) {
+        if (!active || rows.isEmpty()) return@LaunchedEffect
+        lifecycle.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            while (true) {
+                now = System.currentTimeMillis()
+                if (guide.windowEnd > 0L && now >= guide.windowEnd) onGuideRefresh()
+                kotlinx.coroutines.delay(30_000L)
+            }
+        }
+    }
     val sectionShape = RoundedCornerShape(10.dp)
     var activeRowIndex by remember { mutableIntStateOf(-1) }
+    var activeChannelId by remember { mutableStateOf<Long?>(null) }
     var visibleStartIndex by remember { mutableIntStateOf(0) }
 
+    LaunchedEffect(rows.map { it.id }) {
+        activeRowIndex = if (activeRowIndex < 0) -1 else rows.indexOfFirst { it.id == activeChannelId }
+            .takeIf { it >= 0 } ?: activeRowIndex.coerceAtMost(rows.lastIndex)
+        visibleStartIndex = visibleStartIndex.coerceIn(0, (rows.size - HOME_ON_NOW_VISIBLE_ROWS).coerceAtLeast(0))
+    }
     if (rows.isEmpty()) return
 
     fun selectRow(index: Int) {
         val target = index.coerceIn(0, rows.lastIndex)
         activeRowIndex = target
+        activeChannelId = rows[target].id
         visibleStartIndex = visibleStartFor(target, visibleStartIndex, rows.size)
     }
 
@@ -198,12 +229,13 @@ private fun OnNowRow(
         }
         return when (event.key) {
             Key.DirectionUp -> {
-                selectRow((activeRowIndex - 1).coerceAtLeast(0))
-                true
+                if (activeRowIndex == 0) { activeRowIndex = -1; false }
+                else { selectRow(activeRowIndex - 1); true }
             }
             Key.DirectionDown -> {
-                selectRow((activeRowIndex + 1).coerceAtMost(rows.lastIndex))
-                true
+                if (activeRowIndex == rows.lastIndex && onContainerDown != null) {
+                    activeRowIndex = -1; onContainerDown(); true
+                } else { selectRow((activeRowIndex + 1).coerceAtMost(rows.lastIndex)); true }
             }
             Key.DirectionLeft, Key.DirectionRight, Key.Back -> {
                 activeRowIndex = -1
@@ -298,7 +330,7 @@ private fun OnNowRow(
                         OnNowChannelItem(
                             channel = channel,
                             programmes = guide.programmes[channel.id].orEmpty(),
-                            now = guide.now,
+                            now = now,
                             focused = focused && activeRowIndex == index,
                         )
                     }

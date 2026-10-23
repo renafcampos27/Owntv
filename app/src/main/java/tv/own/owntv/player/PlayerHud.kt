@@ -217,9 +217,11 @@ fun PlayerHud(
     val timeshiftOffset: () -> Int? = { timeshiftOffsetSec?.invoke() }
     val layoutDirection = LocalLayoutDirection.current
     val isPlaying by player.isPlaying.collectAsStateWithLifecycle()
+    val playbackRequested by player.playbackRequested.collectAsStateWithLifecycle()
     val position = player.position.collectAsStateWithLifecycle()
     val duration by player.duration.collectAsStateWithLifecycle()
     val buffering by player.buffering.collectAsStateWithLifecycle()
+    val opening = openingChannel?.collectAsStateWithLifecycle()?.value
     val reopenWait by (recentChannelWaitSeconds ?: remember { kotlinx.coroutines.flow.MutableStateFlow(0) }).collectAsStateWithLifecycle()
     val error by player.error.collectAsStateWithLifecycle()
     val errorInfo by player.errorInfo.collectAsStateWithLifecycle()
@@ -590,7 +592,9 @@ fun PlayerHud(
         // zapping and digit entry stay visible with the HUD hidden. With the controls up the unified top
         // strip already names the channel, so only a direct tune — whose card names the channel the stream
         // is still switching to — draws here.
-        val tuned = (tuneOsd as? TuneOsd.Tuned)?.info
+        val tuned = (tuneOsd as? TuneOsd.Tuned)?.info?.takeIf {
+            openingChannel == null || (opening != null && it.channelId == opening.id && it.sourceId == opening.sourceId)
+        }
         Column(
             modifier = Modifier.align(Alignment.TopStart)
                 .padding(start = 28.dp, top = if (controlsVisible) 92.dp else 28.dp),
@@ -601,7 +605,11 @@ fun PlayerHud(
                 // mpv paths publish their metadata after an async resolve, which would show the old channel.
                 if (tuned != null) {
                     ChannelOsdCard(title = tuned.name, subtitle = tuned.number?.let { stringResource(CoreR.string.player_channel_number, it) }, logoUrl = tuned.logoUrl)
-                } else {
+                } else if (opening != null) {
+                    ChannelOsdCard(title = opening.name,
+                        subtitle = opening.number?.let { stringResource(CoreR.string.player_channel_number, it) },
+                        logoUrl = opening.logoUrl)
+                } else if (openingChannel == null) {
                     ChannelCard(player)
                 }
             }
@@ -660,7 +668,7 @@ fun PlayerHud(
             // overlay owns the screen with its own Retry, so the play/rewind/forward must not show behind it.
             if (error == null) {
                 Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                    CenterControls(player, nav, isPlaying, isLive, onRewindLive, onForwardLive, timeshiftOffset, playFocus)
+                    CenterControls(player, nav, playbackRequested, isLive, onRewindLive, onForwardLive, timeshiftOffset, playFocus)
 
                 }
 
@@ -797,10 +805,11 @@ fun PlayerHud(
                 } else {
                     Spacer(Modifier.height(14.dp))
                     val session = PlaybackSessionDiagnostics.state.collectAsStateWithLifecycle().value
-                    val title = openingChannel?.collectAsStateWithLifecycle()?.value?.name
+                    val title = opening?.name
                         ?: player.currentMeta.collectAsStateWithLifecycle().value.title
                     Text(if (title.isNullOrBlank()) stringResource(tv.own.owntv.R.string.player_loading_stream)
-                        else stringResource(if (session.switchReason == PlaybackSessionDiagnostics.SwitchReason.ALTERNATIVE_VERSION)
+                        else stringResource(if (opening != null && session.channelId == opening.id && session.sourceId == opening.sourceId &&
+                            session.switchReason == PlaybackSessionDiagnostics.SwitchReason.ALTERNATIVE_VERSION)
                             tv.own.owntv.R.string.ui_alternative_channel else tv.own.owntv.R.string.ui_connecting_channel, title), color = Color.White)
                 }
             }

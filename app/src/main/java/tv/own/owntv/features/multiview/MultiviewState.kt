@@ -88,6 +88,16 @@ class MultiviewState(
     var audible by mutableIntStateOf(-1)
         private set
 
+    val audibleEngine: tv.own.owntv.player.PlaybackEngine?
+        get() = if (released || audible !in tiles.indices || tiles[audible].retiring || tiles[audible].retirementFailed) null
+            else pool.peek(audible)
+
+    var focusRequest by mutableIntStateOf(0)
+        private set
+    fun requestFocus(tile: Int) {
+        if (!released && tile in tiles.indices) { focused = tile; focusRequest++ }
+    }
+
     private val claims = HashMap<Int, OpenStreamRegistry.Claim>()
     private var released = false
     private val cleanupScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
@@ -160,6 +170,7 @@ class MultiviewState(
     fun fill(tile: Int, channel: ChannelEntity) {
         if (released || primaryRetiring) return
         if (tile !in tiles.indices) return
+        requestFocus(tile)
         val retired = retireTile(tile)
         val revision = revisions.getValue(tile)
         tiles[tile] = MultiviewTile(channel = channel, retiring = true)
@@ -221,7 +232,7 @@ class MultiviewState(
             retireTile(tiles.lastIndex)
             tiles.removeAt(tiles.lastIndex)
         }
-        if (focused > tiles.lastIndex) focused = tiles.lastIndex
+        if (focused > tiles.lastIndex) requestFocus(tiles.lastIndex)
         if (audible == tile) {
             val next = tiles.indices.firstOrNull {
                 val survivor = tiles[it]

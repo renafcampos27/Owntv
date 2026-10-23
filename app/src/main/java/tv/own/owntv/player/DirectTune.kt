@@ -3,7 +3,7 @@ import androidx.compose.ui.input.key.Key
 /** Outcome of a direct-tune channel-number lookup, communicated from [tv.own.owntv.features.live.LiveViewModel]
  *  back to [PlayerHud] without requiring the HUD to query the database or infer success from player state. */
 sealed interface DirectTuneResult {
-    /** Exactly one candidate resolved; the channel is now playing. */
+    /** Exactly one candidate resolved; selection/start was requested, playback may still be pending. */
     data class Found(val channel: DirectTuneChannelInfo) : DirectTuneResult
     /** No visible channel carries this provider number in the searched sources. */
     data class NotFound(val number: Int) : DirectTuneResult
@@ -24,6 +24,8 @@ data class DirectTuneChannelInfo(
     /** False when the tuned channel was already playing and no stream was restarted — the HUD then has no
      *  playback start to wait for before it retires the OSD. */
     val restarted: Boolean = true,
+    val channelId: Long? = null,
+    val sourceId: Long? = null,
 )
 
 /** Resolve a list of candidate channel IDs (same provider number, same source) to a single one.

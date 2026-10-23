@@ -266,7 +266,7 @@ internal fun ChannelNumberCard(digits: String, error: String? = null, modifier: 
 
 @Composable
 internal fun CenterControls(
-    player: PlaybackEngine, nav: NavState, isPlaying: Boolean, isLive: Boolean,
+    player: PlaybackEngine, nav: NavState, playbackRequested: Boolean, isLive: Boolean,
     onRewindLive: (() -> Unit)?, onForwardLive: (() -> Unit)?, timeshiftOffset: () -> Int?,
     playFocus: FocusRequester, modifier: Modifier = Modifier,
 ) {
@@ -290,7 +290,7 @@ internal fun CenterControls(
                 rewindMode -> CircleButton(OwnTVIcon.REWIND, size = 44) { onRewindLive() } // step back into the archive
                 !isLive -> CircleButton(OwnTVIcon.REWIND, size = 44) { player.seekBy(-seekStep) }
             }
-            CircleButton(if (isPlaying) OwnTVIcon.PAUSE else OwnTVIcon.PLAY, size = 64, primary = true, modifier = Modifier.focusRequester(playFocus)) { player.togglePlayPause() }
+            CircleButton(if (playbackRequested) OwnTVIcon.PAUSE else OwnTVIcon.PLAY, size = 64, primary = true, modifier = Modifier.focusRequester(playFocus)) { player.togglePlayPause() }
             when {
                 rewindMode && timeshifting -> CircleButton(OwnTVIcon.FORWARD, size = 44) { onForwardLive?.invoke() } // toward live
                 !isLive && !rewindMode -> CircleButton(OwnTVIcon.FORWARD, size = 44) { player.seekBy(seekStep) }

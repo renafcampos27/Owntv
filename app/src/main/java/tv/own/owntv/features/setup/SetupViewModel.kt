@@ -1,5 +1,6 @@
 package tv.own.owntv.features.setup
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Job
@@ -24,6 +25,7 @@ import java.io.File
  * and the job whose lifetime "Run in background" depends on.
  */
 class SetupViewModel(
+    private val savedState: SavedStateHandle,
     private val importer: SourceImporter,
     private val epgRepository: tv.own.owntv.core.repository.EpgRepository,
     private val epgSourceStore: tv.own.owntv.core.epg.EpgSourceStore,
@@ -51,6 +53,16 @@ class SetupViewModel(
     fun startRemoteRestore(port: Int) = companion.startForBackupRestore(port)
     fun stopRemoteRestore() = companion.stop()
 
+    private val recoveryJob = viewModelScope.launch {
+        savedState.get<Long>("setup_profile_id")?.let { importer.recoverAttempt(it, savedState["setup_source_id"]) }
+    }
+    init {
+        viewModelScope.launch { importer.createdSourceId.collect { id ->
+            if (id != null) savedState["setup_source_id"] = id
+        } }
+    }
+    val lastDraft: SourceEntity? get() = importer.lastDraft
+    val draftAutoRefresh get() = if (importer.lastDraft == null) PlaylistRefresh.OFF else importer.draftAutoRefresh
     val state: StateFlow<SourceImporter.ImportState> = importer.state
     val progress = importer.progress
 
@@ -84,7 +96,11 @@ class SetupViewModel(
 
     /** Creates the profile (not active yet); the rest of onboarding attaches content to it. */
     fun createProfile(name: String, avatarId: Int, isKids: Boolean, pin: String?, onCreated: (Long) -> Unit = {}) {
-        viewModelScope.launch { onCreated(importer.createProfile(name, avatarId, isKids, pin)) }
+        viewModelScope.launch {
+            val id = importer.createProfile(name, avatarId, isKids, pin)
+            savedState["setup_profile_id"] = id
+            onCreated(id)
+        }
     }
 
     fun startXtream(
@@ -131,8 +147,11 @@ class SetupViewModel(
      * from it, then raises the semi-auto EPG prompt if the playlist that just landed has a guide feed.
      */
     private fun runImport(block: suspend () -> Unit) {
-        importJob?.cancel()
+        val previous = importJob
+        previous?.cancel()
         val job = viewModelScope.launch {
+            previous?.join()
+            recoveryJob.join()
             block()
             val done = importer.state.value as? SourceImporter.ImportState.Success ?: return@launch
             val source = done.source ?: return@launch
@@ -187,7 +206,7 @@ class SetupViewModel(
     fun cancelImport() {
         importJob?.cancel()
         importJob = null
-        importer.reset()
+        importer.reset(clearDraft = true)
     }
 
     /**

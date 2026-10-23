@@ -148,6 +148,7 @@ fun OwnTVShell(
     onSelectPlaylist: (Long) -> Unit = {},
     activeProfileId: Long?,
     pendingDeepLink: LauncherDeepLink?,
+    deepLinkRevision: Long = 0L,
     onDeepLinkConsumed: () -> Unit,
     isOffline: Boolean = false,
     onExitApp: () -> Unit,
@@ -313,13 +314,6 @@ fun OwnTVShell(
         if (catchupFailure?.let { !liveVm.acceptsCatchup(it.owner) } == true) liveVm.dismissCatchupFailure()
     }
     val vodExoActive by player.exoActiveState.collectAsStateWithLifecycle()
-    // Publish the active engine to the system (audio focus + MediaSession), and detach when the player
-    // is closed — an inactive session must not keep answering the TV's transport keys or the Assistant.
-    LaunchedEffect(liveOnExo, playerMode) {
-        playbackSession.attach(
-            if (playerMode == PlayerMode.NONE) null else if (liveOnExo) liveVm.previewEngine else mpvEngine,
-        )
-    }
     // Auto frame rate: only ever applied to the FULL-SCREEN surface (never the mini-player or the
     // in-pane Live preview) — see FrameRateController.
     val autoFrameRate by settingsRepo.autoFrameRate.collectAsStateWithLifecycle(initialValue = false)
@@ -378,6 +372,27 @@ fun OwnTVShell(
     val enginePool = koinInject<tv.own.owntv.player.LiveEnginePool>()
     val streamRegistry = koinInject<tv.own.owntv.core.live.OpenStreamRegistry>()
     var multiview by remember { mutableStateOf<tv.own.owntv.features.multiview.MultiviewState?>(null) }
+    val sessionEngine = if (multiview != null) multiview?.audibleEngine
+        else if (playerMode == PlayerMode.NONE) null else if (liveOnExo) liveVm.previewEngine else mpvEngine
+    DisposableEffect(playbackSession, sessionEngine, guideLifecycle) {
+        val owner = Any()
+        fun availableEngine() = sessionEngine?.takeUnless {
+            it is tv.own.owntv.player.LivePreviewEngine && it.isDisposed
+        }
+        playbackSession.attachOwned(owner, if (guideLifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.STARTED)) availableEngine() else null)
+        val observer = androidx.lifecycle.LifecycleEventObserver { _, event ->
+            when (event) {
+                androidx.lifecycle.Lifecycle.Event.ON_STOP -> playbackSession.suspendOwned(owner)
+                androidx.lifecycle.Lifecycle.Event.ON_START -> playbackSession.resumeOwned(owner, availableEngine())
+                else -> Unit
+            }
+        }
+        guideLifecycle.addObserver(observer)
+        onDispose {
+            guideLifecycle.removeObserver(observer)
+            playbackSession.detachOwned(owner)
+        }
+    }
     var multiviewPickFor by remember { mutableStateOf<Int?>(null) }
     // Only remember that the old Activity had a grid; native engines/surfaces are never restored.
     var multiviewWasOpen by rememberSaveable { mutableStateOf(false) }
@@ -983,7 +998,7 @@ fun OwnTVShell(
         requestShellFocus((if (sidebarHidden) shellContentFocus else sidebarFocus))
     }
 
-    LaunchedEffect(pendingDeepLink, activeProfileId) {
+    LaunchedEffect(pendingDeepLink, deepLinkRevision, activeProfileId) {
         val deepLink = pendingDeepLink ?: return@LaunchedEffect
         val pid = activeProfileId ?: return@LaunchedEffect
         if (pid < 0) return@LaunchedEffect
@@ -1667,7 +1682,7 @@ fun OwnTVShell(
                     player = if (liveOnExo) liveVm.previewEngine else mpvEngine, // HUD drives the active engine
                     onBack = exitPlayer,
                     recentChannelWaitSeconds = if (isTunedLive) liveVm.recentChannelWaitSeconds else null,
-                    openingChannel = if (isTunedLive) liveVm.previewChannel else null,
+                    openingChannel = if (isTunedLive) liveVm.playingChannel else null,
                     onPip = dockPlayer, // PiP/dock works for live on either engine now
                     onAudioMode = toAudioMode,
                     // The channel-list overlay draws ABOVE the HUD; while it's open the HUD goes inert so

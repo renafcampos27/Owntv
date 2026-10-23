@@ -32,17 +32,18 @@ suspend fun runSemiAutoEpgSync(
         val epgSource = store.getAll().firstOrNull { it.url == url } ?: store.add(source.name, url, source.userAgent)
         val now = System.currentTimeMillis()
         try {
-            val written = epgRepository.refreshUrl(epgSource.id, epgSource.url, epgSource.userAgent) { _, count ->
+            val written = epgRepository.refreshUrl(epgSource.id, epgSource.url, epgSource.userAgent,
+                acceptsSource = { store.isCurrentRequest(epgSource) }) { _, count ->
                 setState(EpgSyncUi.Syncing(total + count))
             }
-            store.setSynced(epgSource.id, now, null)
+            if (!store.recordAttempt(epgSource, now, null)) throw CancellationException()
             total += written
             anySucceeded = true
         } catch (c: CancellationException) {
             throw c
         } catch (e: Exception) {
             // One dead feed must not cost the user the ones that do work — remember it and carry on.
-            store.setSynced(epgSource.id, now, e.message)
+            store.recordAttempt(epgSource, null, e.message)
             failure = e
         }
     }

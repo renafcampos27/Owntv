@@ -1,0 +1,12 @@
+<resources>
+    <string name="backup_phase1_authorization_unavailable">Não foi possível verificar a proteção do perfil. Tenta novamente.</string>
+    <string name="backup_phase1_repeat_password">Repetir palavra-passe do backup</string>
+    <string name="backup_phase1_passwords_differ">As palavras-passe não coincidem.</string>
+    <string name="backup_phase1_protection_title">Proteção dos perfis</string>
+    <string name="backup_phase1_protection_message">Os PINs e as restrições infantis dos perfis existentes são mantidos. Podes autorizar as alterações abaixo com o PIN atual de cada perfil. Os perfis novos recebem a proteção guardada no backup.</string>
+    <string name="backup_phase1_protection_none">Não existem alterações de proteção a autorizar.</string>
+    <string name="backup_phase1_protection_allow">Autorizar alterações de proteção: %1$s</string>
+    <string name="backup_phase1_protection_revoke">Manter proteção atual: %1$s</string>
+    <string name="backup_phase1_protection_pin">PIN atual do perfil: %1$s</string>
+    <string name="backup_phase1_protection_details">Restrições infantis: %1$s → %2$s · Alteração de PIN: %3$s</string>
+</resources>

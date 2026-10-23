@@ -144,16 +144,8 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
                 tv.own.owntv.player.LiveDiagnosticsLog.event("diagnostics_setting enabled=$on")
             }
         }
-        // Seed the one persisted playback quirk (panels whose catch-up archive needs a software
-        // decoder) off the main thread. One small DataStore read, fire-and-forget: nothing on the
-        // launch path waits for it, and the value is only consulted when an archive is opened.
-        appScope.launch {
-            val store = GlobalContext.get().get<tv.own.owntv.core.player.ArchiveDecodeStore>()
-            val known = runCatching { store.hosts() }.getOrDefault(emptySet())
-            tv.own.owntv.player.LiveStreamQuirks.installArchivePersistence(known) { host ->
-                appScope.launch { runCatching { store.remember(host) } }
-            }
-        }
+        // Automatic archive fallback is session-only; old learned hosts must not override hardware
+        // decoding on future launches. Explicit user/channel playback preferences remain unchanged.
         // NOTE: cold start does ZERO heavy DB work. Index + ANALYZE maintenance is piggy-backed onto the
         // operation that actually changes the data — ImportFinalizer.finalize() for normal re-syncs, the
         // deferred content-index worker after a fresh import, the EpgRepository refresh after every EPG

@@ -68,7 +68,6 @@ val playerModule = module {
         val context = androidContext()
 
         tv.own.owntv.player.PlaybackSession(context,
-            focusPolicy = tv.own.owntv.player.PlaybackSession.FocusPolicy.DUCK,
             pauseWhenOutputDisconnects = false)
     }
     // Bridges the playing item to the OpenSubtitles search. Bound here rather than with the rest of

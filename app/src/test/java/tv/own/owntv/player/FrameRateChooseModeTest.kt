@@ -68,4 +68,23 @@ class FrameRateChooseModeTest {
         assertEquals(fhd24, chosen?.mode)
         assertFalse(chosen!!.seamless)
     }
+    @Test fun currentModeIsSeamlessEvenIfNotListedAsItsOwnAlternative() {
+        val chosen = choose(30f, seamlessOnly = true, current = uhd60)
+        assertEquals(uhd60.id, chosen?.mode?.id)
+        assertTrue(chosen!!.seamless)
+    }
+
+    @Test fun unmatchedCadenceReleasesThePreviousModeRequest() {
+        assertEquals(0, FrameRateController.requestedModeId(null, 3))
+        assertNull(FrameRateController.requestedModeId(null, 0))
+        assertEquals(2, FrameRateController.requestedModeId(2, 3))
+    }
+    @Test fun fractionalAndIntegerModesAreNotAssumedToBeSeamlessAlternatives() {
+        val fractional = uhd60.copy(id = 7, hz = 59.94f)
+        val chosen = choose(59.94f, modes = listOf(uhd60, fractional), seamlessRates = listOf(59.94f))
+        assertEquals(fractional.id, chosen?.mode?.id)
+        // Without that exact alternative, staying at 60 is the only seamless choice.
+        val constrained = choose(59.94f, modes = listOf(uhd60, fractional), seamlessOnly = true)
+        assertEquals(uhd60.id, constrained?.mode?.id)
+    }
 }

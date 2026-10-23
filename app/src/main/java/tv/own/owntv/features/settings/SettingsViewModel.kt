@@ -32,6 +32,7 @@ import tv.own.owntv.core.player.SurroundMode
 import tv.own.owntv.core.database.dao.SourceDao
 import tv.own.owntv.core.database.entity.SourceEntity
 import tv.own.owntv.core.repository.SourceRepository
+import tv.own.owntv.core.repository.catalogConfigurationKey
 import tv.own.owntv.core.repository.SourceTestResult
 import tv.own.owntv.core.setup.SourceImporter
 import tv.own.owntv.core.sync.ImportStage
@@ -287,6 +288,13 @@ class SettingsViewModel(
     fun setLivePreviewAudio(enabled: Boolean) {
         viewModelScope.launch { settings.setLivePreviewAudio(enabled) }
     }
+
+    val preferSdr = settings.preferSdr.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
+    fun setPreferSdr(enabled: Boolean) { viewModelScope.launch { settings.setPreferSdr(enabled) } }
+    val audioOutputDelays = settings.audioOutputDelays.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.AudioOutputDelays())
+    val audioSyncOutput = settings.audioSyncOutput.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.settings.AudioSyncOutput.AUTO)
+    fun setAudioSyncOutput(output: tv.own.owntv.core.settings.AudioSyncOutput) { viewModelScope.launch { settings.setAudioSyncOutput(output) } }
+    fun setOutputAudioDelay(output: tv.own.owntv.core.settings.AudioSyncOutput, ms: Int) { viewModelScope.launch { settings.setOutputAudioDelay(output, ms) } }
 
     val hdrEnabled: StateFlow<Boolean> = settings.hdrEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
@@ -1128,6 +1136,9 @@ class SettingsViewModel(
                 syncSeries = syncSeries,
                 preferHls = preferHls,
             )
+            val configurationChanged = existing.catalogConfigurationKey() != updated.catalogConfigurationKey()
+            if (_sourceTest.value?.sourceId == id) dismissSourceTest()
+            if (configurationChanged || scopeChanged) catalogSyncScheduler.cancelSync(id)
             sourceRepository.updateSource(updated)
             settings.setPlaylistAutoRefresh(id, autoRefresh)
             // Apply the "Default playlist" toggle: on → this becomes the active playlist; off → if this was
@@ -1139,11 +1150,11 @@ class SettingsViewModel(
             if (scopeChanged) {
                 catalogSyncScheduler.cancelSync(id)
             }
-            if (scopeTurnedOn || updated.lastSyncAt == null) {
+            if (configurationChanged || scopeTurnedOn || updated.lastSyncAt == null) {
                 val counts = importFinalizer.contentCounts(id)
                 catalogSyncScheduler.enqueueSync(
                     id,
-                    reason = "scope_edit",
+                    reason = "source_edit",
                     contentTypes = SyncContentTypes.enabledFor(updated),
                     baseItemCount = counts.channels + counts.movies + counts.series,
                 )
@@ -1174,17 +1185,10 @@ class SettingsViewModel(
 
     val progress: StateFlow<ImportStage?> = importer.progress
 
-    /**
-     * Pre-fills the Add form after a failed add, so a typo does not mean re-typing a portal URL on a
-     * remote control.
-     *
-     * **It has never actually fired.** The field was introduced in v4.0.0 declared `null` and, then
-     * as now, the only assignment to it anywhere is back to `null` on success — so the retry form has
-     * always opened blank. Kept at its existing behaviour here rather than quietly fixed, because
-     * making it work is a change to what the user sees and is not part of removing the duplicated
-     * import flow.
-     */
-    val lastFailedSource: SourceEntity? get() = null
+    /** Credentials survive a retry in memory only; success or explicit cancel clears them. */
+    val lastFailedSource: SourceEntity? get() = importer.lastDraft
+    val draftAutoRefresh get() = if (importer.lastDraft == null) PlaylistRefresh.OFF else importer.draftAutoRefresh
+    val draftIsDefault get() = importer.lastDraft != null && importer.draftIsDefault
 
     private fun SourceImporter.ImportState.toUi(): ImportState = when (this) {
         SourceImporter.ImportState.Idle -> ImportState.Idle
@@ -1241,13 +1245,20 @@ class SettingsViewModel(
      * one short request, because "is this playlist still alive?" is the question this button has
      * always really answered.
      */
+    private var sourceTestJob: kotlinx.coroutines.Job? = null
+    private var sourceTestGeneration = 0L
+
     fun testSource(source: SourceEntity) {
-        viewModelScope.launch {
-            _sourceTest.value = SourceTestUi.Running(source.name)
+        dismissSourceTest()
+        val generation = sourceTestGeneration
+        val revision = source.catalogConfigurationKey()
+        sourceTestJob = viewModelScope.launch {
+            _sourceTest.value = SourceTestUi.Running(source.name, source.id, revision)
             val result = sourceTester.test(source)
             // Back may have closed the popup while the request was still running; don't re-open it.
-            if (_sourceTest.value != null) {
-                _sourceTest.value = SourceTestUi.Done(source.name, result, connectionLimits.known(source))
+            if (generation == sourceTestGeneration && _sourceTest.value != null &&
+                sourceDao.getById(source.id)?.catalogConfigurationKey() == revision) {
+                _sourceTest.value = SourceTestUi.Done(source.name, result, connectionLimits.known(source), source.id, revision)
             }
         }
     }
@@ -1260,17 +1271,21 @@ class SettingsViewModel(
      * running would both be killed by the measurement and corrupt its result.
      */
     fun retestSource(source: SourceEntity) {
-        measureJob?.cancel()
+        dismissSourceTest()
+        val generation = sourceTestGeneration
+        val revision = source.catalogConfigurationKey()
         measureJob = viewModelScope.launch {
             stopAllPlayback()
-            _sourceTest.value = SourceTestUi.Measuring(source.name, tv.own.owntv.core.live.ProbeProgress(1, 1, tv.own.owntv.core.live.MAX_PROBE_STREAMS))
+            _sourceTest.value = SourceTestUi.Measuring(source.name, tv.own.owntv.core.live.ProbeProgress(1, 1, tv.own.owntv.core.live.MAX_PROBE_STREAMS), source.id, revision)
             val limit = connectionLimits.measureAndStore(source, force = true) { progress ->
-                if (_sourceTest.value is SourceTestUi.Measuring) {
-                    _sourceTest.value = SourceTestUi.Measuring(source.name, progress)
+                if (generation == sourceTestGeneration && _sourceTest.value is SourceTestUi.Measuring) {
+                    _sourceTest.value = SourceTestUi.Measuring(source.name, progress, source.id, revision)
                 }
             }
             val result = sourceTester.test(source)
-            if (_sourceTest.value != null) _sourceTest.value = SourceTestUi.Done(source.name, result, limit)
+            if (generation == sourceTestGeneration && _sourceTest.value != null &&
+                sourceDao.getById(source.id)?.catalogConfigurationKey() == revision)
+                _sourceTest.value = SourceTestUi.Done(source.name, result, limit, source.id, revision)
         }
     }
 
@@ -1298,6 +1313,11 @@ class SettingsViewModel(
     }
 
     fun dismissSourceTest() {
+        sourceTestGeneration++
+        sourceTestJob?.cancel()
+        sourceTestJob = null
+        measureJob?.cancel()
+        measureJob = null
         _sourceTest.value = null
     }
 
@@ -1346,8 +1366,10 @@ class SettingsViewModel(
      * it core would create a second profile for a user who already has one.
      */
     private fun runImport(block: suspend () -> Unit) {
-        importJob?.cancel()
+        val previous = importJob
+        previous?.cancel()
         val job = viewModelScope.launch {
+            previous?.join()
             val pid = profileDao.resolveExistingProfileId(settings.activeProfileId.first()) ?: return@launch
             Log.d(TAG, "runImport profile=$pid")
             importer.useProfile(pid)
@@ -1430,7 +1452,7 @@ class SettingsViewModel(
     fun cancelImport() {
         importJob?.cancel()
         importJob = null
-        importer.reset()
+        importer.reset(clearDraft = true)
     }
 
     private suspend fun refreshActiveTvHome(allowBrowsableRequest: Boolean = true) {
@@ -1449,7 +1471,12 @@ class SettingsViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 
     fun saveProxy(enabled: Boolean, host: String, port: Int, username: String, password: String) {
-        viewModelScope.launch { settings.saveProxy(enabled, host, port, username, password) }
+        val parsed = tv.own.owntv.core.network.NetworkConfigInput.proxy(host, port, username, password)
+        if (enabled && parsed == null) { _proxyTest.value = ProxyTestState.Fail(ProxyFailure.InvalidAddress); return }
+        viewModelScope.launch {
+            val cfg = if (enabled) parsed!! else settings.proxyConfig.first().copy(enabled = false)
+            settings.saveProxy(cfg.enabled, cfg.host, cfg.port, cfg.username, cfg.password)
+        }
     }
 
     sealed interface ProxyTestState {
@@ -1483,11 +1510,12 @@ class SettingsViewModel(
 
     fun testProxy(host: String, port: Int, username: String, password: String) {
         if (_proxyTest.value == ProxyTestState.Testing) return
-        val h = host.trim()
-        if (h.isBlank() || port !in 1..65535) {
+        val cfg = tv.own.owntv.core.network.NetworkConfigInput.proxy(host, port, username, password)
+        if (cfg == null) {
             _proxyTest.value = ProxyTestState.Fail(ProxyFailure.InvalidAddress)
             return
         }
+        val h = cfg.host
         val owner = proxyTestOwnership.begin()
         _proxyTest.value = ProxyTestState.Testing
         proxyTestJob = viewModelScope.launch {
@@ -1541,8 +1569,21 @@ class SettingsViewModel(
     val dnsConfig: StateFlow<tv.own.owntv.core.network.DnsConfig> = settings.dnsConfig
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.network.DnsConfig())
 
+    val dnsEditorConfig = settings.dnsConfig.map { it as tv.own.owntv.core.network.DnsConfig? }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+    private fun validatedDns(host: String, port: Int, dohUrl: String) =
+        tv.own.owntv.core.network.NetworkConfigInput.dns(
+            tv.own.owntv.core.network.NetworkConfigInput.dnsText(
+                tv.own.owntv.core.network.DnsConfig(true, host, port, dohUrl)))
+
     fun saveDns(enabled: Boolean, host: String, port: Int, dohUrl: String) {
-        viewModelScope.launch { settings.saveDns(enabled, host, port, dohUrl) }
+        val parsed = validatedDns(host, port, dohUrl)
+        if (enabled && parsed == null) { _dnsTest.value = DnsTestState.Fail(DnsTestFailure.ServerRequired); return }
+        viewModelScope.launch {
+            val cfg = if (enabled) parsed!! else settings.dnsConfig.first().copy(enabled = false)
+            settings.saveDns(cfg.enabled, cfg.host, cfg.port, cfg.dohUrl)
+        }
     }
 
     sealed interface DnsTestState {
@@ -1580,7 +1621,8 @@ class SettingsViewModel(
         if (_dnsTest.value == DnsTestState.Testing) return
         val doh = dohUrl.trim()
         val h = host.trim()
-        if (enabled && h.isBlank() && doh.isBlank()) {
+        val parsed = validatedDns(h, port, doh)
+        if (enabled && parsed == null) {
             _dnsTest.value = DnsTestState.Fail(DnsTestFailure.ServerRequired)
             return
         }
@@ -1590,12 +1632,7 @@ class SettingsViewModel(
         dnsTestJob = viewModelScope.launch {
             val result = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
                 runCatching {
-                    val cfg = tv.own.owntv.core.network.DnsConfig(
-                        enabled = enabled,
-                        host = h,
-                        port = if (port in 1..65535) port else 53,
-                        dohUrl = doh,
-                    )
+                    val cfg = parsed?.copy(enabled = enabled) ?: tv.own.owntv.core.network.DnsConfig()
                     // Test the selected backend strictly: seed it synchronously so the first lookup
                     // cannot race the Flow collector, and do not let a failed custom server silently
                     // succeed through the device's system DNS.
@@ -1781,8 +1818,10 @@ class SettingsViewModel(
 /** What the source-test popup is showing. */
 sealed interface SourceTestUi {
     val sourceName: String
+    val sourceId: Long
+    val revision: String
 
-    data class Running(override val sourceName: String) : SourceTestUi
+    data class Running(override val sourceName: String, override val sourceId: Long, override val revision: String) : SourceTestUi
 
     /**
      * The connection measurement, which takes minutes rather than the fraction of a second the
@@ -1791,6 +1830,7 @@ sealed interface SourceTestUi {
     data class Measuring(
         override val sourceName: String,
         val progress: tv.own.owntv.core.live.ProbeProgress,
+        override val sourceId: Long, override val revision: String,
     ) : SourceTestUi
 
     data class Done(
@@ -1798,5 +1838,6 @@ sealed interface SourceTestUi {
         val result: SourceTestResult,
         /** What is stored for this playlist, measured or published. Null before anything is known. */
         val limit: tv.own.owntv.core.live.ConnectionLimit? = null,
+        override val sourceId: Long, override val revision: String,
     ) : SourceTestUi
 }

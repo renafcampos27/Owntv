@@ -28,7 +28,7 @@ import tv.own.owntv.core.live.LiveKey
  * tests: a background rebuild publishing over a list the user has since navigated away from, and
  * CH+/CH− going dead in the window after a numeric jump lands outside the current list.
  */
-class LiveZapList(
+internal class LiveZapList(
     private val scope: CoroutineScope,
     /** The channel on screen — CH± steps from it, and a rebuild only publishes while it still plays. */
     private val playingChannelId: () -> Long?,
@@ -65,6 +65,7 @@ class LiveZapList(
     private var armed = false
 
     private var loadJob: Job? = null
+    private var browseWindow: (suspend (Long, Int) -> ZapWindow?)? = null
 
     /** Bumped every time a rebuild starts OR is cancelled. The background rebuild captures this at
      *  start and re-checks it before publishing, so an older build cannot overwrite the list after a
@@ -133,9 +134,11 @@ class LiveZapList(
         title: String?,
         key: LiveKey?,
         categoryId: Long?,
+        adjacent: (suspend (Long, Int) -> ZapWindow?)? = null,
     ) {
         loadJob?.cancel()
         publish(channels, categoryId = categoryId, title = title, key = key)
+        browseWindow = adjacent
     }
 
     /**
@@ -151,6 +154,7 @@ class LiveZapList(
      */
     private fun publish(loaded: List<ChannelEntity>, categoryId: Long?, title: String?, key: LiveKey?) {
         cancelPendingRebuild()
+        browseWindow = null
         this.categoryId = categoryId
         armed = true
         replace(loaded)
@@ -178,6 +182,20 @@ class LiveZapList(
      *     bounded rebuild has published) — step through the anchor saved at tune time instead, so CH±
      *     is responsive rather than dead. The anchor moves with the user, so a held key still chains.
      */
+    suspend fun nextAvailable(delta: Int): ChannelEntity? {
+        val loader = browseWindow ?: return next(delta)
+        val owner = generation
+        val anchor = playingChannelId() ?: return null
+        val localIndex = list.indexOfFirst { matchesPlaying(it, anchor) }
+        // The ordinary step stays in memory. Only crossing this window needs catalogue I/O.
+        if (localIndex >= 0 && localIndex + delta in list.indices) return list[localIndex + delta]
+        val window = loader(anchor, delta) ?: return null
+        currentCoroutineContext().ensureActive()
+        if (generation != owner || playingChannelId() != anchor || browseWindow !== loader) return null
+        replace(window.rows)
+        return window.target
+    }
+
     fun next(delta: Int): ChannelEntity? {
         val currentId = playingChannelId()
         val i = if (currentId != null) list.indexOfFirst { matchesPlaying(it, currentId) } else -1
@@ -230,6 +248,7 @@ class LiveZapList(
             pending = null
         }
 
+        if (!alreadyInList) browseWindow = null
         play(tuned)
 
         if (alreadyInList) return

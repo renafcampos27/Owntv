@@ -1,6 +1,7 @@
 package tv.own.owntv.features.live
 
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import org.junit.Assert.*
 import org.junit.Test
 import tv.own.owntv.core.database.entity.ChannelEntity
@@ -180,6 +181,47 @@ class ChannelAlternativesTest {
             true
         }
         assertTrue(result)
+    }
+
+    @Test fun pauseLongerThanBothBudgetsDoesNotSwitchTheChannel() = runBlocking {
+        val requested = kotlinx.coroutines.flow.MutableStateFlow(false)
+        assertTrue(runWithBackoffAwareTimeout(40, null, null, maxWaitCeilingMs = 60,
+            playbackRequested = { requested.value }, awaitPlaybackRequest = { requested.first { it } }) {
+            delay(180); requested.value = true; delay(5); true
+        })
+    }
+    @Test fun aCancelledChildAttemptCannotStartAFallback() = runBlocking {
+        val tried = mutableListOf<Int>()
+        try {
+            tryChannelAlternatives(1, { listOf(2) }, timeoutMs = 500,
+                playbackRequested = { true }, attempt = { tried += it; throw CancellationException("stopped") },
+                failed = { error("Cancellation is not failure") }, switching = {})
+            fail("Expected cancellation")
+        } catch (_: CancellationException) { }
+        assertEquals(listOf(1), tried)
+    }
+    @Test fun leavingWhilePausedDoesNotTryAnotherVersion() = runBlocking {
+        val entered = CompletableDeferred<Unit>(); val tried = mutableListOf<Int>()
+        val job = launch {
+            tryChannelAlternatives(1, { listOf(2) }, timeoutMs = 40, playbackRequested = { false },
+                attempt = { tried += it; entered.complete(Unit); awaitCancellation() },
+                failed = { error("Cancelled owner") }, switching = {})
+        }
+        entered.await(); delay(80); job.cancelAndJoin(); assertEquals(listOf(1), tried)
+    }
+
+    @Test fun parkedPauseWaitsForAnEventInsteadOfPollingAndTerminalFailureStillWins() = runBlocking {
+        val requested = kotlinx.coroutines.flow.MutableStateFlow(false)
+        val observing = CompletableDeferred<Unit>()
+        val outcome = CompletableDeferred<Boolean>()
+        var reads = 0
+        val result = async {
+            runWithBackoffAwareTimeout(40, null, null, maxWaitCeilingMs = 60,
+                playbackRequested = { reads++; requested.value },
+                awaitPlaybackRequest = { observing.complete(Unit); requested.first { it } }) { outcome.await() }
+        }
+        observing.await(); delay(100); assertEquals(1, reads)
+        outcome.complete(false); assertFalse(result.await())
     }
 
 }

@@ -35,6 +35,7 @@
 2	technical	app/src/main/java/tv/own/owntv/MainActivity.kt	none
 1	log	app/src/main/java/tv/own/owntv/MainActivity.kt	onCreate deepLinkHost=${intent.data?.host} deepLinkType=${pendingDeepLink?.javaClass?.simpleName ?: "none"}
 1	log	app/src/main/java/tv/own/owntv/MainActivity.kt	onNewIntent deepLinkHost=${intent.data?.host} deepLinkType=${pendingDeepLink?.javaClass?.simpleName ?: "none"}
+2	preference-key	app/src/main/java/tv/own/owntv/MainActivity.kt	owntv.deepLinkConsumed
 1	performance	app/src/main/java/tv/own/owntv/MainActivity.kt	profile-id-loaded
 1	performance	app/src/main/java/tv/own/owntv/MainActivity.kt	profiles-loaded
 1	log	app/src/main/java/tv/own/owntv/MainActivity.kt	ui_perf_unavailable type=${failed.javaClass.simpleName}
@@ -296,7 +297,8 @@
 1	file-path	app/src/main/java/tv/own/owntv/features/settings/AutomaticBackupWorker.kt	owntv-auto-
 1	preference-key	app/src/main/java/tv/own/owntv/features/settings/AutomaticBackupWorker.kt	owntv-automatic-backup
 1	preference-key	app/src/main/java/tv/own/owntv/features/settings/AutomaticBackupWorker.kt	owntv-automatic-backup-now
-3	empty	app/src/main/java/tv/own/owntv/features/settings/BackupScreen.kt	\0
+2	empty	app/src/main/java/tv/own/owntv/features/settings/BackupProtectionReviewDialog.kt	\0
+4	empty	app/src/main/java/tv/own/owntv/features/settings/BackupScreen.kt	\0
 3	technical	app/src/main/java/tv/own/owntv/features/settings/ChNavSettingsScreen.kt	false
 2	technical	app/src/main/java/tv/own/owntv/features/settings/ChNavSettingsScreen.kt	true
 4	empty	app/src/main/java/tv/own/owntv/features/settings/ChannelPlaybackSettingsDialog.kt	\0
@@ -318,6 +320,8 @@
 1	url	app/src/main/java/tv/own/owntv/features/settings/LocalSyncScreen.kt	http://
 1	technical	app/src/main/java/tv/own/owntv/features/settings/ManageProfilesScreen.kt	•
 5	empty	app/src/main/java/tv/own/owntv/features/settings/ManageSourcesScreen.kt	\0
+1	file-path	app/src/main/java/tv/own/owntv/features/settings/ManualBackupFilename.kt	owntv-backup-${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmss", Locale.ROOT))}-${UUID.randomUUID()}.own
+1	technical	app/src/main/java/tv/own/owntv/features/settings/ManualBackupFilename.kt	yyyyMMdd-HHmmss
 9	empty	app/src/main/java/tv/own/owntv/features/settings/MetadataSettingsScreen.kt	\0
 2	locale	app/src/main/java/tv/own/owntv/features/settings/MetadataSettingsScreen.kt	ar
 2	locale	app/src/main/java/tv/own/owntv/features/settings/MetadataSettingsScreen.kt	bg
@@ -383,8 +387,8 @@
 1	log	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	resync enqueue sourceId=${source.id} clean=$clean
 1	log	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	runImport profile=$pid
 1	log	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	runImport sync success sourceId=${done.source?.id} profile=$pid
-1	technical	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	scope_edit
 1	log	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	setAndroidTvHomeEnabled enabled=$enabled
+1	protocol	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	source_edit
 1	protocol	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	timed out
 1	protocol	app/src/main/java/tv/own/owntv/features/settings/SettingsViewModel.kt	unknown host
 1	technical	app/src/main/java/tv/own/owntv/features/settings/SimpleModeBackupCodec.kt	Invalid channel recovery timeout
@@ -430,6 +434,8 @@
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_afr_pause
 3	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_afr_resolution
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_audio_lang
+4	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_audio_output_delays
+4	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_audio_output_route
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_audio_sync
 1	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_autoplay
 3	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_channel_numbers
@@ -452,6 +458,7 @@
 3	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_mini
 3	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_multiview
 4	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_multiview_tiles
+3	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_prefer_sdr
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_preroll
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_preroll_sources
 3	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_preview_audio
@@ -471,11 +478,14 @@
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_vod_engine
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_zoom
 2	locale	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	zho
+1	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	·
 4	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	–
 2	file-path	app/src/main/java/tv/own/owntv/features/setup/AddSourceScreen.kt	/
 1	technical	app/src/main/java/tv/own/owntv/features/setup/AddSourceScreen.kt	m3u
 1	technical	app/src/main/java/tv/own/owntv/features/setup/AddSourceScreen.kt	m3u8
 9	empty	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	\0
+2	preference-key	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	setup_profile_id
+2	protocol	app/src/main/java/tv/own/owntv/features/setup/SetupViewModel.kt	setup_source_id
 1	empty	app/src/main/java/tv/own/owntv/features/setup/SetupWizard.kt	\0
 14	empty	app/src/main/java/tv/own/owntv/features/setup/SourceDraftViewModel.kt	\0
 4	empty	app/src/main/java/tv/own/owntv/features/shell/OwnTVShell.kt	\0
@@ -637,9 +647,9 @@
 1	regex	app/src/main/java/tv/own/owntv/player/FailedChannelAttempts.kt	(?:response\\s+code|http(?:\\s+status)?)[ :]+([45][0-9]{2})
 1	log	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	AFR apply failed: ${it.message}
 1	log	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	AFR reset failed: ${it.message}
-1	log	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	AFR: ${fps}fps -> mode ${target.modeId} deferred ${waitMs}ms (cooldown)
+1	log	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	AFR: ${fps}fps -> mode ${targetId} deferred ${waitMs}ms (cooldown)
 1	log	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	AFR: display mode released
-1	log	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	AFR: video ${fps}fps -> display mode ${target.modeId} (${target.physicalWidth}x${target.physicalHeight} ${target.refreshRate}Hz, seamless=${choice.seamless})
+1	log	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	AFR: video ${fps}fps -> mode $targetId (seamless=${choice?.seamless ?: false})
 2	compiler	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	DEPRECATION
 1	log	app/src/main/java/tv/own/owntv/player/FrameRateController.kt	FrameRate
 1	empty	app/src/main/java/tv/own/owntv/player/MiniPlayer.kt	\0

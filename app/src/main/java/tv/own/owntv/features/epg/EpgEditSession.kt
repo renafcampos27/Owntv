@@ -6,15 +6,19 @@ internal class EpgEditSession {
     private var context: Triple<Long, Set<Long>, String?>? = null
     private var epoch = 0L
 
+    @Synchronized
     fun update(profile: Long, sources: Collection<Long>, restoring: String?) {
         val next = Triple(profile, sources.toSet(), restoring)
         if (context != next) { context = next; epoch++ }
     }
 
+    @Synchronized
     fun invalidate() { epoch++ }
 
+    @Synchronized
     fun capture(profile: Long, source: Long): Owner = Owner(profile, source, epoch)
 
+    @Synchronized
     fun accepts(owner: Owner): Boolean {
         val current = context ?: return false
         return owner.epoch == epoch && owner.profile >= 0 && owner.profile == current.first &&
