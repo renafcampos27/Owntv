@@ -46,9 +46,13 @@ android {
         applicationId = "tv.own.owntv"
         minSdk = 26
         targetSdk = 36
-        // Release version 105.1.0.6 (versionCode 10510006) so it installs directly over legacy builds.
-        versionCode = (System.getenv("VERSION_CODE") ?: "10510006").toInt()
-        versionName = System.getenv("VERSION_NAME") ?: "105.1.0.6"
+        val releaseVersion = Properties().apply {
+            rootProject.file("version.properties").inputStream().use { load(it) }
+        }
+        versionCode = releaseVersion.getProperty("versionCode").toInt().also { require(it > 0) }
+        versionName = releaseVersion.getProperty("versionName").also {
+            require(it.matches(Regex("[0-9]+\\.[0-9]+\\.[0-9]+(?:\\.[0-9]+)?")))
+        }
 
         // Opt-in local diagnostic APKs keep the rolling playback trace enabled even when they are
         // release-signed (so they can update an installed production build without changing its data).
@@ -426,6 +430,7 @@ dependencies {
 
     // Test
     testImplementation(libs.junit)
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:${libs.versions.coroutines.get()}")
     // Test-only, never packaged: android.jar's org.json is a stub, and isReturnDefaultValues turns
     // every JSONObject call into a silent null/0. Backup/restore is all JSON, so the unit tests need
     // the real implementation to mean anything.
