@@ -247,54 +247,6 @@ fun MetadataSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             Spacer(Modifier.height(18.dp))
         }
 
-        // Status panel, laid out exactly like the OpenSubtitles account screen: label left, value
-        // right. Which source is active is always shown; the allowance rows only appear on the shared
-        // default tier, because an own key or a self-hosted server is the user's own resource and is
-        // never metered - showing a limit there would be a lie.
-        if (false && mode.enrich) {
-            ServiceSummaryCard(
-                eyebrow = stringResource(CoreR.string.settings_metadata_active_source),
-                title = stringResource(metadataTierLabelRes(tier)),
-                description = when (tier) {
-                    MetadataConfig.Tier.DEFAULT_WORKER -> stringResource(CoreR.string.settings_metadata_shared_worker_description)
-                    MetadataConfig.Tier.OWN_KEY -> maskSecret(storedKey)
-                    MetadataConfig.Tier.SELF_HOST -> storedUrl
-                },
-            )
-            Spacer(Modifier.height(12.dp))
-            when (tier) {
-                // TMDB has no way to name the account behind a key - the key identifies the
-                // application, not a person, so there is nothing to show but the key itself. Masked to
-                // the last 4 characters: enough to tell two keys apart, useless to anyone reading it
-                // over a shoulder or in a screenshot.
-                MetadataConfig.Tier.OWN_KEY -> Unit
-                MetadataConfig.Tier.SELF_HOST -> Unit
-                MetadataConfig.Tier.DEFAULT_WORKER -> {
-                    val budget by vm.metadataBudgetStatus.collectAsStateWithLifecycle()
-                    LaunchedEffect(Unit) { vm.refreshMetadataBudget() }
-                    budget?.let { b ->
-                        // All three windows on one line. Three separate rows pushed the actual
-                        // settings off the first screen, and these numbers are only ever glanced at.
-                    val context = LocalContext.current
-                    AllowanceCard(
-                        b.remainingMinute, b.limitMinute,
-                        b.remainingHour, b.limitHour,
-                        b.remainingDay, b.limitDay,
-                        android.text.format.DateFormat.getTimeFormat(context).format(java.util.Date(b.resetAtMs)),
-                    )
-                    }
-                    Spacer(Modifier.height(8.dp))
-                    Text(
-                        stringResource(CoreR.string.settings_metadata_fair_share),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = colors.onSurfaceVariant,
-                        modifier = Modifier.padding(horizontal = 16.dp),
-                    )
-                }
-            }
-            Spacer(Modifier.height(18.dp))
-        }
-
         // One row + a picker, matching Metadata language below. Stacked as three rows these read as
         // three separate settings rather than one choice, and they pushed everything else off screen.
         GroupLabel(stringResource(CoreR.string.settings_metadata_library_details))

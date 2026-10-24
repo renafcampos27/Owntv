@@ -72,7 +72,7 @@ class BackupViewModel(
 
     /** PIN check for ticking a locked, non-active profile in the export picker. */
     fun verifyPin(profile: tv.own.owntv.core.database.entity.ProfileEntity, pin: String): Boolean =
-        tv.own.owntv.core.util.Pin.verify(pin, profile.pinHash)
+        tv.own.owntv.core.util.Pin.verify(pin, profile.pinHash, scope = tv.own.owntv.core.util.Pin.profileScope(profile.id))
 
     sealed interface State {
         data object Idle : State
@@ -104,6 +104,7 @@ class BackupViewModel(
             val skippedSources: Int = 0,
             val invalidLocale: Boolean = false,
             val skippedSettings: Int = 0,
+            val skippedSubtitleItems: Int = 0,
         ) : State
         data class Error(val kind: BackupError) : State
 
@@ -205,7 +206,8 @@ class BackupViewModel(
         backup.import(file, sections, password, profileProtectionPins = pins).fold(
             onSuccess = { summary -> State.Done(DoneKind.RESTORED, items = summary.items,
                 passwordsOmitted = password.isNullOrBlank(), skippedSources = summary.skippedSources,
-                invalidLocale = summary.invalidLocale, skippedSettings = summary.skippedSettings) },
+                invalidLocale = summary.invalidLocale, skippedSettings = summary.skippedSettings,
+                skippedSubtitleItems = summary.skippedSubtitleItems) },
             onFailure = { if (it is BackupManager.WrongPasswordException)
                 State.NeedPassword(file, sections, retry = true) else State.Error(BackupError.IMPORT) },
         )
@@ -249,7 +251,7 @@ class BackupViewModel(
             var unavailable = false
             val accepted = try {
                 val profile = profileDao.getById(profileId)
-                profile != null && tv.own.owntv.core.util.Pin.verify(pin, profile.pinHash)
+                profile != null && tv.own.owntv.core.util.Pin.verify(pin, profile.pinHash, scope = tv.own.owntv.core.util.Pin.profileScope(profile.id))
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (_: Exception) {

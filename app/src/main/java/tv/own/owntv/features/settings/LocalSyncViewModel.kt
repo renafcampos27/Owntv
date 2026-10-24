@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import java.io.File
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -84,7 +85,12 @@ class LocalSyncViewModel(
         // same arriving container twice.
         if (incomingWatcher?.isActive != true) incomingWatcher = viewModelScope.launch {
             sync.incoming.collect { file ->
-                val payload = sync.previewIncoming(file).getOrNull() ?: return@collect
+                val payload = sync.previewIncoming(file).getOrElse {
+                    error = SyncFailure.BadPayload
+                    cleanupFile(file)
+                    return@collect
+                }
+                if (busy || step is Step.Confirm) { cleanupFile(file); return@collect }
                 step = Step.Confirm(
                     device = null,
                     direction = SyncDirection.RECEIVE,
@@ -147,6 +153,7 @@ class LocalSyncViewModel(
     }
 
     fun submitPin(pin: String) {
+        if (busy) return
         val current = step as? Step.EnterPin ?: return
         busy = true
         viewModelScope.launch {
@@ -158,7 +165,7 @@ class LocalSyncViewModel(
     }
 
     fun unpair(device: PairedDevice) {
-        viewModelScope.launch { sync.unpair(device.id) }
+        viewModelScope.launch { runCatching { sync.unpair(device.id) }.onFailure { error = SyncFailure.Unknown } }
     }
 
     fun chooseDevice(device: PairedDevice) {
@@ -171,6 +178,7 @@ class LocalSyncViewModel(
     }
 
     fun start(sections: Set<BackupManager.Section>) {
+        if (busy) return
         val current = step as? Step.ChooseSections ?: return
         busy = true
         viewModelScope.launch {
@@ -191,22 +199,29 @@ class LocalSyncViewModel(
     }
 
     fun confirm() {
+        if (busy) return
         val current = step as? Step.Confirm ?: return
         busy = true
         viewModelScope.launch {
+            try {
             sync.apply(current.file, current.sections, current.password)
                 .onSuccess { summary ->
                     val sent = current.device != null && current.direction == SyncDirection.MERGE &&
                         sync.send(current.device, current.sections).isSuccess
                     step = Step.Result(received = summary, sent = sent)
+                    cleanupFile(current.file)
                 }
                 .onFailure { error = reason() }
-            busy = false
+            } finally {
+                if (!kotlinx.coroutines.currentCoroutineContext().isActive) cleanupFile(current.file)
+                busy = false
+            }
         }
     }
 
     fun cancel() {
-        (step as? Step.Confirm)?.file?.delete()
+        if (busy) return
+        (step as? Step.Confirm)?.file?.let(::cleanupFile)
         discovery?.cancel()
         step = null
         sync.clearProgress()
@@ -217,10 +232,17 @@ class LocalSyncViewModel(
     }
 
     override fun onCleared() {
+        if (!busy) (step as? Step.Confirm)?.file?.let(::cleanupFile)
         discovery?.cancel()
         sync.stopHosting()
         super.onCleared()
     }
+
+    private fun cleanupFile(file: File) {
+        cleanupScope.launch { sync.releaseIncoming(file) }
+    }
+
+    private val cleanupScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO)
 
     private fun reason(): SyncFailure =
         (sync.progress.value as? tv.own.owntv.core.sync.local.SyncProgress.Failed)?.reason ?: SyncFailure.Unknown

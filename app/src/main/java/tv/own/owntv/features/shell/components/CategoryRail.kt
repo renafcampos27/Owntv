@@ -176,7 +176,9 @@ fun CategoryRail(
     val searchFocus = remember { FocusRequester() }
     val categoryKeys = remember(categories) { railCategoryKeys(categories) }
     val rowFocusByKey = remember { mutableMapOf<Triple<String, String?, Int>, FocusRequester>() }
-    val rowFocusers = visible.map { index -> rowFocusByKey.getOrPut(categoryKeys[index]) { FocusRequester() } }
+    val rowFocusers = remember(categoryKeys, visible) {
+        visible.map { index -> rowFocusByKey.getOrPut(categoryKeys[index]) { FocusRequester() } }
+    }
     LaunchedEffect(categoryKeys) { rowFocusByKey.keys.retainAll(categoryKeys.toSet()) }
     // Return the cursor to a specific row (see [focusRowIndex]). The row is addressed by its original
     // category index, so a rail filtered by the search box still resolves to the right focuser.

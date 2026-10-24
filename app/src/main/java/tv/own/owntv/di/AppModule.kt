@@ -93,6 +93,7 @@ val appModule = module {
             get(),
             get(),
             get(), // shared network observer for local-timeshift recovery
+            get(), // catalogue invalidation without retaining another list
         )
     }
     viewModelOf(::MovieViewModel)

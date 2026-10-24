@@ -14,12 +14,13 @@ import org.json.JSONObject
 // App-owned preferences, included in SETTINGS backups through TvBackupAppSettings.
 private val Context.simpleModeStore by preferencesDataStore(name = "owntv_simple_mode")
 
-data class SimpleModeOptions(val hideCategories: Boolean = true, val hideSidebar: Boolean = false, val channelRecovery: Boolean = true, val startOnBoot: Boolean = false, val startOnWake: Boolean = false, val recoveryTimeoutSeconds: Int = RecoveryTimeout.DEFAULT_SECONDS)
+data class SimpleModeOptions(val hideCategories: Boolean = true, val hideSidebar: Boolean = false, val channelRecovery: Boolean = true, val startOnBoot: Boolean = false, val startOnWake: Boolean = false, val recoveryTimeoutSeconds: Int = RecoveryTimeout.DEFAULT_SECONDS, val tvAvoMode: Boolean = false)
 
 object SimpleModePreferences {
 
     private val categories = booleanPreferencesKey("hide_categories")
     private val sidebar = booleanPreferencesKey("hide_sidebar")
+    private val tvAvoMode = booleanPreferencesKey("tv_avo_mode")
 
     private val recoveryTimeout = intPreferencesKey("channel_recovery_timeout_seconds")
     private val recovery = booleanPreferencesKey("channel_recovery")
@@ -66,13 +67,27 @@ object SimpleModePreferences {
     private fun options(prefs: Preferences) = SimpleModeOptions(
         hideCategories = prefs[categories] ?: true,
         hideSidebar = prefs[sidebar] ?: false,
+        tvAvoMode = prefs[tvAvoMode] ?: false,
         channelRecovery = prefs[recovery] ?: true,
         startOnBoot = prefs[boot] ?: false,
         startOnWake = prefs[wake] ?: false,
         recoveryTimeoutSeconds = RecoveryTimeout.normalize(prefs[recoveryTimeout]),
     )
 
-    fun observe(context: Context) = context.applicationContext.simpleModeStore.data.map(::options)
+    fun observe(context: Context) = observe(context.applicationContext.simpleModeStore)
+    internal fun observe(store: DataStore<Preferences>) = store.data.map(::options)
+
+    suspend fun setTvAvoMode(context: Context, enabled: Boolean, prepareVersions: suspend () -> Unit = {}) =
+        setTvAvoMode(context.applicationContext.simpleModeStore, enabled, prepareVersions)
+
+    internal suspend fun setTvAvoMode(store: DataStore<Preferences>, enabled: Boolean, prepareVersions: suspend () -> Unit = {}) {
+        // Prepare the profile first. Failure must not publish an incompletely activated preset.
+        if (enabled) prepareVersions()
+        store.edit {
+            it[tvAvoMode] = enabled
+            if (enabled) it[recovery] = true
+        }
+    }
 
     suspend fun exportBackup(context: Context): JSONObject = exportBackup(context.applicationContext.simpleModeStore)
     suspend fun restoreBackup(context: Context, data: JSONObject) = restoreBackup(context.applicationContext.simpleModeStore, data)
@@ -80,11 +95,12 @@ object SimpleModePreferences {
     internal suspend fun exportBackup(store: DataStore<Preferences>): JSONObject = SimpleModeBackupCodec.encode(options(store.data.first()))
 
     internal suspend fun restoreBackup(store: DataStore<Preferences>, data: JSONObject) {
-        // Decode all fields before changing any key; edit commits all six values atomically.
+        // Decode all fields before changing any key; edit commits all portable values atomically.
         store.edit { prefs ->
             val restored = SimpleModeBackupCodec.decode(data, options(prefs))
             prefs[categories] = restored.hideCategories
             prefs[sidebar] = restored.hideSidebar
+            prefs[tvAvoMode] = restored.tvAvoMode
             prefs[recovery] = restored.channelRecovery
             prefs[recoveryTimeout] = restored.recoveryTimeoutSeconds
             prefs[boot] = restored.startOnBoot

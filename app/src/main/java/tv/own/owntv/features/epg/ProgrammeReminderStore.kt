@@ -44,7 +44,6 @@ class ProgrammeReminderStore {
     private val _reminders = MutableStateFlow<List<ProgrammeReminder>>(emptyList())
     val reminders: StateFlow<List<ProgrammeReminder>> = _reminders.asStateFlow()
 
-    private val dismissedKeys = LinkedHashSet<ProgrammeReminder.Key>()
 
     fun canSchedule(programme: EpgProgrammeEntity, nowMs: Long): Boolean =
         programme.startMs > nowMs && programme.stopMs > programme.startMs
@@ -70,12 +69,10 @@ class ProgrammeReminderStore {
         synchronized(lock) {
             val current = _reminders.value
             if (current.any { it.key == target }) {
-                dismissedKeys.remove(target)
                 _reminders.value = current.filterNot { it.key == target }
                 return false
             }
             if (!canSchedule(programme, nowMs)) return false
-            dismissedKeys.remove(target)
             val added = ProgrammeReminder(
                 profileId = profileId,
                 channelId = channel.id,
@@ -95,7 +92,6 @@ class ProgrammeReminderStore {
 
     fun dismiss(key: ProgrammeReminder.Key) {
         synchronized(lock) {
-            dismissedKeys.add(key)
             _reminders.value = _reminders.value.filterNot { it.key == key }
         }
     }
@@ -128,7 +124,7 @@ class ProgrammeReminderStore {
             var candidate: ProgrammeReminder? = null
 
             for (item in current) {
-                if (item.stopMs <= nowMs || item.key in dismissedKeys) {
+                if (item.stopMs <= nowMs) {
                     changed = true
                     continue
                 }
@@ -140,7 +136,6 @@ class ProgrammeReminderStore {
                     // Suppress the prompt while already on the channel, but keep the reminder
                     // until the programme actually starts: the viewer may zap away in the lead window.
                     if (nowMs >= item.startMs) {
-                        dismissedKeys.add(item.key)
                         changed = true
                     } else {
                         kept.add(item)
@@ -173,7 +168,6 @@ class ProgrammeReminderStore {
 
     fun clearAll() {
         synchronized(lock) {
-            dismissedKeys.clear()
             _reminders.value = emptyList()
         }
     }

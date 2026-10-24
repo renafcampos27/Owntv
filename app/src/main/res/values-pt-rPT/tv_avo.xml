@@ -1,0 +1,5 @@
+<resources>
+    <string name="tv_avo_mode_title">Modo TV Avó</string>
+    <string name="tv_avo_mode_description">Apenas nome do canal e programação. Ao ativar, liga também o agrupamento de versões, a prioridade de reprodução e a troca automática entre qualidades. Cima/baixo muda de canal; Voltar regressa à lista.</string>
+    <string name="tv_avo_channel_unavailable">Não foi possível abrir este canal. Muda de canal ou carrega em Voltar.</string>
+</resources>

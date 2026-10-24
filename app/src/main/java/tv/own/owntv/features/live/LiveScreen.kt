@@ -1119,12 +1119,13 @@ private fun ChannelRow(
     providerName: String? = null,
     modifier: Modifier = Modifier,
 ) {
+    val initialNowTitle = remember(vm, channel.id) { vm.nowPlaying.value[channel.id] }
     val nowTitle by remember(vm, channel.id, isFocusedChannel) {
         if (isFocusedChannel) kotlinx.coroutines.flow.combine(vm.nowPlaying, vm.browseNowNext) { titles, guide ->
             guide.second?.now?.title?.takeIf { guide.first == channel.id && it.isNotBlank() } ?: titles[channel.id]
         }.distinctUntilChanged()
         else vm.nowPlaying.map { it[channel.id] }.distinctUntilChanged()
-    }.collectAsStateWithLifecycle(initialValue = vm.nowPlaying.value[channel.id])
+    }.collectAsStateWithLifecycle(initialValue = initialNowTitle)
     val colors = OwnTVTheme.colors
     val currentChannelLabel = stringResource(tv.own.owntv.R.string.ui_current_channel)
     var pressStage by remember(channel.id) { mutableStateOf(ChannelPressStage.IDLE) }

@@ -1,0 +1,11 @@
+<resources>
+    <plurals name="pin_retry_wait">
+        <item quantity="one">Aguarda %1$d segundo antes de tentar o PIN novamente.</item>
+        <item quantity="other">Aguarda %1$d segundos antes de tentar o PIN novamente.</item>
+    </plurals>
+    <string name="profiles_confirm_adult_pin">Confirma o PIN do perfil adulto %1$s</string>
+    <plurals name="backup_subtitle_items_omitted">
+        <item quantity="one">Não foi possível restaurar %1$d item de legendas. O restauro ficou incompleto.</item>
+        <item quantity="other">Não foi possível restaurar %1$d itens de legendas. O restauro ficou incompleto.</item>
+    </plurals>
+</resources>

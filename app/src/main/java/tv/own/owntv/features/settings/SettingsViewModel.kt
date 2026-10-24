@@ -886,6 +886,11 @@ class SettingsViewModel(
         else customizationStore.observe(pid, MediaType.LIVE)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.customize.SectionCustomizations())
 
+    suspend fun prepareTvAvoChannelVersions() {
+        val pid = settings.activeProfileId.first()
+        if (pid >= 0) customizationStore.update(pid, MediaType.LIVE) { tvAvoChannelVersions(it) }
+    }
+
     fun setGroupChannelVersions(enabled: Boolean) { viewModelScope.launch {
         val pid = settings.activeProfileId.first()
         if (pid >= 0) customizationStore.update(pid, MediaType.LIVE) { it.copy(groupChannelVersions = enabled) }

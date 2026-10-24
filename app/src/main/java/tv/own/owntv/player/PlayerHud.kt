@@ -131,6 +131,8 @@ private sealed interface TuneOsd {
 fun PlayerHud(
     player: PlaybackEngine,
     onBack: () -> Unit,
+    tvAvoMode: Boolean = false,
+    tvAvoChannelName: String? = null,
     recentChannelWaitSeconds: kotlinx.coroutines.flow.StateFlow<Int>? = null,
     openingChannel: kotlinx.coroutines.flow.StateFlow<tv.own.owntv.core.database.entity.ChannelEntity?>? = null,
     onPip: (() -> Unit)? = null,
@@ -210,6 +212,12 @@ fun PlayerHud(
     watchingWallMs: (() -> Long?)? = null,
     modifier: Modifier = Modifier,
 ) {
+
+    if (tvAvoMode) {
+        TvAvoPlayerHud(player, onBack, tvAvoChannelName, directTuneContextKey,
+            onChannelUp, onChannelDown, liveEpgCard, recentChannelWaitSeconds, inert, modifier)
+        return
+    }
 
     // T14 — nothing that ticks is read in this root scope: with the controls hidden it used to recompose
     // the whole HUD once a second for a position nobody could see. The offset, the archive clock and the

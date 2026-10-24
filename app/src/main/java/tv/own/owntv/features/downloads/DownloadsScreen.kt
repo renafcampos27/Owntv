@@ -383,10 +383,7 @@ private fun StorageBar(info: tv.own.owntv.core.download.DownloadStorageInfo) {
 }
 
 private fun storageSize(bytes: Long, unknown: String): String =
-    if (bytes <= 0) unknown else java.text.NumberFormat.getNumberInstance().apply {
-        minimumFractionDigits = 1
-        maximumFractionDigits = 1
-    }.format(bytes / 1_073_741_824.0)
+    if (bytes <= 0) unknown else tv.own.owntv.ui.format.OneDecimalFormatter.format(bytes / 1_073_741_824.0)
 
 @Composable
 private fun DownloadRow(
@@ -479,9 +476,6 @@ private fun sizeMb(bytes: Long, unknown: String): String =
     } else {
         stringResource(
             CoreR.string.common_size_mb,
-            java.text.NumberFormat.getNumberInstance().apply {
-                minimumFractionDigits = 1
-                maximumFractionDigits = 1
-            }.format(bytes / 1_048_576.0),
+            tv.own.owntv.ui.format.OneDecimalFormatter.format(bytes / 1_048_576.0),
         )
     }

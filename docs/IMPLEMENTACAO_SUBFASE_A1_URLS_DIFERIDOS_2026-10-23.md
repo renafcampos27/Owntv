@@ -1,6 +1,6 @@
 # OwnTV TV — subfase A1: URLs de diferidos e credenciais
 
-**Data:** 23/10/2026. **Autorização:** primeira subfase do plano reavaliado; âmbito limitado a **R1 / DAT-03**. As restantes subfases não foram iniciadas.
+**Estado: concluída e validada automaticamente.** **Implementação:** 23/10/2026. **Retoma e fecho da validação:** 24/10/2026. **Autorização:** primeira subfase do plano reavaliado; âmbito limitado a **R1 / DAT-03**. As restantes subfases não foram iniciadas.
 
 Plano: [reanálise do council](../implementar_rena/REANALISE_COUNCIL_PLANO_2026-10-23.md). Esta implementação fecha a lacuna de construção de URL identificada em R1, sem reaplicar o bloco DAT-03 inteiro.
 
@@ -27,10 +27,10 @@ Não foram alteradas as opções de formato/fallback, HLS obrigatório, motores,
 - Os testes verificam `&`, `+`, `%`, `/`, `?`, `#`, percent-encoding literal, Unicode, credenciais recebidas logicamente, tokens repetidos, subdiretório/porta, caminhos M3U compactos, passagem por CatchupFormats, HLS restrito e horário com fuso/correção aplicado uma vez.
 - Verificação i18n aprovada, sem aumento do baseline e sem alterações semânticas no inventário de outros ficheiros.
 - **Seis testes da ferramenta de snapshot aprovados.**
-- Compilação App debug/release e lint vital de release: **em validação no momento de criação deste registo**; atualizar antes do fecho.
+- Compilação App debug/release e lint vital de release: execução de 23/10 **aprovada**, em 5 min 38 s. Na retoma de 24/10 foi detetada alteração posterior de `app/build.gradle.kts`, com a versão atual `105.1.0.6`; **nova validação da integração atual aprovada**, em 3 min 34 s, com 109 tarefas (11 executadas e 98 atualizadas). A alteração da versão não foi feita por esta subfase. Mantém-se aviso de funcionalidades Gradle obsoletas; lint não foi desativado nem contornado com baseline.
 - Verificação de whitespace do diff aprovada com CR de fim de linha reconhecido, preservando os fins de linha preexistentes do Windows.
 
-Logs desta intervenção: `%TEMP%/owntv-subphase-A1-red.log`, `owntv-subphase-A1-core.log`, `owntv-subphase-A1-app.log`. A passagem intermédia com a diferença de timestamp está em `owntv-subphase-A1-green.log` e não representa o resultado final.
+Logs desta intervenção: `%TEMP%/owntv-subphase-A1-red.log`, `owntv-subphase-A1-core.log`, `owntv-subphase-A1-app.log` e revalidação `owntv-subphase-A1-app-final-20261024.log`. A passagem intermédia com a diferença de timestamp está em `owntv-subphase-A1-green.log` e não representa o resultado final.
 
 ## Integridade e recuperação
 

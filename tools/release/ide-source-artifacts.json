@@ -1,0 +1,2485 @@
+[
+  {
+    "group": "androidx.activity",
+    "name": "activity",
+    "version": "1.12.4",
+    "artifact": "activity-1.12.4-sources.jar"
+  },
+  {
+    "group": "androidx.activity",
+    "name": "activity",
+    "version": "1.13.0",
+    "artifact": "activity-1.13.0-sources.jar"
+  },
+  {
+    "group": "androidx.activity",
+    "name": "activity-compose",
+    "version": "1.13.0",
+    "artifact": "activity-compose-1.13.0-samples-sources.jar"
+  },
+  {
+    "group": "androidx.activity",
+    "name": "activity-compose",
+    "version": "1.13.0",
+    "artifact": "activity-compose-1.13.0-sources.jar"
+  },
+  {
+    "group": "androidx.activity",
+    "name": "activity-ktx",
+    "version": "1.12.4",
+    "artifact": "activity-ktx-1.12.4-sources.jar"
+  },
+  {
+    "group": "androidx.activity",
+    "name": "activity-ktx",
+    "version": "1.13.0",
+    "artifact": "activity-ktx-1.13.0-sources.jar"
+  },
+  {
+    "group": "androidx.annotation",
+    "name": "annotation-experimental",
+    "version": "1.4.1",
+    "artifact": "annotation-experimental-1.4.1-sources.jar"
+  },
+  {
+    "group": "androidx.annotation",
+    "name": "annotation-experimental",
+    "version": "1.5.0",
+    "artifact": "annotation-experimental-1.5.0-sources.jar"
+  },
+  {
+    "group": "androidx.annotation",
+    "name": "annotation-jvm",
+    "version": "1.10.0",
+    "artifact": "annotation-jvm-1.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.annotation",
+    "name": "annotation-jvm",
+    "version": "1.8.1",
+    "artifact": "annotation-jvm-1.8.1-sources.jar"
+  },
+  {
+    "group": "androidx.annotation",
+    "name": "annotation-jvm",
+    "version": "1.9.1",
+    "artifact": "annotation-jvm-1.9.1-sources.jar"
+  },
+  {
+    "group": "androidx.appcompat",
+    "name": "appcompat",
+    "version": "1.7.1",
+    "artifact": "appcompat-1.7.1-sources.jar"
+  },
+  {
+    "group": "androidx.appcompat",
+    "name": "appcompat-resources",
+    "version": "1.7.1",
+    "artifact": "appcompat-resources-1.7.1-sources.jar"
+  },
+  {
+    "group": "androidx.arch.core",
+    "name": "core-common",
+    "version": "2.1.0",
+    "artifact": "core-common-2.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.arch.core",
+    "name": "core-common",
+    "version": "2.2.0",
+    "artifact": "core-common-2.2.0-sources.jar"
+  },
+  {
+    "group": "androidx.arch.core",
+    "name": "core-runtime",
+    "version": "2.1.0",
+    "artifact": "core-runtime-2.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.arch.core",
+    "name": "core-runtime",
+    "version": "2.2.0",
+    "artifact": "core-runtime-2.2.0-sources.jar"
+  },
+  {
+    "group": "androidx.autofill",
+    "name": "autofill",
+    "version": "1.0.0",
+    "artifact": "autofill-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.benchmark",
+    "name": "benchmark-baseline-profile-gradle-plugin",
+    "version": "1.5.0-rc02",
+    "artifact": "benchmark-baseline-profile-gradle-plugin-1.5.0-rc02-sources.jar"
+  },
+  {
+    "group": "androidx.benchmark",
+    "name": "benchmark-common",
+    "version": "1.5.0-rc02",
+    "artifact": "benchmark-common-1.5.0-rc02-samples-sources.jar"
+  },
+  {
+    "group": "androidx.benchmark",
+    "name": "benchmark-common",
+    "version": "1.5.0-rc02",
+    "artifact": "benchmark-common-1.5.0-rc02-sources.jar"
+  },
+  {
+    "group": "androidx.benchmark",
+    "name": "benchmark-macro",
+    "version": "1.5.0-rc02",
+    "artifact": "benchmark-macro-1.5.0-rc02-sources.jar"
+  },
+  {
+    "group": "androidx.benchmark",
+    "name": "benchmark-macro-junit4",
+    "version": "1.5.0-rc02",
+    "artifact": "benchmark-macro-junit4-1.5.0-rc02-samples-sources.jar"
+  },
+  {
+    "group": "androidx.benchmark",
+    "name": "benchmark-macro-junit4",
+    "version": "1.5.0-rc02",
+    "artifact": "benchmark-macro-junit4-1.5.0-rc02-sources.jar"
+  },
+  {
+    "group": "androidx.benchmark",
+    "name": "benchmark-traceprocessor-android",
+    "version": "1.5.0-rc02",
+    "artifact": "benchmark-traceprocessor-1.5.0-rc02-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.benchmark",
+    "name": "benchmark-traceprocessor-android",
+    "version": "1.5.0-rc02",
+    "artifact": "benchmark-traceprocessor-android-1.5.0-rc02-sources.jar"
+  },
+  {
+    "group": "androidx.collection",
+    "name": "collection",
+    "version": "1.0.0",
+    "artifact": "collection-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.collection",
+    "name": "collection",
+    "version": "1.1.0",
+    "artifact": "collection-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.collection",
+    "name": "collection-jvm",
+    "version": "1.5.0",
+    "artifact": "collection-jvm-1.5.0-sources.jar"
+  },
+  {
+    "group": "androidx.collection",
+    "name": "collection-ktx",
+    "version": "1.1.0",
+    "artifact": "collection-ktx-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.collection",
+    "name": "collection-ktx",
+    "version": "1.5.0",
+    "artifact": "collection-ktx-1.5.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.animation",
+    "name": "animation-android",
+    "version": "1.12.0",
+    "artifact": "animation-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.animation",
+    "name": "animation-android",
+    "version": "1.12.0",
+    "artifact": "animation-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.animation",
+    "name": "animation-core-android",
+    "version": "1.12.0",
+    "artifact": "animation-core-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.animation",
+    "name": "animation-core-android",
+    "version": "1.12.0",
+    "artifact": "animation-core-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.foundation",
+    "name": "foundation-android",
+    "version": "1.12.0",
+    "artifact": "foundation-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.foundation",
+    "name": "foundation-android",
+    "version": "1.12.0",
+    "artifact": "foundation-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.foundation",
+    "name": "foundation-layout-android",
+    "version": "1.12.0",
+    "artifact": "foundation-layout-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.foundation",
+    "name": "foundation-layout-android",
+    "version": "1.12.0",
+    "artifact": "foundation-layout-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.material",
+    "name": "material-icons-core-android",
+    "version": "1.7.8",
+    "artifact": "material-icons-core-1.7.8-samples-sources.jar",
+    "docsType": "fake-sources"
+  },
+  {
+    "group": "androidx.compose.material",
+    "name": "material-icons-core-android",
+    "version": "1.7.8",
+    "artifact": "material-icons-core-android-1.7.8-sources.jar"
+  },
+  {
+    "group": "androidx.compose.material",
+    "name": "material-ripple-android",
+    "version": "1.12.0",
+    "artifact": "material-ripple-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.material3",
+    "name": "material3-android",
+    "version": "1.4.0",
+    "artifact": "material3-1.4.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.material3",
+    "name": "material3-android",
+    "version": "1.4.0",
+    "artifact": "material3-android-1.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.runtime",
+    "name": "runtime-android",
+    "version": "1.12.0",
+    "artifact": "runtime-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.runtime",
+    "name": "runtime-android",
+    "version": "1.12.0",
+    "artifact": "runtime-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.runtime",
+    "name": "runtime-annotation-android",
+    "version": "1.12.0",
+    "artifact": "runtime-annotation-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.runtime",
+    "name": "runtime-annotation-android",
+    "version": "1.12.0",
+    "artifact": "runtime-annotation-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.runtime",
+    "name": "runtime-retain-android",
+    "version": "1.12.0",
+    "artifact": "runtime-retain-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.runtime",
+    "name": "runtime-retain-android",
+    "version": "1.12.0",
+    "artifact": "runtime-retain-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.runtime",
+    "name": "runtime-saveable-android",
+    "version": "1.12.0",
+    "artifact": "runtime-saveable-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.runtime",
+    "name": "runtime-saveable-android",
+    "version": "1.12.0",
+    "artifact": "runtime-saveable-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-android",
+    "version": "1.12.0",
+    "artifact": "ui-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-android",
+    "version": "1.12.0",
+    "artifact": "ui-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-geometry-android",
+    "version": "1.12.0",
+    "artifact": "ui-geometry-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-graphics-android",
+    "version": "1.12.0",
+    "artifact": "ui-graphics-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-graphics-android",
+    "version": "1.12.0",
+    "artifact": "ui-graphics-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-test-manifest",
+    "version": "1.12.0",
+    "artifact": "ui-test-manifest-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-text-android",
+    "version": "1.12.0",
+    "artifact": "ui-text-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-text-android",
+    "version": "1.12.0",
+    "artifact": "ui-text-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-tooling-android",
+    "version": "1.12.0",
+    "artifact": "ui-tooling-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-tooling-android",
+    "version": "1.12.0",
+    "artifact": "ui-tooling-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-tooling-data-android",
+    "version": "1.12.0",
+    "artifact": "ui-tooling-data-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-tooling-preview-android",
+    "version": "1.12.0",
+    "artifact": "ui-tooling-preview-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-tooling-preview-android",
+    "version": "1.12.0",
+    "artifact": "ui-tooling-preview-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-unit-android",
+    "version": "1.12.0",
+    "artifact": "ui-unit-1.12.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-unit-android",
+    "version": "1.12.0",
+    "artifact": "ui-unit-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.compose.ui",
+    "name": "ui-util-android",
+    "version": "1.12.0",
+    "artifact": "ui-util-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "androidx.concurrent",
+    "name": "concurrent-futures",
+    "version": "1.1.0",
+    "artifact": "concurrent-futures-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.concurrent",
+    "name": "concurrent-futures",
+    "version": "1.2.0",
+    "artifact": "concurrent-futures-1.2.0-sources.jar"
+  },
+  {
+    "group": "androidx.concurrent",
+    "name": "concurrent-futures-ktx",
+    "version": "1.1.0",
+    "artifact": "concurrent-futures-ktx-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.concurrent",
+    "name": "concurrent-futures-ktx",
+    "version": "1.2.0",
+    "artifact": "concurrent-futures-ktx-1.2.0-sources.jar"
+  },
+  {
+    "group": "androidx.core",
+    "name": "core",
+    "version": "1.19.0",
+    "artifact": "core-1.19.0-samples-sources.jar"
+  },
+  {
+    "group": "androidx.core",
+    "name": "core",
+    "version": "1.19.0",
+    "artifact": "core-1.19.0-sources.jar"
+  },
+  {
+    "group": "androidx.core",
+    "name": "core",
+    "version": "1.9.0",
+    "artifact": "core-1.9.0-sources.jar"
+  },
+  {
+    "group": "androidx.core",
+    "name": "core-ktx",
+    "version": "1.19.0",
+    "artifact": "core-ktx-1.19.0-sources.jar"
+  },
+  {
+    "group": "androidx.core",
+    "name": "core-splashscreen",
+    "version": "1.2.0",
+    "artifact": "core-splashscreen-1.2.0-sources.jar"
+  },
+  {
+    "group": "androidx.core",
+    "name": "core-viewtree",
+    "version": "1.0.0",
+    "artifact": "core-viewtree-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.cursoradapter",
+    "name": "cursoradapter",
+    "version": "1.0.0",
+    "artifact": "cursoradapter-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.customview",
+    "name": "customview",
+    "version": "1.0.0",
+    "artifact": "customview-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.customview",
+    "name": "customview-poolingcontainer",
+    "version": "1.0.0",
+    "artifact": "customview-poolingcontainer-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.databinding",
+    "name": "databinding-common",
+    "version": "9.4.1",
+    "artifact": "databinding-common-9.4.1-sources.jar"
+  },
+  {
+    "group": "androidx.databinding",
+    "name": "databinding-compiler-common",
+    "version": "9.4.1",
+    "artifact": "databinding-compiler-common-9.4.1-sources.jar"
+  },
+  {
+    "group": "androidx.datastore",
+    "name": "datastore-android",
+    "version": "1.2.1",
+    "artifact": "datastore-android-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.datastore",
+    "name": "datastore-core-android",
+    "version": "1.2.1",
+    "artifact": "datastore-core-android-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.datastore",
+    "name": "datastore-core-okio-jvm",
+    "version": "1.2.1",
+    "artifact": "datastore-core-okio-jvm-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.datastore",
+    "name": "datastore-preferences-android",
+    "version": "1.2.1",
+    "artifact": "datastore-preferences-android-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.datastore",
+    "name": "datastore-preferences-core-android",
+    "version": "1.2.1",
+    "artifact": "datastore-preferences-core-android-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.datastore",
+    "name": "datastore-preferences-external-protobuf",
+    "version": "1.2.1",
+    "artifact": "datastore-preferences-external-protobuf-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.datastore",
+    "name": "datastore-preferences-proto",
+    "version": "1.2.1",
+    "artifact": "datastore-preferences-proto-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.documentfile",
+    "name": "documentfile",
+    "version": "1.1.0",
+    "artifact": "documentfile-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.drawerlayout",
+    "name": "drawerlayout",
+    "version": "1.0.0",
+    "artifact": "drawerlayout-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.emoji2",
+    "name": "emoji2",
+    "version": "1.3.0",
+    "artifact": "emoji2-1.3.0-sources.jar"
+  },
+  {
+    "group": "androidx.emoji2",
+    "name": "emoji2",
+    "version": "1.4.0",
+    "artifact": "emoji2-1.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.emoji2",
+    "name": "emoji2-views-helper",
+    "version": "1.3.0",
+    "artifact": "emoji2-views-helper-1.3.0-sources.jar"
+  },
+  {
+    "group": "androidx.emoji2",
+    "name": "emoji2-views-helper",
+    "version": "1.4.0",
+    "artifact": "emoji2-views-helper-1.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.exifinterface",
+    "name": "exifinterface",
+    "version": "1.3.6",
+    "artifact": "exifinterface-1.3.6-sources.jar"
+  },
+  {
+    "group": "androidx.exifinterface",
+    "name": "exifinterface",
+    "version": "1.4.2",
+    "artifact": "exifinterface-1.4.2-sources.jar"
+  },
+  {
+    "group": "androidx.fragment",
+    "name": "fragment",
+    "version": "1.8.9",
+    "artifact": "fragment-1.8.9-sources.jar"
+  },
+  {
+    "group": "androidx.fragment",
+    "name": "fragment-ktx",
+    "version": "1.8.9",
+    "artifact": "fragment-ktx-1.8.9-sources.jar"
+  },
+  {
+    "group": "androidx.graphics",
+    "name": "graphics-path",
+    "version": "1.0.1",
+    "artifact": "graphics-path-1.0.1-sources.jar"
+  },
+  {
+    "group": "androidx.interpolator",
+    "name": "interpolator",
+    "version": "1.0.0",
+    "artifact": "interpolator-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-common",
+    "version": "2.3.1",
+    "artifact": "lifecycle-common-2.3.1-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-common",
+    "version": "2.6.2",
+    "artifact": "lifecycle-common-2.6.2-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-common-java8",
+    "version": "2.11.0",
+    "artifact": "lifecycle-common-java8-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-common-jvm",
+    "version": "2.10.0",
+    "artifact": "lifecycle-common-jvm-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-common-jvm",
+    "version": "2.11.0",
+    "artifact": "lifecycle-common-jvm-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-livedata",
+    "version": "2.10.0",
+    "artifact": "lifecycle-livedata-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-livedata",
+    "version": "2.11.0",
+    "artifact": "lifecycle-livedata-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-livedata-core",
+    "version": "2.10.0",
+    "artifact": "lifecycle-livedata-core-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-livedata-core",
+    "version": "2.11.0",
+    "artifact": "lifecycle-livedata-core-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-livedata-core-ktx",
+    "version": "2.10.0",
+    "artifact": "lifecycle-livedata-core-ktx-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-livedata-core-ktx",
+    "version": "2.11.0",
+    "artifact": "lifecycle-livedata-core-ktx-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-livedata-ktx",
+    "version": "2.10.0",
+    "artifact": "lifecycle-livedata-ktx-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-livedata-ktx",
+    "version": "2.11.0",
+    "artifact": "lifecycle-livedata-ktx-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-process",
+    "version": "2.10.0",
+    "artifact": "lifecycle-process-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-process",
+    "version": "2.11.0",
+    "artifact": "lifecycle-process-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-runtime",
+    "version": "2.3.1",
+    "artifact": "lifecycle-runtime-2.3.1-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-runtime",
+    "version": "2.6.2",
+    "artifact": "lifecycle-runtime-2.6.2-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-runtime-android",
+    "version": "2.10.0",
+    "artifact": "lifecycle-runtime-android-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-runtime-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-runtime-android-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-runtime-compose-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-runtime-compose-2.11.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-runtime-compose-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-runtime-compose-android-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-runtime-ktx-android",
+    "version": "2.10.0",
+    "artifact": "lifecycle-runtime-ktx-android-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-runtime-ktx-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-runtime-ktx-android-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-service",
+    "version": "2.10.0",
+    "artifact": "lifecycle-service-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-service",
+    "version": "2.11.0",
+    "artifact": "lifecycle-service-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-android",
+    "version": "2.10.0",
+    "artifact": "lifecycle-viewmodel-android-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-viewmodel-android-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-compose-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-viewmodel-compose-2.11.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-compose-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-viewmodel-compose-android-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-ktx",
+    "version": "2.10.0",
+    "artifact": "lifecycle-viewmodel-ktx-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-ktx",
+    "version": "2.11.0",
+    "artifact": "lifecycle-viewmodel-ktx-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-savedstate-android",
+    "version": "2.10.0",
+    "artifact": "lifecycle-viewmodel-savedstate-2.10.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-savedstate-android",
+    "version": "2.10.0",
+    "artifact": "lifecycle-viewmodel-savedstate-android-2.10.0-sources.jar"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-savedstate-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-viewmodel-savedstate-2.11.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.lifecycle",
+    "name": "lifecycle-viewmodel-savedstate-android",
+    "version": "2.11.0",
+    "artifact": "lifecycle-viewmodel-savedstate-android-2.11.0-sources.jar"
+  },
+  {
+    "group": "androidx.loader",
+    "name": "loader",
+    "version": "1.0.0",
+    "artifact": "loader-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-common",
+    "version": "1.11.1",
+    "artifact": "media3-common-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-container",
+    "version": "1.11.1",
+    "artifact": "media3-container-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-database",
+    "version": "1.11.1",
+    "artifact": "media3-database-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-datasource",
+    "version": "1.11.1",
+    "artifact": "media3-datasource-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-datasource-okhttp",
+    "version": "1.11.1",
+    "artifact": "media3-datasource-okhttp-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-decoder",
+    "version": "1.11.1",
+    "artifact": "media3-decoder-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-exoplayer",
+    "version": "1.11.1",
+    "artifact": "media3-exoplayer-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-exoplayer-dash",
+    "version": "1.11.1",
+    "artifact": "media3-exoplayer-dash-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-exoplayer-hls",
+    "version": "1.11.1",
+    "artifact": "media3-exoplayer-hls-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-extractor",
+    "version": "1.11.1",
+    "artifact": "media3-extractor-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.media3",
+    "name": "media3-ui",
+    "version": "1.11.1",
+    "artifact": "media3-ui-1.11.1-sources.jar"
+  },
+  {
+    "group": "androidx.navigationevent",
+    "name": "navigationevent-android",
+    "version": "1.0.0",
+    "artifact": "navigationevent-1.0.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.navigationevent",
+    "name": "navigationevent-android",
+    "version": "1.0.0",
+    "artifact": "navigationevent-android-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.navigationevent",
+    "name": "navigationevent-android",
+    "version": "1.0.2",
+    "artifact": "navigationevent-1.0.2-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.navigationevent",
+    "name": "navigationevent-android",
+    "version": "1.0.2",
+    "artifact": "navigationevent-android-1.0.2-sources.jar"
+  },
+  {
+    "group": "androidx.navigationevent",
+    "name": "navigationevent-compose-android",
+    "version": "1.0.0",
+    "artifact": "navigationevent-compose-1.0.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.navigationevent",
+    "name": "navigationevent-compose-android",
+    "version": "1.0.0",
+    "artifact": "navigationevent-compose-android-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.paging",
+    "name": "paging-common-android",
+    "version": "3.5.1",
+    "artifact": "paging-common-3.5.1-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.paging",
+    "name": "paging-common-android",
+    "version": "3.5.1",
+    "artifact": "paging-common-android-3.5.1-sources.jar"
+  },
+  {
+    "group": "androidx.paging",
+    "name": "paging-common-ktx",
+    "version": "3.5.1",
+    "artifact": "paging-common-ktx-3.5.1-sources.jar"
+  },
+  {
+    "group": "androidx.paging",
+    "name": "paging-compose-android",
+    "version": "3.5.1",
+    "artifact": "paging-compose-3.5.1-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.paging",
+    "name": "paging-compose-android",
+    "version": "3.5.1",
+    "artifact": "paging-compose-android-3.5.1-sources.jar"
+  },
+  {
+    "group": "androidx.paging",
+    "name": "paging-runtime",
+    "version": "3.5.1",
+    "artifact": "paging-runtime-3.5.1-samples-sources.jar"
+  },
+  {
+    "group": "androidx.paging",
+    "name": "paging-runtime",
+    "version": "3.5.1",
+    "artifact": "paging-runtime-3.5.1-sources.jar"
+  },
+  {
+    "group": "androidx.profileinstaller",
+    "name": "profileinstaller",
+    "version": "1.4.0",
+    "artifact": "profileinstaller-1.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.profileinstaller",
+    "name": "profileinstaller",
+    "version": "1.4.1",
+    "artifact": "profileinstaller-1.4.1-sources.jar"
+  },
+  {
+    "group": "androidx.recyclerview",
+    "name": "recyclerview",
+    "version": "1.2.1",
+    "artifact": "recyclerview-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.recyclerview",
+    "name": "recyclerview",
+    "version": "1.3.0",
+    "artifact": "recyclerview-1.3.0-sources.jar"
+  },
+  {
+    "group": "androidx.resourceinspection",
+    "name": "resourceinspection-annotation",
+    "version": "1.0.1",
+    "artifact": "resourceinspection-annotation-1.0.1-sources.jar"
+  },
+  {
+    "group": "androidx.room",
+    "name": "room-common-jvm",
+    "version": "2.8.5",
+    "artifact": "room-common-jvm-2.8.5-sources.jar"
+  },
+  {
+    "group": "androidx.room",
+    "name": "room-ktx",
+    "version": "2.8.5",
+    "artifact": "room-ktx-2.8.5-sources.jar"
+  },
+  {
+    "group": "androidx.room",
+    "name": "room-paging-android",
+    "version": "2.8.5",
+    "artifact": "room-paging-android-2.8.5-sources.jar"
+  },
+  {
+    "group": "androidx.room",
+    "name": "room-runtime-android",
+    "version": "2.8.5",
+    "artifact": "room-runtime-android-2.8.5-sources.jar"
+  },
+  {
+    "group": "androidx.savedstate",
+    "name": "savedstate",
+    "version": "1.2.1",
+    "artifact": "savedstate-1.2.1-sources.jar"
+  },
+  {
+    "group": "androidx.savedstate",
+    "name": "savedstate-android",
+    "version": "1.4.0",
+    "artifact": "savedstate-1.4.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.savedstate",
+    "name": "savedstate-android",
+    "version": "1.4.0",
+    "artifact": "savedstate-android-1.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.savedstate",
+    "name": "savedstate-compose-android",
+    "version": "1.4.0",
+    "artifact": "savedstate-compose-1.4.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.savedstate",
+    "name": "savedstate-compose-android",
+    "version": "1.4.0",
+    "artifact": "savedstate-compose-android-1.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.savedstate",
+    "name": "savedstate-ktx",
+    "version": "1.4.0",
+    "artifact": "savedstate-ktx-1.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.sqlite",
+    "name": "sqlite-android",
+    "version": "2.6.2",
+    "artifact": "sqlite-android-2.6.2-sources.jar"
+  },
+  {
+    "group": "androidx.sqlite",
+    "name": "sqlite-bundled-android",
+    "version": "2.6.2",
+    "artifact": "sqlite-bundled-android-2.6.2-sources.jar"
+  },
+  {
+    "group": "androidx.sqlite",
+    "name": "sqlite-framework-android",
+    "version": "2.6.2",
+    "artifact": "sqlite-framework-android-2.6.2-sources.jar"
+  },
+  {
+    "group": "androidx.startup",
+    "name": "startup-runtime",
+    "version": "1.1.1",
+    "artifact": "startup-runtime-1.1.1-sources.jar"
+  },
+  {
+    "group": "androidx.startup",
+    "name": "startup-runtime",
+    "version": "1.2.0",
+    "artifact": "startup-runtime-1.2.0-sources.jar"
+  },
+  {
+    "group": "androidx.test",
+    "name": "annotation",
+    "version": "1.0.1",
+    "artifact": "annotation-1.0.1-sources.jar"
+  },
+  {
+    "group": "androidx.test",
+    "name": "core",
+    "version": "1.7.0",
+    "artifact": "core-1.7.0-sources.jar"
+  },
+  {
+    "group": "androidx.test",
+    "name": "monitor",
+    "version": "1.8.0",
+    "artifact": "monitor-1.8.0-sources.jar"
+  },
+  {
+    "group": "androidx.test",
+    "name": "rules",
+    "version": "1.5.0",
+    "artifact": "rules-1.5.0-javadoc.jar"
+  },
+  {
+    "group": "androidx.test",
+    "name": "rules",
+    "version": "1.5.0",
+    "artifact": "rules-1.5.0-sources.jar"
+  },
+  {
+    "group": "androidx.test",
+    "name": "runner",
+    "version": "1.7.0",
+    "artifact": "runner-1.7.0-sources.jar"
+  },
+  {
+    "group": "androidx.test.espresso",
+    "name": "espresso-core",
+    "version": "3.7.0",
+    "artifact": "espresso-core-3.7.0-sources.jar"
+  },
+  {
+    "group": "androidx.test.espresso",
+    "name": "espresso-idling-resource",
+    "version": "3.7.0",
+    "artifact": "espresso-idling-resource-3.7.0-sources.jar"
+  },
+  {
+    "group": "androidx.test.ext",
+    "name": "junit",
+    "version": "1.3.0",
+    "artifact": "junit-1.3.0-sources.jar"
+  },
+  {
+    "group": "androidx.test.services",
+    "name": "storage",
+    "version": "1.6.0",
+    "artifact": "storage-1.6.0-sources.jar"
+  },
+  {
+    "group": "androidx.test.uiautomator",
+    "name": "uiautomator",
+    "version": "2.4.0",
+    "artifact": "uiautomator-2.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.test.uiautomator",
+    "name": "uiautomator-shell-android",
+    "version": "2.4.0",
+    "artifact": "uiautomator-shell-android-2.4.0-sources.jar"
+  },
+  {
+    "group": "androidx.tracing",
+    "name": "tracing",
+    "version": "1.1.0",
+    "artifact": "tracing-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.tracing",
+    "name": "tracing",
+    "version": "1.2.0",
+    "artifact": "tracing-1.2.0-sources.jar"
+  },
+  {
+    "group": "androidx.tracing",
+    "name": "tracing-ktx",
+    "version": "1.1.0",
+    "artifact": "tracing-ktx-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.tracing",
+    "name": "tracing-ktx",
+    "version": "1.2.0",
+    "artifact": "tracing-ktx-1.2.0-sources.jar"
+  },
+  {
+    "group": "androidx.tracing",
+    "name": "tracing-perfetto",
+    "version": "1.0.1",
+    "artifact": "tracing-perfetto-1.0.1-sources.jar"
+  },
+  {
+    "group": "androidx.tracing",
+    "name": "tracing-perfetto-binary",
+    "version": "1.0.1",
+    "artifact": "tracing-perfetto-binary-1.0.1-sources.jar"
+  },
+  {
+    "group": "androidx.tracing",
+    "name": "tracing-perfetto-handshake",
+    "version": "1.0.1",
+    "artifact": "tracing-perfetto-handshake-1.0.1-sources.jar"
+  },
+  {
+    "group": "androidx.tv",
+    "name": "tv-material",
+    "version": "1.1.0",
+    "artifact": "tv-material-1.1.0-samples-sources.jar"
+  },
+  {
+    "group": "androidx.tv",
+    "name": "tv-material",
+    "version": "1.1.0",
+    "artifact": "tv-material-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.tvprovider",
+    "name": "tvprovider",
+    "version": "1.1.0",
+    "artifact": "tvprovider-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.vectordrawable",
+    "name": "vectordrawable",
+    "version": "1.1.0",
+    "artifact": "vectordrawable-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.vectordrawable",
+    "name": "vectordrawable-animated",
+    "version": "1.1.0",
+    "artifact": "vectordrawable-animated-1.1.0-sources.jar"
+  },
+  {
+    "group": "androidx.versionedparcelable",
+    "name": "versionedparcelable",
+    "version": "1.1.1",
+    "artifact": "versionedparcelable-1.1.1-sources.jar"
+  },
+  {
+    "group": "androidx.viewpager",
+    "name": "viewpager",
+    "version": "1.0.0",
+    "artifact": "viewpager-1.0.0-sources.jar"
+  },
+  {
+    "group": "androidx.window",
+    "name": "window",
+    "version": "1.5.0",
+    "artifact": "window-1.5.0-samples-sources.jar"
+  },
+  {
+    "group": "androidx.window",
+    "name": "window",
+    "version": "1.5.0",
+    "artifact": "window-1.5.0-sources.jar"
+  },
+  {
+    "group": "androidx.window",
+    "name": "window-core-android",
+    "version": "1.5.0",
+    "artifact": "window-core-1.5.0-samples-sources.jar",
+    "docsType": "sources"
+  },
+  {
+    "group": "androidx.window",
+    "name": "window-core-android",
+    "version": "1.5.0",
+    "artifact": "window-core-android-1.5.0-sources.jar"
+  },
+  {
+    "group": "androidx.work",
+    "name": "work-runtime",
+    "version": "2.11.2",
+    "artifact": "work-runtime-2.11.2-sources.jar"
+  },
+  {
+    "group": "androidx.work",
+    "name": "work-runtime-ktx",
+    "version": "2.11.2",
+    "artifact": "work-runtime-ktx-2.11.2-sources.jar"
+  },
+  {
+    "group": "co.touchlab",
+    "name": "stately-concurrency-jvm",
+    "version": "2.1.0",
+    "artifact": "stately-concurrency-jvm-2.1.0-sources.jar"
+  },
+  {
+    "group": "co.touchlab",
+    "name": "stately-concurrent-collections-jvm",
+    "version": "2.1.0",
+    "artifact": "stately-concurrent-collections-jvm-2.1.0-sources.jar"
+  },
+  {
+    "group": "co.touchlab",
+    "name": "stately-strict-jvm",
+    "version": "2.1.0",
+    "artifact": "stately-strict-jvm-2.1.0-sources.jar"
+  },
+  {
+    "group": "com.android",
+    "name": "signflinger",
+    "version": "9.4.1",
+    "artifact": "signflinger-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android",
+    "name": "zipflinger",
+    "version": "9.4.1",
+    "artifact": "zipflinger-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.databinding",
+    "name": "baseLibrary",
+    "version": "9.4.1",
+    "artifact": "baseLibrary-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools",
+    "name": "annotations",
+    "version": "32.4.1",
+    "artifact": "annotations-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools",
+    "name": "common",
+    "version": "32.4.1",
+    "artifact": "common-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools",
+    "name": "dvlib",
+    "version": "32.4.1",
+    "artifact": "dvlib-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools",
+    "name": "repository",
+    "version": "32.4.1",
+    "artifact": "repository-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools",
+    "name": "sdk-common",
+    "version": "32.4.1",
+    "artifact": "sdk-common-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools",
+    "name": "sdklib",
+    "version": "32.4.1",
+    "artifact": "sdklib-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.analytics-library",
+    "name": "crash",
+    "version": "32.4.1",
+    "artifact": "crash-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.analytics-library",
+    "name": "protos",
+    "version": "32.4.1",
+    "artifact": "protos-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.analytics-library",
+    "name": "shared",
+    "version": "32.4.1",
+    "artifact": "shared-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.analytics-library",
+    "name": "tracker",
+    "version": "32.4.1",
+    "artifact": "tracker-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "aapt2-proto",
+    "version": "9.4.1-15978811",
+    "artifact": "aapt2-proto-9.4.1-15978811-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "aaptcompiler",
+    "version": "9.4.1",
+    "artifact": "aaptcompiler-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "apksig",
+    "version": "9.4.1",
+    "artifact": "apksig-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "apkzlib",
+    "version": "9.4.1",
+    "artifact": "apkzlib-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "builder",
+    "version": "9.4.1",
+    "artifact": "builder-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "builder-model",
+    "version": "9.4.1",
+    "artifact": "builder-model-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "builder-test-api",
+    "version": "9.4.1",
+    "artifact": "builder-test-api-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "gradle",
+    "version": "9.4.1",
+    "artifact": "gradle-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "gradle-api",
+    "version": "9.4.1",
+    "artifact": "gradle-api-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "gradle-common-api",
+    "version": "9.4.1",
+    "artifact": "gradle-common-api-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "gradle-settings-api",
+    "version": "9.4.1",
+    "artifact": "gradle-settings-api-9.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build",
+    "name": "manifest-merger",
+    "version": "32.4.1",
+    "artifact": "manifest-merger-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build.jetifier",
+    "name": "jetifier-core",
+    "version": "1.0.0-beta10",
+    "artifact": "jetifier-core-1.0.0-beta10-sources.jar"
+  },
+  {
+    "group": "com.android.tools.build.jetifier",
+    "name": "jetifier-processor",
+    "version": "1.0.0-beta10",
+    "artifact": "jetifier-processor-1.0.0-beta10-sources.jar"
+  },
+  {
+    "group": "com.android.tools.ddms",
+    "name": "ddmlib",
+    "version": "32.4.1",
+    "artifact": "ddmlib-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.layoutlib",
+    "name": "layoutlib-api",
+    "version": "32.4.1",
+    "artifact": "layoutlib-api-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.lint",
+    "name": "lint-model",
+    "version": "32.4.1",
+    "artifact": "lint-model-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.lint",
+    "name": "lint-typedef-remover",
+    "version": "32.4.1",
+    "artifact": "lint-typedef-remover-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.android.tools.utp",
+    "name": "gradle-work-action-api",
+    "version": "32.4.1",
+    "artifact": "gradle-work-action-api-32.4.1-sources.jar"
+  },
+  {
+    "group": "com.github.albfernandez",
+    "name": "juniversalchardet",
+    "version": "2.5.0",
+    "artifact": "juniversalchardet-2.5.0-javadoc.jar"
+  },
+  {
+    "group": "com.github.albfernandez",
+    "name": "juniversalchardet",
+    "version": "2.5.0",
+    "artifact": "juniversalchardet-2.5.0-sources.jar"
+  },
+  {
+    "group": "com.google.accompanist",
+    "name": "accompanist-drawablepainter",
+    "version": "0.37.3",
+    "artifact": "accompanist-drawablepainter-0.37.3-javadoc.jar"
+  },
+  {
+    "group": "com.google.accompanist",
+    "name": "accompanist-drawablepainter",
+    "version": "0.37.3",
+    "artifact": "accompanist-drawablepainter-0.37.3-sources.jar"
+  },
+  {
+    "group": "com.google.auto.value",
+    "name": "auto-value-annotations",
+    "version": "1.6.2",
+    "artifact": "auto-value-annotations-1.6.2-sources.jar"
+  },
+  {
+    "group": "com.google.auto.value",
+    "name": "auto-value-annotations",
+    "version": "1.6.3",
+    "artifact": "auto-value-annotations-1.6.3-javadoc.jar"
+  },
+  {
+    "group": "com.google.auto.value",
+    "name": "auto-value-annotations",
+    "version": "1.6.3",
+    "artifact": "auto-value-annotations-1.6.3-sources.jar"
+  },
+  {
+    "group": "com.google.code.findbugs",
+    "name": "jsr305",
+    "version": "3.0.2",
+    "artifact": "jsr305-3.0.2-javadoc.jar"
+  },
+  {
+    "group": "com.google.code.findbugs",
+    "name": "jsr305",
+    "version": "3.0.2",
+    "artifact": "jsr305-3.0.2-sources.jar"
+  },
+  {
+    "group": "com.google.code.gson",
+    "name": "gson",
+    "version": "2.11.0",
+    "artifact": "gson-2.11.0-sources.jar"
+  },
+  {
+    "group": "com.google.crypto.tink",
+    "name": "tink",
+    "version": "1.7.0",
+    "artifact": "tink-1.7.0-sources.jar"
+  },
+  {
+    "group": "com.google.dagger",
+    "name": "dagger",
+    "version": "2.28.3",
+    "artifact": "dagger-2.28.3-sources.jar"
+  },
+  {
+    "group": "com.google.devtools.ksp",
+    "name": "symbol-processing-api",
+    "version": "2.3.11",
+    "artifact": "symbol-processing-api-2.3.11-sources.jar"
+  },
+  {
+    "group": "com.google.devtools.ksp",
+    "name": "symbol-processing-common-deps",
+    "version": "2.3.11",
+    "artifact": "symbol-processing-common-deps-2.3.11-sources.jar"
+  },
+  {
+    "group": "com.google.devtools.ksp",
+    "name": "symbol-processing-gradle-plugin",
+    "version": "2.3.11",
+    "artifact": "symbol-processing-gradle-plugin-2.3.11-sources.jar"
+  },
+  {
+    "group": "com.google.errorprone",
+    "name": "error_prone_annotations",
+    "version": "2.30.0",
+    "artifact": "error_prone_annotations-2.30.0-javadoc.jar"
+  },
+  {
+    "group": "com.google.errorprone",
+    "name": "error_prone_annotations",
+    "version": "2.30.0",
+    "artifact": "error_prone_annotations-2.30.0-sources.jar"
+  },
+  {
+    "group": "com.google.errorprone",
+    "name": "error_prone_annotations",
+    "version": "2.36.0",
+    "artifact": "error_prone_annotations-2.36.0-sources.jar"
+  },
+  {
+    "group": "com.google.flatbuffers",
+    "name": "flatbuffers-java",
+    "version": "1.12.0",
+    "artifact": "flatbuffers-java-1.12.0-sources.jar"
+  },
+  {
+    "group": "com.google.guava",
+    "name": "failureaccess",
+    "version": "1.0.2",
+    "artifact": "failureaccess-1.0.2-javadoc.jar"
+  },
+  {
+    "group": "com.google.guava",
+    "name": "failureaccess",
+    "version": "1.0.2",
+    "artifact": "failureaccess-1.0.2-sources.jar"
+  },
+  {
+    "group": "com.google.guava",
+    "name": "guava",
+    "version": "33.4.0-jre",
+    "artifact": "guava-33.4.0-jre-sources.jar"
+  },
+  {
+    "group": "com.google.guava",
+    "name": "listenablefuture",
+    "version": "1.0",
+    "artifact": "listenablefuture-1.0-javadoc.jar"
+  },
+  {
+    "group": "com.google.guava",
+    "name": "listenablefuture",
+    "version": "1.0",
+    "artifact": "listenablefuture-1.0-sources.jar"
+  },
+  {
+    "group": "com.google.j2objc",
+    "name": "j2objc-annotations",
+    "version": "3.0.0",
+    "artifact": "j2objc-annotations-3.0.0-javadoc.jar"
+  },
+  {
+    "group": "com.google.j2objc",
+    "name": "j2objc-annotations",
+    "version": "3.0.0",
+    "artifact": "j2objc-annotations-3.0.0-sources.jar"
+  },
+  {
+    "group": "com.google.jimfs",
+    "name": "jimfs",
+    "version": "1.1",
+    "artifact": "jimfs-1.1-sources.jar"
+  },
+  {
+    "group": "com.google.protobuf",
+    "name": "protobuf-java",
+    "version": "3.25.5",
+    "artifact": "protobuf-java-3.25.5-sources.jar"
+  },
+  {
+    "group": "com.google.protobuf",
+    "name": "protobuf-java-util",
+    "version": "3.25.5",
+    "artifact": "protobuf-java-util-3.25.5-sources.jar"
+  },
+  {
+    "group": "com.google.testing.platform",
+    "name": "core-proto",
+    "version": "0.0.8-alpha08",
+    "artifact": "core-proto-0.0.8-alpha08-sources.jar"
+  },
+  {
+    "group": "com.google.zxing",
+    "name": "core",
+    "version": "3.5.4",
+    "artifact": "core-3.5.4-javadoc.jar"
+  },
+  {
+    "group": "com.google.zxing",
+    "name": "core",
+    "version": "3.5.4",
+    "artifact": "core-3.5.4-sources.jar"
+  },
+  {
+    "group": "com.googlecode.juniversalchardet",
+    "name": "juniversalchardet",
+    "version": "1.0.3",
+    "artifact": "juniversalchardet-1.0.3-sources.jar"
+  },
+  {
+    "group": "com.squareup",
+    "name": "javapoet",
+    "version": "1.13.0",
+    "artifact": "javapoet-1.13.0-sources.jar"
+  },
+  {
+    "group": "com.squareup",
+    "name": "javawriter",
+    "version": "2.5.0",
+    "artifact": "javawriter-2.5.0-sources.jar"
+  },
+  {
+    "group": "com.squareup.okhttp3",
+    "name": "okhttp-android",
+    "version": "5.5.0",
+    "artifact": "okhttp-android-5.5.0-sources.jar"
+  },
+  {
+    "group": "com.squareup.okio",
+    "name": "okio-jvm",
+    "version": "3.17.0",
+    "artifact": "okio-jvm-3.17.0-sources.jar"
+  },
+  {
+    "group": "com.squareup.okio",
+    "name": "okio-jvm",
+    "version": "3.18.1",
+    "artifact": "okio-jvm-3.18.1-sources.jar"
+  },
+  {
+    "group": "com.squareup.wire",
+    "name": "wire-runtime-jvm",
+    "version": "6.4.0",
+    "artifact": "wire-runtime-jvm-6.4.0-sources.jar"
+  },
+  {
+    "group": "com.sun.istack",
+    "name": "istack-commons-runtime",
+    "version": "3.0.8",
+    "artifact": "istack-commons-runtime-3.0.8-sources.jar"
+  },
+  {
+    "group": "com.sun.xml.fastinfoset",
+    "name": "FastInfoset",
+    "version": "1.2.16",
+    "artifact": "FastInfoset-1.2.16-sources.jar"
+  },
+  {
+    "group": "commons-codec",
+    "name": "commons-codec",
+    "version": "1.17.1",
+    "artifact": "commons-codec-1.17.1-sources.jar"
+  },
+  {
+    "group": "commons-io",
+    "name": "commons-io",
+    "version": "2.16.1",
+    "artifact": "commons-io-2.16.1-sources.jar"
+  },
+  {
+    "group": "commons-logging",
+    "name": "commons-logging",
+    "version": "1.2",
+    "artifact": "commons-logging-1.2-sources.jar"
+  },
+  {
+    "group": "gradle",
+    "name": "gradle",
+    "version": "9.7.1",
+    "artifact": "gradle-9.7.1-src.zip"
+  },
+  {
+    "group": "gradle",
+    "name": "gradle",
+    "version": "9.8.0",
+    "artifact": "gradle-9.8.0-src.zip"
+  },
+  {
+    "group": "io.coil-kt.coil3",
+    "name": "coil-android",
+    "version": "3.6.0",
+    "artifact": "coil-android-3.6.0-sources.jar"
+  },
+  {
+    "group": "io.coil-kt.coil3",
+    "name": "coil-compose-android",
+    "version": "3.6.0",
+    "artifact": "coil-compose-android-3.6.0-sources.jar"
+  },
+  {
+    "group": "io.coil-kt.coil3",
+    "name": "coil-compose-core-android",
+    "version": "3.6.0",
+    "artifact": "coil-compose-core-android-3.6.0-sources.jar"
+  },
+  {
+    "group": "io.coil-kt.coil3",
+    "name": "coil-core-android",
+    "version": "3.6.0",
+    "artifact": "coil-core-android-3.6.0-sources.jar"
+  },
+  {
+    "group": "io.coil-kt.coil3",
+    "name": "coil-network-core-android",
+    "version": "3.6.0",
+    "artifact": "coil-network-core-android-3.6.0-sources.jar"
+  },
+  {
+    "group": "io.coil-kt.coil3",
+    "name": "coil-network-okhttp-android",
+    "version": "3.6.0",
+    "artifact": "coil-network-okhttp-android-3.6.0-sources.jar"
+  },
+  {
+    "group": "io.insert-koin",
+    "name": "koin-compose-android",
+    "version": "4.2.2",
+    "artifact": "koin-compose-android-4.2.2-sources.jar"
+  },
+  {
+    "group": "io.insert-koin",
+    "name": "koin-compose-viewmodel-android",
+    "version": "4.2.2",
+    "artifact": "koin-compose-viewmodel-android-4.2.2-sources.jar"
+  },
+  {
+    "group": "io.insert-koin",
+    "name": "koin-core-jvm",
+    "version": "4.2.2",
+    "artifact": "koin-core-jvm-4.2.2-sources.jar"
+  },
+  {
+    "group": "io.insert-koin",
+    "name": "koin-core-viewmodel-android",
+    "version": "4.2.2",
+    "artifact": "koin-core-viewmodel-android-4.2.2-sources.jar"
+  },
+  {
+    "group": "jakarta.activation",
+    "name": "jakarta.activation-api",
+    "version": "1.2.1",
+    "artifact": "jakarta.activation-api-1.2.1-sources.jar"
+  },
+  {
+    "group": "jakarta.xml.bind",
+    "name": "jakarta.xml.bind-api",
+    "version": "2.3.2",
+    "artifact": "jakarta.xml.bind-api-2.3.2-sources.jar"
+  },
+  {
+    "group": "javax.inject",
+    "name": "javax.inject",
+    "version": "1",
+    "artifact": "javax.inject-1-javadoc.jar"
+  },
+  {
+    "group": "javax.inject",
+    "name": "javax.inject",
+    "version": "1",
+    "artifact": "javax.inject-1-sources.jar"
+  },
+  {
+    "group": "junit",
+    "name": "junit",
+    "version": "4.13.2",
+    "artifact": "junit-4.13.2-javadoc.jar"
+  },
+  {
+    "group": "junit",
+    "name": "junit",
+    "version": "4.13.2",
+    "artifact": "junit-4.13.2-sources.jar"
+  },
+  {
+    "group": "net.java.dev.jna",
+    "name": "jna",
+    "version": "5.6.0",
+    "artifact": "jna-5.6.0-sources.jar"
+  },
+  {
+    "group": "net.java.dev.jna",
+    "name": "jna-platform",
+    "version": "5.6.0",
+    "artifact": "jna-platform-5.6.0-sources.jar"
+  },
+  {
+    "group": "net.sf.jopt-simple",
+    "name": "jopt-simple",
+    "version": "4.9",
+    "artifact": "jopt-simple-4.9-sources.jar"
+  },
+  {
+    "group": "net.sf.kxml",
+    "name": "kxml2",
+    "version": "2.3.0",
+    "artifact": "kxml2-2.3.0-sources.jar"
+  },
+  {
+    "group": "org.apache.commons",
+    "name": "commons-compress",
+    "version": "1.27.1",
+    "artifact": "commons-compress-1.27.1-sources.jar"
+  },
+  {
+    "group": "org.apache.commons",
+    "name": "commons-lang3",
+    "version": "3.16.0",
+    "artifact": "commons-lang3-3.16.0-sources.jar"
+  },
+  {
+    "group": "org.apache.httpcomponents",
+    "name": "httpclient",
+    "version": "4.5.14",
+    "artifact": "httpclient-4.5.14-sources.jar"
+  },
+  {
+    "group": "org.apache.httpcomponents",
+    "name": "httpcore",
+    "version": "4.4.16",
+    "artifact": "httpcore-4.4.16-sources.jar"
+  },
+  {
+    "group": "org.apache.httpcomponents",
+    "name": "httpmime",
+    "version": "4.5.6",
+    "artifact": "httpmime-4.5.6-sources.jar"
+  },
+  {
+    "group": "org.bitbucket.b_c",
+    "name": "jose4j",
+    "version": "0.9.5",
+    "artifact": "jose4j-0.9.5-sources.jar"
+  },
+  {
+    "group": "org.bouncycastle",
+    "name": "bcpkix-jdk18on",
+    "version": "1.80.2",
+    "artifact": "bcpkix-jdk18on-1.80.2-sources.jar"
+  },
+  {
+    "group": "org.bouncycastle",
+    "name": "bcprov-jdk18on",
+    "version": "1.80.2",
+    "artifact": "bcprov-jdk18on-1.80.2-sources.jar"
+  },
+  {
+    "group": "org.bouncycastle",
+    "name": "bcutil-jdk18on",
+    "version": "1.80.2",
+    "artifact": "bcutil-jdk18on-1.80.2-sources.jar"
+  },
+  {
+    "group": "org.checkerframework",
+    "name": "checker-qual",
+    "version": "3.43.0",
+    "artifact": "checker-qual-3.43.0-javadoc.jar"
+  },
+  {
+    "group": "org.checkerframework",
+    "name": "checker-qual",
+    "version": "3.43.0",
+    "artifact": "checker-qual-3.43.0-sources.jar"
+  },
+  {
+    "group": "org.glassfish.jaxb",
+    "name": "jaxb-runtime",
+    "version": "2.3.2",
+    "artifact": "jaxb-runtime-2.3.2-sources.jar"
+  },
+  {
+    "group": "org.glassfish.jaxb",
+    "name": "txw2",
+    "version": "2.3.2",
+    "artifact": "txw2-2.3.2-sources.jar"
+  },
+  {
+    "group": "org.gradle.toolchains",
+    "name": "foojay-resolver",
+    "version": "1.0.0",
+    "artifact": "foojay-resolver-1.0.0-sources.jar"
+  },
+  {
+    "group": "org.hamcrest",
+    "name": "hamcrest-core",
+    "version": "1.3",
+    "artifact": "hamcrest-core-1.3-javadoc.jar"
+  },
+  {
+    "group": "org.hamcrest",
+    "name": "hamcrest-core",
+    "version": "1.3",
+    "artifact": "hamcrest-core-1.3-sources.jar"
+  },
+  {
+    "group": "org.hamcrest",
+    "name": "hamcrest-library",
+    "version": "1.3",
+    "artifact": "hamcrest-library-1.3-javadoc.jar"
+  },
+  {
+    "group": "org.hamcrest",
+    "name": "hamcrest-library",
+    "version": "1.3",
+    "artifact": "hamcrest-library-1.3-sources.jar"
+  },
+  {
+    "group": "org.jdom",
+    "name": "jdom2",
+    "version": "2.0.6",
+    "artifact": "jdom2-2.0.6-sources.jar"
+  },
+  {
+    "group": "org.jetbrains",
+    "name": "annotations",
+    "version": "13.0",
+    "artifact": "annotations-13.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains",
+    "name": "annotations",
+    "version": "23.0.0",
+    "artifact": "annotations-23.0.0-javadoc.jar"
+  },
+  {
+    "group": "org.jetbrains",
+    "name": "annotations",
+    "version": "23.0.0",
+    "artifact": "annotations-23.0.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.animation",
+    "name": "animation-android",
+    "version": "1.12.0",
+    "artifact": "animation-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.animation",
+    "name": "animation-core-android",
+    "version": "1.12.0",
+    "artifact": "animation-core-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.foundation",
+    "name": "foundation-android",
+    "version": "1.12.0",
+    "artifact": "foundation-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.foundation",
+    "name": "foundation-layout-android",
+    "version": "1.12.0",
+    "artifact": "foundation-layout-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.runtime",
+    "name": "runtime-android",
+    "version": "1.12.0",
+    "artifact": "runtime-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.runtime",
+    "name": "runtime-saveable-android",
+    "version": "1.12.0",
+    "artifact": "runtime-saveable-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.ui",
+    "name": "ui-android",
+    "version": "1.12.0",
+    "artifact": "ui-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.ui",
+    "name": "ui-geometry-android",
+    "version": "1.12.0",
+    "artifact": "ui-geometry-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.ui",
+    "name": "ui-graphics-android",
+    "version": "1.12.0",
+    "artifact": "ui-graphics-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.ui",
+    "name": "ui-text-android",
+    "version": "1.12.0",
+    "artifact": "ui-text-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.ui",
+    "name": "ui-unit-android",
+    "version": "1.12.0",
+    "artifact": "ui-unit-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.compose.ui",
+    "name": "ui-util-android",
+    "version": "1.12.0",
+    "artifact": "ui-util-android-1.12.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "compose-compiler-gradle-plugin",
+    "version": "2.4.20",
+    "artifact": "compose-compiler-gradle-plugin-2.4.20-gradle96-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "compose-compiler-gradle-plugin",
+    "version": "2.4.20",
+    "artifact": "compose-compiler-gradle-plugin-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "fus-statistics-gradle-plugin",
+    "version": "2.4.20",
+    "artifact": "fus-statistics-gradle-plugin-2.4.20-gradle96-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "fus-statistics-gradle-plugin",
+    "version": "2.4.20",
+    "artifact": "fus-statistics-gradle-plugin-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-annotations-jvm",
+    "version": "2.4.20",
+    "artifact": "kotlin-annotations-jvm-2.4.20-javadoc.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-annotations-jvm",
+    "version": "2.4.20",
+    "artifact": "kotlin-annotations-jvm-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-build-statistics",
+    "version": "2.4.20",
+    "artifact": "kotlin-build-statistics-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-build-tools-api",
+    "version": "2.4.20",
+    "artifact": "kotlin-build-tools-api-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-compiler-runner",
+    "version": "2.4.20",
+    "artifact": "kotlin-compiler-runner-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-daemon-client",
+    "version": "2.4.20",
+    "artifact": "kotlin-daemon-client-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-gradle-plugin",
+    "version": "2.2.10",
+    "artifact": "kotlin-gradle-plugin-2.2.10-gradle813-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-gradle-plugin",
+    "version": "2.4.20",
+    "artifact": "kotlin-gradle-plugin-2.4.20-gradle96-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-gradle-plugin",
+    "version": "2.4.20",
+    "artifact": "kotlin-gradle-plugin-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-gradle-plugin-annotations",
+    "version": "2.4.20",
+    "artifact": "kotlin-gradle-plugin-annotations-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-gradle-plugin-api",
+    "version": "2.4.20",
+    "artifact": "kotlin-gradle-plugin-api-2.4.20-gradle96-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-gradle-plugin-api",
+    "version": "2.4.20",
+    "artifact": "kotlin-gradle-plugin-api-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-gradle-plugin-idea",
+    "version": "2.4.20",
+    "artifact": "kotlin-gradle-plugin-idea-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-gradle-plugin-idea-proto",
+    "version": "2.4.20",
+    "artifact": "kotlin-gradle-plugin-idea-proto-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-klib-commonizer-api",
+    "version": "2.4.20",
+    "artifact": "kotlin-klib-commonizer-api-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-native-utils",
+    "version": "2.4.20",
+    "artifact": "kotlin-native-utils-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-reflect",
+    "version": "2.2.10",
+    "artifact": "kotlin-reflect-2.2.10-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-reflect",
+    "version": "2.4.0",
+    "artifact": "kotlin-reflect-2.4.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-reflect",
+    "version": "2.4.10",
+    "artifact": "kotlin-reflect-2.4.10-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib",
+    "version": "2.2.10",
+    "artifact": "kotlin-stdlib-2.2.10-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib",
+    "version": "2.4.0",
+    "artifact": "kotlin-stdlib-2.4.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib",
+    "version": "2.4.10",
+    "artifact": "kotlin-stdlib-2.4.10-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib",
+    "version": "2.4.20",
+    "artifact": "kotlin-stdlib-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib-jdk7",
+    "version": "1.8.0",
+    "artifact": "kotlin-stdlib-jdk7-1.8.0-javadoc.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib-jdk7",
+    "version": "1.8.0",
+    "artifact": "kotlin-stdlib-jdk7-1.8.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib-jdk7",
+    "version": "2.2.10",
+    "artifact": "kotlin-stdlib-jdk7-2.2.10-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib-jdk8",
+    "version": "1.8.0",
+    "artifact": "kotlin-stdlib-jdk8-1.8.0-javadoc.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib-jdk8",
+    "version": "1.8.0",
+    "artifact": "kotlin-stdlib-jdk8-1.8.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib-jdk8",
+    "version": "2.2.10",
+    "artifact": "kotlin-stdlib-jdk8-2.2.10-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-tooling-core",
+    "version": "2.4.20",
+    "artifact": "kotlin-tooling-core-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-util-io",
+    "version": "2.4.20",
+    "artifact": "kotlin-util-io-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-util-klib",
+    "version": "2.4.20",
+    "artifact": "kotlin-util-klib-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-util-klib-metadata",
+    "version": "2.4.20",
+    "artifact": "kotlin-util-klib-metadata-2.4.20-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "atomicfu-jvm",
+    "version": "0.28.0",
+    "artifact": "atomicfu-jvm-0.28.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "kotlinx-coroutines-android",
+    "version": "1.11.0",
+    "artifact": "kotlinx-coroutines-android-1.11.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "kotlinx-coroutines-core",
+    "version": "1.9.0",
+    "artifact": "kotlinx-coroutines-core-1.9.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "kotlinx-coroutines-core-jvm",
+    "version": "1.11.0",
+    "artifact": "kotlinx-coroutines-core-jvm-1.11.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "kotlinx-coroutines-core-jvm",
+    "version": "1.8.1",
+    "artifact": "kotlinx-coroutines-core-jvm-1.8.1-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "kotlinx-coroutines-core-jvm",
+    "version": "1.9.0",
+    "artifact": "kotlinx-coroutines-core-jvm-1.9.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "kotlinx-coroutines-test-jvm",
+    "version": "1.11.0",
+    "artifact": "kotlinx-coroutines-test-jvm-1.11.0-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "kotlinx-serialization-core-jvm",
+    "version": "1.7.3",
+    "artifact": "kotlinx-serialization-core-jvm-1.7.3-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlinx",
+    "name": "kotlinx-serialization-json-jvm",
+    "version": "1.7.3",
+    "artifact": "kotlinx-serialization-json-jvm-1.7.3-sources.jar"
+  },
+  {
+    "group": "org.json",
+    "name": "json",
+    "version": "20260814",
+    "artifact": "json-20260814-javadoc.jar"
+  },
+  {
+    "group": "org.json",
+    "name": "json",
+    "version": "20260814",
+    "artifact": "json-20260814-sources.jar"
+  },
+  {
+    "group": "org.jspecify",
+    "name": "jspecify",
+    "version": "1.0.0",
+    "artifact": "jspecify-1.0.0-javadoc.jar"
+  },
+  {
+    "group": "org.jspecify",
+    "name": "jspecify",
+    "version": "1.0.0",
+    "artifact": "jspecify-1.0.0-sources.jar"
+  },
+  {
+    "group": "org.jvnet.staxex",
+    "name": "stax-ex",
+    "version": "1.8.1",
+    "artifact": "stax-ex-1.8.1-sources.jar"
+  },
+  {
+    "group": "org.ow2.asm",
+    "name": "asm",
+    "version": "9.9",
+    "artifact": "asm-9.9-sources.jar"
+  },
+  {
+    "group": "org.ow2.asm",
+    "name": "asm-analysis",
+    "version": "9.9",
+    "artifact": "asm-analysis-9.9-sources.jar"
+  },
+  {
+    "group": "org.ow2.asm",
+    "name": "asm-commons",
+    "version": "9.9",
+    "artifact": "asm-commons-9.9-sources.jar"
+  },
+  {
+    "group": "org.ow2.asm",
+    "name": "asm-tree",
+    "version": "9.9",
+    "artifact": "asm-tree-9.9-sources.jar"
+  },
+  {
+    "group": "org.ow2.asm",
+    "name": "asm-util",
+    "version": "9.9",
+    "artifact": "asm-util-9.9-sources.jar"
+  },
+  {
+    "group": "org.slf4j",
+    "name": "slf4j-api",
+    "version": "1.7.30",
+    "artifact": "slf4j-api-1.7.30-sources.jar"
+  },
+  {
+    "group": "org.tensorflow",
+    "name": "tensorflow-lite-metadata",
+    "version": "0.2.0",
+    "artifact": "tensorflow-lite-metadata-0.2.0-sources.jar"
+  },
+  {
+    "group": "org.xerial",
+    "name": "sqlite-jdbc",
+    "version": "3.41.2.2",
+    "artifact": "sqlite-jdbc-3.41.2.2-javadoc.jar"
+  },
+  {
+    "group": "org.xerial",
+    "name": "sqlite-jdbc",
+    "version": "3.41.2.2",
+    "artifact": "sqlite-jdbc-3.41.2.2-sources.jar"
+  }
+]

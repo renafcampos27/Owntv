@@ -93,6 +93,8 @@ fun ProfileGate(onEnter: (Long) -> Unit, onAddProfile: () -> Unit, modifier: Mod
 
     pinFor?.let { p ->
         PinDialog(
+            credentialHash = p.pinHash,
+            credentialScope = tv.own.owntv.core.util.Pin.profileScope(p.id),
             title = if (pinError) stringResource(CoreR.string.profiles_wrong_pin) else stringResource(CoreR.string.profiles_enter_pin, p.name),
             onSubmit = { pin ->
                 if (vm.verifyPin(p, pin)) {

@@ -217,8 +217,13 @@ fun ManageProfilesScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
         )
     }
     authorizationPending?.let { operation ->
+        val adult = if (operation.profile.isKids && operation.profile.pinHash.isNullOrBlank())
+            profiles.firstOrNull { !it.isKids && !it.pinHash.isNullOrBlank() } else null
         PinDialog(
-            title = stringResource(tv.own.owntv.R.string.profiles_confirm_current_pin, operation.profile.name),
+            credentialHash = adult?.pinHash ?: operation.profile.pinHash,
+            credentialScope = tv.own.owntv.core.util.Pin.profileScope(adult?.id ?: operation.profile.id),
+            title = if (adult != null) stringResource(tv.own.owntv.R.string.profiles_confirm_adult_pin, adult.name)
+                else stringResource(tv.own.owntv.R.string.profiles_confirm_current_pin, operation.profile.name),
             onSubmit = { currentPin ->
                 if (!busy) {
                     busy = true

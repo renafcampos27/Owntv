@@ -227,7 +227,6 @@ fun SettingsScreen(
     var showCatchupSourceClock by remember { mutableStateOf(false) }
     var showEpgOffset by remember { mutableStateOf(false) }
     var showVisualProfile by remember { mutableStateOf(false) }
-    var showVodLayout by remember { mutableStateOf(false) }
     var showStartup by remember { mutableStateOf(false) }
     var showStartupChannelPicker by remember { mutableStateOf(false) }
     var showAfrWarning by remember { mutableStateOf(false) }
@@ -266,7 +265,6 @@ fun SettingsScreen(
     val liveGuideDelayRowFocus = remember { FocusRequester() }
     val visualProfileFocus = remember { FocusRequester() }
     val uiDiagnosticsFocus = remember { FocusRequester() }
-    val vodLayoutRowFocus = remember { FocusRequester() }
     val startupRowFocus = remember { FocusRequester() }
     val livePreviewQuickFocus = remember { FocusRequester() }
     // Hoisted list state for the root settings list. We snapshot its position the instant a row is
@@ -285,7 +283,7 @@ fun SettingsScreen(
         savedIndex = listState.firstVisibleItemIndex
         savedOffset = listState.firstVisibleItemScrollOffset
     }
-    val anyDialogOpen = showSessionDiagnostics || showCategories || showVisualProfile || showZoom || showPopupSize || showFontCustomization || showTheme || showAccent || showUpdate || showCatchupTime || showCatchupSourceClock || showEpgOffset || showStartup || showStartupChannelPicker || showAfrWarning || showLivePreviewPanelWarning || showBgImageChooser || showBgPicker || showBrowsing || showFocusHighlight || showBgRemote || showVodLayout
+    val anyDialogOpen = showSessionDiagnostics || showCategories || showVisualProfile || showZoom || showPopupSize || showFontCustomization || showTheme || showAccent || showUpdate || showCatchupTime || showCatchupSourceClock || showEpgOffset || showStartup || showStartupChannelPicker || showAfrWarning || showLivePreviewPanelWarning || showBgImageChooser || showBgPicker || showBrowsing || showFocusHighlight || showBgRemote
     // When a dialog closes, restore focus to the row that opened it. NOTE: this restore crosses
     // INTO the root focus group from outside (the dialog), but onEnter does NOT fire for programmatic
     // requestsFocus (only for directional entry) — so dialogReturn must be cleared HERE, not in onEnter.
@@ -294,7 +292,7 @@ fun SettingsScreen(
     val settingsFocusGuard = remember { FocusRequestGuard() }
     val searchRowFocus = remember { mutableMapOf<String, FocusRequester>() }
     var searchReturnFocus by remember { mutableStateOf<FocusRequester?>(null) }
-    LaunchedEffect(showSessionDiagnostics, showCategories, showVisualProfile, showZoom, showPopupSize, showFontCustomization, showTheme, showAccent, showUpdate, showCatchupTime, showCatchupSourceClock, showEpgOffset, showStartup, showStartupChannelPicker, showAfrWarning, showLivePreviewPanelWarning, showBgImageChooser, showBgPicker, showBrowsing, showFocusHighlight, showBgRemote, showVodLayout) {
+    LaunchedEffect(showSessionDiagnostics, showCategories, showVisualProfile, showZoom, showPopupSize, showFontCustomization, showTheme, showAccent, showUpdate, showCatchupTime, showCatchupSourceClock, showEpgOffset, showStartup, showStartupChannelPicker, showAfrWarning, showLivePreviewPanelWarning, showBgImageChooser, showBgPicker, showBrowsing, showFocusHighlight, showBgRemote) {
         if (!anyDialogOpen) {
             // Focus back on the opener row, with the scroll offset held still the whole way — see
             // [restoreAfterDialogClose] for why doing those two in sequence made the highlight travel.
@@ -359,7 +357,6 @@ fun SettingsScreen(
                 diagnosticFormat.integer(process.gcMs, diagnosticLocale, diagnosticUnavailable))
     }
         ?: stringResource(CoreR.string.ui_measurement_waiting)
-    val vodLayout by settingsVm.vodLayout.collectAsStateWithLifecycle()
     val startupMode by settingsVm.startupMode.collectAsStateWithLifecycle()
     val startupChannel by settingsVm.startupChannel.collectAsStateWithLifecycle()
     val startupChannelQuery by settingsVm.startupChannelQuery.collectAsStateWithLifecycle()
@@ -1082,6 +1079,9 @@ fun SettingsScreen(
             SettingsSearchEntry(stringResource(CoreR.string.settings_group_layout), stringResource(R.string.channel_recovery_timeout), stringResource(R.string.channel_recovery_timeout_description), OwnTVIcon.LIVE_TV, TileTone.SECONDARY) {
                 open(SettingsTab.NAV_MENU); navEntry = tv.own.owntv.features.settings.NavSettingsEntry.RECOVERY_TIMEOUT
             },
+            SettingsSearchEntry(stringResource(CoreR.string.settings_group_layout), stringResource(R.string.tv_avo_mode_title), stringResource(R.string.tv_avo_mode_description), OwnTVIcon.LIVE_TV, TileTone.SECONDARY) {
+                open(SettingsTab.NAV_MENU); navEntry = tv.own.owntv.features.settings.NavSettingsEntry.TV_AVO
+            },
             SettingsSearchEntry(stringResource(CoreR.string.settings_group_layout), stringResource(R.string.simple_mode_categories), stringResource(R.string.simple_mode_categories_description), OwnTVIcon.MENU, TileTone.SECONDARY) {
                 open(SettingsTab.NAV_MENU); navEntry = tv.own.owntv.features.settings.NavSettingsEntry.HIDE_CATEGORIES
             },
@@ -1305,7 +1305,9 @@ fun SettingsScreen(
                         ) {
                             if (searching) {
                                 items(searchResults, key = { it.group + it.title }) { e ->
-                                    val entryFocus = searchRowFocus.getOrPut(e.group + e.title) { FocusRequester() }
+                                    val entryFocus = remember(searchRowFocus, e.group, e.title) {
+                                        searchRowFocus.getOrPut(e.group + e.title) { FocusRequester() }
+                                    }
                                     SettingsRow(
                                         modifier = Modifier.focusRequester(entryFocus),
                                         dense = true,
@@ -1436,32 +1438,6 @@ fun SettingsScreen(
             selected = visualProfile.name,
             onSelect = { settingsVm.setVisualProfile(tv.own.owntv.core.theme.VisualProfile.valueOf(it)); showVisualProfile = false },
             onDismiss = { showVisualProfile = false },
-        )
-    }
-    if (showVodLayout) {
-        val layouts = tv.own.owntv.core.settings.SettingsRepository.VodLayout.entries
-        tv.own.owntv.features.settings.PickerDialog(
-            title = stringResource(CoreR.string.settings_vod_layout),
-            subtitle = stringResource(CoreR.string.settings_vod_layout_screen_description),
-            options = layouts.map { it.name to stringResource(vodLayoutLabelRes(it)) },
-            descriptions = layouts.associate {
-                it.name to stringResource(
-                    if (it == tv.own.owntv.core.settings.SettingsRepository.VodLayout.CINEMATIC) {
-                        CoreR.string.settings_vod_layout_cinematic_description
-                    } else {
-                        CoreR.string.settings_vod_layout_separate_description
-                    },
-                )
-            },
-            optionPreview = { value ->
-                VodLayoutPreviewBars(tv.own.owntv.core.settings.SettingsRepository.VodLayout.valueOf(value))
-            },
-            selected = vodLayout.name,
-            onSelect = {
-                settingsVm.setVodLayout(tv.own.owntv.core.settings.SettingsRepository.VodLayout.valueOf(it))
-                showVodLayout = false
-            },
-            onDismiss = { showVodLayout = false },
         )
     }
     if (showFocusHighlight) {
@@ -1714,52 +1690,6 @@ private fun startupLabel(mode: tv.own.owntv.core.settings.StartupMode): String =
 private fun navModeLabel(mode: tv.own.owntv.core.settings.SettingsRepository.NavMenuMode): String = stringResource(
     if (mode == tv.own.owntv.core.settings.SettingsRepository.NavMenuMode.DYNAMIC) CoreR.string.settings_dynamic else CoreR.string.settings_static,
 )
-
-/** Chip and option label for the Movies & Series layout choice. */
-private fun vodLayoutLabelRes(layout: tv.own.owntv.core.settings.SettingsRepository.VodLayout): Int =
-    if (layout == tv.own.owntv.core.settings.SettingsRepository.VodLayout.CINEMATIC) {
-        CoreR.string.settings_vod_layout_cinematic
-    } else {
-        CoreR.string.settings_vod_layout_separate
-    }
-
-/**
- * The little bar diagram under each layout option, so the choice is legible at TV distance without
- * reading the description.
- *
- * Separate panels is three plain bars — categories, the list, the preview. Cinematic is two: the
- * category rail, dimmed because it floats as glass, and one wide block carrying the artwork's own
- * colour, because in that layout the picture IS the background.
- */
-@Composable
-private fun VodLayoutPreviewBars(layout: tv.own.owntv.core.settings.SettingsRepository.VodLayout) {
-    val colors = OwnTVTheme.colors
-    val bar = colors.onSurface.copy(alpha = 0.13f)
-    val shape = RoundedCornerShape(4.dp)
-    Row(
-        modifier = Modifier.fillMaxWidth().height(30.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        if (layout == tv.own.owntv.core.settings.SettingsRepository.VodLayout.CINEMATIC) {
-            Box(Modifier.width(48.dp).fillMaxHeight().clip(shape).background(bar.copy(alpha = 0.07f)))
-            Box(
-                Modifier
-                    .weight(1f)
-                    .fillMaxHeight()
-                    .clip(shape)
-                    .background(
-                        androidx.compose.ui.graphics.Brush.horizontalGradient(
-                            listOf(colors.primary.copy(alpha = 0.45f), colors.tertiary.copy(alpha = 0.28f)),
-                        ),
-                    ),
-            )
-        } else {
-            Box(Modifier.width(48.dp).fillMaxHeight().clip(shape).background(bar))
-            Box(Modifier.weight(1f).fillMaxHeight().clip(shape).background(bar))
-            Box(Modifier.width(64.dp).fillMaxHeight().clip(shape).background(bar))
-        }
-    }
-}
 
 /** Chip text for the Language settings row: system-default label, or the selected locale's endonym. */
 @Composable

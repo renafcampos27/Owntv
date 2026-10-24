@@ -1,0 +1,67 @@
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.artifacts.result.UnresolvedArtifactResult
+import org.gradle.api.artifacts.result.UnresolvedComponentResult
+import org.gradle.jvm.JvmLibrary
+import org.gradle.language.base.artifact.SourcesArtifact
+import groovy.xml.XmlSlurper
+import groovy.json.JsonOutput
+import java.security.MessageDigest
+
+// Opt-in regression check against the real buildscript graph, including plugin variants.
+// This init script is never applied to normal builds or packaged into the application.
+gradle.projectsEvaluated {
+    rootProject.tasks.register('verifyIdeBuildscriptSources') {
+        doLast {
+            def metadata = new XmlSlurper().parse(rootProject.file('gradle/verification-metadata.xml'))
+            def accepted = [:]
+            metadata.components.component.each { component ->
+                def coordinate = "${component.@group}:${component.@name}:${component.@version}".toString()
+                component.artifact.each { artifact ->
+                    accepted[coordinate + ':' + artifact.@name.toString()] = artifact.sha256.collect { it.@value.toString() }
+                }
+            }
+            def missing = []
+            rootProject.allprojects.each { project ->
+                def classpath = project.buildscript.configurations.findByName('classpath')
+                if (classpath == null) return
+                def ids = classpath.incoming.resolutionResult.allComponents.collect { it.id }
+                    .findAll { it instanceof ModuleComponentIdentifier }
+                if (ids.empty) return
+                if (project.hasProperty('owntvIdeInventoryOnly')) {
+                    println('OWNTV_IDE_BUILD_COMPONENTS=' + JsonOutput.toJson(ids.collect {
+                        [group: it.group, name: it.module, version: it.version]
+                    }))
+                    return
+                }
+                def result = project.dependencies.createArtifactResolutionQuery()
+                    .forComponents(ids).withArtifacts(JvmLibrary, SourcesArtifact).execute()
+                result.components.findAll { it instanceof UnresolvedComponentResult }.each { throw it.failure }
+                int count = 0
+                result.resolvedComponents.each { component ->
+                    component.getArtifacts(SourcesArtifact).each { artifact ->
+                        if (artifact instanceof UnresolvedArtifactResult) throw artifact.failure
+                        def file = artifact.file
+                        def id = component.id
+                        def coordinate = "${id.group}:${id.module}:${id.version}".toString()
+                        def checksums = accepted[coordinate + ':' + file.name]
+                        if (!checksums) {
+                            missing.add([group: id.group, name: id.module, version: id.version, artifact: file.name])
+                        } else {
+                            def digest = MessageDigest.getInstance('SHA-256').digest(file.bytes).encodeHex().toString()
+                            if (!(digest in checksums)) throw new GradleException("Unreviewed source checksum: ${coordinate}:${file.name}")
+                        }
+                        count++
+                    }
+                }
+                println("IDE buildscript sources inspected: ${project.path}: ${count}")
+            }
+            if (rootProject.hasProperty('owntvIdeInventoryOnly')) {
+                println('Buildscript component inventory complete; source archives were not checked in inventory mode.')
+                return
+            }
+            missing.unique().each { println('OWNTV_IDE_SOURCE_MISSING=' + JsonOutput.toJson(it)) }
+            if (!missing.empty) throw new GradleException('Buildscript source checksums are missing from verification metadata')
+            println('All resolved buildscript sources match reviewed SHA-256 values.')
+        }
+    }
+}

@@ -134,6 +134,7 @@ class LiveViewModel(
     private val streams: tv.own.owntv.core.live.OpenStreamRegistry,
     private val epgReader: LiveEpgReader,
     private val connectivity: tv.own.owntv.core.network.ConnectivityObserver,
+    private val database: tv.own.owntv.core.database.OwnTVDatabase,
 ) : ViewModel() {
     // Construct before any initializer can create a controller or receive an opening callback.
     private val recoveryAttempts = ChannelAttemptSignal()
@@ -332,7 +333,7 @@ class LiveViewModel(
                     !tv.own.owntv.core.content.AdultCategoryClassifier.allows(owner.profileId, channel.categoryId, profileDao, categoryDao)) return@launch
                 val source = getSource(channel.sourceId) ?: return@launch
                 checkCatchup(owner)
-                check(player.stopAndAwaitRelease())
+                check(liveTuner.releaseAndAwaitForArchive())
                 checkCatchup(owner)
                 val grant = tv.own.owntv.core.live.connectionBudget(source, streams.openOn(source.id), tv.own.owntv.core.live.StreamPurpose.WATCHING)
                 check(grant is StreamGrant.Allowed)
@@ -978,8 +979,9 @@ class LiveViewModel(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), defaultRail)
 
     private val groupedCount = MutableStateFlow<Int?>(null)
+    private val catalogRevision = MutableStateFlow(0L)
     @Volatile private var activeBrowseArgs: Args? = null
-    @Volatile private var groupedBrowseIds: Pair<Args, LongArray>? = null
+    @Volatile private var groupedBrowseIds: Triple<Args, Long, LongArray>? = null
     val channels: Flow<PagingData<ChannelEntity>> = combine(
         _selected,
         ctx,
@@ -1004,6 +1006,7 @@ class LiveViewModel(
                     maxSize = PagingConfig.MAX_SIZE_UNBOUNDED,
                 ),
             ) {
+                val pageRevision = catalogRevision.value
                 val base = pagingSource(key, c, query, sort)
                 groupedCount.value = null
                 if (!cs.cust.groupChannelVersions) base else GroupedChannelPagingSource(
@@ -1016,10 +1019,8 @@ class LiveViewModel(
                     preferred = { previous, next -> ChannelVersionPolicy.ordered(listOf(previous, next), cs.cust).first() },
                     onReady = { grouped ->
                         if (_selected.value == key && ctx.value == c && custom.value == cs.cust) {
-                            if (versionGroupKeys.size > 20_000) versionGroupKeys.clear()
-                            grouped.forEach { versionGroupKeys[it.id] = ChannelVersionPolicy.groupKey(it, cs.cust) }
                             groupedCount.value = grouped.size
-                            groupedBrowseIds = args to grouped.map { it.id }.toLongArray()
+                            groupedBrowseIds = Triple(args, pageRevision, grouped.map { it.id }.toLongArray())
                         }
                     },
                 )
@@ -1392,13 +1393,10 @@ class LiveViewModel(
     // [LiveZapList]. What stays here is the querying: the loaders below, because the hide/rename rules
     // they apply are shared with the browse lists and belong beside them.
     internal val channelVersionSettings: StateFlow<SectionCustomizations> get() = custom
-    private val versionGroupKeys = java.util.concurrent.ConcurrentHashMap<Long, String>()
 
     private fun groupedChannels(rows: List<ChannelEntity>, cust: SectionCustomizations): List<ChannelEntity> {
         if (!cust.groupChannelVersions) return rows
         val grouped = ChannelVersionPolicy.grouped(rows, cust)
-        if (versionGroupKeys.size > 20_000) versionGroupKeys.clear()
-        grouped.forEach { versionGroupKeys[it.id] = ChannelVersionPolicy.groupKey(it, cust) }
         return grouped
     }
 
@@ -1567,6 +1565,17 @@ class LiveViewModel(
         },
     )
     val canZap: StateFlow<Boolean> = zapList.canZap
+    init {
+        viewModelScope.launch {
+            database.invalidationTracker.createFlow(
+                "channels", "categories", "content_order", "custom_category_members",
+                emitInitialState = false,
+            ).collect {
+                catalogRevision.value += 1
+                zapList.catalogChanged()
+            }
+        }
+    }
     val recentChannelWaitSeconds: StateFlow<Int> = liveTuner.recentChannelWaitSeconds
     val zapChannels: StateFlow<List<ChannelEntity>> = zapList.channels
     val zapListTitle: StateFlow<String?> = zapList.title
@@ -1776,6 +1785,7 @@ class LiveViewModel(
             key = key,
             categoryId = (key as? LiveKey.Folder)?.id,
             adjacent = if (pagedBrowse) activeBrowseArgs?.let(::browseWindowLoader) else null,
+            revision = { catalogRevision.value },
         )
         ensurePlaying(channel, explicitVersion)
     }
@@ -1810,36 +1820,53 @@ class LiveViewModel(
     private fun browseWindowLoader(args: Args): suspend (Long, Int) -> ZapWindow? {
         val mutex = kotlinx.coroutines.sync.Mutex()
         var ids: LongArray? = null
+        var indexedRevision = -1L
         fun current() = ctx.value == args.ctx && custResolved.value == args.cs
         return loader@{ anchor, delta ->
             mutex.lock()
             try {
                 if (!current()) return@loader null
-                val order = ids ?: withContext(Dispatchers.IO) {
-                    if (args.cs.cust.groupChannelVersions) {
-                        groupedBrowseIds?.takeIf { it.first == args }?.second ?: longArrayOf()
-                    } else collectZapIds(pagingSource(args.key, args.ctx, args.query, args.sort)) { ch ->
-                        isChannelVisible(ch, args.cs.cust, args.cs.hiddenCats, args.key, args.cs.restrictedCats) &&
-                            (args.cs.cust.movedFromOrigin[CustomizeKeys.channel(ch)]?.let { origin ->
-                                args.key !is LiveKey.Folder || origin != folderContextKeys.value[args.key.id]
-                            } ?: true)
+                repeat(2) {
+                    val revision = catalogRevision.value
+                    val previousOrder = ids ?: zapList.channels.value.map { it.id }.toLongArray()
+                    if (indexedRevision != revision) ids = null
+                    val order = ids ?: withContext(Dispatchers.IO) {
+                        val include: (ChannelEntity) -> Boolean = { ch ->
+                            isChannelVisible(ch, args.cs.cust, args.cs.hiddenCats, args.key, args.cs.restrictedCats) &&
+                                (args.cs.cust.movedFromOrigin[CustomizeKeys.channel(ch)]?.let { origin ->
+                                    args.key !is LiveKey.Folder || origin != folderContextKeys.value[args.key.id]
+                                } ?: true)
+                        }
+                        if (args.cs.cust.groupChannelVersions) {
+                            groupedBrowseIds?.takeIf { it.first == args && it.second == revision }?.third
+                                ?: collectZapIds(GroupedChannelPagingSource(
+                                    pagingSource(args.key, args.ctx, args.query, args.sort), include,
+                                    { ch -> ChannelVersionPolicy.groupKey(ch, args.cs.cust) },
+                                    { previous, next -> ChannelVersionPolicy.ordered(listOf(previous, next), args.cs.cust).first() },
+                                )) { true }
+                        } else collectZapIds(pagingSource(args.key, args.ctx, args.query, args.sort), include)
+                    }.also { ids = it; indexedRevision = revision }
+                    if (!current()) return@loader null
+                    if (catalogRevision.value != revision) { ids = null; return@repeat }
+                    val actualAnchor = order.firstOrNull { it == anchor } ?: zapList.channels.value
+                        .firstOrNull { it.id in order && _previewChannel.value?.let { playing -> matchesChannelRow(it, playing) } == true }?.id
+                        ?: replacementZapAnchor(order, previousOrder, anchor, delta)
+                        ?: return@loader null
+                    val position = order.indexOf(actualAnchor)
+                    if (position < 0 || order.size < 2) return@loader null
+                    val targetId = order[Math.floorMod(position + delta, order.size)]
+                    val windowIds = zapWindowIds(order, actualAnchor, delta)
+                    val rows = withContext(Dispatchers.IO) { channelDao.getByIds(windowIds).associateBy { it.id } }
+                    if (!current()) return@loader null
+                    if (catalogRevision.value != revision) { ids = null; return@repeat }
+                    val ordered = windowIds.mapNotNull { rows[it] }.map { ch ->
+                        args.cs.cust.itemNames[CustomizeKeys.channel(ch)]?.let { ch.copy(name = it) } ?: ch
                     }
-                }.also { ids = it }
-                if (!current()) return@loader null
-                val actualAnchor = order.firstOrNull { it == anchor } ?: zapList.channels.value
-                    .firstOrNull { it.id in order && _previewChannel.value?.let { playing -> matchesChannelRow(it, playing) } == true }?.id
-                    ?: return@loader null
-                val position = order.indexOf(actualAnchor)
-                if (position < 0 || order.size < 2) return@loader null
-                val targetId = order[Math.floorMod(position + delta, order.size)]
-                val windowIds = zapWindowIds(order, actualAnchor, delta)
-                val rows = withContext(Dispatchers.IO) { channelDao.getByIds(windowIds).associateBy { it.id } }
-                if (!current()) return@loader null
-                val ordered = windowIds.mapNotNull { rows[it] }.map { ch ->
-                    args.cs.cust.itemNames[CustomizeKeys.channel(ch)]?.let { ch.copy(name = it) } ?: ch
+                    val target = ordered.firstOrNull { it.id == targetId }
+                    if (target == null) { ids = null; groupedBrowseIds = null; return@repeat }
+                    return@loader ZapWindow(target, ordered)
                 }
-                val target = ordered.firstOrNull { it.id == targetId } ?: return@loader null
-                ZapWindow(target, ordered)
+                null
             } finally { mutex.unlock() }
         }
     }
@@ -1995,7 +2022,6 @@ class LiveViewModel(
 
             // Playback starts IMMEDIATELY — the rebuild that follows it is the zap list's business.
             if (liveOnExo.value) previewEngine.deferCurrentTune()
-            versionGroupKeys[tuned.id] = ChannelVersionPolicy.groupKey(tuned)
             zapList.directTune(currentChannel.id, tuned) { playChannel(it) }
 
             return tv.own.owntv.player.DirectTuneResult.Found(

@@ -100,7 +100,7 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
     // Custom category pending deletion — confirmed in a scrim before anything is removed (plan §3.5).
     var deletingCategory by remember { mutableStateOf<CustomizeCatRow?>(null) }
     // PIN gate: asked on every entry (state is per-composition, so leaving the screen re-locks it).
-    var unlocked by remember { mutableStateOf(false) }
+    var unlocked by remember(pinLock.profileId) { mutableStateOf(false) }
     var pinError by remember { mutableStateOf(false) }
     // Set/Change/Remove PIN flow (only reachable once unlocked).
     var editingPin by remember { mutableStateOf<PinEdit?>(null) }
@@ -158,9 +158,11 @@ fun CustomizeScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
             )
         }
         PinDialog(
+            credentialHash = pinLock.pin,
+            credentialScope = Pin.customizationScope(pinLock.profileId),
             title = stringResource(if (pinError) CoreR.string.settings_customize_wrong_pin else CoreR.string.settings_customize_enter_pin),
             onSubmit = { entered ->
-                if (entered == pinLock.pin || Pin.verify(entered, pinLock.pin)) {
+                if (Pin.verify(entered, pinLock.pin, allowLegacyPlaintext = true, scope = Pin.customizationScope(pinLock.profileId))) {
                     unlocked = true
                     pinError = false
                 } else {

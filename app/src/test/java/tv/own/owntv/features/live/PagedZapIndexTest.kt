@@ -8,6 +8,49 @@ import org.junit.Test
 import tv.own.owntv.core.database.entity.ChannelEntity
 
 class PagedZapIndexTest {
+    @Test fun catalogueRevisionRefreshesEvenAnInteriorWindowStep() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        var revision = 0L
+        var loads = 0
+        val list = LiveZapList(scope, { 1L }, { emptyList() }, { emptyList() }, { emptyList() }, { null })
+        try {
+            list.armFromBrowse(listOf(row(1), row(2)), null, null, null,
+                adjacent = { _, _ -> loads++; ZapWindow(row(3), listOf(row(1), row(3))) }, revision = { revision })
+            assertEquals(2L, list.nextAvailable(1)?.id)
+            assertEquals(0, loads)
+            revision++
+            list.catalogChanged()
+            assertEquals(3L, list.nextAvailable(1)?.id)
+            assertEquals(1, loads)
+            assertEquals(listOf(1L, 3L), list.channels.value.map { it.id })
+        } finally { scope.cancel() }
+    }
+
+    @Test fun catalogueChangeDuringReadCannotPublishTheOldWindow() = runBlocking {
+        val scope = CoroutineScope(SupervisorJob() + Dispatchers.Unconfined)
+        var revision = 0L
+        val list = LiveZapList(scope, { 1L }, { emptyList() }, { emptyList() }, { emptyList() }, { null })
+        try {
+            list.armFromBrowse(listOf(row(1)), null, null, null,
+                adjacent = { _, _ -> revision++; ZapWindow(row(2), listOf(row(1), row(2))) }, revision = { revision })
+            assertNull(list.nextAvailable(1))
+            assertEquals(listOf(1L), list.channels.value.map { it.id })
+            list.catalogChanged()
+            assertTrue(list.canZap.value)
+        } finally { scope.cancel() }
+    }
+
+    @Test fun removingThePlayingRowKeepsDirectionAndFallsBackAtTheContextBoundary() {
+        val old = longArrayOf(1, 2, 3, 4)
+        val current = longArrayOf(1, 3, 4)
+        val forward = replacementZapAnchor(current, old, 2, 1)!!
+        val backward = replacementZapAnchor(current, old, 2, -1)!!
+        assertEquals(3L, zapWindowIds(current, forward, 1)[1])
+        assertEquals(1L, zapWindowIds(current, backward, -1)[1])
+        assertNull(replacementZapAnchor(longArrayOf(1), old, 2, 1))
+        assertEquals(4L, replacementZapAnchor(current, longArrayOf(), 99, 1))
+    }
+
     private fun row(id: Long) = ChannelEntity(id = id, sourceId = 1, name = "$id", streamUrl = "")
     @Test fun indexCrossesPagesKeepsOrderAndAppliesVisibilityWithoutRetainingEntities() = runBlocking {
         val source = object : PagingSource<Int, ChannelEntity>() {

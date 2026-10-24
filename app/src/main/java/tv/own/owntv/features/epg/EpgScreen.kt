@@ -182,9 +182,10 @@ fun EpgScreen(
 
     val vm: EpgViewModel = koinViewModel()
     val recordContext = LocalContext.current
+    val recordResources = androidx.compose.runtime.rememberUpdatedState(androidx.compose.ui.platform.LocalResources.current)
     LaunchedEffect(vm) {
         vm.recordMessages.collect { message ->
-            android.widget.Toast.makeText(recordContext, recordContext.getString(message), android.widget.Toast.LENGTH_LONG).show()
+            android.widget.Toast.makeText(recordContext, recordResources.value.getString(message), android.widget.Toast.LENGTH_LONG).show()
         }
     }
     val state by vm.state.collectAsStateWithLifecycle()

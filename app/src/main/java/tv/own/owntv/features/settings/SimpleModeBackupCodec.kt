@@ -10,6 +10,7 @@ internal object SimpleModeBackupCodec {
         .put("version", 1)
         .put("hideCategories", options.hideCategories)
         .put("hideSidebar", options.hideSidebar)
+        .put("tvAvoMode", options.tvAvoMode)
         .put("channelRecovery", options.channelRecovery)
         .put("recoveryTimeoutSeconds", RecoveryTimeout.normalize(options.recoveryTimeoutSeconds))
         .put("startOnBoot", options.startOnBoot)
@@ -34,6 +35,7 @@ internal object SimpleModeBackupCodec {
         return current.copy(
             hideCategories = flag("hideCategories", current.hideCategories),
             hideSidebar = flag("hideSidebar", current.hideSidebar),
+            tvAvoMode = flag("tvAvoMode", current.tvAvoMode),
             channelRecovery = flag("channelRecovery", current.channelRecovery),
             recoveryTimeoutSeconds = timeout,
             startOnBoot = flag("startOnBoot", current.startOnBoot),

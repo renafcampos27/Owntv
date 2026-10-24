@@ -83,19 +83,21 @@ internal fun ProfileScrim(
 /** Numeric PIN entry. Calls [onSubmit] with the entered digits. [compact] renders the small
  *  popup-menu treatment (narrow panel, Caladea font) used by the Customize screen. */
 @Composable
-internal fun PinDialog(title: String, onSubmit: (String) -> Unit, onDismiss: () -> Unit, compact: Boolean = false) {
-    val dialog: @Composable () -> Unit = { PinDialogBody(title, onSubmit, onDismiss, compact) }
+internal fun PinDialog(title: String, onSubmit: (String) -> Unit, onDismiss: () -> Unit, compact: Boolean = false,
+    credentialHash: String? = null, credentialScope: String = tv.own.owntv.core.util.Pin.DEFAULT_SCOPE) {
+    val dialog: @Composable () -> Unit = { PinDialogBody(title, onSubmit, onDismiss, compact, credentialHash, credentialScope) }
     if (compact) tv.own.owntv.ui.theme.PopupFontTheme(content = dialog) else dialog()
 }
 
 @Composable
-private fun PinDialogBody(title: String, onSubmit: (String) -> Unit, onDismiss: () -> Unit, compact: Boolean) {
+private fun PinDialogBody(title: String, onSubmit: (String) -> Unit, onDismiss: () -> Unit, compact: Boolean, credentialHash: String?, credentialScope: String) {
     val colors = OwnTVTheme.colors
     var pin by remember { mutableStateOf("") }
     val focus = remember { FocusRequester() }
     LaunchedEffect(Unit) { runCatching { focus.requestFocus() } }
     ProfileScrim(onDismiss, width = if (compact) 290.dp else 480.dp, padding = if (compact) 16.dp else 28.dp) {
         Text(title, style = if (compact) MaterialTheme.typography.titleMedium else MaterialTheme.typography.titleLarge, color = colors.onSurface)
+        PinCooldownHint(credentialHash, credentialScope)
         Spacer(Modifier.height(if (compact) 10.dp else 16.dp))
         OwnTVTextField(
             value = pin,
@@ -123,6 +125,20 @@ private fun PinDialogBody(title: String, onSubmit: (String) -> Unit, onDismiss: 
             )
         }
     }
+}
+
+@Composable
+internal fun PinCooldownHint(credentialHash: String?, credentialScope: String = tv.own.owntv.core.util.Pin.DEFAULT_SCOPE) {
+    var remaining by remember(credentialHash, credentialScope) { mutableIntStateOf(0) }
+    LaunchedEffect(credentialHash, credentialScope) {
+        if (credentialHash == null) return@LaunchedEffect
+        while (true) {
+            remaining = tv.own.owntv.core.util.Pin.remainingLockSeconds(credentialHash, credentialScope)
+            kotlinx.coroutines.delay(500)
+        }
+    }
+    if (remaining > 0) Text(androidx.compose.ui.res.pluralStringResource(tv.own.owntv.R.plurals.pin_retry_wait, remaining, remaining),
+        style = MaterialTheme.typography.bodyMedium, color = OwnTVTheme.colors.primary)
 }
 
 /**

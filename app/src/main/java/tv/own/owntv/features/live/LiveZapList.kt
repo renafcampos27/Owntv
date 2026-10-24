@@ -66,6 +66,8 @@ internal class LiveZapList(
 
     private var loadJob: Job? = null
     private var browseWindow: (suspend (Long, Int) -> ZapWindow?)? = null
+    private var browseRevision: (() -> Long)? = null
+    private var loadedRevision = 0L
 
     /** Bumped every time a rebuild starts OR is cancelled. The background rebuild captures this at
      *  start and re-checks it before publishing, so an older build cannot overwrite the list after a
@@ -135,10 +137,13 @@ internal class LiveZapList(
         key: LiveKey?,
         categoryId: Long?,
         adjacent: (suspend (Long, Int) -> ZapWindow?)? = null,
+        revision: () -> Long = { 0L },
     ) {
         loadJob?.cancel()
         publish(channels, categoryId = categoryId, title = title, key = key)
         browseWindow = adjacent
+        browseRevision = revision
+        loadedRevision = revision()
     }
 
     /**
@@ -155,6 +160,7 @@ internal class LiveZapList(
     private fun publish(loaded: List<ChannelEntity>, categoryId: Long?, title: String?, key: LiveKey?) {
         cancelPendingRebuild()
         browseWindow = null
+        browseRevision = null
         this.categoryId = categoryId
         armed = true
         replace(loaded)
@@ -188,12 +194,19 @@ internal class LiveZapList(
         val anchor = playingChannelId() ?: return null
         val localIndex = list.indexOfFirst { matchesPlaying(it, anchor) }
         // The ordinary step stays in memory. Only crossing this window needs catalogue I/O.
-        if (localIndex >= 0 && localIndex + delta in list.indices) return list[localIndex + delta]
+        val revision = browseRevision?.invoke() ?: 0L
+        if (revision == loadedRevision && localIndex >= 0 && localIndex + delta in list.indices) return list[localIndex + delta]
         val window = loader(anchor, delta) ?: return null
         currentCoroutineContext().ensureActive()
-        if (generation != owner || playingChannelId() != anchor || browseWindow !== loader) return null
+        if (generation != owner || playingChannelId() != anchor || browseWindow !== loader || browseRevision?.invoke() != revision) return null
         replace(window.rows)
+        loadedRevision = revision
         return window.target
+    }
+
+    /** A previously single-row window may now have neighbours after a catalogue refresh. */
+    fun catalogChanged() {
+        if (browseWindow != null) _canZap.value = true
     }
 
     fun next(delta: Int): ChannelEntity? {

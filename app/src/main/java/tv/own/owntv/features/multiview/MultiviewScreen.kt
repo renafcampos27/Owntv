@@ -90,8 +90,10 @@ fun MultiviewScreen(
     modifier: Modifier = Modifier,
 ) {
     var menuFor by remember { mutableStateOf<Int?>(null) }
-    val focusRequesters = remember(state) { mutableMapOf<Int, FocusRequester>() }
-    state.tiles.indices.forEach { focusRequesters.getOrPut(it) { FocusRequester() } }
+    val focusCache = remember(state) { mutableMapOf<Int, FocusRequester>() }
+    val focusRequesters = remember(state, state.tiles.size) {
+        state.tiles.indices.associateWith { focusCache.getOrPut(it) { FocusRequester() } }
+    }
     val focusGuard = remember(state) { FocusRequestGuard() }
     LaunchedEffect(state, state.focusRequest) {
         val target = state.focused

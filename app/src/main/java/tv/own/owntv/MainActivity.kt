@@ -75,6 +75,9 @@ private const val BG_TAG = "BgImage"
 class MainActivity : ComponentActivity() {
     @Volatile private var uiPerformanceMonitor: tv.own.owntv.diagnostics.UiPerformanceMonitor? = null
 
+    // Public Android Activity callback: preserve framework dispatch after recording the key.
+    // AndroidX inherits a restricted annotation; this does not call its internal dispatcher helpers.
+    @android.annotation.SuppressLint("RestrictedApi")
     override fun dispatchKeyEvent(event: android.view.KeyEvent): Boolean {
         uiPerformanceMonitor?.key(event)
         return super.dispatchKeyEvent(event)

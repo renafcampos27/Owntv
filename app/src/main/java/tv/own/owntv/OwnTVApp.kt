@@ -79,6 +79,7 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
     override fun onCreate() {
         Perf.begin() // zero-point for the OwnTVPerf startup timeline (adb logcat -s OwnTVPerf)
         super.onCreate()
+        tv.own.owntv.core.util.Pin.configureAttemptStorage(java.io.File(noBackupFilesDir, "pin-attempts.properties"))
         // Core has its own BuildConfig, which carries none of this: a library gets no version at all,
         // and the edge key and the maintainer switch are the app's build inputs. Hand them over before
         // the first reader — CrashRecorder, two lines down (see CoreBuildInfo).
@@ -129,6 +130,17 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
                     GlobalContext.get().get<tv.own.owntv.core.customize.CustomizationStore>()
                         .disableChannelVersionPriority()
                 }
+                tv.own.owntv.features.settings.observeTvAvoChannelPreset(
+                    tv.own.owntv.features.settings.SimpleModePreferences.observe(this@OwnTVApp),
+                    settings.activeProfileId,
+                    prepare = { pid ->
+                        GlobalContext.get().get<tv.own.owntv.core.customize.CustomizationStore>()
+                            .update(pid, tv.own.owntv.core.model.MediaType.LIVE) {
+                                tv.own.owntv.features.settings.tvAvoChannelVersions(it)
+                            }
+                    },
+                    enableRecovery = { tv.own.owntv.features.settings.SimpleModePreferences.setChannelRecovery(this@OwnTVApp, true) },
+                )
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
                 throw cancelled
             } catch (_: java.io.IOException) {

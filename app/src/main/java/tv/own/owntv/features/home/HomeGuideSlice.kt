@@ -202,9 +202,10 @@ private fun OnNowRow(
     var visibleStartIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(rows.map { it.id }) {
-        activeRowIndex = if (activeRowIndex < 0) -1 else rows.indexOfFirst { it.id == activeChannelId }
-            .takeIf { it >= 0 } ?: activeRowIndex.coerceAtMost(rows.lastIndex)
-        visibleStartIndex = visibleStartIndex.coerceIn(0, (rows.size - HOME_ON_NOW_VISIBLE_ROWS).coerceAtLeast(0))
+        val selection = reconcileHomeGuideSelection(rows.map { it.id }, activeChannelId, activeRowIndex, visibleStartIndex)
+        activeRowIndex = selection.index
+        activeChannelId = selection.channelId
+        visibleStartIndex = selection.start
     }
     if (rows.isEmpty()) return
 
@@ -470,7 +471,7 @@ private data class OnNowProgrammeInfo(
 private const val HOME_ON_NOW_VISIBLE_ROWS = 5
 private const val HOME_ON_NOW_UPCOMING_COUNT = 4
 
-private fun visibleStartFor(
+internal fun visibleStartFor(
     activeIndex: Int,
     currentStart: Int,
     rowCount: Int,

@@ -1,6 +1,10 @@
 # OwnTV TV — reanálise crítica do plano e decisão do council
 
+**Execução atualizada — 24/10/2026:** as restantes subfases recomendadas A2/A3/A4, B, C, D e E estão implementadas e validadas automaticamente; ver secção 12 e [relatório](../docs/IMPLEMENTACAO_SUBFASES_RESTANTES_2026-10-24.md). O diagnóstico e as contagens de 23/10 abaixo ficam como histórico. Aceitação física e propostas condicionais continuam pendentes.
+
 **Data:** 23/10/2026. **Âmbito:** análise, sem implementação de código.
+
+**Execução posterior autorizada:** subfase A1 / R1 implementada em 23/10 e validada/fechada a 24/10; ver secção 11. A análise e a contagem abaixo são a fotografia anterior a essa execução.
 
 Documento reavaliado: [analise_final_ia_analisadasol.md](analise_final_ia_analisadasol.md). Esta revisão prevalece sobre a utilização das propostas e dos números de linha antigos como tarefas atuais. O histórico de implementação é conservado.
 
@@ -217,3 +221,27 @@ Não atribuir ganhos percentuais: faltam medições comparáveis na mesma box/li
 - Media3: [troubleshooting do ExoPlayer](https://developer.android.com/media/media3/exoplayer/troubleshooting). Flags MPEG-TS para access units/non-IDR têm efeitos e compromissos; não justificam ativação global como cura de áudio.
 
 **Entrega desta intervenção:** esta reanálise e anotação do plano original. Nenhuma das correções propostas foi aplicada ao código nesta análise.
+
+## 11. Execução posterior — subfase A1 / R1 — 23–24/10/2026
+
+O utilizador autorizou implementar por subfases, começando pela primeira. Foi delimitada **A1 — R1 / DAT-03**, correção dos dois conversores de URLs de diferidos. **Concluída e validada automaticamente:** os **1 367 testes JVM do Core** passaram, incluindo sete novos. Compilação debug/release e lint vital passaram a 23/10 e novamente a 24/10 com a versão atual `105.1.0.6`, cuja alteração foi externa a esta subfase. **Contagem após A1:** 29 IDs implementados no âmbito inspecionado, cinco com resíduos, seis blocos da fase 6 a completar e OPT-03 transversal. Aceitação física continua pendente; não são contagens de bugs reproduzidos.
+
+Novo snapshot: **1 062 inputs**, SHA-256 `d6c9d4b67ff4b791f10d91926e1d6694ba986a7b77a368937166543bdc7df4b5`, conferido com o Core externo. O snapshot anterior e uma cópia com manifesto foram preservados. Sem APK ou ensaio físico.
+
+Registo e critérios físicos pendentes: [IMPLEMENTACAO_SUBFASE_A1_URLS_DIFERIDOS_2026-10-23.md](../docs/IMPLEMENTACAO_SUBFASE_A1_URLS_DIFERIDOS_2026-10-23.md).
+
+**Subfases seguintes ainda não iniciadas:** A2 — R4 / PLY-07, invalidação do índice de zapping após alterar catálogo; A3 — R3 / PLY-01, confirmação Exo→timeshift local; A4 — R5 / UI-07, seleção visível no Home. O lote B mantém R2 / INT-02 e R6 / PLY-02. Fase 6, OPT-03, MED/NOV e UPSCALING conservam as condições desta revisão; nenhuma destas implementações seguintes foi autorizada automaticamente pelo fecho de A1.
+
+
+## 12. Fecho autorizado das restantes subfases — 24/10/2026
+
+A2/R4, A3/R3, A4/R5, B1/R2, B2/R6 e os blocos INT-06/07/08/09 e OPT-01/02 foram implementados. OPT-03 tem matriz de opções críticas e testes reais do repositório para snapshot/escada, incluindo recriação do repositório; não equivale a certificação de cada opção numa box.
+
+**Validação automática:** 2 448 JVM (460 App, 1 375 Core, 613 motores), 15 Python, compilação debug/release e lint debug/vital release sem erros. Dependências verificadas em modo estrito e fontes do Core iguais ao snapshot de 1 071 inputs (`ff76713c2d027257ff49b416d7bb13c56a5968045319b88252577e4ab796014a`). Detalhes, cópia de recuperação, limitações e ensaios físicos no [relatório final](../docs/IMPLEMENTACAO_SUBFASES_RESTANTES_2026-10-24.md).
+
+Sem APK, publicação ou CI remoto executados. Não converter as contagens históricas em novas tarefas nem somar testes a bugs. MED/NOV e upscaling continuam condicionais. TV-AVO-01 foi apenas registado como melhoria futura em `docs/MELHORIAS_FUTURAS_PENDENTES.md`, a pedido do utilizador.
+
+
+## 13. Atualização posterior — TV-AVO-01
+
+Em 24/10/2026 o utilizador autorizou implementar a proposta futura. Ficou concluída e validada automaticamente na App, como preferência opcional persistida e incluída no backup, sem alteração do Core. 466 testes App e compilação/lint passaram; aceitação física pendente. Ver [relatório TV Avó](../docs/IMPLEMENTACAO_TV_AVO_2026-10-24.md). As referências anteriores a esta proposta como «apenas registada» são históricas; não indicam trabalho por iniciar.

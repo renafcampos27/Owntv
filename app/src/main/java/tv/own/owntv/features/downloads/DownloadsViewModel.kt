@@ -98,7 +98,7 @@ class DownloadsViewModel(
      * USB stick.
      */
     val storage: StateFlow<tv.own.owntv.core.download.DownloadStorageInfo?> =
-        combine(downloads, settings.downloadRoot) { _, _ -> Unit }
+        storageRefreshSignals(downloads, settings.downloadRoot) { rows -> rows.map { Triple(it.id, it.status, it.filePath) } }
             .mapLatest { downloadManager.storageInfo() }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
 

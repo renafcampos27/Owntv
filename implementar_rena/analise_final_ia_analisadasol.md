@@ -1,6 +1,12 @@
 # OwnTV TV — análise final das propostas das outras IA
 
+**Estado atual — 24/10/2026:** A1, A2, A3, A4 e lotes B/C/D/E recomendados estão implementados e validados automaticamente. Ver **secção 26** e [relatório final de execução](../docs/IMPLEMENTACAO_SUBFASES_RESTANTES_2026-10-24.md). OPT-03 tem matriz das opções críticas e testes de alcance; os ensaios de hardware/comando permanecem pendentes. MED/NOV e upscaling continuam condicionais; TV-AVO-01 foi implementado posteriormente por autorização específica; ver secções 27–28.
+
+**Leitura do histórico:** as indicações abaixo de «fase 6 por completar» ou «restantes não iniciadas» são fotografias anteriores, superadas pelo fecho da secção 26.
+
 **Data da revisão original:** 20/10/2026. **Reanálise crítica atual: 23/10/2026.** As fases 1–5 têm implementação e validação automática histórica nos âmbitos registados, mas a nova revisão identificou seis IDs com complementos ou lacunas residuais. Não reaplicar o plano em bloco. A fase 6 continua por completar; aceitação física, medições e novidades opcionais mantêm-se condicionais. **A secção 24 e a [reanálise atual do council](REANALISE_COUNCIL_PLANO_2026-10-23.md) prevalecem para decidir o trabalho seguinte.** As secções anteriores conservam o histórico, não constituem um novo inventário de tarefas pendentes.
+
+**Execução posterior em 23–24/10/2026:** primeira subfase **A1 — R1 / DAT-03**, URLs de diferidos, **concluída e validada automaticamente**; ver secção 25. As restantes subfases não foram iniciadas. Contagem após A1: 29 IDs implementados no âmbito inspecionado, cinco com resíduos, seis blocos da fase 6 a completar e OPT-03 transversal; aceitação física pendente.
 
 ## 1. Decisão do council
 
@@ -689,3 +695,49 @@ Foi pedido reavaliar este plano com agentes especializados, sem implementar. For
 - **MED-01–15/NOV-01–06:** continuam condicionais/opcionais, várias com infraestrutura parcial. Sem novos índices, alterações globais de buffer/flags/retries, redução de fsync ou novas funcionalidades sem requisito/evidência. UPSCALING-BETA-01 permanece investigação futura.
 
 **Ordem futura recomendada:** resíduos funcionais delimitados; integridade residual de backup/invalidação; distribuição INT-08/09 antes de publicar; PIN/LocalSync; otimização medida e limpeza. OPT-03 acompanha os lotes desde o primeiro. Resumo e critérios completos no relatório. Esta reanálise altera apenas documentação e **não inicia implementação nem autoriza automaticamente qualquer lote**.
+
+## 25. Primeira subfase da reanálise — A1 / R1 / DAT-03 — 23–24/10/2026
+
+Autorizada a implementação por subfases, começando pela primeira. Delimitada a **A1 — conversão de URLs de diferidos com credenciais especiais**. Corrigidos o fallback de arquivo para PHP e o modo M3U xc/xtream, usando valores lógicos dos segmentos e parâmetros de query seguros. Tokens existentes preservados, incluindo repetições e percent-encoding; grafia dos horários conservada, sem alteração da correção +1 h ou das opções de formato/HLS.
+
+- **Core:** 1 367 testes JVM aprovados, zero falhas/erros/ignorados, incluindo sete testes novos. Antes do fix, seis dos sete novos testes reproduziram falhas. Nenhum teste existente foi enfraquecido. i18n aprovado sem aumento do baseline; seis testes da ferramenta de snapshot aprovados.
+- **App:** compilação debug/release e lint vital aprovados a 23/10 e novamente a 24/10, em 3 min 34 s, com a versão atual `105.1.0.6`, alterada fora desta subfase. **A1 concluída e validada automaticamente.**
+- **Integridade:** novo snapshot com 1 062 inputs, SHA-256 `d6c9d4b67ff4b791f10d91926e1d6694ba986a7b77a368937166543bdc7df4b5`, conferido com os fontes externos. Cópia anterior com manifesto em `C:/Users/renat/Downloads/OwnTV-subfase-A1-backup-20261023-163539/`; snapshot anterior conservado.
+- **Âmbito preservado:** esquema 51, HLS/exceções, formatos/fallback, áudio, buffers/latência, reabertura, configurações por canal, gravações, dados instalados e volume de 100%. OwnTV Mobile não alterado. Sem APK, assinatura, commit, push ou publicação; aceitação física pendente.
+
+Registo: [IMPLEMENTACAO_SUBFASE_A1_URLS_DIFERIDOS_2026-10-23.md](../docs/IMPLEMENTACAO_SUBFASE_A1_URLS_DIFERIDOS_2026-10-23.md).
+
+**Subfases seguintes, ainda não iniciadas:** A2 — R4 / PLY-07, índice de zapping após atualização do catálogo; A3 — R3 / PLY-01, confirmação Exo→timeshift local; A4 — R5 / UI-07, seleção visível em «No momento». O lote B mantém R2 / INT-02 e R6 / PLY-02. Fase 6, OPT-03, MED/NOV e UPSCALING mantêm as condições da reanálise. Este registo não inicia nem autoriza automaticamente o trabalho seguinte.
+
+
+## 26. Fecho das restantes subfases autorizadas — 24/10/2026
+
+Foram implementados **A2/R4, A3/R3, A4/R5, B1/R2 e B2/R6**, e completados os blocos recomendados **INT-06/07/08/09 e OPT-01/02**, com a matriz transversal OPT-03. Não reaplicar estes blocos a partir das listas históricas.
+
+- Zapping: índice paginado invalidado por catálogo/ordenação, revisão no cache e recusa de resultados antigos; janela limitada e direção preservada quando desaparece o canal.
+- Reprodução: confirmação conjunta Exo/mpv antes do produtor de timeshift local; lições temporárias de formato invalidadas por configurações/headers novos.
+- Home: seleção por identidade e janela visível reconciliadas ao mudar a lista.
+- Backup: export completo não omite silenciosamente recursos selecionados; seleções Off/timings sem cache preservados; resumo de itens de legendas não aplicados.
+- PIN/LocalSync: autoridade comum/persistida, hashes versionados compatíveis com leitura legada, proteção Kids condicionada a adulto protegido, revogação ativa, identidades não substituídas silenciosamente, limites de bytes reais, cancelamento e temporários com owner/leases/TTL.
+- Distribuição: versão única, progressão conferida contra APK publicado, assinatura autorizada/package/ABIs/hashes, permissões por job, Actions fixadas, wrappers/dependências verificadas e matriz CI Android 26/34.
+- Custo/limpeza: amostragem de armazenamento informativo, formatters por locale/thread e resíduos sem consumidores confirmados; quotas, lembretes, canal de arranque e cores preservados.
+
+**Evidência:** 460 testes App + 1 375 Core + 613 motores = **2 448 JVM**, sem falhas; **15 testes Python**; compilação App debug/release e lint debug/vital release aprovados com verificação estrita de dependências. Os testes instrumentados foram compilados, não executados. Snapshot de 1 071 inputs, SHA-256 `ff76713c2d027257ff49b416d7bb13c56a5968045319b88252577e4ab796014a`, conferido contra os bytes atuais do Core.
+
+Não foi gerado/publicado APK. CI remoto, foco com comando, codecs/HDMI, fornecedor e LocalSync entre dispositivos continuam a exigir aceitação real. Não há percentagens de ganho medidas. Consultar o [relatório final](../docs/IMPLEMENTACAO_SUBFASES_RESTANTES_2026-10-24.md) para limitações de PIN em versões antigas e configuração de assinatura para publicação futura.
+
+**Futuro, sem implementação nesta intervenção:** MED/NOV, UPSCALING-BETA-01 e **TV-AVO-01 — modo «TV Avó»**. Este último deixa visíveis apenas play/pausa, nome do canal e programação, ocultando os restantes controlos do leitor e preservando CH+/CH− e saída. Está registado em [melhorias futuras](../docs/MELHORIAS_FUTURAS_PENDENTES.md); não ficou ativo por este registo.
+
+
+## 27. TV-AVO-01 implementado por autorização específica — 24/10/2026
+
+A proposta registada no fecho anterior foi autorizada e implementada como opção do leitor interno, desligada por defeito: play/pausa, canal e programação, sem ferramentas avançadas. Setas/CH mantêm o zapping; Voltar regressa à lista, de onde se pode desativar o modo nas definições. A escolha persiste e integra o backup completo, sem alterar motores, buffers, Core ou dados instalados.
+
+**Validação desta implementação:** 466 testes App (seis novos), compilação debug/release, lint debug/vital release sem erros, inventário i18n e igualdade do Core com o snapshot. Sem APK ou teste em box. Detalhes e aceitação física pendente no [relatório TV Avó](../docs/IMPLEMENTACAO_TV_AVO_2026-10-24.md). O registo antigo de TV-AVO-01 como ideia futura é histórico; não reaplicar a implementação. MED/NOV e UPSCALING conservam as suas condições.
+
+
+## 28. Complemento TV Avó — sem play/pausa e com versões automáticas
+
+Por pedido posterior de 24/10/2026, foi removido o botão de play/pausa. OK apenas revela nome/programação. Ativar o modo liga agrupamento das versões, prioridade de reprodução e recuperação automática entre qualidades; aplica também no arranque/perfil, preservando ordem manual, versões ocultas e tempo de espera. Desativar o modo não reverte essas opções.
+
+470 testes App, compilação debug/release e lint sem erros. Core/motores/snapshot sem alterações e nenhum APK gerado. Ver [estado atual e aceitação física](../docs/IMPLEMENTACAO_TV_AVO_2026-10-24.md). A descrição com play/pausa da secção 27 é histórica e fica superada por este pedido.

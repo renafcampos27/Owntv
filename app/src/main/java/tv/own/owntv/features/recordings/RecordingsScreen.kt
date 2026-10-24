@@ -68,8 +68,6 @@ import tv.own.owntv.ui.components.trapVerticalFocusExit
 import tv.own.owntv.ui.format.formatBestDateTime
 import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.ui.theme.OwnTVTheme
-import java.text.NumberFormat
-import java.util.Locale
 
 /**
  * Everything the recorder has done, is doing, or could not do.
@@ -696,10 +694,7 @@ private fun IntegrityDetails(row: RecordingEntity, recovery: RecordingEntity?) {
 
 /** Megabytes to one decimal, formatted for the locale. Same shape as the Downloads screen's. */
 private fun sizeMb(bytes: Long): String =
-    java.text.NumberFormat.getNumberInstance().apply {
-        minimumFractionDigits = 1
-        maximumFractionDigits = 1
-    }.format(bytes / 1_048_576.0)
+    tv.own.owntv.ui.format.OneDecimalFormatter.format(bytes / 1_048_576.0)
 
 internal fun splitEstimatedDuration(durationMs: Long): Pair<Long, Long> {
     val totalMinutes = durationMs.coerceAtLeast(0) / 60_000L
@@ -804,10 +799,7 @@ private fun StorageBar(info: RecordingStorageInfo) {
 private fun whenText(atMs: Long): String =
     formatBestDateTime(LocalContext.current, "EEEdMMMjm", atMs)
 
-private fun decimal(value: Double): String = NumberFormat.getNumberInstance(Locale.getDefault()).apply {
-    minimumFractionDigits = 1
-    maximumFractionDigits = 1
-}.format(value)
+private fun decimal(value: Double): String = tv.own.owntv.ui.format.OneDecimalFormatter.format(value)
 
 private fun gigabytes(bytes: Long): String = decimal(bytes.coerceAtLeast(0) / 1_073_741_824.0)
 

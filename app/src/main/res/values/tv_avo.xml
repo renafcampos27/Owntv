@@ -1,0 +1,5 @@
+<resources>
+    <string name="tv_avo_mode_title">TV Avó mode</string>
+    <string name="tv_avo_mode_description">Only the channel name and programmes. Enabling this mode also enables version grouping, playback priority and automatic quality fallback. Up/Down changes channel; Back returns to the list.</string>
+    <string name="tv_avo_channel_unavailable">This channel could not open. Change channel or press Back.</string>
+</resources>

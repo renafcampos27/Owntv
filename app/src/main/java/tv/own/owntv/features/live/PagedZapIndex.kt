@@ -33,6 +33,17 @@ internal suspend fun collectZapIds(
 
 internal data class ZapWindow(val target: ChannelEntity, val rows: List<ChannelEntity>)
 
+/** Preserve direction when the playing channel itself was removed during a catalogue update. */
+internal fun replacementZapAnchor(ids: LongArray, previous: LongArray, anchor: Long, delta: Int): Long? {
+    if (ids.size < 2) return null
+    val old = previous.indexOf(anchor)
+    val successor = if (old >= 0) (1..minOf(17, previous.size)).firstNotNullOfOrNull { step ->
+        previous[Math.floorMod(old + step * delta, previous.size)].takeIf { it in ids }
+    } else null
+    val target = successor?.let { ids.indexOf(it) } ?: if (delta >= 0) 0 else ids.lastIndex
+    return ids[Math.floorMod(target - delta, ids.size)]
+}
+
 /** A small circular entity window around the destination; ordering is the captured browse ordering. */
 internal fun zapWindowIds(ids: LongArray, anchor: Long, delta: Int): List<Long> {
     val index = ids.indexOf(anchor)

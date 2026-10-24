@@ -8,6 +8,7 @@ import androidx.datastore.core.okio.OkioStorage
 import okio.FileSystem
 import okio.Path.Companion.toPath
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.first
 import org.json.JSONObject
 import org.junit.Assert.*
 import org.junit.Rule
@@ -20,7 +21,7 @@ class CompleteSettingsBackupTest {
     @get:Rule val folder = TemporaryFolder()
     private val configured = SimpleModeOptions(
         hideCategories = true, hideSidebar = true, channelRecovery = false,
-        startOnBoot = true, startOnWake = true, recoveryTimeoutSeconds = 17,
+        startOnBoot = true, startOnWake = true, recoveryTimeoutSeconds = 17, tvAvoMode = true,
     )
 
     private class StoreSettings(private val store: DataStore<Preferences>) : BackupAppSettings {
@@ -47,6 +48,62 @@ class CompleteSettingsBackupTest {
     }
 
     private suspend fun read(store: DataStore<Preferences>) = SimpleModeBackupCodec.decode(SimpleModePreferences.exportBackup(store), SimpleModeOptions())
+
+    @Test fun tvAvoIsOffByDefaultAndTheRealSetterPersistsAcrossStoreReopening() = runBlocking {
+        withStore("tv-avo") { store ->
+            assertFalse(SimpleModePreferences.observe(store).first().tvAvoMode)
+            SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(configured.copy(tvAvoMode = false)))
+            SimpleModePreferences.setTvAvoMode(store, true)
+            assertEquals(configured.copy(channelRecovery = true), read(store))
+        }
+        withStore("tv-avo") { store ->
+            assertTrue(SimpleModePreferences.observe(store).first().tvAvoMode)
+            SimpleModePreferences.setTvAvoMode(store, false)
+        }
+        withStore("tv-avo") { store -> assertEquals(configured.copy(tvAvoMode = false, channelRecovery = true), read(store)) }
+    }
+
+    @Test fun tvAvoPreparesVersionsBeforePublishingAndKeepsTheConfiguredWaitTime() = runBlocking {
+        withStore("tv-avo-enable") { store ->
+            val before = configured.copy(tvAvoMode = false, channelRecovery = false, recoveryTimeoutSeconds = 23)
+            SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(before))
+            var prepared = false
+            SimpleModePreferences.setTvAvoMode(store, true) {
+                assertFalse(SimpleModePreferences.observe(store).first().tvAvoMode)
+                prepared = true
+            }
+            assertTrue(prepared)
+            assertEquals(before.copy(tvAvoMode = true, channelRecovery = true), read(store))
+            SimpleModePreferences.setTvAvoMode(store, false) { fail("Disabling must not apply a preset") }
+            assertEquals(before.copy(channelRecovery = true), read(store))
+        }
+    }
+
+    @Test fun failedTvAvoPreparationDoesNotPublishModeOrRecovery() = runBlocking {
+        withStore("tv-avo-failed-preset") { store ->
+            val before = configured.copy(tvAvoMode = false, channelRecovery = false)
+            SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(before))
+            try { SimpleModePreferences.setTvAvoMode(store, true) { throw java.io.IOException("Unavailable") }; fail("Expected IO failure") }
+            catch (_: java.io.IOException) { }
+            assertEquals(before, read(store))
+        }
+    }
+
+    @Test fun olderBackupsWithoutTvAvoKeepTheCurrentChoice() {
+        val older = SimpleModeBackupCodec.encode(configured).apply { remove("tvAvoMode") }
+        assertTrue(SimpleModeBackupCodec.decode(older, configured).tvAvoMode)
+        assertFalse(SimpleModeBackupCodec.decode(older, configured.copy(tvAvoMode = false)).tvAvoMode)
+    }
+
+    @Test fun invalidTvAvoCannotPartiallyRestoreOtherFlags() = runBlocking {
+        withStore("tv-avo-invalid") { store ->
+            SimpleModePreferences.restoreBackup(store, SimpleModeBackupCodec.encode(configured))
+            val malformed = SimpleModeBackupCodec.encode(configured.copy(hideSidebar = false)).put("tvAvoMode", "true")
+            try { SimpleModePreferences.restoreBackup(store, malformed); fail("Expected invalid boolean") }
+            catch (_: IllegalArgumentException) { }
+            assertEquals(configured, read(store))
+        }
+    }
 
     @Test fun sidebarAndPriorityDefaultsApplyOnceAndPreserveOtherPreferences() = runBlocking {
         var calls = 0

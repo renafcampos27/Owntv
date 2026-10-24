@@ -11,6 +11,10 @@ import java.lang.reflect.Proxy
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.test.setMain
+import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.async
@@ -72,6 +76,7 @@ import tv.own.owntv.core.stalker.StalkerSession
 import tv.own.owntv.core.stalker.StreamUrlResolver
 import tv.own.owntv.player.HeroPreviewEngine
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class HomePreviewHandoverTest {
 
     @get:Rule
@@ -121,6 +126,7 @@ class HomePreviewHandoverTest {
 
     @Before
     fun setUp() {
+        Dispatchers.setMain(Dispatchers.Default)
         val rootDir = temp.newFolder("owntv-home-preview-test")
         val prefs = InMemorySharedPreferences()
         context = object : ContextWrapper(null) {
@@ -136,7 +142,7 @@ class HomePreviewHandoverTest {
 
     @After
     fun tearDown() {
-        streamingHttp.evictAll()
+        try { streamingHttp.evictAll() } finally { Dispatchers.resetMain() }
     }
 
     @Test(timeout = 10_000)

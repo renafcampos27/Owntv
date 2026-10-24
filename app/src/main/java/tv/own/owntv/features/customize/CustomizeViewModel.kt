@@ -93,12 +93,12 @@ class CustomizeViewModel(
 
     /** Optional PIN lock on this screen (per profile). [loaded]=false while DataStore is still read,
      *  so the screen never flashes unlocked content before the lock state is known. */
-    data class PinLock(val loaded: Boolean = false, val pin: String? = null)
+    data class PinLock(val loaded: Boolean = false, val pin: String? = null, val profileId: Long = -1)
 
     val pinLock: StateFlow<PinLock> = ctx
         .flatMapLatest { c ->
             if (c.profileId < 0) flowOf(PinLock(loaded = true))
-            else settings.customizePin(c.profileId).map { PinLock(loaded = true, pin = it) }
+            else settings.customizePin(c.profileId).map { PinLock(loaded = true, pin = it, profileId = c.profileId) }
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PinLock())
 

@@ -1121,6 +1121,14 @@ fun OwnTVShell(
                 }
             }
             .onKeyEvent { e ->
+                if (simple.tvAvoMode && playerMode == PlayerMode.FULLSCREEN) {
+                    // Keep Back dispatch for an overlay above the simple reader; no custom shortcuts.
+                    if (e.key == Key.Back) {
+                        if (e.type == KeyEventType.KeyUp && !e.nativeKeyEvent.isCanceled) backDispatcher?.onBackPressed()
+                        return@onKeyEvent backDispatcher != null
+                    }
+                    return@onKeyEvent false
+                }
                 val shortcutKey = e.nativeKeyEvent.keyCode
                 val shellBindings = remoteShortcutBindings.filter {
                     it.keyCode == shortcutKey &&
@@ -1638,7 +1646,7 @@ fun OwnTVShell(
                     },
                 )
             }
-            if (isFull && !autoFrameRate && !afrPrompted) {
+            if (isFull && !simple.tvAvoMode && !autoFrameRate && !afrPrompted) {
                 // Frame rate of whichever engine is on screen. On the mpv side this is what the direct
                 // path judders on; on Exo it now survives "Measured stream stats" being off (F14).
                 val activeFps by if (liveOnExo) {
@@ -1679,6 +1687,8 @@ fun OwnTVShell(
                 // re-tune the live stream and jump the user to the current programme.
                 val isTunedLive = isLiveChannel && !catchupActive
                 PlayerHud(
+                    tvAvoMode = simple.tvAvoMode,
+                    tvAvoChannelName = playingChannel?.name,
                     player = if (liveOnExo) liveVm.previewEngine else mpvEngine, // HUD drives the active engine
                     onBack = exitPlayer,
                     recentChannelWaitSeconds = if (isTunedLive) liveVm.recentChannelWaitSeconds else null,

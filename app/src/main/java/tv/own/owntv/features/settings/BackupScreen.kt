@@ -203,6 +203,10 @@ fun BackupScreen(onBack: () -> Unit, modifier: Modifier = Modifier) {
                     if (s.invalidLocale) {
                         Text(stringResource(CoreR.string.settings_backup_invalid_locale), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                     }
+                    if (s.skippedSubtitleItems > 0) {
+                        Text(pluralStringResource(R.plurals.backup_subtitle_items_omitted, s.skippedSubtitleItems, s.skippedSubtitleItems),
+                            style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
+                    }
                     if (s.skippedSettings > 0) {
                         Text(pluralStringResource(CoreR.plurals.settings_backup_unmatched_settings, s.skippedSettings, s.skippedSettings), style = MaterialTheme.typography.bodyMedium, color = colors.onSurfaceVariant)
                     }
@@ -553,6 +557,8 @@ internal fun ProfilePickerDialog(
     pinFor?.let { profile ->
         ProfilePinDialog(
             profileName = profile.name,
+            credentialHash = profile.pinHash,
+            credentialScope = tv.own.owntv.core.util.Pin.profileScope(profile.id),
             verify = { pin -> verifyPin(profile, pin) },
             onUnlocked = { ticked = ticked + profile.id; pinFor = null },
             onDismiss = { pinFor = null },
@@ -565,6 +571,8 @@ internal fun ProfilePickerDialog(
 @Composable
 private fun ProfilePinDialog(
     profileName: String,
+    credentialHash: String?,
+    credentialScope: String,
     verify: (String) -> Boolean,
     onUnlocked: () -> Unit,
     onDismiss: () -> Unit,
@@ -580,6 +588,7 @@ private fun ProfilePinDialog(
     Box(Modifier.fillMaxSize().modalScrim().trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
         Column(Modifier.dialogPanel(width = 480.dp, padding = 28.dp)) {
             Text(stringResource(CoreR.string.settings_backup_profile_locked, profileName), style = MaterialTheme.typography.titleLarge, color = colors.onSurface)
+            tv.own.owntv.features.profiles.PinCooldownHint(credentialHash, credentialScope)
             Spacer(Modifier.height(8.dp))
             Text(
                 stringResource(CoreR.string.settings_backup_profile_pin_description),

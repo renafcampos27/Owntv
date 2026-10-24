@@ -126,7 +126,7 @@ internal fun ChannelVersionsDialog(
                             modifier = Modifier.fillMaxWidth().then(if (index == 0) Modifier.focusRequester(firstVersionFocus) else Modifier))
                         return@itemsIndexed
                     }
-                    val itemFocus = rowFocus.getOrPut(item.id) { FocusRequester() }
+                    val itemFocus = remember(rowFocus, item.id) { rowFocus.getOrPut(item.id) { FocusRequester() } }
                     val hidden = CustomizeKeys.channel(item) in settings.hiddenItems
                     val targetButton = when {
                         movedId == item.id && moveDirection < 0 && index > 0 -> -1

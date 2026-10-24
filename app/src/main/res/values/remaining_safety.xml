@@ -1,0 +1,11 @@
+<resources>
+    <plurals name="pin_retry_wait">
+        <item quantity="one">Wait %1$d second before trying the PIN again.</item>
+        <item quantity="other">Wait %1$d seconds before trying the PIN again.</item>
+    </plurals>
+    <string name="profiles_confirm_adult_pin">Confirm the PIN for adult profile %1$s</string>
+    <plurals name="backup_subtitle_items_omitted">
+        <item quantity="one">%1$d subtitle item could not be restored. The restore is incomplete.</item>
+        <item quantity="other">%1$d subtitle items could not be restored. The restore is incomplete.</item>
+    </plurals>
+</resources>

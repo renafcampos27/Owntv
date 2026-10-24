@@ -49,7 +49,7 @@ import tv.own.owntv.ui.theme.Dimens
 import tv.own.owntv.core.theme.GlassSurface
 import tv.own.owntv.ui.theme.OwnTVTheme
 
-enum class NavSettingsEntry { VERSIONS, PRIORITY, RECOVERY_TIMEOUT, HIDE_CATEGORIES, HIDE_SIDEBAR }
+enum class NavSettingsEntry { VERSIONS, PRIORITY, RECOVERY_TIMEOUT, HIDE_CATEGORIES, HIDE_SIDEBAR, TV_AVO }
 
 /**
  * v4.3.0 — Nav menu customization. Two modes:
@@ -84,7 +84,7 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier, ini
         if (initialEntry == null) {
             runCatching { firstFocus.requestFocus() }
         } else {
-            if (initialEntry in listOf(NavSettingsEntry.RECOVERY_TIMEOUT, NavSettingsEntry.HIDE_CATEGORIES, NavSettingsEntry.HIDE_SIDEBAR) && simple == null) return@LaunchedEffect
+            if (initialEntry in listOf(NavSettingsEntry.RECOVERY_TIMEOUT, NavSettingsEntry.HIDE_CATEGORIES, NavSettingsEntry.HIDE_SIDEBAR, NavSettingsEntry.TV_AVO) && simple == null) return@LaunchedEffect
             repeat(10) {
                 androidx.compose.runtime.withFrameNanos { }
                 if (runCatching { entryFocus.getValue(initialEntry).requestFocus() }.getOrDefault(false)) {
@@ -213,6 +213,15 @@ fun NavMenuSettingsScreen(onBack: () -> Unit, modifier: Modifier = Modifier, ini
                 )
             }
 
+            Row2(
+                icon = OwnTVIcon.LIVE_TV,
+                title = stringResource(R.string.tv_avo_mode_title),
+                modifier = Modifier.focusRequester(entryFocus.getValue(NavSettingsEntry.TV_AVO)),
+                desc = stringResource(R.string.tv_avo_mode_description),
+                chip = stringResource(if (options.tvAvoMode) R.string.simple_mode_on else R.string.simple_mode_off),
+                primaryChip = options.tvAvoMode,
+                onClick = { scope.launch { SimpleModePreferences.setTvAvoMode(context, !options.tvAvoMode) { settingsVm.prepareTvAvoChannelVersions() } } },
+            )
             Row2(
                 icon = OwnTVIcon.MENU,
                 title = stringResource(R.string.simple_mode_categories),
