@@ -1,0 +1,135 @@
+{
+  "date": "2026-10-31",
+  "stage": "V2",
+  "default_policy": "STRICT",
+  "new_policy": "AUTO_FULL",
+  "scope": "EXOPLAYER_LIVE_HTTPS",
+  "core_lock": {
+    "schema": 1,
+    "archive": "vendor/owntv-core-source-8375ddea1894e8e55ac5b3217260ddc1fdcf378044f31c5f2bf4c77766f3402e.zip",
+    "sha256": "8375ddea1894e8e55ac5b3217260ddc1fdcf378044f31c5f2bf4c77766f3402e",
+    "version": "1.0.57-own.20261011",
+    "files": 1089,
+    "description": "Customized TV Core source snapshot; not an upstream release equivalence claim"
+  },
+  "device_tests": "COMPILED_NOT_EXECUTED",
+  "apk_generated": false,
+  "versions_or_dependencies_changed_in_v2": false,
+  "committed": false,
+  "pushed": false,
+  "python_tests_passed": 23,
+  "new_jvm_tests_since_v1": 12,
+  "backup": "C:/Users/renat/Downloads/OwnTV-tls-v2-backup-20261031-173129",
+  "jvm_tests": {
+    "app": {
+      "tests": 470,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "core": {
+      "tests": 1402,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "player": {
+      "tests": 614,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "logs": {
+    "owntv-tls-v2-network-gate.log": {
+      "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v2-network-gate.log",
+      "sha256": "ab6c18b6369af0b386aa408cc5a8aacf51d0ec6c1b95c9717090e0efa073513c",
+      "result": "BUILD_SUCCESSFUL"
+    },
+    "owntv-tls-v2-integration.log": {
+      "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v2-integration.log",
+      "sha256": "460f112f8da5f9793eaefa648de072f5a53d5b9642e649a2b96e16a78d40aa6f",
+      "result": "BUILD_SUCCESSFUL"
+    },
+    "owntv-tls-v2-final-validation.log": {
+      "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v2-final-validation.log",
+      "sha256": "3f2b7c832bc977da2dac1f953e3155313bd7c3231e9315bfb5ea1ffdf96b0e5a",
+      "result": "BUILD_SUCCESSFUL"
+    },
+    "owntv-tls-v2-clean-build.log": {
+      "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v2-clean-build.log",
+      "sha256": "5c13974691b9bd7ee1dfc272df47946f1b9878456b8656165df0fa582a2a9895",
+      "result": "BUILD_SUCCESSFUL"
+    }
+  },
+  "tls_test_cases": {
+    "tv.own.owntv.core.network.PlaybackTlsInterceptorTest": [
+      "fullModeRevalidatesThroughUnverifiedHostnameAndStrictWithoutPermanentBypass",
+      "lastResortRequiresExactEndpointEvidenceAndDoesNotClassifyByMessages",
+      "unknownCaAndPinFailureAreNeverBypassed",
+      "fullModeHealthySegmentsRemainStrictAndReuseOneConnection",
+      "fullModeCancellationUsesOneNativeCallAndDoesNotLearnACanceledFallback",
+      "headersSurviveRecoveryButPrivateHeadersDoNotFollowAnotherOrigin",
+      "cancellationInFallbackRetainsOneNativeCallAndNeverLearnsSuccess",
+      "fullModeRecoversUnknownCaSelfSignedAndExpiredButUsesHostnameOnlyWhenSufficient",
+      "fullModeRejectsNetworkGenericSslAndNonIdempotentFailures",
+      "healthySegmentsReuseTheSameStrictConnection",
+      "fullModePoliciesAndPoolsAreIsolatedAndDowngradingPolicyInvalidatesThem",
+      "httpErrorsDoNotTriggerTlsFallback",
+      "fullModePreservesStreamHeadersAndNeverUsesHttpErrorsAsTlsEvidence",
+      "fullModeSingleFlightAllowsConcurrentSegmentsToContinue",
+      "invalidToCorrectToInvalidOnSameEndpointAutomaticallyReturnsToStrict",
+      "fullModeDoesNotBypassPinsOnExpiredCertificates",
+      "nonIdempotentRequestsAndDnsErrorsCannotAuthorizeFallback",
+      "validTlsUsesOneNativeCallAndWrongHostnameRetriesInsideTheSameCall",
+      "timeoutAndGenericSslErrorsCannotAuthorizeFallback",
+      "crossHostRedirectMismatchFailsClosedAndHttpDowngradeIsRejected",
+      "expiredRevalidationIsSingleFlightAndOtherSegmentsCanContinue",
+      "fullModeCannotExtendTrustToRedirectHostOrPort",
+      "strictAndUnscopedAndOtherPlaylistCannotBorrowTheException",
+      "expiredCertificateAndPinOnMismatchedHostnameRemainRejected"
+    ],
+    "tv.own.owntv.core.network.PlaybackTlsPreferencesTest": [
+      "policySurvivesClosingAndReopeningARealDataStoreFile",
+      "fullGlobalAndIndependentOverridesSurviveBackupRestore",
+      "backupsScopeAndRemapPlaylistPoliciesAndUnknownValuesFailClosed"
+    ]
+  },
+  "total_jvm_tests": 2486,
+  "clean_build": {
+    "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v2-clean-f_d_5zwv\\OwnTV",
+    "result": "BUILD_SUCCESSFUL",
+    "offline": true,
+    "force_locked_snapshot": true,
+    "project_cache_copied": false,
+    "global_gradle_cache_used": true,
+    "configuration_cache_stored": true,
+    "duration": "6m18s"
+  },
+  "modified_core_inputs": [
+    "core/src/main/java/tv/own/owntv/core/network/PlaybackTlsInterceptor.kt",
+    "core/src/main/java/tv/own/owntv/core/network/PlaybackTlsPolicy.kt",
+    "core/src/main/res/values-pt-rPT/strings_playback_tls.xml",
+    "core/src/main/res/values-pt/strings_playback_tls.xml",
+    "core/src/main/res/values/strings_playback_tls.xml",
+    "core/src/test/java/tv/own/owntv/core/network/PlaybackTlsInterceptorTest.kt",
+    "core/src/test/java/tv/own/owntv/core/network/PlaybackTlsPreferencesTest.kt",
+    "core/src/test/resources/tls/README.md",
+    "player-core/src/androidTest/java/tv/own/owntv/player/PlaybackTlsDataSourceTest.kt",
+    "tools/i18n/safe_literals.txt"
+  ],
+  "new_core_inputs": [
+    "core/src/main/java/tv/own/owntv/core/network/PlaybackTlsTrust.kt",
+    "core/src/test/resources/tls/selfsigned.p12",
+    "player-core/src/androidTest/assets/tls/selfsigned.p12"
+  ],
+  "unchanged_boundaries_vs_v1": [
+    "core/src/main/java/tv/own/owntv/core/di/DataModule.kt",
+    "core/src/main/java/tv/own/owntv/core/network/ExtraTrustAnchors.kt",
+    "core/src/main/java/tv/own/owntv/core/backup/BackupManager.kt",
+    "player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt",
+    "player-core/src/main/java/tv/own/owntv/player/ExoSubtitleEngine.kt",
+    "player-core/src/main/java/tv/own/owntv/player/PlaybackHttpCalls.kt"
+  ],
+  "lint_vital": "NO_ISSUES_FOUND"
+}

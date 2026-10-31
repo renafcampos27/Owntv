@@ -1,0 +1,137 @@
+{
+  "date": "2026-10-31",
+  "stage": "V1",
+  "core_lock": {
+    "schema": 1,
+    "archive": "vendor/owntv-core-source-357e9e5b7b829b020646aa21a0da859eb15bad09479639bf92e8706aefed8500.zip",
+    "sha256": "357e9e5b7b829b020646aa21a0da859eb15bad09479639bf92e8706aefed8500",
+    "version": "1.0.57-own.20261011",
+    "files": 1086,
+    "description": "Customized TV Core source snapshot; not an upstream release equivalence claim"
+  },
+  "settings_default": "STRICT",
+  "tls_scope": "EXOPLAYER_LIVE_ONLY",
+  "v2_implemented": false,
+  "unverified_trust_manager_created": false,
+  "python_tests": 23,
+  "device_execution": "NOT_RUN",
+  "android_datasource_test": "COMPILED_NOT_EXECUTED",
+  "apk_generated": false,
+  "committed": false,
+  "pushed": false,
+  "backup": "C:/Users/renat/Downloads/OwnTV-tls-v1-backup-20261031-163356",
+  "classpath": "com.squareup.okhttp3:okhttp-android:5.5.0",
+  "reviewed_dependency_artifacts": {
+    "app": 1623,
+    "core": 1032
+  },
+  "jvm_tests": {
+    "app": {
+      "tests": 470,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "core": {
+      "tests": 1390,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    },
+    "player": {
+      "tests": 614,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0
+    }
+  },
+  "tls_test_cases": {
+    "tv.own.owntv.core.network.PlaybackTlsInterceptorTest": [
+      "unknownCaAndPinFailureAreNeverBypassed",
+      "headersSurviveRecoveryButPrivateHeadersDoNotFollowAnotherOrigin",
+      "cancellationInFallbackRetainsOneNativeCallAndNeverLearnsSuccess",
+      "healthySegmentsReuseTheSameStrictConnection",
+      "httpErrorsDoNotTriggerTlsFallback",
+      "invalidToCorrectToInvalidOnSameEndpointAutomaticallyReturnsToStrict",
+      "nonIdempotentRequestsAndDnsErrorsCannotAuthorizeFallback",
+      "validTlsUsesOneNativeCallAndWrongHostnameRetriesInsideTheSameCall",
+      "timeoutAndGenericSslErrorsCannotAuthorizeFallback",
+      "crossHostRedirectMismatchFailsClosedAndHttpDowngradeIsRejected",
+      "expiredRevalidationIsSingleFlightAndOtherSegmentsCanContinue",
+      "strictAndUnscopedAndOtherPlaylistCannotBorrowTheException",
+      "expiredCertificateAndPinOnMismatchedHostnameRemainRejected"
+    ],
+    "tv.own.owntv.core.network.PlaybackTlsPreferencesTest": [
+      "policySurvivesClosingAndReopeningARealDataStoreFile",
+      "backupsScopeAndRemapPlaylistPoliciesAndUnknownValuesFailClosed"
+    ]
+  },
+  "total_jvm_tests": 2474,
+  "modified_core_inputs": [
+    "core/src/main/java/tv/own/owntv/core/backup/BackupManager.kt",
+    "core/src/main/java/tv/own/owntv/core/di/DataModule.kt",
+    "core/src/main/java/tv/own/owntv/core/network/StreamingHttpClient.kt",
+    "core/src/main/java/tv/own/owntv/core/settings/SettingsRepository.kt",
+    "gradle/verification-metadata.xml",
+    "player-core/build.gradle.kts",
+    "player-core/src/main/java/tv/own/owntv/player/LiveEngines.kt",
+    "player-core/src/main/java/tv/own/owntv/player/LivePreviewEngine.kt",
+    "player-core/src/main/java/tv/own/owntv/player/LiveTuneController.kt",
+    "player-core/src/test/java/tv/own/owntv/player/LiveTuneControllerTest.kt",
+    "tools/i18n/safe_literals.txt"
+  ],
+  "new_core_inputs": [
+    "core/src/main/java/tv/own/owntv/core/network/PlaybackTlsInterceptor.kt",
+    "core/src/main/java/tv/own/owntv/core/network/PlaybackTlsPolicy.kt",
+    "core/src/main/res/values-pt-rPT/strings_playback_tls.xml",
+    "core/src/main/res/values-pt/strings_playback_tls.xml",
+    "core/src/main/res/values/strings_playback_tls.xml",
+    "core/src/test/java/tv/own/owntv/core/network/PlaybackTlsInterceptorTest.kt",
+    "core/src/test/java/tv/own/owntv/core/network/PlaybackTlsPreferencesTest.kt",
+    "core/src/test/resources/tls/README.md",
+    "core/src/test/resources/tls/ca.pem",
+    "core/src/test/resources/tls/correct.p12",
+    "core/src/test/resources/tls/expired.p12",
+    "core/src/test/resources/tls/wrong.p12",
+    "player-core/src/androidTest/assets/tls/ca.pem",
+    "player-core/src/androidTest/assets/tls/wrong.p12",
+    "player-core/src/androidTest/java/tv/own/owntv/player/PlaybackTlsDataSourceTest.kt"
+  ],
+  "unchanged_native_and_archive_inputs": {
+    "player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt": "81e652c2b3a45aec0d0f7a6fae8f482c57edb76b536264faae87ac424bdd9186",
+    "core/src/main/java/tv/own/owntv/core/network/ExtraTrustAnchors.kt": "8a61e073a4cff279a8c13ce90fe89bcd3577869930c71485cc949f9231f9f8c7",
+    "player-core/src/main/java/tv/own/owntv/player/ExoSubtitleEngine.kt": "9caae42c7223a536ed28aba558f4529d90a54c59e0ba35a061f1e8827e613820",
+    "player-core/src/main/java/tv/own/owntv/player/HeroPreviewEngine.kt": "5a1e9a3882829fdee66c2642baa4e8989c96e8b4411647e24f4852680c1e5176"
+  },
+  "logs": {
+    "owntv-tls-v1-baseline.log": {
+      "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v1-baseline.log",
+      "sha256": "ac3d2645bde0276ab385970c25b20fc510f87e9e4ba08829da05c4cd7e48e2c3",
+      "result": "BUILD_SUCCESSFUL"
+    },
+    "owntv-tls-v1-final-validation.log": {
+      "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v1-final-validation.log",
+      "sha256": "f7daa10e8bb8795b9873574c3b19a7027499a092b6fd11b7f338c698d75dfa67",
+      "result": "BUILD_SUCCESSFUL"
+    },
+    "owntv-tls-v1-clean-build.log": {
+      "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v1-clean-build.log",
+      "sha256": "e4378e5733f08ee9585f08ed82da9feffc5c0debd80d264d2c285593110e9bc5",
+      "result": "BUILD_SUCCESSFUL"
+    }
+  },
+  "clean_build": {
+    "result": "BUILD_SUCCESSFUL",
+    "path": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-v1-clean-d_1j8qdv\\OwnTV",
+    "duration": "8m26s",
+    "offline": true,
+    "force_locked_core_snapshot": true,
+    "project_cache_copied": false,
+    "global_gradle_cache_used": true,
+    "configuration_cache": "STORED",
+    "compiled_app_inputs_match_current_checkout": true
+  },
+  "lint_vital": "NO_ISSUES_FOUND",
+  "new_tests": 16,
+  "core_archive_verified_against_checkout": true
+}

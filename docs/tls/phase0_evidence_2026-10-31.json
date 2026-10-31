@@ -1,0 +1,76 @@
+{
+  "archive": {
+    "schema": 1,
+    "archive": "vendor/owntv-core-source-e96eca676488a1599d43f021f2ec6531af0fcc5ddba6ff1a0f359deb4f1b5280.zip",
+    "sha256": "e96eca676488a1599d43f021f2ec6531af0fcc5ddba6ff1a0f359deb4f1b5280",
+    "version": "1.0.57-own.20261011",
+    "files": 1071,
+    "description": "Customized TV Core source snapshot; not an upstream release equivalence claim"
+  },
+  "zip_verified": true,
+  "all_inputs_match_checkout": true,
+  "input_count": 1071,
+  "extracted_core": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-phase0-s5fb601m\\OwnTV_Core",
+  "okhttp_android_artifact": "C:\\Users\\renat\\.gradle\\caches\\modules-2\\files-2.1\\com.squareup.okhttp3\\okhttp-android\\5.5.0\\ef2d8ff94186d0bb77041b4541097ce2d6943f39\\okhttp.aar",
+  "okhttp_aar_sha256": "6c7fd12f092e64ca2eae0b8a8023900c0d7ffec57888cf8abc8085c6f42e1dcc",
+  "android_chain_apis_present": [
+    "withHostnameVerifier",
+    "withConnectionPool",
+    "withSslSocketFactory"
+  ],
+  "spec_sha256": "625f1ec4c5d07e7a4edae25c5e2cf552784de9d73b79b04746de894713ad4bb3",
+  "date": "2026-10-31",
+  "stage": "0",
+  "production_changes": false,
+  "app_commit": "1ae0279be7d3a2c464588092d00896da2a4e9377",
+  "core_base_commit": "e7a044eaccf96f2143852028c1e207bed8cedcd3",
+  "app_initial_status_entries": 0,
+  "core_initial_status_entries": 666,
+  "snapshot_python_tests": {
+    "tests": 6,
+    "failures": 0,
+    "errors": 0
+  },
+  "release_tool_python_tests": {
+    "tests": 17,
+    "failures": 0,
+    "errors": 0
+  },
+  "android_baseline": {
+    "result": "BLOCKED_BEFORE_TASK_EXECUTION",
+    "log": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-phase0-baseline.log",
+    "failed_artifact": "org.apache.groovy:groovy-bom:4.0.29/groovy-bom-4.0.29.pom",
+    "strict_verification_preserved": true
+  },
+  "mpv_effective_tls": "NOT_MEASURED",
+  "mpv_tls_verify_assignment_in_customized_sources": false,
+  "mpv_wrapper_bytecode_tls_literal": false,
+  "connected_adb_devices": 0,
+  "provider_accessed": false,
+  "controlled_tls_tests": "PENDING_V1",
+  "snapshot_changed": false,
+  "audited_file_sha256": {
+    "core/src/main/java/tv/own/owntv/core/network/StreamingHttpClient.kt": "8a89fdc2283f4a2881c01b0ad944871489d25c5b18238acc87982ba6d39baec4",
+    "core/src/main/java/tv/own/owntv/core/di/DataModule.kt": "a17acc633f68d2cb3e36c45130d29708539138d3dee2fd6c1579441a4695f5f7",
+    "core/src/main/java/tv/own/owntv/core/network/ExtraTrustAnchors.kt": "8a61e073a4cff279a8c13ce90fe89bcd3577869930c71485cc949f9231f9f8c7",
+    "player-core/src/main/java/tv/own/owntv/player/LiveEngines.kt": "d5ec317855047b2cff4cfaf6d07fd45dd23ee7f5b355ce617e18a89034d025fe",
+    "player-core/src/main/java/tv/own/owntv/player/LiveTuneController.kt": "40660397a7bd60055ed6e981d0830e16ca2d4e75889141e8de46b7200c98702c",
+    "player-core/src/main/java/tv/own/owntv/player/LivePreviewEngine.kt": "08575a68bd53372894cf375559066ff8143f2414e5f0b37a3cab54efd3a423ed",
+    "player-core/src/main/java/tv/own/owntv/player/PlaybackHttpCalls.kt": "0f9951459da161f54e808a9a148e8e9079898272c5c780115df3ee1819873df9",
+    "player-core/src/main/java/tv/own/owntv/player/TuneOwnership.kt": "a3132790222dca467defbe7d4c77b38459b7ab5f9a6ed34e1638f96f810e2b47",
+    "player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt": "81e652c2b3a45aec0d0f7a6fae8f482c57edb76b536264faae87ac424bdd9186",
+    "player-core/src/main/java/tv/own/owntv/player/HeroPreviewEngine.kt": "5a1e9a3882829fdee66c2642baa4e8989c96e8b4411647e24f4852680c1e5176",
+    "player-core/src/main/java/tv/own/owntv/player/ExoSubtitleEngine.kt": "9caae42c7223a536ed28aba558f4529d90a54c59e0ba35a061f1e8827e613820"
+  },
+  "player_release_classpath": {
+    "result": "PASSED",
+    "selected": "com.squareup.okhttp3:okhttp-android:5.5.0",
+    "strict_verification": true,
+    "offline": true,
+    "log": "C:\\Users\\renat\\AppData\\Local\\Temp\\owntv-tls-phase0-classpath.log"
+  },
+  "log_sha256": {
+    "owntv-tls-phase0-classpath.log": "1048dec6f44c5ad7065c2e5cf330b28d2117f3ca3f23486be0a231640994ca83",
+    "owntv-tls-phase0-baseline.log": "b4a6a2ff72470bda7a286384548b780b639f1f3ac43850f801681bdb265471ec"
+  }
+}

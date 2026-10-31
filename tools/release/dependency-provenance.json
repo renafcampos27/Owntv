@@ -6475,6 +6475,12 @@
     "proof": "https://services.gradle.org/distributions/gradle-9.8.0-src.zip.sha256"
   },
   {
+    "coordinate": "gradle:gradle:9.8.2",
+    "artifact": "gradle-9.8.2-src.zip",
+    "sha256": "96c9aba0564daa2998f578b589eba9ae1f6656e368fde85f7132e05321bab553",
+    "proof": "https://services.gradle.org/distributions/gradle-9.8.2-src.zip.sha256"
+  },
+  {
     "coordinate": "io.coil-kt.coil3:coil-android:3.6.0",
     "artifact": "coil-android-3.6.0-sources.jar",
     "sha256": "8066e89ff9de76d2925364d272ca3548c08ef5c29c6f523180b20a25377ce875",
@@ -7085,6 +7091,12 @@
     "artifact": "groovy-bom-4.0.29.module",
     "sha256": "2392853c20ff3b7474791d66f831909f25396cb397cf63bf15e1998a5c0b82fc",
     "proof": "https://repo.maven.apache.org/maven2/org/apache/groovy/groovy-bom/4.0.29/groovy-bom-4.0.29.module.sha256"
+  },
+  {
+    "coordinate": "org.apache.groovy:groovy-bom:4.0.29",
+    "artifact": "groovy-bom-4.0.29.pom",
+    "sha256": "c24277dec93f146bcda25f5ae4391d6527e384e2132efa32184c1e852b42bca9",
+    "proof": "https://repo.maven.apache.org/maven2/org/apache/groovy/groovy-bom/4.0.29/groovy-bom-4.0.29.pom"
   },
   {
     "coordinate": "org.apache.groovy:groovy:4.0.29",

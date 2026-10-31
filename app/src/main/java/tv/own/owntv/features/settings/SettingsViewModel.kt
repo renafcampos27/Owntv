@@ -595,6 +595,14 @@ class SettingsViewModel(
         true
     }.getOrDefault(false)
 
+    val playbackTlsConfig = settings.playbackTlsConfig.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.network.PlaybackTlsConfig())
+    fun setPlaybackTlsPolicy(sourceId: Long?, policy: tv.own.owntv.core.network.PlaybackTlsPolicy?) {
+        viewModelScope.launch {
+            if (sourceId != null && sources.value.none { it.id == sourceId && it.syncLive }) return@launch
+            settings.setPlaybackTlsPolicy(sourceId, policy)
+        }
+    }
+
     internal val playbackSnapshot = tv.own.owntv.player.PlaybackSettings.of(settings)
     val liveHlsOnly = settings.liveHlsOnly.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), true)
     fun setLiveHlsOnly(enabled: Boolean) { viewModelScope.launch { settings.setLiveHlsOnly(enabled) } }

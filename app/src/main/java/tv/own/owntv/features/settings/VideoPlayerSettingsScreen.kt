@@ -1,6 +1,7 @@
 package tv.own.owntv.features.settings
 
 import tv.own.owntv.core.R as CoreR
+import tv.own.owntv.core.network.PlaybackTlsPolicy
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
@@ -124,6 +125,7 @@ internal val VIDEO_QUICK_ROWS: List<VideoQuickRef> = listOf(
     VideoQuickRef("vp_multiview", SECTION_ENGINE, OwnTVIcon.LIST_GRID, CoreR.string.settings_multiview, CoreR.string.settings_multiview_description),
     VideoQuickRef("vp_multiview_tiles", SECTION_ENGINE, OwnTVIcon.LIST_GRID, CoreR.string.settings_multiview_tiles_max, CoreR.string.settings_multiview_description),
     VideoQuickRef("vp_channel_playback", SECTION_ENGINE, OwnTVIcon.LIST_GRID, CoreR.string.settings_channel_playback, CoreR.string.settings_channel_playback_description),
+    VideoQuickRef("vp_tls", SECTION_ENGINE, OwnTVIcon.LIVE_TV, CoreR.string.playback_tls_title, CoreR.string.playback_tls_description),
     VideoQuickRef("vp_hls_only", SECTION_ENGINE, OwnTVIcon.LIVE_TV, CoreR.string.settings_live_hls_only, CoreR.string.settings_live_hls_only_description),
     VideoQuickRef("vp_live_engine", SECTION_ENGINE, OwnTVIcon.PLAY, CoreR.string.settings_live_tv_player, CoreR.string.settings_live_player_description),
     VideoQuickRef("vp_live_engine_sources", SECTION_ENGINE, OwnTVIcon.PLAY, CoreR.string.settings_live_engine_per_playlist, CoreR.string.settings_live_engine_per_playlist_description),
@@ -249,6 +251,10 @@ internal fun videoQuickBinding(key: String, vm: SettingsViewModel): VideoQuickBi
         "vp_afr_resolution" -> {
             val on by vm.afrMatchResolution.collectAsStateWithLifecycle()
             toggle(onOff(on), on) { vm.setAfrMatchResolution(!on) }
+        }
+        "vp_tls" -> {
+            val config by vm.playbackTlsConfig.collectAsStateWithLifecycle()
+            link(tlsPolicyLabel(config.global), config.global != PlaybackTlsPolicy.STRICT)
         }
         "vp_hls_only" -> {
             val on by vm.liveHlsOnly.collectAsStateWithLifecycle()
@@ -517,6 +523,8 @@ fun VideoPlayerSettingsScreen(
     val queueing by vm.decoderQueueing.collectAsStateWithLifecycle()
     val vodEngine by vm.vodEnginePreference.collectAsStateWithLifecycle()
     val hlsOnly by vm.liveHlsOnly.collectAsStateWithLifecycle()
+    val tlsConfig by vm.playbackTlsConfig.collectAsStateWithLifecycle()
+    var tlsSourceId by remember { mutableStateOf<Long?>(null) }
     val channelPlaybackConfigs by vm.channelPlaybackConfigs.collectAsStateWithLifecycle()
     val liveEngine by vm.liveEnginePreference.collectAsStateWithLifecycle()
     val enginePins by vm.vodEnginePinCount.collectAsStateWithLifecycle()
@@ -651,6 +659,7 @@ fun VideoPlayerSettingsScreen(
         if (dialog != Dialog.NONE) {
             // The custom-seconds dialog has no row of its own — it belongs to the Live latency row.
             val returnRow = when (dialog) {
+                Dialog.TLS_SOURCE, Dialog.TLS_SOURCES -> Dialog.TLS
                 Dialog.LIVE_CUSTOM -> Dialog.LIVE_LATENCY
                 Dialog.LIVE_RESERVE_CUSTOM -> Dialog.LIVE_RESERVE
                 // The per-playlist value picker belongs to the playlist row that opened it.
@@ -922,6 +931,15 @@ fun VideoPlayerSettingsScreen(
                 onClick = { savedScroll = scrollState.value; dialog = Dialog.MULTIVIEW_TILES },
             )
         }
+        Row2(
+            quickKey = "vp_tls", icon = OwnTVIcon.LIVE_TV,
+            title = stringResource(CoreR.string.playback_tls_title),
+            desc = stringResource(CoreR.string.playback_tls_description),
+            chip = tlsPolicyLabel(tlsConfig.global), chevron = true,
+            primaryChip = tlsConfig.global != PlaybackTlsPolicy.STRICT,
+            modifier = Modifier.focusRequester(dialogRowFocus.getValue(Dialog.TLS)),
+            onClick = { savedScroll = scrollState.value; dialog = Dialog.TLS },
+        )
         Row2(
             quickKey = "vp_hls_only",
             icon = OwnTVIcon.LIVE_TV, title = stringResource(CoreR.string.settings_live_hls_only),
@@ -1306,6 +1324,51 @@ fun VideoPlayerSettingsScreen(
             selected = localResumeMode.name,
             onSelect = { vm.setLocalTimeshiftResumeMode(it); dialog = Dialog.NONE },
             onDismiss = { dialog = Dialog.NONE },
+        )
+        Dialog.TLS -> PickerDialog(
+            wide = true,
+            title = stringResource(CoreR.string.playback_tls_title),
+            subtitle = stringResource(CoreR.string.playback_tls_description),
+            descriptions = mapOf(
+                PlaybackTlsPolicy.AUTO_HOSTNAME.name to stringResource(CoreR.string.playback_tls_hostname_warning),
+                PlaybackTlsPolicy.AUTO_FULL.name to stringResource(CoreR.string.playback_tls_full_warning),
+            ),
+            options = PlaybackTlsPolicy.entries.map { it.name to tlsPolicyLabel(it) } +
+                listOf("SOURCES" to stringResource(CoreR.string.playback_tls_sources)),
+            selected = tlsConfig.global.name,
+            onSelect = { value ->
+                if (value == "SOURCES") dialog = Dialog.TLS_SOURCES
+                else { vm.setPlaybackTlsPolicy(null, PlaybackTlsPolicy.parse(value)); dialog = Dialog.NONE }
+            },
+            onDismiss = { dialog = Dialog.NONE },
+        )
+        Dialog.TLS_SOURCES -> PickerDialog(
+            title = stringResource(CoreR.string.playback_tls_sources),
+            options = sources.filter { it.syncLive }.map { source ->
+                val label = tlsConfig.sources[source.id]?.let { tlsPolicyLabel(it) }
+                    ?: stringResource(CoreR.string.playback_tls_follow)
+                source.id.toString() to stringResource(CoreR.string.playback_tls_source_label, source.name, label)
+            },
+            selected = tlsSourceId?.toString() ?: "",
+            onSelect = { value -> tlsSourceId = value.toLongOrNull(); dialog = Dialog.TLS_SOURCE },
+            onDismiss = { dialog = Dialog.TLS },
+        )
+        Dialog.TLS_SOURCE -> PickerDialog(
+            wide = true,
+            title = sources.firstOrNull { it.id == tlsSourceId }?.name ?: stringResource(CoreR.string.playback_tls_title),
+            subtitle = stringResource(CoreR.string.playback_tls_description),
+            descriptions = mapOf(
+                PlaybackTlsPolicy.AUTO_HOSTNAME.name to stringResource(CoreR.string.playback_tls_hostname_warning),
+                PlaybackTlsPolicy.AUTO_FULL.name to stringResource(CoreR.string.playback_tls_full_warning),
+            ),
+            options = listOf("FOLLOW_GLOBAL" to stringResource(CoreR.string.playback_tls_follow)) +
+                PlaybackTlsPolicy.entries.map { it.name to tlsPolicyLabel(it) },
+            selected = tlsConfig.sources[tlsSourceId]?.name ?: "FOLLOW_GLOBAL",
+            onSelect = { value ->
+                tlsSourceId?.let { vm.setPlaybackTlsPolicy(it, if (value == "FOLLOW_GLOBAL") null else PlaybackTlsPolicy.parse(value)) }
+                dialog = Dialog.TLS_SOURCES
+            },
+            onDismiss = { dialog = Dialog.TLS_SOURCES },
         )
         Dialog.CHANNEL_PLAYBACK -> ChannelPlaybackSettingsDialog(vm) { dialog = Dialog.NONE }
         Dialog.LIVE_ENGINE -> PickerDialog(
@@ -1876,6 +1939,7 @@ private fun dialogForQuickKey(key: String): Dialog? = when (key) {
     "vp_afr_pause" -> Dialog.AFR_PAUSE
     "vp_multiview_tiles" -> Dialog.MULTIVIEW_TILES
     "vp_live_engine" -> Dialog.LIVE_ENGINE
+    "vp_tls" -> Dialog.TLS
     "vp_live_engine_sources" -> Dialog.LIVE_ENGINE_SOURCES
     "vp_vod_engine" -> Dialog.VOD_ENGINE
     "vp_reset_pins" -> Dialog.RESET_PINS
@@ -1905,7 +1969,7 @@ private fun dialogForQuickKey(key: String): Dialog? = when (key) {
     else -> null
 }
 
-private enum class Dialog { NONE, LOCAL_TIMESHIFT_RESUME, CHANNEL_PLAYBACK, LIVE_ENGINE, LIVE_ENGINE_SOURCES, LIVE_ENGINE_SOURCE, LIVE_LATENCY_SOURCES, LIVE_LATENCY_SOURCE, LIVE_LATENCY_CUSTOM_SOURCE, LIVE_RESERVE, LIVE_RESERVE_CUSTOM, LIVE_RESERVE_SOURCES, LIVE_RESERVE_SOURCE, LIVE_RESERVE_CUSTOM_SOURCE, VOD_ENGINE, ZOOM, RESET_SAVED_ZOOM, RESET_SAVED_AUDIO_DELAY, SEEK_STEP, LIVE_REWIND_STEP, SUB_STYLE, SUB_LANG, AUDIO_LANG, AUDIO_SYNC, AUDIO_OUTPUT_ROUTE, AUDIO_OUTPUT_DELAYS, RESUME, LIVE_LATENCY, LIVE_CUSTOM, LIVE_PREROLL, CHANNEL_REOPEN_INTERVAL, LIVE_TUNE_TIMEOUT, LIVE_PREROLL_SOURCES, LIVE_PREROLL_SOURCE, EXTERNAL_PLAYER, RESET_PINS, AFR_WARNING, AFR_PAUSE, LIVE_PREVIEW_PANEL, MINI_PLAYER, MULTIVIEW_TILES, MULTIVIEW_WARNING }
+private enum class Dialog { NONE, TLS, TLS_SOURCES, TLS_SOURCE, LOCAL_TIMESHIFT_RESUME, CHANNEL_PLAYBACK, LIVE_ENGINE, LIVE_ENGINE_SOURCES, LIVE_ENGINE_SOURCE, LIVE_LATENCY_SOURCES, LIVE_LATENCY_SOURCE, LIVE_LATENCY_CUSTOM_SOURCE, LIVE_RESERVE, LIVE_RESERVE_CUSTOM, LIVE_RESERVE_SOURCES, LIVE_RESERVE_SOURCE, LIVE_RESERVE_CUSTOM_SOURCE, VOD_ENGINE, ZOOM, RESET_SAVED_ZOOM, RESET_SAVED_AUDIO_DELAY, SEEK_STEP, LIVE_REWIND_STEP, SUB_STYLE, SUB_LANG, AUDIO_LANG, AUDIO_SYNC, AUDIO_OUTPUT_ROUTE, AUDIO_OUTPUT_DELAYS, RESUME, LIVE_LATENCY, LIVE_CUSTOM, LIVE_PREROLL, CHANNEL_REOPEN_INTERVAL, LIVE_TUNE_TIMEOUT, LIVE_PREROLL_SOURCES, LIVE_PREROLL_SOURCE, EXTERNAL_PLAYER, RESET_PINS, AFR_WARNING, AFR_PAUSE, LIVE_PREVIEW_PANEL, MINI_PLAYER, MULTIVIEW_TILES, MULTIVIEW_WARNING }
 
 /**
  * Label for one engine preference — "ExoPlayer, then mpv", "mpv only", and so on.
@@ -2191,6 +2255,7 @@ internal fun PickerDialog(
     leadingIcons: Map<String, OwnTVIcon> = emptyMap(),
     subtitle: String? = null,
     descriptions: Map<String, String> = emptyMap(),
+    wide: Boolean = false,
     /** Drawn under an option's description — the layout chooser's little bar preview. */
     optionPreview: (@Composable (String) -> Unit)? = null,
 ) {
@@ -2222,7 +2287,7 @@ internal fun PickerDialog(
             Box(Modifier.fillMaxSize().modalScrim().cancelPendingFocusOnInput(focusGuard).trapAllFocusExit().focusGroup(), contentAlignment = Alignment.Center) {
                 Column(
                     // Descriptions need room to breathe; a 280dp column would wrap them to five lines.
-                    modifier = Modifier.dialogPanel(width = if (descriptions.isEmpty()) 280.dp else 420.dp, corner = 16.dp, padding = 14.dp, scroll = false),
+                    modifier = Modifier.dialogPanel(width = if (!wide && descriptions.isEmpty()) 280.dp else 420.dp, corner = 16.dp, padding = 14.dp, scroll = false),
                 ) {
             Text(title, style = MaterialTheme.typography.titleMedium, color = colors.onSurface)
             if (subtitle != null) {
@@ -3195,3 +3260,12 @@ private fun audioSyncOutputLabel(output: tv.own.owntv.core.settings.AudioSyncOut
     tv.own.owntv.core.settings.AudioSyncOutput.USB -> CoreR.string.audio_sync_usb
     tv.own.owntv.core.settings.AudioSyncOutput.SPEAKER -> CoreR.string.audio_sync_speaker
 })
+
+@Composable
+private fun tlsPolicyLabel(policy: PlaybackTlsPolicy): String = stringResource(
+    when (policy) {
+        PlaybackTlsPolicy.STRICT -> CoreR.string.playback_tls_strict
+        PlaybackTlsPolicy.AUTO_HOSTNAME -> CoreR.string.playback_tls_hostname
+        PlaybackTlsPolicy.AUTO_FULL -> CoreR.string.playback_tls_full
+    },
+)

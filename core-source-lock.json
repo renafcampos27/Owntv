@@ -1,8 +1,8 @@
 {
   "schema": 1,
-  "archive": "vendor/owntv-core-source-e96eca676488a1599d43f021f2ec6531af0fcc5ddba6ff1a0f359deb4f1b5280.zip",
-  "sha256": "e96eca676488a1599d43f021f2ec6531af0fcc5ddba6ff1a0f359deb4f1b5280",
+  "archive": "vendor/owntv-core-source-70aab7a373d8d6dc8449eda6a3c3e720118387e196a81fa0222f15710456ceb9.zip",
+  "sha256": "70aab7a373d8d6dc8449eda6a3c3e720118387e196a81fa0222f15710456ceb9",
   "version": "1.0.57-own.20261011",
-  "files": 1071,
+  "files": 1089,
   "description": "Customized TV Core source snapshot; not an upstream release equivalence claim"
 }

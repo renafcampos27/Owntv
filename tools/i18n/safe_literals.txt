@@ -420,11 +420,13 @@
 1	preference-key	app/src/main/java/tv/own/owntv/features/settings/SimpleModePreferences.kt	start_on_wake
 1	technical	app/src/main/java/tv/own/owntv/features/settings/SimpleModePreferences.kt	tv_avo_mode
 5	json	app/src/main/java/tv/own/owntv/features/settings/TvBackupAppSettings.kt	automaticBackupIntervalMonths
-14	empty	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	\0
+15	empty	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	$exo · $mpv
 4	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	${src.name} · $value
 4	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	+
 1	technical	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	-1
+3	protocol	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	FOLLOW_GLOBAL
+2	protocol	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	SOURCES
 2	locale	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	ara
 2	locale	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	deu
 2	locale	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	eng
@@ -482,6 +484,7 @@
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_sub_lang
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_sub_style
 3	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_surround
+4	protocol	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_tls
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_tune_timeout
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_vod_engine
 4	preference-key	app/src/main/java/tv/own/owntv/features/settings/VideoPlayerSettingsScreen.kt	vp_zoom

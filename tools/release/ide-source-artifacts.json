@@ -2481,5 +2481,11 @@
     "name": "sqlite-jdbc",
     "version": "3.41.2.2",
     "artifact": "sqlite-jdbc-3.41.2.2-sources.jar"
+  },
+  {
+    "group": "gradle",
+    "name": "gradle",
+    "version": "9.8.2",
+    "artifact": "gradle-9.8.2-src.zip"
   }
 ]
