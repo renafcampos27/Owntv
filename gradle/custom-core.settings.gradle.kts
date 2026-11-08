@@ -3,7 +3,10 @@
 val lockFile = settingsDir.resolve("core-source-lock.json")
 check(lockFile.isFile) { "Missing customized Core lock. Run tools/core_snapshot/snapshot_core.py --core <checkout>." }
 @Suppress("UNCHECKED_CAST")
-val lock = groovy.json.JsonSlurper().parse(lockFile) as Map<String, Any>
+// Explicit configuration input: Groovy's parse(File) can bypass configuration-cache tracking.
+val lock = groovy.json.JsonSlurper().parseText(
+    providers.fileContents(layout.settingsDirectory.file("core-source-lock.json")).asText.get(),
+) as Map<String, Any>
 val archive = settingsDir.resolve(lock["archive"] as String)
 check(archive.isFile) { "Missing customized Core source snapshot: ${archive.name}" }
 fun checksum(bytes: ByteArray) = java.security.MessageDigest.getInstance("SHA-256")

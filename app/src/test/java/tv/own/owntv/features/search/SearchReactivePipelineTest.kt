@@ -74,7 +74,8 @@ class SearchReactivePipelineTest {
         val job = launch { pipeline.collect { emissions += it } }
 
         query.value = "RTP"
-        awaitCondition { executedQueries.size == 1 }
+        // The reader records its call before flatMapLatest delivers the result to the collector.
+        awaitCondition { executedQueries.size == 1 && emissions.lastOrNull()?.channels?.isNotEmpty() == true }
 
         assertEquals(1, executedQueries.size)
         assertEquals(Triple(1L, 1L, "RTP"), executedQueries.first())

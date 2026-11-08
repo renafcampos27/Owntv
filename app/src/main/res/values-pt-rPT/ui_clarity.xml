@@ -18,7 +18,7 @@
     <string name="ui_not_available">Não disponível</string>
     <string name="ui_settings_requested_hint">Configurações pedidas. Consulta o diagnóstico para confirmar o motor e descodificador em uso.</string>
     <string name="ui_duration_seconds">%1$s s</string>
-    <string name="ui_buffer_limits">Carregar abaixo de %1$s · parar acima de %2$s</string>
+    <string name="ui_buffer_limits">Carregar abaixo de %1$s · limiar %2$s\nSegmentos podem exceder; RAM pode limitar a reserva.</string>
     <string name="ui_attempt_line">%1$s · %2$s · %3$s</string>
     <string name="ui_http_status">HTTP %1$d</string>
     <string name="ui_current_channel">Canal atual</string>

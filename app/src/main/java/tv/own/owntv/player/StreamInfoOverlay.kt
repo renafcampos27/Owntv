@@ -70,10 +70,11 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
         StreamInfoLabel.BUFFER, StreamInfoLabel.LIVE_BUFFER, StreamInfoLabel.DECODER, StreamInfoLabel.HLS_SEGMENTS) }
     if (rows.isEmpty()) return
     val res = LocalResources.current
+    fun durationNumber(seconds: Double): String = java.text.NumberFormat.getNumberInstance().apply {
+        maximumFractionDigits = 1
+    }.format(seconds)
     @Composable fun durationText(seconds: Double?): String = if (seconds == null) stringResource(tv.own.owntv.R.string.ui_not_available)
-        else stringResource(tv.own.owntv.R.string.ui_duration_seconds, java.text.NumberFormat.getNumberInstance().apply {
-            maximumFractionDigits = 1
-        }.format(seconds))
+        else stringResource(tv.own.owntv.R.string.ui_duration_seconds, durationNumber(seconds))
     val colors = OwnTVTheme.colors
     val scrollState = rememberScrollState()
     val scrollScope = rememberCoroutineScope()
@@ -139,7 +140,9 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
                     )
                     Text(
                         when {
-                            !details && value is StreamInfoValue.HlsSegments -> durationText(value.lastPublishedSeconds)
+                            !details && value is StreamInfoValue.HlsSegments -> value.lastPublishedSeconds?.let {
+                                stringResource(CoreR.string.player_hls_last_published, durationNumber(it))
+                            } ?: stringResource(tv.own.owntv.R.string.ui_not_available)
                             !details && value is StreamInfoValue.LiveBuffer -> stringResource(tv.own.owntv.R.string.ui_buffer_limits,
                                 durationText(value.depthSeconds), durationText(value.maxBufferSeconds))
                             !details && value is StreamInfoValue.Decoder -> value.forSummary().displayText(res, compact = true)

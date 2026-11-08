@@ -18,7 +18,7 @@
     <string name="ui_not_available">Not available</string>
     <string name="ui_settings_requested_hint">Requested settings. Check diagnostics for the decoder and engine actually in use.</string>
     <string name="ui_duration_seconds">%1$s s</string>
-    <string name="ui_buffer_limits">Load below %1$s · stop above %2$s</string>
+    <string name="ui_buffer_limits">Refill below %1$s · upper threshold %2$s\nSegments may exceed it; RAM may limit the reserve.</string>
     <string name="ui_attempt_line">%1$s · %2$s · %3$s</string>
     <string name="ui_http_status">HTTP %1$d</string>
     <string name="ui_current_channel">Current channel</string>
