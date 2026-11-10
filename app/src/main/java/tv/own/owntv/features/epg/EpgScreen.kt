@@ -78,10 +78,7 @@ import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import coil3.compose.AsyncImage
-import coil3.compose.AsyncImagePainter
-import coil3.request.ImageRequest
-import coil3.size.Precision
+import tv.own.owntv.ui.images.ChannelLogoImage
 import tv.own.owntv.core.database.entity.ChannelEntity
 import tv.own.owntv.core.database.entity.EpgProgrammeEntity
 import tv.own.owntv.core.epg.displayLogoUrl
@@ -1092,23 +1089,8 @@ private data class GuideRowDisplay(
 private fun GuideChannelLogo(channel: ChannelEntity) {
     val url = channel.displayLogoUrl
     if (url.isNullOrBlank()) return
-    var failed by remember(url) { mutableStateOf(false) }
-    if (failed) return
-    val context = LocalContext.current
-    val imageRequest = remember(url, context) {
-        ImageRequest.Builder(context)
-            .data(url)
-            .size(128, 128)
-            .precision(Precision.INEXACT)
-            .build()
-    }
-    AsyncImage(
-        model = imageRequest,
-        contentDescription = null,
-        contentScale = ContentScale.Fit,
-        modifier = Modifier.size(34.dp),
-        onState = { if (it is AsyncImagePainter.State.Error) failed = true },
-    )
+    ChannelLogoImage(model = url, contentDescription = null, contentScale = ContentScale.Fit,
+        modifier = Modifier.size(34.dp))
 }
 
 /** Move through prepared cells, retaining the existing edge/window loading policy. */

@@ -31,7 +31,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.runtime.setValue
-import coil3.compose.AsyncImage
+import tv.own.owntv.ui.images.ChannelLogoImage
 import kotlinx.coroutines.launch
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -270,7 +270,7 @@ private fun NowPlayingItem(
                         color = content,
                         modifier = Modifier.width(22.dp).height(16.dp),
                     )
-                    !state.logoUrl.isNullOrBlank() -> AsyncImage(
+                    !state.logoUrl.isNullOrBlank() -> ChannelLogoImage(
                         model = state.logoUrl,
                         contentDescription = null,
                         contentScale = androidx.compose.ui.layout.ContentScale.Fit,

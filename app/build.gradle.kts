@@ -417,6 +417,8 @@ dependencies {
     // Image loading
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
+    implementation(libs.coil.svg)
+    implementation(libs.androidsvg)
 
     // Dependency injection
     implementation(platform(libs.koin.bom))

@@ -1,5 +1,7 @@
 package tv.own.owntv.features.home
 
+import tv.own.owntv.core.epg.displayLogoUrl
+
 import tv.own.owntv.core.R as CoreR
 
 import android.content.Context
@@ -86,6 +88,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import tv.own.owntv.ui.images.ChannelLogoImage
 import kotlinx.coroutines.launch
 import org.koin.compose.koinInject
 import tv.own.owntv.core.database.entity.ChannelEntity
@@ -618,7 +621,7 @@ private fun expandedHeroImageUrl(item: HeroItem, metadata: HomeHeroMetadata?): S
         metadata?.backdropUrl
             ?: item.series.backdropUrl?.takeIf { it.isNotBlank() }
             ?: item.series.posterUrl?.takeIf { it.isNotBlank() }
-    is HeroItem.LiveHero -> item.channel.logoUrl?.takeIf { it.isNotBlank() }
+    is HeroItem.LiveHero -> item.channel.displayLogoUrl?.takeIf { it.isNotBlank() }
 }
 
 private fun expandedHeroPlot(item: HeroItem, metadata: HomeHeroMetadata?): String? = when (item) {
@@ -1218,7 +1221,7 @@ private fun HeroRowSection(
                     val imageUrl = when (item) {
                         is HeroItem.MovieHero -> item.movie.posterUrl
                         is HeroItem.SeriesHero -> item.series.posterUrl
-                        is HeroItem.LiveHero -> item.channel.logoUrl
+                        is HeroItem.LiveHero -> item.channel.displayLogoUrl
                     }
                     val itemMetadata = heroMetadata[item.heroKey()]
                     val expandedImageUrl = expandedHeroImageUrl(item, itemMetadata)
@@ -1304,7 +1307,7 @@ private fun HeroRowSection(
                                         val cardImageUrl = expandedImageUrl ?: imageUrl
                                         if (!cardImageUrl.isNullOrBlank()) {
                                             if (item is HeroItem.LiveHero) {
-                                                AsyncImage(
+                                                ChannelLogoImage(
                                                     model = cardImageUrl,
                                                     contentDescription = null,
                                                     contentScale = ContentScale.Fit,
@@ -1347,14 +1350,14 @@ private fun HeroRowSection(
                                     ) {
                                         if (!imageUrl.isNullOrBlank()) {
                                             if (item is HeroItem.LiveHero) {
-                                                AsyncImage(
+                                                ChannelLogoImage(
                                                     model = imageUrl,
                                                     contentDescription = null,
                                                     modifier = Modifier.fillMaxSize().blur(20.dp),
                                                     contentScale = ContentScale.Crop,
                                                     alpha = 0.5f,
                                                 )
-                                                AsyncImage(
+                                                ChannelLogoImage(
                                                     model = imageUrl,
                                                     contentDescription = null,
                                                     modifier = Modifier.size(80.dp),
@@ -1452,14 +1455,14 @@ private fun HeroRowSection(
                                 val artUrl = expandedHeroImageUrl(expandedItem, expandedMeta)
                                 if (!artUrl.isNullOrBlank()) {
                                     if (expandedItem is HeroItem.LiveHero) {
-                                        AsyncImage(
+                                        ChannelLogoImage(
                                             model = artUrl,
                                             contentDescription = null,
                                             modifier = Modifier.fillMaxSize().blur(20.dp),
                                             contentScale = ContentScale.Crop,
                                             alpha = 0.5f,
                                         )
-                                        AsyncImage(
+                                        ChannelLogoImage(
                                             model = artUrl,
                                             contentDescription = null,
                                             contentScale = ContentScale.Fit,

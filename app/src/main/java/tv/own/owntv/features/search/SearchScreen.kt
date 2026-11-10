@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
+import tv.own.owntv.ui.images.ChannelLogoImage
 import org.koin.androidx.compose.koinViewModel
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
@@ -359,7 +360,8 @@ private fun DetailPane(
             contentAlignment = Alignment.Center,
         ) {
             if (!posterUrl.isNullOrBlank()) {
-                AsyncImage(model = posterUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
+                if (item is SearchItem.ChannelItem) ChannelLogoImage(model = posterUrl, modifier = Modifier.fillMaxSize())
+                else AsyncImage(model = posterUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
             } else {
                 OwnTVIcon(icon, tint = colors.onSurfaceVariant, modifier = Modifier.size(48.dp))
             }
@@ -434,7 +436,8 @@ private fun ResultRow(
                 contentAlignment = Alignment.Center,
             ) {
                 if (!thumbUrl.isNullOrBlank()) {
-                    AsyncImage(model = thumbUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
+                    if (fallbackIcon == OwnTVIcon.LIVE_TV) ChannelLogoImage(model = thumbUrl, modifier = Modifier.fillMaxSize())
+                    else AsyncImage(model = thumbUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
                 } else {
                     OwnTVIcon(fallbackIcon, tint = colors.onSurfaceVariant, modifier = Modifier.size(22.dp))
                 }

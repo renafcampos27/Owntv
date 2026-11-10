@@ -277,8 +277,8 @@ Exigir testes de playlist/segmento/chave, opções Exo/apenas HLS e espera do fo
 
 ### Fase 4 — Produtor local de timeshift
 
-- [ ] **4A — testar primeiro:** P10, manifesto local coerente sem nova rejeição geral de origens antes utilizáveis.
-- [ ] **4B — testar primeiro:** P11a, paridade dos casos antes aceites; sem bloqueio geral de HLS/AES.
+- [x] **4A — implementada em 09/11/2026:** P10, target local estável, derivação tolerante aos metadados upstream imperfeitos e validação antes de transferir/evictar. Testes de regressão e integração em [relatório 4A/4B](IMPLEMENTACAO_FASES_4A_4B_TIMESHIFT_2026-11-09.md); aceitação física pendente.
+- [x] **4B — implementada em 09/11/2026:** P11a adaptada à paridade: a tag AES isolada não bloqueia TS claro antes aceite; inspeção limitada na resposta existente, só para chave ativa em segmento elegível. Sem chaves/descifra, novo pedido ou fallback automático. Ver [relatório 4A/4B](IMPLEMENTACAO_FASES_4A_4B_TIMESHIFT_2026-11-09.md); aceitação física pendente.
 
 Exigir janela a rodar, duração variável, leitores antigos abertos, sequência reiniciada, quota e fecho sem sobreposição. Direto e gravações existentes conservam comportamento. Esta fase corrige apenas o percurso local.
 

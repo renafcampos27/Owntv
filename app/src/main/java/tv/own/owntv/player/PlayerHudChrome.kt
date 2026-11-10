@@ -46,7 +46,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
+import tv.own.owntv.ui.images.ChannelLogoImage
 import tv.own.owntv.core.player.PlayerControl
 import tv.own.owntv.core.player.ControlCluster
 import tv.own.owntv.ui.components.OwnTVButton
@@ -164,8 +164,9 @@ private fun ChannelLogo(logoUrl: String?, title: String?, size: Int, modifier: M
         modifier.size(size.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF004F46)),
         contentAlignment = Alignment.Center,
     ) {
-        if (!logoUrl.isNullOrBlank()) AsyncImage(model = logoUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
-        else Text((title ?: "?").take(3).uppercase(), style = MaterialTheme.typography.labelMedium, color = Color(0xFF6FF8E4), fontWeight = FontWeight.Bold)
+        ChannelLogoImage(model = logoUrl, modifier = Modifier.fillMaxSize(), fallback = {
+            Text((title ?: "?").take(3).uppercase(), style = MaterialTheme.typography.labelMedium, color = Color(0xFF6FF8E4), fontWeight = FontWeight.Bold)
+        })
     }
 }
 
@@ -182,8 +183,9 @@ internal fun ChannelOsdCard(
         verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
     ) {
         Box(Modifier.size(44.dp).clip(RoundedCornerShape(10.dp)).background(Color(0xFF004F46)), contentAlignment = Alignment.Center) {
-            if (!logoUrl.isNullOrBlank()) AsyncImage(model = logoUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
-            else Text((title ?: "?").take(3).uppercase(), style = MaterialTheme.typography.labelMedium, color = Color(0xFF6FF8E4), fontWeight = FontWeight.Bold)
+            ChannelLogoImage(model = logoUrl, modifier = Modifier.fillMaxSize(), fallback = {
+                Text((title ?: "?").take(3).uppercase(), style = MaterialTheme.typography.labelMedium, color = Color(0xFF6FF8E4), fontWeight = FontWeight.Bold)
+            })
         }
         Column {
             Text(title ?: "", style = MaterialTheme.typography.titleSmall, color = Color.White, maxLines = 1, overflow = TextOverflow.Ellipsis)

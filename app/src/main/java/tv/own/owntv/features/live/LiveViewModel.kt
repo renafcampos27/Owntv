@@ -367,8 +367,20 @@ class LiveViewModel(
                     session.status.first { it == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.FAILED ||
                         it == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.ENDED ||
                         it == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.CLOSED }
-                    if (localSession === session && acceptsCatchup(owner) && session.status.value == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.FAILED) {
-                        android.widget.Toast.makeText(appContext, CoreR.string.local_timeshift_failed, android.widget.Toast.LENGTH_LONG).show()
+                    if (session.status.value == tv.own.owntv.core.timeshift.LocalTimeshiftSession.Status.FAILED) {
+                        finishLocalTimeshiftFailure(
+                            isCurrent = { localSession === session && localOwner == owner && acceptsCatchup(owner) },
+                            // Keep complete local segments available to the current reader, without an upstream claim.
+                            stopCapture = { session.retainCopy() },
+                            releaseClaim = {
+                                val claim = localClaim
+                                localClaim = null
+                                claim?.let(streams::release)
+                            },
+                            notifyFailure = {
+                                android.widget.Toast.makeText(appContext, CoreR.string.local_timeshift_failed, android.widget.Toast.LENGTH_LONG).show()
+                            },
+                        )
                     }
                 }
             } catch (cancelled: kotlinx.coroutines.CancellationException) {
@@ -376,6 +388,7 @@ class LiveViewModel(
                 throw cancelled
             } catch (_: Exception) {
                 disposeLocalTimeshift(owner)
+                localCleanup?.join()
                 if (acceptsCatchup(owner)) android.widget.Toast.makeText(appContext, CoreR.string.local_timeshift_failed, android.widget.Toast.LENGTH_LONG).show()
             }
         }

@@ -52,7 +52,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
-import coil3.compose.AsyncImage
+import tv.own.owntv.ui.images.ChannelLogoImage
 import org.koin.androidx.compose.koinViewModel
 import tv.own.owntv.core.database.entity.RecordingEntity
 import tv.own.owntv.core.model.RecordingStatus
@@ -449,7 +449,7 @@ private fun RecordingRow(
             contentAlignment = Alignment.Center,
         ) {
             if (!recording.channelIconUrl.isNullOrBlank()) {
-                AsyncImage(model = recording.channelIconUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
+                ChannelLogoImage(model = recording.channelIconUrl, contentDescription = null, modifier = Modifier.fillMaxSize())
             } else {
                 OwnTVIcon(OwnTVIcon.LIVE_TV, tint = colors.onSurfaceVariant, modifier = Modifier.size(24.dp))
             }

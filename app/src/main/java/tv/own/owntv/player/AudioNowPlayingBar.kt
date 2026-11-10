@@ -53,7 +53,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import coil3.compose.AsyncImage
+import tv.own.owntv.ui.images.ChannelLogoImage
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Text
 import tv.own.owntv.core.i18n.HorizontalDirection
@@ -213,7 +213,7 @@ fun AudioNowPlayingBar(
                     ) {
                         val logo = meta.logoUrl
                         if (!logo.isNullOrBlank()) {
-                            AsyncImage(model = logo, contentDescription = null, modifier = Modifier.fillMaxSize())
+                            ChannelLogoImage(model = logo, contentDescription = null, modifier = Modifier.fillMaxSize())
                         }
                         Equalizer(playing = isPlaying, color = colors.primary, modifier = Modifier.size(width = 22.dp, height = 16.dp))
                     }

@@ -42,6 +42,7 @@ import tv.own.owntv.features.shell.ShellViewModel
  * reordering is safe and a missing binding fails immediately, naming the type.
  */
 val appModule = module {
+    single { tv.own.owntv.ui.images.createChannelLogoRepository(get(), get()) }
     single<tv.own.owntv.core.backup.BackupAppSettings> {
         tv.own.owntv.features.settings.TvBackupAppSettings(get<android.content.Context>())
     }

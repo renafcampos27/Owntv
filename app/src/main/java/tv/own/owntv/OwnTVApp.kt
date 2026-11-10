@@ -98,9 +98,6 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         // user can export from Settings, instead of being lost with the process.
         tv.own.owntv.core.util.CrashRecorder.diagnostics = { tv.own.owntv.player.LiveDiagnosticsLog.snapshot() }
         tv.own.owntv.core.util.CrashRecorder.install(this)
-        // Core learns a panel's session limit while syncing; the engine is what acts on it. Registered
-        // before Koin so the very first source flow already reaches the player (see LiveSessionLimit).
-        tv.own.owntv.core.player.LiveSessionLimit.report = tv.own.owntv.player.LiveStreamQuirks::rememberSessionLimit
         // Four of the five subtitle faces are this app's own res/font files, so the engine asks us for
         // the id rather than owning the assets (see SubtitleFontAssets).
         tv.own.owntv.player.SubtitleFontAssets.resourceOf = { it.subtitleFontResource }
@@ -110,6 +107,11 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
             modules(coreModule, appModule, databaseModule, dataModule, playerModule)
         }
         Perf.stamp("koin-started")
+        appScope.launch {
+            try { tv.own.owntv.ui.images.ChannelLogoScheduler.observe(this@OwnTVApp) }
+            catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
+            catch (_: Exception) { /* Logo maintenance may retry at next launch; never abort TV startup. */ }
+        }
         // Detailed playback logging follows the setting for the WHOLE process. It used to be observed by
         // the live preview engine, which is a lazy singleton — so nothing wrote to the diagnostics log
         // until the user happened to open Live TV, and a fault during startup, a VOD open or an EPG sync
@@ -179,6 +181,8 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
      */
     @OptIn(coil3.annotation.ExperimentalCoilApi::class)
     override fun newImageLoader(context: PlatformContext): ImageLoader {
+        // Configure before the first decoder is built; provider artwork must not expand XML entities.
+        com.caverock.androidsvg.SVG.setInternalEntitiesEnabled(false)
         // The shared client deliberately disables connection retries so catalog/EPG sync owns its retry
         // policy. That setting is harmful for CDN images, though: hosts such as image.tmdb.org publish
         // both IPv6 and IPv4, and some Android TV boxes resolve IPv6 first even when their IPv6 route is
@@ -205,7 +209,7 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
             }
             .build()
         return ImageLoader.Builder(context)
-            .components { add(OkHttpNetworkFetcherFactory(callFactory = { imageHttpClient },
+            .components { add(coil3.svg.SvgDecoder.Factory()); add(OkHttpNetworkFetcherFactory(callFactory = { imageHttpClient },
                 cacheStrategy = { tv.own.owntv.ui.images.SuccessfulImageCacheStrategy })) }
             .memoryCache { MemoryCache.Builder().maxSizePercent(context, 0.10).build() }
             // Explicit bounded disk cache: posters/logos survive across sessions instead of

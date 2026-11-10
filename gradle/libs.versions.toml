@@ -127,6 +127,9 @@ kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 # Image loading
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-network-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
+coil-svg = { group = "io.coil-kt.coil3", name = "coil-svg", version.ref = "coil" }
+# Same runtime dependency as coil-svg; direct access disables XML entity expansion before decoding.
+androidsvg = { group = "com.caverock", name = "androidsvg-aar", version = "1.4" }
 
 # Networking (M3U/Xtream fetch)
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }

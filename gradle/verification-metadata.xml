@@ -8,6 +8,7 @@
          <ignored-key id="FD116C1969FCCFF3" reason="Key couldn't be downloaded from any key server"/>
       </ignored-keys>
       <trusted-keys>
+         <trusted-key id="F3BD845679DD6A30F3F50F91597852B0B140F0BC" group="com.caverock" name="androidsvg-aar" version="1.4"/>
          <trusted-key id="04543577D6A9CC626239C50C7ECBD740FF06AEB5">
             <trusting group="org.glassfish.jaxb"/>
             <trusting group="org.jvnet.staxex" name="stax-ex" version="1.8.1"/>
@@ -7228,6 +7229,55 @@
          </artifact>
          <artifact name="gradle-work-action-api-32.5.1.pom">
             <sha256 value="7ce9885d9404590746b4b2512481dc2bac7733166dcb1fc0dc475f54f8320656" origin="Verified against official HTTPS repository for AGP 9.5.1"/>
+         </artifact>
+      </component>
+      <component group="com.android.tools.build" name="aapt2" version="9.5.1-16666295">
+         <artifact name="aapt2-9.5.1-16666295.pom">
+            <sha256 value="fe9320e05a427fc4b1c87819980d663f64d6c143a7befbedc0dd03109d6bc3ea" origin="Verified against official Google HTTPS repository for AGP 9.5.1"/>
+         </artifact>
+         <artifact name="aapt2-9.5.1-16666295-windows.jar">
+            <sha256 value="0cca28660dd8f8ac75c28023c14e929392e6d094ddac1564945d6ceca8fc6df8" origin="Verified against official Google HTTPS repository for AGP 9.5.1"/>
+         </artifact>
+      </component>
+      <component group="tv.own.owntv" name="libmpv" version="2026.11.0">
+         <artifact name="libmpv-2026.11.0.aar">
+            <sha256 value="89f8f6b7eb007ccfd07224c1a02482963fe41726f2eeb47c1c268aedde51cd7f" origin="Reconfirmed against official OwnTV Maven HTTPS artifact for UP70-C"/>
+         </artifact>
+         <artifact name="libmpv-2026.11.0.module">
+            <sha256 value="6494a8ae29915498d564e8a30763990841fd8019294de4d5f7fc3bf06a3c13ef" origin="Reconfirmed against official OwnTV Maven HTTPS artifact for UP70-C"/>
+         </artifact>
+         <artifact name="libmpv-2026.11.0.pom">
+            <sha256 value="a447141ba4e123f0d3c2d1486aa8f820d4be1c08dab060f3360793702b56910b" origin="Reconfirmed against official OwnTV Maven HTTPS artifact for UP70-C"/>
+         </artifact>
+      </component>
+      <component group="com.caverock" name="androidsvg-aar" version="1.4">
+         <artifact name="androidsvg-aar-1.4.aar">
+            <sha256 value="02a5b08a2b35d2d58eb2eaca9d84ac00fb341da725fdbd653ea3ed130437e95a" origin="Verified Maven Central bytes and published checksum for channel-logo SVG support"/>
+         </artifact>
+         <artifact name="androidsvg-aar-1.4.pom">
+            <sha256 value="a789196681aeff63a375ed4bf417c721f087729e9c90c5e4efccdbc9e97e924a" origin="Verified Maven Central bytes and published checksum for channel-logo SVG support"/>
+         </artifact>
+      </component>
+      <component group="io.coil-kt.coil3" name="coil-svg" version="3.6.0">
+         <artifact name="coil-svg-3.6.0.jar">
+            <sha256 value="9cf415735489b3e655b953fd6979c016df90cf0d13081f8b232a5d964b8ee165" origin="Verified Maven Central bytes and published checksum for channel-logo SVG support"/>
+         </artifact>
+         <artifact name="coil-svg-3.6.0.module">
+            <sha256 value="ea8122a0463e06f1033e024a609866e04bb6377bdb1159e2d935362a6f0324b1" origin="Verified Maven Central bytes and published checksum for channel-logo SVG support"/>
+         </artifact>
+         <artifact name="coil-svg-3.6.0.pom">
+            <sha256 value="9d5bc3628c951d022653e875de564e5aa9213ff373b4e8692771cc9f9672d8a2" origin="Verified Maven Central bytes and published checksum for channel-logo SVG support"/>
+         </artifact>
+      </component>
+      <component group="io.coil-kt.coil3" name="coil-svg-android" version="3.6.0">
+         <artifact name="coil-svg-android-3.6.0.aar">
+            <sha256 value="9f97a9febff7cd59eae5b6bf6d036f772f5c1a63491861be9d758db85f1789b7" origin="Verified Maven Central bytes and published checksum for channel-logo SVG support"/>
+         </artifact>
+         <artifact name="coil-svg-android-3.6.0.module">
+            <sha256 value="29c6c59fb70fa5f88ecd0a659267726de5bd9953a0836633f9ed844504e47053" origin="Verified Maven Central bytes and published checksum for channel-logo SVG support"/>
+         </artifact>
+         <artifact name="coil-svg-android-3.6.0.pom">
+            <sha256 value="dcd1fe6e4ace3149eb3a44222488139b856d4d09487bcf371e8ae1cce303492b" origin="Verified Maven Central bytes and published checksum for channel-logo SVG support"/>
          </artifact>
       </component>
    </components>

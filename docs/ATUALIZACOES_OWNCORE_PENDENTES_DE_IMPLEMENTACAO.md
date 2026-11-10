@@ -1,6 +1,25 @@
 # Atualizações OwnCore pendentes de implementação
 
-Última atualização: 18/10/2026.
+Última atualização: 10/11/2026.
+
+## Logótipos persistentes — integração App/Core de 10/11/2026
+
+Implementada cache própria de miniaturas com atualização pelas gerações das listas, WebP até 192 × 192, quota, cancelamento e apresentação partilhada. Core limitado a consulta paginada de referências de logótipos e exposição do helper de cancelamento existente, sem alteração do seu comportamento. Sem migração de DB/backup nem alteração dos motores. Validação: 96 testes de rede Core + 492 App; Release e lint vital aprovados; três testes de imagem Android compilados, ainda sem execução física. Snapshot atual: `372e6d340b96e5ff2dad1505878f088ff32ff4650e790dfcec01f7d73ef47823`, 1116 inputs. Ver [implementação e limites](IMPLEMENTACAO_LOGOTIPOS_PERSISTENTES_2026-11-10.md).
+
+
+## Core 1.0.70 — UP70-A/B1/C integrados; B2 não integrado e aceitação física pendente
+
+Revisão com três agentes especializados e council, sobre snapshots completos e Core TV personalizado atual. Resultado: integração seletiva UP70-A (redação de credenciais, recusa explícita Xtream, preservar limite medido, posições por lotes com estacionamento transacional e aprendizagem HLS top-level), UP70-B (writer EPG de oito colunas; preload só com teto firme e ganho medido) e UP70-C (libmpv isolado/reversível, com hash Maven correto e regressão A/V). Não importar resets de ordens, schema 53, backup 26 upstream como equivalente ao formato local, filler histórico paralelo, sondagem GET mpv ou retries globais. Muitas proteções já existem localmente.
+
+**Após autorização, UP70-A (U01–U05) implementado:** privacidade de diagnósticos, recusa Xtream antes de escritas/prune, autoridade de limites medidos, ordenação multi-lote com ranges transacionais sem colisões e aprendizagem HLS restrita ao pedido principal. Core/player: 439 + 633 testes dirigidos/completos aprovados, respetivamente; parsing Android compilado mas não executado na box. App: compilação Release, 470 testes e lint vital aprovados; total relevante de 1542 testes. Os dez testes de gravação que falharam na suite geral reproduzem-se também nas classes do Core anterior; ver provas e limites no relatório. Aceitação física pendente. Ver [implementação e limites UP70-A](IMPLEMENTACAO_UP70_A_2026-11-08.md).
+
+**UP70-B autorizado:** B1 implementado removendo a transação exterior redundante no `storeProgrammes`; o Room já prepara um statement por lote e gere transação/Flows. Validação dirigida: 217 testes aprovados e testes Android compilados, ainda sem execução na box. App: compilação Release, 470 testes e lint vital aprovados; total de 687 testes JVM e cinco testes do modelo. Aceitação física pendente. B2 foi medido, mas não integrado: em feeds parciais aumenta trabalho e memória sem necessidade; conservar o tracker lazy limitado. Ver [implementação UP70-B](IMPLEMENTACAO_UP70_B_2026-11-08.md).
+
+**UP70-C autorizado e integrado:** libmpv 2026.10.4→2026.11.0, com reconfirmação dos três hashes Maven, revisão dos 30 ELF e da ponte FFmpeg do ExoPlayer. 633 testes do player aprovados; 470 resultados de testes da App mantidos aprovados pela cache. Release, lint vital, merge dos 30 nativos e R8/DEX aprovados, com 12 classes/26 métodos JNI preservados. Aceitação física pendente. Não alteradas políticas de reprodução. Ver [implementação UP70-C](IMPLEMENTACAO_UP70_C_2026-11-08.md).
+
+**Pendências:** aceitação física e propostas opcionais que recebam autorização específica. B2 adaptativo só com nova prova de ganho/memória; não ativar preload global. AGP 9.5.1, Media3 1.11.1, schema 51 e backup 26 mantidos; libmpv agora 2026.11.0. Snapshot histórico de 4A/4B: `e5796ee0f13439d1acc8ef833f3b369bce3aeb2000696ea61a7c0179e7333ded`, 1116 inputs; o snapshot atual está registado acima. Sem equivalência integral com upstream 1.0.70. Os registos abaixo são históricos.
+
+Consultar [análise técnica completa e plano seletivo](ANALISE_CORE_1.0.70_LIBMPV_2026.11.0_COUNCIL_2026-11-08.md). As fases 4A/4B do plano HLS anterior foram implementadas em 09/11, limitadas ao timeshift local, e aguardam aceitação física; os nomes UP70 evitam confusão entre planos. Ver [implementação 4A/4B e limites](IMPLEMENTACAO_FASES_4A_4B_TIMESHIFT_2026-11-09.md). O snapshot dessa implementação substitui o hash histórico de UP70-C; não significa uma nova atualização de libmpv.
 
 ## Integração seletiva — Core 1.0.68 / OwnTV 5.2.0
 
