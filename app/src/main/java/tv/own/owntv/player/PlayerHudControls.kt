@@ -41,6 +41,7 @@ import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.input.key.KeyEventType
@@ -381,15 +382,25 @@ private fun BoxScope.Playhead(frac: Float) {
 }
 
 @Composable
-internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepMs: Long, onSeek: (Long) -> Unit) {
+internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepMs: Long, onSeek: (Long) -> Unit,
+    deferUntilRelease: Boolean = false, seekGeneration: () -> Long = { 0L }) {
 
     val currentSeek by rememberUpdatedState(onSeek)
     val currentPosition by rememberUpdatedState(positionMs)
+    val currentDuration by rememberUpdatedState(durationMs)
+    val currentGeneration by rememberUpdatedState(seekGeneration)
+    var scrub by remember { mutableStateOf(TimelineScrub()) }
+    fun commitScrub() {
+        val delta = scrub.deltaToCommit(currentPosition, currentDuration, currentGeneration())
+        scrub = TimelineScrub()
+        if (delta != null) currentSeek(delta)
+    }
     val interaction = remember { MutableInteractionSource() }
     val focused by interaction.collectIsFocusedAsState()
     val shownDuration = durationMs
-    val frac = if (shownDuration > 0) (positionMs.toFloat() / shownDuration).coerceIn(0f, 1f) else 0f
-    val shownPosition = positionMs
+    val shownPosition = scrub.targetMs?.takeIf { scrub.generation == currentGeneration() && shownDuration > 0 }
+        ?.coerceIn(0, shownDuration) ?: positionMs
+    val frac = if (shownDuration > 0) (shownPosition.toFloat() / shownDuration).coerceIn(0f, 1f) else 0f
     val accessibleLabel = stringResource(CoreR.string.player_time_progress, formatTime(shownPosition), formatTime(shownDuration))
     // The buffer ghost: how far ahead the engine has data. Never behind the playhead, so a stale or
     // unreported value simply draws nothing rather than a stripe that contradicts the fill.
@@ -400,10 +411,28 @@ internal fun SeekBar(positionMs: Long, durationMs: Long, bufferedMs: Long, stepM
             .semantics {
                 contentDescription = accessibleLabel
                 progressBarRangeInfo = ProgressBarRangeInfo(frac, 0f..1f)
-                setProgress { if (durationMs <= 0) false else { currentSeek(timelineDelta(it, durationMs, currentPosition)); true } }
+                setProgress { if (durationMs <= 0) false else {
+                    scrub = TimelineScrub()
+                    currentSeek(timelineDelta(it, durationMs, currentPosition)); true
+                } }
             }
+            .onFocusChanged { if (!it.isFocused && deferUntilRelease) commitScrub() }
             .onKeyEvent { e ->
                 // Physical by design: left rewinds and right advances media time in every locale.
+                if (deferUntilRelease) {
+                    val arrow = e.key == Key.DirectionLeft || e.key == Key.DirectionRight
+                    if (arrow && e.type == KeyEventType.KeyDown) {
+                        scrub = scrub.move(currentPosition, currentDuration,
+                            if (e.key == Key.DirectionLeft) -stepMs.coerceAtLeast(0) else stepMs.coerceAtLeast(0), currentGeneration())
+                        return@onKeyEvent true
+                    }
+                    if (arrow && e.type == KeyEventType.KeyUp) { commitScrub(); return@onKeyEvent true }
+                    // Submit before navigation to Play or a media key bubbles to the parent.
+                    if (e.type == KeyEventType.KeyDown) {
+                        if (e.key == Key.Back) scrub = TimelineScrub() else commitScrub()
+                    }
+                    return@onKeyEvent false
+                }
                 if (e.type == KeyEventType.KeyDown) when (e.key) {
                     Key.DirectionLeft -> { onSeek(-stepMs); true }
                     Key.DirectionRight -> { onSeek(stepMs); true }

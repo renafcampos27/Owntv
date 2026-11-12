@@ -79,4 +79,25 @@ class ChannelLogoDiskCacheTest {
         cache.save(key, webpFixture(), 1, 1, null, null)
         assertTrue(absent.isDirectory)
     }
+
+    @Test fun pngFallbackSurvivesRestartAndParticipatesInTheSameDiskQuota() {
+        val png = ByteArray(64) { 1 }.also { byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10).copyInto(it) }
+        val cache = ChannelLogoDiskCache(directory, maxBytes = 128)
+        val asset = cache.save(key, png, 1, 1, null, null)
+        assertEquals("png", asset.file.extension)
+        assertEquals(asset, ChannelLogoDiskCache(directory).read(key).asset)
+        cache.checked(key, cache.read(key), 2, 2, false)
+        assertEquals(asset, cache.read(key).asset)
+        repeat(5) { cache.save(ChannelLogoDiskCache.key("extra-$it"), webpFixture(), 1, 3L + it, null, null) }
+        assertTrue(directory.listFiles().orEmpty().filter { it.extension in setOf("png", "webp") }.sumOf { it.length() } <= 128)
+    }
+
+    @Test fun legacyFailureRetryNeverOverridesAnExplicitProviderRetryAfter() {
+        val record = ChannelLogoDiskCache.Record(null, -1, 100, 1_000, null, null,
+            retryAfterUntil = 60_000, policyVersion = 0)
+        assertFalse(record.needsRefresh(100, 1_001))
+        assertTrue(record.needsRefresh(100, 60_001))
+        val current = record.copy(retryAfterUntil = 0, policyVersion = ChannelLogoDiskCache.POLICY_VERSION)
+        assertFalse(current.needsRefresh(100, 1_001))
+    }
 }

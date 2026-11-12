@@ -37,4 +37,19 @@ class ChannelLogoEncodingTest {
     @Test fun providerHtmlIsRejectedInsteadOfBecomingALogo() = runBlocking {
         assertTrue(runCatching { encodeChannelLogo(context, "<html>not an image</html>".toByteArray()) }.isFailure)
     }
+
+    @Test fun svgContentTypeHandlesLongXmlPreambles() = runBlocking {
+        val svg = "<?xml version=\"1.0\"?><!--" + " ".repeat(2048) + "-->" +
+            """<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="600"><rect width="1800" height="600" fill="red"/></svg>"""
+        val compressed = encodeChannelLogo(context, svg.toByteArray(), "image/svg+xml; charset=utf-8")
+        val thumbnail = BitmapFactory.decodeByteArray(compressed, 0, compressed.size)
+        assertEquals(192, thumbnail.width); assertEquals(64, thumbnail.height)
+    }
+
+    @Test fun legacyCacheFallbackCannotDownloadOrOverwriteOriginals() {
+        val request = cachedChannelLogoRequest(context, "https://example.invalid/logo.png")
+        assertEquals(coil3.request.CachePolicy.DISABLED, request.networkCachePolicy)
+        assertEquals(coil3.request.CachePolicy.READ_ONLY, request.diskCachePolicy)
+        assertEquals(coil3.request.CachePolicy.READ_ONLY, request.memoryCachePolicy)
+    }
 }

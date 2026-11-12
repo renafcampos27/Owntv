@@ -3,6 +3,7 @@ package tv.own.owntv.ui.images
 import android.content.Context
 import android.graphics.Bitmap
 import android.os.Build
+import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -29,26 +30,38 @@ internal fun createChannelLogoRepository(context: Context, base: OkHttpClient): 
         .protocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1)).retryOnConnectionFailure(true)
         .callTimeout(10, TimeUnit.SECONDS).readTimeout(8, TimeUnit.SECONDS).build()
     return ChannelLogoRepository(ChannelLogoDiskCache(context.noBackupFilesDir.resolve("channel-logos")), client,
-        encode = { encodeChannelLogo(context, it) })
+        encode = { file, mimeType -> encodeChannelLogo(context, file, mimeType) })
 }
 
-internal suspend fun encodeChannelLogo(context: Context, bytes: ByteArray): ByteArray {
-    val request = ImageRequest.Builder(context).data(bytes).size(CHANNEL_LOGO_SIZE, CHANNEL_LOGO_SIZE)
+internal suspend fun encodeChannelLogo(context: Context, data: Any, mimeType: String? = null): ByteArray {
+    val request = ImageRequest.Builder(context).data(data).size(CHANNEL_LOGO_SIZE, CHANNEL_LOGO_SIZE)
         .scale(Scale.FIT).precision(Precision.EXACT).allowHardware(false).allowRgb565(false)
-        .memoryCachePolicy(CachePolicy.DISABLED).diskCachePolicy(CachePolicy.DISABLED).build()
+        .memoryCachePolicy(CachePolicy.DISABLED).diskCachePolicy(CachePolicy.DISABLED)
+        .networkCachePolicy(CachePolicy.DISABLED).apply {
+            // Content-Type can identify SVGs beyond Coil's short signature-sniffing window.
+            if (mimeType?.substringBefore(';')?.trim().equals("image/svg+xml", true)) {
+                decoderFactory { result, options, _ -> coil3.svg.SvgDecoder(result.source, options) }
+            }
+        }.build()
     val result = SingletonImageLoader.get(context).execute(request)
     check(result is SuccessResult)
     val image = result.image
-    check(image.width in 1..CHANNEL_LOGO_SIZE && image.height in 1..CHANNEL_LOGO_SIZE)
-    val bitmap = image.toBitmap()
+    val original = image.toBitmap()
+    val (width, height) = logoThumbnailSize(original.width, original.height, CHANNEL_LOGO_SIZE)
+    val bitmap = if (width == original.width && height == original.height) original
+        else Bitmap.createScaledBitmap(original, width, height, true)
     val output = ByteArrayOutputStream()
     @Suppress("DEPRECATION")
     val format = if (Build.VERSION.SDK_INT >= 30) Bitmap.CompressFormat.WEBP_LOSSY else Bitmap.CompressFormat.WEBP
-    check(bitmap.compress(format, 90, output))
+    if (!bitmap.compress(format, 90, output)) {
+        output.reset()
+        check(bitmap.compress(Bitmap.CompressFormat.PNG, 100, output))
+    }
+    check(output.size() <= ChannelLogoDiskCache.MAX_THUMBNAIL_BYTES)
     return output.toByteArray()
 }
 
-/** Only a small immutable local thumbnail reaches Coil. No network request is made by the row. */
+/** The repository owns network requests; rows can also reuse an older Coil cache entry offline. */
 @Composable
 internal fun ChannelLogoImage(
     model: String?,
@@ -65,6 +78,25 @@ internal fun ChannelLogoImage(
         AsyncImage(model = request, contentDescription = contentDescription, modifier = modifier, contentScale = contentScale, alpha = alpha)
         return
     }
+    key(url) { PersistentChannelLogo(url, contentDescription, modifier, contentScale, alpha, fallback) }
+}
+
+/** Never writes originals back into Coil's disk cache or creates a second network download. */
+internal fun cachedChannelLogoRequest(context: Context, url: String): ImageRequest =
+    ImageRequest.Builder(context).data(url).size(CHANNEL_LOGO_SIZE, CHANNEL_LOGO_SIZE)
+        .scale(Scale.FIT).precision(Precision.INEXACT).allowRgb565(false).crossfade(false)
+        .memoryCachePolicy(CachePolicy.READ_ONLY).diskCachePolicy(CachePolicy.READ_ONLY)
+        .networkCachePolicy(CachePolicy.DISABLED).build()
+
+@Composable
+private fun PersistentChannelLogo(
+    url: String,
+    contentDescription: String?,
+    modifier: Modifier,
+    contentScale: ContentScale,
+    alpha: Float,
+    fallback: @Composable () -> Unit,
+) {
     val repository = koinInject<ChannelLogoRepository>()
     val flow = remember(url, repository) { repository.observe(url) }
     val initial = remember(url, repository) { repository.cached(url) }
@@ -77,7 +109,20 @@ internal fun ChannelLogoImage(
                 .scale(Scale.FIT).precision(Precision.INEXACT).allowRgb565(false).crossfade(false).build()
         }
     }
-    if (request == null || failed) fallback()
-    else AsyncImage(model = request, contentDescription = contentDescription, modifier = modifier,
-        contentScale = contentScale, alpha = alpha, onError = { failed = true; asset?.let { repository.repair(url, it) } })
+    if (request != null && !failed) {
+        AsyncImage(model = request, contentDescription = contentDescription, modifier = modifier,
+            contentScale = contentScale, alpha = alpha,
+            onError = { failed = true; asset?.let { repository.repair(url, it) } })
+    } else {
+        val cachedRequest = remember(context, url) { cachedChannelLogoRequest(context, url) }
+        var cacheFailed by remember(url) { mutableStateOf(false) }
+        var cacheReady by remember(url) { mutableStateOf(false) }
+        if (cacheFailed) fallback()
+        else Box(modifier) {
+            if (!cacheReady) fallback()
+            AsyncImage(model = cachedRequest, contentDescription = contentDescription, modifier = Modifier.matchParentSize(),
+                contentScale = contentScale, alpha = alpha,
+                onSuccess = { cacheReady = true }, onError = { cacheFailed = true })
+        }
+    }
 }

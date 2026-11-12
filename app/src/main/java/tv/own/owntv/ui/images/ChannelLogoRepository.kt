@@ -12,17 +12,17 @@ import kotlinx.coroutines.sync.withPermit
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import tv.own.owntv.core.network.cancelBlockingCallWithCoroutine
-import java.io.ByteArrayOutputStream
+import java.io.File
 import java.util.concurrent.ConcurrentHashMap
 
 /** A failed update keeps the last good thumbnail; UI requests never wait on the main thread. */
 internal class ChannelLogoRepository(
     internal val disk: ChannelLogoDiskCache,
     private val client: OkHttpClient,
-    private val encode: suspend (ByteArray) -> ByteArray,
+    private val encode: suspend (File, String?) -> ByteArray,
     private val now: () -> Long = System::currentTimeMillis,
 ) {
-    companion object { const val MAX_DOWNLOAD_BYTES = 2 * 1024 * 1024 }
+    companion object { const val MAX_DOWNLOAD_BYTES = 8 * 1024 * 1024 }
     private class DeferredImage(val waitMs: Long) : IllegalStateException()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val permits = Semaphore(2)
@@ -63,9 +63,11 @@ internal class ChannelLogoRepository(
         locks[(key.hashCode() and Int.MAX_VALUE) % locks.size].withLock {
             val record = disk.read(key)
             states[key]?.value = record.asset
-            // Resumed background batches skip prior failures too; only a new list retries them all.
-            if (background && record.attemptedGeneration >= generation) return@withLock
+            // Old failed entries get one retry after a decoder-policy upgrade; valid copies stay put.
+            if (background && record.attemptedGeneration >= generation &&
+                (record.asset != null || record.policyVersion >= ChannelLogoDiskCache.POLICY_VERSION)) return@withLock
             if (!record.needsRefresh(generation, now())) return@withLock
+            var staging: File? = null
             try {
                 permits.withPermit {
                     currentCoroutineContext().ensureActive()
@@ -79,13 +81,13 @@ internal class ChannelLogoRepository(
                     }.build()
                     val call = client.newCall(request)
                     val context = currentCoroutineContext()
-                    data class Download(val bytes: ByteArray?, val etag: String?, val modified: String?)
+                    data class Download(val file: File?, val mimeType: String?, val etag: String?, val modified: String?)
                     val download = cancelBlockingCallWithCoroutine(call::cancel) {
                         call.execute().use { response ->
                             try {
                                 if (response.code == 304) {
                                     check(record.asset != null)
-                                    Download(null, response.header("ETag") ?: record.etag, response.header("Last-Modified") ?: record.modified)
+                                    Download(null, null, response.header("ETag") ?: record.etag, response.header("Last-Modified") ?: record.modified)
                                 } else {
                                     if (response.code == 429 || response.code == 503) {
                                         tv.own.owntv.core.network.HttpRetryAfter.delayMs(response.header("Retry-After"), now())
@@ -94,27 +96,34 @@ internal class ChannelLogoRepository(
                                     check(response.isSuccessful)
                                     val body = response.body
                                     check(body.contentLength() <= MAX_DOWNLOAD_BYTES)
-                                    val output = ByteArrayOutputStream()
-                                    val buffer = ByteArray(8192)
+                                    val file = disk.newDownload().also { staging = it }
+                                    val buffer = ByteArray(32 * 1024)
                                     val input = body.byteStream()
-                                    while (true) {
-                                        context.ensureActive()
-                                        val n = input.read(buffer)
-                                        if (n < 0) break
-                                        check(output.size() + n <= MAX_DOWNLOAD_BYTES)
-                                        output.write(buffer, 0, n)
+                                    file.outputStream().use { output ->
+                                        var total = 0L
+                                        while (true) {
+                                            context.ensureActive()
+                                            val n = input.read(buffer)
+                                            if (n < 0) break
+                                            check(total + n <= MAX_DOWNLOAD_BYTES)
+                                            output.write(buffer, 0, n)
+                                            total += n
+                                        }
                                     }
-                                    Download(output.toByteArray(), response.header("ETag"), response.header("Last-Modified"))
+                                    val reportedType = body.contentType()?.toString()
+                                    val genericType = reportedType == null || reportedType.substringBefore(';').trim().equals("application/octet-stream", true)
+                                    val type = if (genericType && response.request.url.encodedPath.endsWith(".svg", true)) "image/svg+xml" else reportedType
+                                    Download(file, type, response.header("ETag"), response.header("Last-Modified"))
                                 }
                             } catch (error: Exception) { call.cancel(); throw error }
                         }
                     }
-                    val bytes = download.bytes
-                    val asset = if (bytes == null) {
+                    val file = download.file
+                    val asset = if (file == null) {
                         disk.checked(key, record, generation, now(), true, download.etag, download.modified)
                         record.asset
                     } else {
-                        val thumbnail = encode(bytes)
+                        val thumbnail = encode(file, download.mimeType)
                         currentCoroutineContext().ensureActive()
                         disk.save(key, thumbnail, generation, now(), download.etag, download.modified)
                     }
@@ -127,7 +136,7 @@ internal class ChannelLogoRepository(
                 val wait = (error as? DeferredImage)?.waitMs ?: 0
                 val deadline = if (wait == 0L) 0L else if (wait > Long.MAX_VALUE - time) Long.MAX_VALUE else time + wait
                 runCatching { disk.checked(key, record, generation, time, false, retryAfterUntil = deadline) }
-            }
+            } finally { staging?.delete() }
         }
     }
 

@@ -14,15 +14,18 @@ internal class ChannelLogoDiskCache(val root: File, private val maxBytes: Long =
     companion object {
         const val MAX_THUMBNAIL_BYTES = 192 * 1024
         const val FAILURE_BACKOFF_MS = 10 * 60_000L
+        const val POLICY_VERSION = 1
         fun key(url: String): String = digest(url.toByteArray(Charsets.UTF_8))
         private fun digest(bytes: ByteArray) = MessageDigest.getInstance("SHA-256").digest(bytes)
             .joinToString("") { "%02x".format(it) }
     }
     data class Record(val asset: LogoAsset?, val generation: Long, val attemptedGeneration: Long,
-        val attemptedAt: Long, val etag: String?, val modified: String?, val retryAfterUntil: Long = 0) {
+        val attemptedAt: Long, val etag: String?, val modified: String?, val retryAfterUntil: Long = 0,
+        val policyVersion: Int = 0) {
         fun needsRefresh(generation: Long, now: Long): Boolean {
             if (now < retryAfterUntil) return false
             if (asset != null && this.generation >= generation) return false
+            if (asset == null && policyVersion < POLICY_VERSION) return true
             if (asset == null && this.generation >= generation && this.generation == attemptedGeneration) return true
             return attemptedGeneration < generation || now < attemptedAt || now - attemptedAt >= FAILURE_BACKOFF_MS
         }
@@ -34,30 +37,36 @@ internal class ChannelLogoDiskCache(val root: File, private val maxBytes: Long =
         val properties = Properties()
         runCatching { File(root, "$key.properties").inputStream().use(properties::load) }
         val revision = properties.getProperty("revision")?.takeIf { it.matches(Regex("[a-f0-9]{64}")) }
-        val file = revision?.let { File(root, "$key-$it.webp") }?.takeIf { it.isFile && it.length() in 1..MAX_THUMBNAIL_BYTES }
-        return Record(file?.let { LogoAsset(it, revision!!) }, properties.getProperty("generation")?.toLongOrNull() ?: -1,
+        val format = properties.getProperty("format")?.takeIf { it in setOf("webp", "png") } ?: "webp"
+        val file = revision?.let { File(root, "$key-$it.$format") }?.takeIf { it.isFile && it.length() in 1..MAX_THUMBNAIL_BYTES }
+        return Record(file?.let { LogoAsset(it, revision) }, properties.getProperty("generation")?.toLongOrNull() ?: -1,
             properties.getProperty("attemptedGeneration")?.toLongOrNull() ?: -1,
             properties.getProperty("attemptedAt")?.toLongOrNull() ?: 0,
             properties.getProperty("etag"), properties.getProperty("modified"),
-            properties.getProperty("retryAfterUntil")?.toLongOrNull() ?: 0)
+            properties.getProperty("retryAfterUntil")?.toLongOrNull() ?: 0,
+            properties.getProperty("policyVersion")?.toIntOrNull() ?: 0)
     }
 
     /** Immutable content files + atomic metadata switch: failed refreshes cannot replace a valid logo. */
     @Synchronized fun save(key: String, bytes: ByteArray, generation: Long, now: Long, etag: String?, modified: String?): LogoAsset {
         require(bytes.size in 12..MAX_THUMBNAIL_BYTES)
         require(bytes.size <= maxBytes)
-        require(bytes.copyOfRange(0, 4).contentEquals("RIFF".toByteArray()) &&
-            bytes.copyOfRange(8, 12).contentEquals("WEBP".toByteArray()))
+        val format = when {
+            bytes.copyOfRange(0, 4).contentEquals("RIFF".toByteArray()) &&
+                bytes.copyOfRange(8, 12).contentEquals("WEBP".toByteArray()) -> "webp"
+            bytes.copyOfRange(0, 8).contentEquals(byteArrayOf(-119, 80, 78, 71, 13, 10, 26, 10)) -> "png"
+            else -> error("Unsupported logo thumbnail")
+        }
         val revision = digest(bytes)
-        val file = File(root, "$key-$revision.webp")
+        val file = File(root, "$key-$revision.$format")
         if (!file.isFile) {
-            val total = imageBytes ?: root.listFiles().orEmpty().filter { it.extension == "webp" }.sumOf { it.length() }
+            val total = imageBytes ?: root.listFiles().orEmpty().filter(::isImage).sumOf { it.length() }
             atomic(file) { it.write(bytes) }
             imageBytes = total + bytes.size
         }
-        metadata(key, revision, generation, generation, now, etag, modified)
+        metadata(key, revision, generation, generation, now, etag, modified, format = format)
         if ((imageBytes ?: 0) > maxBytes) {
-            root.listFiles().orEmpty().filter { it.extension == "webp" && it != file }.sortedBy { it.lastModified() }.forEach {
+            root.listFiles().orEmpty().filter { isImage(it) && it != file }.sortedBy { it.lastModified() }.forEach {
                 if (imageBytes!! > maxBytes) { val size = it.length(); if (it.delete()) imageBytes = imageBytes!! - size }
             }
         }
@@ -66,15 +75,18 @@ internal class ChannelLogoDiskCache(val root: File, private val maxBytes: Long =
 
     @Synchronized fun checked(key: String, record: Record, generation: Long, now: Long, success: Boolean,
         etag: String? = record.etag, modified: String? = record.modified, retryAfterUntil: Long = 0) {
-        metadata(key, record.asset?.revision, if (success) generation else record.generation, generation, now, etag, modified, retryAfterUntil)
+        metadata(key, record.asset?.revision, if (success) generation else record.generation, generation, now, etag, modified,
+            retryAfterUntil, record.asset?.file?.extension ?: "webp")
     }
 
-    private fun metadata(key: String, revision: String?, generation: Long, attempted: Long, now: Long, etag: String?, modified: String?, retryAfterUntil: Long = 0) {
+    private fun metadata(key: String, revision: String?, generation: Long, attempted: Long, now: Long, etag: String?, modified: String?, retryAfterUntil: Long = 0, format: String = "webp") {
         val data = Properties().apply {
             revision?.let { setProperty("revision", it) }
             setProperty("generation", generation.toString()); setProperty("attemptedGeneration", attempted.toString())
             setProperty("attemptedAt", now.toString())
             setProperty("retryAfterUntil", retryAfterUntil.toString())
+            setProperty("policyVersion", POLICY_VERSION.toString())
+            setProperty("format", format)
             etag?.let { setProperty("etag", it) }; modified?.let { setProperty("modified", it) }
         }
         atomic(File(root, "$key.properties")) { data.store(it, null) }
@@ -89,12 +101,19 @@ internal class ChannelLogoDiskCache(val root: File, private val maxBytes: Long =
         } finally { temporary.delete() }
     }
 
+    internal fun newDownload(): File {
+        check(root.mkdirs() || root.isDirectory)
+        return File.createTempFile("logo-", ".part", root)
+    }
+
+    private fun isImage(file: File): Boolean = file.extension == "webp" || file.extension == "png"
+
     /** Inactive/orphaned logos go first. A fixed disk ceiling still applies to unusually large lists. */
     @Synchronized fun prune(active: Set<String>): Set<String> {
         val removed = mutableSetOf<String>()
         val files = root.listFiles().orEmpty()
         val referenced = files.filter { it.extension == "properties" }.associate { it.nameWithoutExtension to read(it.nameWithoutExtension).asset?.file?.name }
-        val images = files.filter { it.extension == "webp" }
+        val images = files.filter(::isImage)
         var total = images.sumOf { it.length() }
         images.sortedWith(compareBy<File> { it.name != referenced[it.name.take(64)] || it.name.take(64) !in active }
             .reversed().thenBy { it.lastModified() }).forEach { file ->

@@ -517,7 +517,8 @@ private fun VodTimeline(player: PlaybackEngine, position: () -> Long, duration: 
         TimeCap(formatTime(pos), Alignment.Start)
         Spacer(Modifier.width(12.dp))
         Box(Modifier.weight(1f)) {
-            SeekBar(positionMs = pos, durationMs = duration, bufferedMs = buffered, stepMs = seekStep, onSeek = { player.seekBy(it) })
+            SeekBar(positionMs = pos, durationMs = duration, bufferedMs = buffered, stepMs = seekStep,
+                onSeek = { player.seekBy(it) }, deferUntilRelease = true, seekGeneration = { player.seekGeneration })
         }
         Spacer(Modifier.width(12.dp))
         TimeCap(stringResource(CoreR.string.player_time_remaining, formatTime((duration - pos).coerceAtLeast(0))), Alignment.End)

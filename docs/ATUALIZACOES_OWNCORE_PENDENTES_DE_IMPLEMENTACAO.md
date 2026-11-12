@@ -1,10 +1,18 @@
 # Atualizações OwnCore pendentes de implementação
 
-Última atualização: 10/11/2026.
+Última atualização: 12/11/2026.
+
+## Logótipos em falta — correção App de 12/11/2026
+
+Corrigida a recuperação de entradas antigas sem imagem: cache anterior do Coil apenas offline, originais até 8 MiB transferidos para ficheiro temporário, MIME/SVG preservado, redimensionamento explícito, PNG alternativo e nova tentativa após upgrade da política. Miniaturas 192 × 192/192 KiB, quota 64 MiB, concorrência dois, Retry-After e imagens válidas preservados. **513 testes JVM da App, Release e lint vital aprovados; cinco testes Android compilados, sem aceitação física.** Alteração apenas App, sem novo snapshot Core: mantém `b96bf0f13976cfe350e70c2750a73eca472abf2c98c70c1230d3bb590882e5bb`, 1117 inputs. O limite de originais de 2 MiB descrito no relatório histórico de 10/11 foi substituído nesta correção. Ver [correção e critérios de aceitação](CORRECAO_LOGOTIPOS_OCULTOS_2026-11-12.md).
+
+## Recuo e retoma — proteções integradas em 12/11/2026
+
+Implementadas seleção temporal sem seek por cada repetição de seta, validação da geração mesmo ao reabrir o mesmo programa, proteção de seek/play/pause na fila nativa e milissegundos nos seeks relativos. Diagnóstico opcional identifica o ramo do motor e a intenção. Validação: 636 testes do player + 501 da App, Release e lint vital aprovados. **A causa do reinício Google TV não foi confirmada e a aceitação física continua pendente**; não marcar o reinício como resolvido só pelos testes locais. Snapshot atual: `b96bf0f13976cfe350e70c2750a73eca472abf2c98c70c1230d3bb590882e5bb`, 1117 inputs. Ver [correção, âmbito e aceitação](CORRECAO_RECUO_RETOMA_DIFERIDOS_2026-11-12.md).
 
 ## Logótipos persistentes — integração App/Core de 10/11/2026
 
-Implementada cache própria de miniaturas com atualização pelas gerações das listas, WebP até 192 × 192, quota, cancelamento e apresentação partilhada. Core limitado a consulta paginada de referências de logótipos e exposição do helper de cancelamento existente, sem alteração do seu comportamento. Sem migração de DB/backup nem alteração dos motores. Validação: 96 testes de rede Core + 492 App; Release e lint vital aprovados; três testes de imagem Android compilados, ainda sem execução física. Snapshot atual: `372e6d340b96e5ff2dad1505878f088ff32ff4650e790dfcec01f7d73ef47823`, 1116 inputs. Ver [implementação e limites](IMPLEMENTACAO_LOGOTIPOS_PERSISTENTES_2026-11-10.md).
+Implementada cache própria de miniaturas com atualização pelas gerações das listas, WebP até 192 × 192, quota, cancelamento e apresentação partilhada. Core limitado a consulta paginada de referências de logótipos e exposição do helper de cancelamento existente, sem alteração do seu comportamento. Sem migração de DB/backup nem alteração dos motores. Validação: 96 testes de rede Core + 492 App; Release e lint vital aprovados; três testes de imagem Android compilados, ainda sem execução física. Snapshot dessa integração: `372e6d340b96e5ff2dad1505878f088ff32ff4650e790dfcec01f7d73ef47823`, 1116 inputs. Ver [implementação e limites](IMPLEMENTACAO_LOGOTIPOS_PERSISTENTES_2026-11-10.md).
 
 
 ## Core 1.0.70 — UP70-A/B1/C integrados; B2 não integrado e aceitação física pendente
