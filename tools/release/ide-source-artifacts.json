@@ -2487,5 +2487,23 @@
     "name": "gradle",
     "version": "9.8.2",
     "artifact": "gradle-9.8.2-src.zip"
+  },
+  {
+    "group": "gradle",
+    "name": "gradle",
+    "version": "9.9.0",
+    "artifact": "gradle-9.9.0-src.zip"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-stdlib",
+    "version": "2.4.21",
+    "artifact": "kotlin-stdlib-2.4.21-sources.jar"
+  },
+  {
+    "group": "org.jetbrains.kotlin",
+    "name": "kotlin-reflect",
+    "version": "2.4.21",
+    "artifact": "kotlin-reflect-2.4.21-sources.jar"
   }
 ]

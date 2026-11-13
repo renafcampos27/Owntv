@@ -41,6 +41,8 @@ internal fun TvAvoPlayerHud(
     reopenSeconds: StateFlow<Int>?,
     inert: Boolean,
     modifier: Modifier,
+    visibility: PlayerHudVisibility,
+    compactInformation: (@Composable () -> Unit)? = null,
 ) {
     val requested by player.playbackRequested.collectAsStateWithLifecycle()
     val buffering by player.buffering.collectAsStateWithLifecycle()
@@ -49,19 +51,18 @@ internal fun TvAvoPlayerHud(
     val waiting by remember(reopenSeconds) {
         reopenSeconds?.map { it > 0 }?.distinctUntilChanged() ?: flowOf(false)
     }.collectAsStateWithLifecycle(false)
-    var visible by remember { mutableStateOf(true) }
+    val visible = visibility.informationVisible
     var activity by remember { mutableIntStateOf(0) }
     val showControls = visible || !requested || error != null
     val catchFocus = remember { FocusRequester() }
     val canZap = onChannelUp != null && onChannelDown != null
-    val toggle: () -> Unit = { if (error != null) player.retry() else player.togglePlayPause(); visible = true; activity++ }
+    val toggle: () -> Unit = { if (error != null) player.retry() else player.togglePlayPause(); visibility.showInformation(); activity++ }
 
     BackHandler(enabled = !inert, onBack = onBack)
-    LaunchedEffect(player, channelKey) { visible = true; activity++ }
     LaunchedEffect(visible, requested, buffering, waiting, error, inert, activity) {
         if (visible && requested && !buffering && !waiting && error == null && !inert) {
             delay(4_500)
-            visible = false
+            visibility.hideInformation()
         }
     }
     LaunchedEffect(inert, player, channelKey) {
@@ -81,20 +82,29 @@ internal fun TvAvoPlayerHud(
                 TvAvoAction.PASS -> false
                 TvAvoAction.CONSUME -> true
                 TvAvoAction.BACK -> { if (!event.nativeKeyEvent.isCanceled) onBack(); true }
-                TvAvoAction.SHOW -> { if (!event.nativeKeyEvent.isCanceled) visible = true; true }
+                TvAvoAction.SHOW -> { if (!event.nativeKeyEvent.isCanceled) visibility.showControls(); true }
                 // Same delta convention as the regular HUD: physical Up/CH+ advances the list.
-                TvAvoAction.NEXT -> { onChannelDown?.invoke(); visible = true; true }
-                TvAvoAction.PREVIOUS -> { onChannelUp?.invoke(); visible = true; true }
+                TvAvoAction.NEXT -> { onChannelDown?.invoke(); visibility.showInformation(); true }
+                TvAvoAction.PREVIOUS -> { onChannelUp?.invoke(); visibility.showInformation(); true }
                 TvAvoAction.TOGGLE -> { if (event.nativeKeyEvent.repeatCount == 0) toggle(); true }
                 TvAvoAction.PLAY -> {
                     if (event.nativeKeyEvent.repeatCount == 0) { if (error != null) player.retry() else player.play() }
-                    visible = true; true
+                    visibility.showInformation(); true
                 }
-                TvAvoAction.PAUSE -> { player.pause(); visible = true; true }
+                TvAvoAction.PAUSE -> { player.pause(); visibility.showInformation(); true }
             }
         }) {
             Box(Modifier.fillMaxSize().focusRequester(catchFocus).focusable())
-            if (showControls) {
+            if (showControls && compactInformation != null) {
+                Box(Modifier.align(Alignment.BottomStart).padding(28.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        compactInformation()
+                        if (error != null) Text(stringResource(R.string.tv_avo_channel_unavailable),
+                            style = MaterialTheme.typography.bodyMedium, color = Color.White,
+                            modifier = Modifier.background(Color.Black.copy(alpha = 0.78f)).padding(12.dp))
+                    }
+                }
+            } else if (showControls) {
                 Row(
                     Modifier.align(Alignment.BottomStart).padding(28.dp).fillMaxWidth()
                         .clip(RoundedCornerShape(18.dp)).background(Color.Black.copy(alpha = 0.80f)).padding(20.dp),

@@ -133,6 +133,7 @@ fun PlayerHud(
     onBack: () -> Unit,
     tvAvoMode: Boolean = false,
     tvAvoChannelName: String? = null,
+    channelIntro: (@Composable () -> Unit)? = null,
     recentChannelWaitSeconds: kotlinx.coroutines.flow.StateFlow<Int>? = null,
     openingChannel: kotlinx.coroutines.flow.StateFlow<tv.own.owntv.core.database.entity.ChannelEntity?>? = null,
     onPip: (() -> Unit)? = null,
@@ -213,9 +214,12 @@ fun PlayerHud(
     modifier: Modifier = Modifier,
 ) {
 
-    if (tvAvoMode) {
+    val compactStart = channelIntro != null || tvAvoMode
+    val visibility = remember(directTuneContextKey, compactStart) { PlayerHudVisibility(compactStart) }
+    if (tvAvoMode && !visibility.controlsVisible) {
         TvAvoPlayerHud(player, onBack, tvAvoChannelName, directTuneContextKey,
-            onChannelUp, onChannelDown, liveEpgCard, recentChannelWaitSeconds, inert, modifier)
+            onChannelUp, onChannelDown, liveEpgCard, recentChannelWaitSeconds, inert, modifier,
+            visibility = visibility, compactInformation = channelIntro)
         return
     }
 
@@ -270,7 +274,7 @@ fun PlayerHud(
     val showNextCard = !isLive && error == null && nav.hasNext && nextUpTitle != null &&
         nextCardDue && !autoNextDismissed
 
-    var controlsVisible by remember { mutableStateOf(true) }
+    var controlsVisible by visibility
     var showInfo by remember { mutableStateOf(false) } // stream technical-info overlay
     // Used only by "Report this stream", which writes the current readout into the playback log (F18).
     val reportContext = androidx.compose.ui.platform.LocalContext.current
@@ -328,7 +332,9 @@ fun PlayerHud(
 
     val zap: (Int) -> Unit = { d ->
         cancelDirectTune()
-        (if (d < 0) onChannelUp else onChannelDown)?.invoke(); channelFlash++
+        if (compactStart) visibility.showInformation()
+        (if (d < 0) onChannelUp else onChannelDown)?.invoke()
+        if (!compactStart) channelFlash++
     }
 
     // Restartable timeout: each new digit restarts the ~2 s window. On expiry, submit.
@@ -407,16 +413,22 @@ fun PlayerHud(
     // Only for the "report this stream" button, whose readout is now gathered off the main thread.
     val hudScope = androidx.compose.runtime.rememberCoroutineScope()
 
-    LaunchedEffect(forceShow) { if (forceShow) controlsVisible = true }
+    LaunchedEffect(forceShow, visibility) { if (forceShow) controlsVisible = true }
+    LaunchedEffect(visibility, visibility.informationVisible, playbackRequested, buffering, reopenWait, error, inert) {
+        if (visibility.informationVisible && playbackRequested && !buffering && reopenWait == 0 && error == null && !inert) {
+            delay(4500)
+            visibility.hideInformation()
+        }
+    }
     LaunchedEffect(controlsVisible, player) { if (controlsVisible) player.refreshStreamChips() }
     DisposableEffect(showInfo, player) {
         if (showInfo) player.refreshStreamChips()
         player.setBitrateTrackingEnabled(showInfo)
         onDispose { player.setBitrateTrackingEnabled(false) }
     }
-    LaunchedEffect(controlsVisible, wakeTick, forceShow, inert) {
+    LaunchedEffect(controlsVisible, wakeTick, forceShow, inert, showInfo) {
         // Don't auto-hide under an overlay — hiding is what triggers the catch-all focus grab below.
-        if (controlsVisible && !forceShow && !inert) { delay(4500); controlsVisible = false }
+        if (controlsVisible && !forceShow && !inert && (!tvAvoMode || !showInfo)) { delay(4500); controlsVisible = false }
     }
     LaunchedEffect(controlsVisible, error, dialog, inert, showNextCard, showInfo) {
         // Never steal focus while a dialog is open (its rows own it) or while a shell overlay is up
@@ -424,9 +436,11 @@ fun PlayerHud(
         if (dialog != HudDialog.NONE || inert || showInfo) return@LaunchedEffect
         // The next-episode countdown card owns focus while it's up so Play now / Cancel are reachable.
         if (showNextCard) { runCatching { nextFocus.requestFocus() }; return@LaunchedEffect }
-        if (controlsVisible) {
-            if (error != null) runCatching { retryFocus.requestFocus() } else runCatching { playFocus.requestFocus() }
-        } else runCatching { catchFocus.requestFocus() }
+        val target = if (!controlsVisible) catchFocus else if (error != null) retryFocus else playFocus
+        repeat(4) {
+            androidx.compose.runtime.withFrameNanos { }
+            if (runCatching { target.requestFocus() }.getOrDefault(false)) return@LaunchedEffect
+        }
     }
 
     // The player sits over opaque video (never a glass surface — see Glass.kt), so its HUD buttons
@@ -539,7 +553,7 @@ fun PlayerHud(
             }
             // Hidden HUD owns the complete OK gesture, so its release cannot click a newly shown control.
             if (!inert && dialog == HudDialog.NONE && !showInfo && !digitsActive &&
-                (e.key == Key.DirectionCenter || e.key == Key.Enter) &&
+                (e.key == Key.DirectionCenter || e.key == Key.Enter || e.key == Key.NumPadEnter) &&
                 (!controlsVisible || hiddenOkDownAt != null)) {
                 if (e.type == KeyEventType.KeyDown && hiddenOkDownAt == null) hiddenOkDownAt = e.nativeKeyEvent.eventTime
                 if (e.type == KeyEventType.KeyUp) {
@@ -567,8 +581,8 @@ fun PlayerHud(
                 // intended: CH-/Down from the first channel lands on the last, and vice versa.
                 canZap && e.key == Key.MediaNext -> { zap(1); true }
                 canZap && e.key == Key.MediaPrevious -> { zap(-1); true }
-                canZap && isLive && !controlsVisible && !showInfo && e.key == Key.DirectionUp -> { zap(1); true }
-                canZap && isLive && !controlsVisible && !showInfo && e.key == Key.DirectionDown -> { zap(-1); true }
+                canZap && (isLive || compactStart) && !controlsVisible && !showInfo && e.key == Key.DirectionUp -> { zap(1); true }
+                canZap && (isLive || compactStart) && !controlsVisible && !showInfo && e.key == Key.DirectionDown -> { zap(-1); true }
                 // The category list lives at logical Start; history lives at logical End.
                 onOpenChannelList != null && !controlsVisible &&
                     e.key.horizontalDirection(layoutDirection) == HorizontalDirection.START -> { onOpenChannelList(); true }
@@ -608,7 +622,7 @@ fun PlayerHud(
                 .padding(start = 28.dp, top = if (controlsVisible) 92.dp else 28.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            if (isLive && (tuned != null || (showFlash && !controlsVisible))) {
+            if (!compactStart && isLive && (tuned != null || (showFlash && !controlsVisible))) {
                 // A fresh tune drives the card from the lookup result, not player metadata: the Stalker and
                 // mpv paths publish their metadata after an async resolve, which would show the old channel.
                 if (tuned != null) {
@@ -628,14 +642,13 @@ fun PlayerHud(
             }
         }
 
-        // The REC badge, and it is deliberately OUTSIDE `if (controlsVisible)`.
-        //
-        // The shell hides the status pill during fullscreen playback, so without this a recording
-        // running behind the picture would be completely invisible — which is the one thing D13 says
-        // must not happen. It is drawn whenever anything is recording, HUD up or down, and it is not
-        // focusable and not interactive: stopping a recording is the Recordings screen's job, and a
-        // stop button one stray D-pad press from the middle of a programme is not a kindness.
-        RecordingBadge(modifier = Modifier.align(Alignment.TopEnd))
+        // Channel playback keeps supplementary information behind OK; recordings continue unchanged.
+        // Non-channel playback retains the existing always-visible recording badge.
+        if (!compactStart || controlsVisible) RecordingBadge(modifier = Modifier.align(Alignment.TopEnd))
+
+        if (visibility.informationVisible && !inert && error == null) {
+            Box(Modifier.align(Alignment.BottomStart).padding(28.dp)) { channelIntro?.invoke() }
+        }
 
         if (controlsVisible) {
             // Scrims: a FLAT semi-transparent panel behind the controls, feathered to transparent only at

@@ -1689,6 +1689,22 @@ fun OwnTVShell(
                 PlayerHud(
                     tvAvoMode = simple.tvAvoMode,
                     tvAvoChannelName = playingChannel?.name,
+                    channelIntro = if (isLiveChannel) {
+                        {
+                            val epg by liveVm.channelNowNext.collectAsStateWithLifecycle()
+                            val archiveEpg by liveVm.channelArchiveNowNext.collectAsStateWithLifecycle()
+                            val watching by liveVm.watchingWallMs.collectAsStateWithLifecycle()
+                            val ownedGuide = if (watching != null) archiveEpg else epg
+                            val instant = watching ?: System.currentTimeMillis()
+                            val programme = ownedGuide.takeIf { it.first == playingChannel?.id }?.second?.now
+                                ?.takeIf { it.startMs <= instant && instant < it.stopMs }
+                            tv.own.owntv.player.ChannelIntroCard(
+                                channel = playingChannel?.name.orEmpty(),
+                                programme = programme?.title,
+                                description = programme?.description,
+                            )
+                        }
+                    } else null,
                     player = if (liveOnExo) liveVm.previewEngine else mpvEngine, // HUD drives the active engine
                     onBack = exitPlayer,
                     recentChannelWaitSeconds = if (isTunedLive) liveVm.recentChannelWaitSeconds else null,

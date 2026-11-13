@@ -764,10 +764,14 @@ class LiveViewModel(
             }
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null to null)
 
-    /** Refresh at minute boundaries while visible; the reader cache prevents repeated network requests. */
-    val nowNext: StateFlow<EpgNowNext?> = guideRead
+    /** Keep the owner with the result so an opening channel cannot show the previous channel's guide.
+     * Refresh at minute boundaries while visible; both presentations share the same reader work. */
+    val channelNowNext: StateFlow<Pair<Long?, EpgNowNext?>> = guideRead
         .debounce(350)
-        .mapLatest { read -> read.channel?.let { epgReader.nowNext(it, custom.value, read.offset) } }
+        .mapLatest { read -> read.channel?.id to read.channel?.let { epgReader.nowNext(it, custom.value, read.offset) } }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null to null)
+
+    val nowNext: StateFlow<EpgNowNext?> = channelNowNext.map { it.second }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     /**
@@ -778,7 +782,7 @@ class LiveViewModel(
      * every second, and the answer can only change when a programme boundary is crossed. Without that
      * rounding this would hit the guide database once a second for the whole of a replay.
      */
-    val archiveNowNext: StateFlow<EpgNowNext?> = combine(
+    val channelArchiveNowNext: StateFlow<Pair<Long?, EpgNowNext?>> = combine(
         _previewChannel,
         watchingWallMs.map { ms -> ms?.let { it / 60_000L } }.distinctUntilChanged(),
         epgRefresh,
@@ -786,10 +790,13 @@ class LiveViewModel(
     ) { ch, minute, _, offset -> (ch to minute) to offset }
         .mapLatest { (target, offset) ->
             val (ch, minute) = target
-            if (ch == null || minute == null) null
-            else epgReader.nowNextAt(ch, minute * 60_000L, custom.value, offset)
+            ch?.id to if (ch == null || minute == null) null
+                else epgReader.nowNextAt(ch, minute * 60_000L, custom.value, offset)
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null to null)
+
+    val archiveNowNext: StateFlow<EpgNowNext?> = channelArchiveNowNext.map { it.second }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
     /**
      * The playing channel's guide entries, for the player's live timeline: they become the programme

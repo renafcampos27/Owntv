@@ -6481,6 +6481,12 @@
     "proof": "https://services.gradle.org/distributions/gradle-9.8.2-src.zip.sha256"
   },
   {
+    "coordinate": "gradle:gradle:9.9.0",
+    "artifact": "gradle-9.9.0-src.zip",
+    "sha256": "c16d860198430fd8fd1c6914c4ca8283820d181ed0c5efa6fcce2275819a7bb4",
+    "proof": "https://services.gradle.org/distributions/gradle-9.9.0-src.zip.sha256"
+  },
+  {
     "coordinate": "io.coil-kt.coil3:coil-android:3.6.0",
     "artifact": "coil-android-3.6.0-sources.jar",
     "sha256": "8066e89ff9de76d2925364d272ca3548c08ef5c29c6f523180b20a25377ce875",
@@ -8701,6 +8707,24 @@
     "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.4.10/kotlin-reflect-2.4.10.pom"
   },
   {
+    "coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.4.21",
+    "artifact": "kotlin-reflect-2.4.21-sources.jar",
+    "sha256": "478739aaf0310de32de799625f173f3f665cce9cf540735f9a81cb5ad05bc8c4",
+    "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.4.21/kotlin-reflect-2.4.21-sources.jar"
+  },
+  {
+    "coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.4.21",
+    "artifact": "kotlin-reflect-2.4.21.jar",
+    "sha256": "7c9e8bda3cafa85b65692065acd22578b2843292b4e4baa8361bdc9175746e88",
+    "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.4.21/kotlin-reflect-2.4.21.jar"
+  },
+  {
+    "coordinate": "org.jetbrains.kotlin:kotlin-reflect:2.4.21",
+    "artifact": "kotlin-reflect-2.4.21.pom",
+    "sha256": "ed535d321580ccad0f8454381126297130f1aa82c53322e11f49f93a18f75b64",
+    "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-reflect/2.4.21/kotlin-reflect-2.4.21.pom"
+  },
+  {
     "coordinate": "org.jetbrains.kotlin:kotlin-script-runtime:2.4.0",
     "artifact": "kotlin-script-runtime-2.4.0.jar",
     "sha256": "196e8ecbf63daf477e34e67c2f871ee232ae7bf8b377432d876d1bbf9d273de3",
@@ -8927,6 +8951,30 @@
     "artifact": "kotlin-stdlib-2.4.20.module",
     "sha256": "afb28052ac6c3d605c0f661816ea653e073eb039682fed35bfa6cdc704c0911c",
     "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.4.20/kotlin-stdlib-2.4.20.module"
+  },
+  {
+    "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.21",
+    "artifact": "kotlin-stdlib-2.4.21-sources.jar",
+    "sha256": "1e29c0668b0aa555e7b154e5da2e8094e1b755cfee25737839195bbbdad8a4a2",
+    "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.4.21/kotlin-stdlib-2.4.21-sources.jar"
+  },
+  {
+    "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.21",
+    "artifact": "kotlin-stdlib-2.4.21.jar",
+    "sha256": "bd8250210584cb659847dce9cda660f8e9906e5def7fbebcea93dc6dcb6a88a3",
+    "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.4.21/kotlin-stdlib-2.4.21.jar"
+  },
+  {
+    "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.21",
+    "artifact": "kotlin-stdlib-2.4.21.module",
+    "sha256": "03b0df67c0cd74a948a45c5b03c4bbcfb31ab9b9879fb380adf7c187b6594b7f",
+    "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.4.21/kotlin-stdlib-2.4.21.module"
+  },
+  {
+    "coordinate": "org.jetbrains.kotlin:kotlin-stdlib:2.4.21",
+    "artifact": "kotlin-stdlib-2.4.21.pom",
+    "sha256": "b92b23ec9c444b2578b9852447565efc72c24b3ea77b4c3bf4e644f685eeef07",
+    "proof": "https://repo.maven.apache.org/maven2/org/jetbrains/kotlin/kotlin-stdlib/2.4.21/kotlin-stdlib-2.4.21.pom"
   },
   {
     "coordinate": "org.jetbrains.kotlin:kotlin-tooling-core:2.4.20",

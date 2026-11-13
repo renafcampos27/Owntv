@@ -22,7 +22,7 @@ class TvAvoKeyPolicyTest {
             assertEquals(TvAvoAction.PASS, tvAvoKeyAction(code, true, true, false))
         assertEquals(TvAvoAction.PASS, tvAvoKeyAction(KeyEvent.KEYCODE_DPAD_UP, true, true, true))
     }
-    @Test fun backExitsAndEveryOkOnlyRevealsInformationWithoutPausing() {
+    @Test fun backExitsAndOkIsHandledOnReleaseWithoutTogglingPlayback() {
         assertEquals(TvAvoAction.CONSUME, tvAvoKeyAction(KeyEvent.KEYCODE_BACK, true, true, false))
         assertEquals(TvAvoAction.BACK, tvAvoKeyAction(KeyEvent.KEYCODE_BACK, false, true, false))
         repeat(2) {

@@ -1,6 +1,14 @@
 # Atualizações OwnCore pendentes de implementação
 
-Última atualização: 12/11/2026.
+Última atualização: 13/11/2026.
+
+## Letra e abertura de canais — 13/11/2026
+
+Letra principal predefinida a 120%, preservando tamanhos explicitamente guardados. Abertura/troca de canal mostra apenas nome e programação/descrição; OK abre os controlos completos sem pausar, também no modo TV Avó. Setas de zapping, erros e esperas mantidos. **518 testes JVM App, Release e lint vital aprovados**; testes Android compilados, aceitação física pendente. Snapshot atual: `dda32fd9d2ef4442120e07570827ab88b4491228d271f04cf52368041d936021`, 1117 inputs. No Core, só mudou `UiFontScale.DEFAULT` em `FontCustomization.kt`; ferramentas, esquemas, motores e streaming preservados. Ver [implementação e limites](LETRA_120_E_ABERTURA_DISCRETA_2026-11-13.md).
+
+## Ferramentas de compilação — Gradle 9.9.0 em 12/11/2026
+
+Wrappers da App e Core atualizados para Gradle 9.9.0, com checksums oficiais, anexos do editor e novas dependências internas verificados. AGP 9.5.1 e Kotlin/Compose da aplicação 2.4.20 preservados. Snapshot atual: `cc8be13dbe0507f4c3e4c781f07c7294ba9811074af4dcd3ca69e243d6563de0`, 1117 inputs; só mudaram cinco inputs de ferramentas/verificação do Core, sem alteração do seu código funcional. Compilação Release, lint vital, classes duplicadas, bibliotecas nativas, **513 testes JVM App e 23 testes Python aprovados**; um teste Python opt-in não executado. Anexos novos validados com ambos os manifestos em modo estrito. Sem APK ou teste físico. Ver [atualização e provas](ATUALIZACAO_GRADLE_9.9.0_2026-11-12.md). Os hashes seguintes são históricos das respetivas intervenções.
 
 ## Logótipos em falta — correção App de 12/11/2026
 
