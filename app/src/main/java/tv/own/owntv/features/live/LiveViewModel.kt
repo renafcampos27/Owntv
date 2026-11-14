@@ -1601,6 +1601,52 @@ class LiveViewModel(
     val zapListTitle: StateFlow<String?> = zapList.title
     val zapListKey: StateFlow<LiveKey?> = zapList.key
 
+    /** The quick list shares the main list's sorting query, including persisted manual positions. */
+    fun prepareChannelList() {
+        val channel = _playingChannel.value ?: _previewChannel.value ?: return
+        val key = zapList.key.value ?: when (val selected = _selected.value) {
+            is LiveKey.Folder -> selected.takeIf { it.id == channel.categoryId } ?: LiveKey.All
+            LiveKey.Catchup -> if (channel.catchup) selected else LiveKey.All
+            else -> selected
+        }
+        val args = Args(key, ctx.value, "", sortMode.value, custResolved.value)
+        if (args.ctx.profileId < 0 || channel.sourceId !in args.ctx.sourceIds) return
+        fun current() = ctx.value == args.ctx && custResolved.value == args.cs && sortMode.value == args.sort
+        val heading = railItems.value.firstOrNull { it.key == args.key }?.title
+            ?: zapList.title.value.takeIf { zapList.key.value == args.key }
+        zapList.refreshFromBrowse(heading, args.key, (args.key as? LiveKey.Folder)?.id,
+            load = {
+                withContext(Dispatchers.IO) {
+                    if (!current()) return@withContext emptyList()
+                    val include: (ChannelEntity) -> Boolean = { ch ->
+                        isChannelVisible(ch, args.cs.cust, args.cs.hiddenCats, args.key, args.cs.restrictedCats) &&
+                            (args.cs.cust.movedFromOrigin[CustomizeKeys.channel(ch)]?.let { origin ->
+                                args.key !is LiveKey.Folder || origin != folderContextKeys.value[args.key.id]
+                            } ?: true)
+                    }
+                    val ids = if (args.cs.cust.groupChannelVersions) {
+                        groupedBrowseIds?.takeIf { it.first == args && it.second == catalogRevision.value }?.third
+                            ?: collectZapIds(GroupedChannelPagingSource(pagingSource(args.key, args.ctx, args.query, args.sort), include,
+                                { ChannelVersionPolicy.groupKey(it, args.cs.cust) },
+                                { previous, next -> ChannelVersionPolicy.ordered(listOf(previous, next), args.cs.cust).first() },
+                            )) { true }
+                    } else collectZapIds(pagingSource(args.key, args.ctx, args.query, args.sort), include)
+                    if (!current() || ids.isEmpty()) return@withContext emptyList()
+                    val candidates = ids.toHashSet()
+                    val anchor = channel.id.takeIf { it in candidates }
+                        ?: zapList.channels.value.firstOrNull { it.id in candidates && matchesChannelRow(it, channel) }?.id
+                        ?: if (args.cs.cust.groupChannelVersions) loadVersionGroup(channel, args.cs.cust)
+                            .firstOrNull { it.id in candidates }?.id else null
+                    val window = if (anchor != null) zapWindowIds(ids, anchor, 0, ZAP_LIST_LIMIT) else ids.take(ZAP_LIST_LIMIT)
+                    val rows = window.chunked(400).flatMap { channelDao.getByIds(it) }.associateBy { it.id }
+                    if (!current()) return@withContext emptyList()
+                    window.mapNotNull { rows[it] }.map { row ->
+                        args.cs.cust.itemNames[CustomizeKeys.channel(row)]?.let { row.copy(name = it) } ?: row
+                    }
+                }
+            }, adjacent = browseWindowLoader(args), revision = { catalogRevision.value }, isCurrent = ::current)
+    }
+
     // --- Category browser (second Left press shows all categories) ---
     private val _showCategoryBrowser = MutableStateFlow(false)
     val showCategoryBrowser: StateFlow<Boolean> = _showCategoryBrowser.asStateFlow()

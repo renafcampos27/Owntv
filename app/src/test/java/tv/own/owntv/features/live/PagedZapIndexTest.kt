@@ -45,8 +45,9 @@ class PagedZapIndexTest {
         val current = longArrayOf(1, 3, 4)
         val forward = replacementZapAnchor(current, old, 2, 1)!!
         val backward = replacementZapAnchor(current, old, 2, -1)!!
-        assertEquals(3L, zapWindowIds(current, forward, 1)[1])
-        assertEquals(1L, zapWindowIds(current, backward, -1)[1])
+        assertEquals(3L, current[Math.floorMod(current.indexOf(forward) + 1, current.size)])
+        assertEquals(1L, current[Math.floorMod(current.indexOf(backward) - 1, current.size)])
+        assertEquals(current.toList(), zapWindowIds(current, backward, -1))
         assertNull(replacementZapAnchor(longArrayOf(1), old, 2, 1))
         assertEquals(4L, replacementZapAnchor(current, longArrayOf(), 99, 1))
     }
@@ -71,8 +72,22 @@ class PagedZapIndexTest {
     @Test fun windowWrapsOnlyAtTheRealContextBoundary() {
         val ids = (1L..600L).toList().toLongArray()
         assertEquals(301L, zapWindowIds(ids, 300, 1)[8])
-        assertEquals(1L, zapWindowIds(ids, 600, 1)[8])
+        assertEquals((1L..17L).toList(), zapWindowIds(ids, 600, 1))
+        assertEquals((584L..600L).toList(), zapWindowIds(ids, 1, -1))
         assertTrue(zapWindowIds(ids, 999, 1).isEmpty())
+    }
+    @Test fun smallManualListsNeverRotateOrSortByChannelNumber() {
+        val ids = longArrayOf(5, 1, 4, 2, 3)
+        for (anchor in ids) for (delta in listOf(-1, 0, 1))
+            assertEquals(ids.toList(), zapWindowIds(ids, anchor, delta))
+        assertEquals(listOf(9L), zapWindowIds(longArrayOf(9), 9, 0))
+    }
+    @Test fun overlayWindowsKeepTheWholeCustomOrderUntilTheirExistingEntityLimit() {
+        val ids = (240L downTo 1L).toList().toLongArray()
+        assertEquals(ids.toList(), zapWindowIds(ids, 100, 0, 2000))
+        val big = (1L..5000L).toList().toLongArray()
+        assertEquals(2000, zapWindowIds(big, 4500, 0, 2000).size)
+        assertTrue(4500L in zapWindowIds(big, 4500, 0, 2000))
     }
     @Test fun lateWindowCannotOverwriteAnotherBrowseContext() = runBlocking {
         val entered = CompletableDeferred<Unit>(); val finish = CompletableDeferred<Unit>()

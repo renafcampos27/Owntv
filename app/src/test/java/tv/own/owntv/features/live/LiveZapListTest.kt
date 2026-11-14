@@ -25,6 +25,80 @@ import tv.own.owntv.core.live.LiveKey
  */
 class LiveZapListTest {
 
+    @Test fun quickListRefreshPublishesTheSavedManualOrderAndZappingUsesIt() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        val zap = LiveZapList(scope, { 2L }, { emptyList() }, { emptyList() }, { emptyList() }, { null })
+        val manual = listOf(list[0], list[3], list[1], list[4], list[2])
+        try {
+            zap.armFromBrowse(list, null, LiveKey.All, null)
+            zap.refreshFromBrowse(null, LiveKey.All, null, { manual }, { _, _ -> null }, { 1L })
+            assertEquals(manual, zap.channels.value)
+            assertEquals(5L, zap.nextAvailable(1)?.id)
+            assertEquals(4L, zap.nextAvailable(-1)?.id)
+            assertEquals(LiveKey.All, zap.key.value)
+        } finally { scope.cancel() }
+    }
+
+    @Test fun lateQuickListRefreshCannotReplaceANewerCategory() = runBlocking {
+        val entered = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val finish = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val exited = kotlinx.coroutines.CompletableDeferred<Unit>()
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        val zap = LiveZapList(scope, { 2L }, { emptyList() }, { emptyList() }, { emptyList() }, { null })
+        try {
+            zap.armFromBrowse(list, null, LiveKey.All, null)
+            zap.refreshFromBrowse(null, LiveKey.All, null, {
+                kotlinx.coroutines.withContext(kotlinx.coroutines.NonCancellable) {
+                    entered.complete(Unit); finish.await(); exited.complete(Unit); list.reversed()
+                }
+            }, { _, _ -> null }, { 1L })
+            entered.await()
+            zap.armFromBrowse(list.take(2), "New", LiveKey.Custom("new"), null)
+            finish.complete(Unit); exited.await()
+            kotlinx.coroutines.yield()
+            assertEquals(list.take(2), zap.channels.value)
+            assertEquals(LiveKey.Custom("new"), zap.key.value)
+        } finally { finish.complete(Unit); scope.cancel() }
+    }
+
+    @Test fun aCatalogueChangeDuringRefreshRetriesBeforePublishing() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        val zap = LiveZapList(scope, { 2L }, { emptyList() }, { emptyList() }, { emptyList() }, { null })
+        var revision = 0L; var loads = 0
+        try {
+            zap.armFromBrowse(list, null, LiveKey.All, null)
+            zap.refreshFromBrowse(null, LiveKey.All, null, {
+                loads++
+                if (loads == 1) { revision++; list } else list.reversed()
+            }, { _, _ -> null }, { revision })
+            assertEquals(2, loads)
+            assertEquals(list.reversed(), zap.channels.value)
+        } finally { scope.cancel() }
+    }
+
+    @Test fun aChangedPlayingChannelRejectsTheOldOverlayRead() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        var playing = 2L
+        val zap = LiveZapList(scope, { playing }, { emptyList() }, { emptyList() }, { emptyList() }, { null })
+        try {
+            zap.armFromBrowse(list, null, LiveKey.All, null)
+            zap.refreshFromBrowse(null, LiveKey.All, null, { playing = 3; list.reversed() }, { _, _ -> null }, { 1L })
+            assertEquals(list, zap.channels.value)
+        } finally { scope.cancel() }
+    }
+
+    @Test fun changedProfileOrSettingsRejectsResultsEvenWhenTheSameChannelStillPlays() = runBlocking {
+        val scope = CoroutineScope(Dispatchers.Unconfined)
+        val zap = LiveZapList(scope, { 2L }, { emptyList() }, { emptyList() }, { emptyList() }, { null })
+        var current = true
+        try {
+            zap.armFromBrowse(list, null, LiveKey.All, null)
+            zap.refreshFromBrowse(null, LiveKey.All, null, { current = false; list.reversed() },
+                { _, _ -> null }, { 1L }, { current })
+            assertEquals(list, zap.channels.value)
+        } finally { scope.cancel() }
+    }
+
     @Test fun groupedZappingAnchorsToThePlayingAlternativeInsteadOfItsRepresentativeId() = runBlocking {
         val representative = ChannelEntity(id = 1, sourceId = 1, name = "SIC Full HD", streamUrl = "")
         val alternative = representative.copy(id = 99, name = "SIC HD")

@@ -421,6 +421,11 @@ fun OwnTVShell(
     val showCategoryBrowser by liveVm.showCategoryBrowser.collectAsStateWithLifecycle()
     val browserCategories by liveVm.browserCategories.collectAsStateWithLifecycle()
     val playingChannel by liveVm.playingChannel.collectAsStateWithLifecycle()
+    val quickListCurrentId = remember(zapChannels, playingChannel) {
+        playingChannel?.let { playing ->
+            zapChannels.firstOrNull { liveVm.matchesChannelRow(it, playing) }?.id ?: playing.id
+        }
+    }
     // Whichever engine is on the speaker right now — what the rail item pictures, what the media
     // keys act on while docked, and what confirms live-edge playback for reminder auto-consumption.
     val dockedEngine = if (liveOnExo) liveVm.previewEngine else mpvEngine
@@ -1716,7 +1721,7 @@ fun OwnTVShell(
                     inert = showMiniGuide || showChannelList || showHistoryList || showCategoryBrowser || showLocalSubPicker || localResumeChannel != null || dueReminder != null,
                     onChannelUp = zap?.let { z -> { z(-1) } },
                     onChannelDown = zap?.let { z -> { z(1) } },
-                    onOpenChannelList = if (isTunedLive && liveCanZap) { { showChannelList = true } } else null,
+                    onOpenChannelList = if (isTunedLive && liveCanZap) { { liveVm.prepareChannelList(); showChannelList = true } } else null,
                     // Live channels only, and only once Multiview is switched on: the channel on screen
                     // becomes tile 1 and the grid takes over. Everything it needs is already tuned.
                     onMultiview = if (multiviewEnabled && isTunedLive && playingChannel != null) {
@@ -1854,7 +1859,7 @@ fun OwnTVShell(
                         // hold a single channel, so this renders for any non-empty list.
                         tv.own.owntv.features.shell.components.ChannelListOverlay(
                             channels = zapChannels,
-                            currentId = playingChannel?.id,
+                            currentId = quickListCurrentId,
                             nowPlaying = overlayNowPlaying,
                             title = zapOverlayTitle,
                             showNumbers = directTuneEnabled,

@@ -44,12 +44,12 @@ internal fun replacementZapAnchor(ids: LongArray, previous: LongArray, anchor: L
     return ids[Math.floorMod(target - delta, ids.size)]
 }
 
-/** A small circular entity window around the destination; ordering is the captured browse ordering. */
-internal fun zapWindowIds(ids: LongArray, anchor: Long, delta: Int): List<Long> {
+/** Keep the displayed window in browse order. Only the destination wraps at a catalogue boundary. */
+internal fun zapWindowIds(ids: LongArray, anchor: Long, delta: Int, limit: Int = 17): List<Long> {
     val index = ids.indexOf(anchor)
-    if (index < 0 || ids.size < 2) return emptyList()
+    if (index < 0 || limit <= 0) return emptyList()
     val target = Math.floorMod(index + delta, ids.size)
-    val count = minOf(17, ids.size)
-    val before = count / 2
-    return (0 until count).map { ids[Math.floorMod(target - before + it, ids.size)] }
+    val count = minOf(limit, ids.size)
+    val first = (target - count / 2).coerceIn(0, ids.size - count)
+    return (first until first + count).map { ids[it] }
 }

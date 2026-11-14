@@ -112,7 +112,7 @@ internal class LiveZapList(
             if (loaded.isEmpty()) return@launch
             val title = categoryName(categoryId)
             currentCoroutineContext().ensureActive()
-            publish(loaded, categoryId = categoryId, title = title, key = null)
+            publish(loaded, categoryId = categoryId, title = title, key = LiveKey.Folder(categoryId))
             onLoaded()
         }
     }
@@ -144,6 +144,40 @@ internal class LiveZapList(
         browseWindow = adjacent
         browseRevision = revision
         loadedRevision = revision()
+    }
+
+    /** Re-read the browse order for an explicitly opened overlay without retuning the channel.
+     * A later tune, category selection or catalogue revision always wins over this read. */
+    fun refreshFromBrowse(
+        title: String?,
+        key: LiveKey,
+        categoryId: Long?,
+        load: suspend () -> List<ChannelEntity>,
+        adjacent: suspend (Long, Int) -> ZapWindow?,
+        revision: () -> Long,
+        isCurrent: () -> Boolean = { true },
+    ) {
+        loadJob?.cancel()
+        val owner = generation
+        val playing = playingChannelId()
+        loadJob = scope.launch {
+            try {
+                repeat(2) {
+                    val version = revision()
+                    val loaded = load()
+                    currentCoroutineContext().ensureActive()
+                    if (owner != generation || playingChannelId() != playing || !isCurrent()) return@launch
+                    if (revision() != version) return@repeat
+                    if (loaded.isEmpty()) return@launch
+                    publish(loaded, categoryId, title, key)
+                    browseWindow = adjacent
+                    browseRevision = revision
+                    loadedRevision = version
+                    return@launch
+                }
+            } catch (cancelled: CancellationException) { throw cancelled }
+            catch (error: Exception) { Log.w(TAG, "channel list: order refresh failed", error) }
+        }
     }
 
     /**

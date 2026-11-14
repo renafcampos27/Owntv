@@ -195,7 +195,7 @@
 1	json	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	schedule_recording
 1	protocol	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	versions
 2	technical	app/src/main/java/tv/own/owntv/features/live/LiveScreen.kt	−
-8	empty	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	\0
+9	empty	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	\0
 1	technical	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	#$it
 1	protocol	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	${channel.sourceId}:
 1	protocol	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	HLS
@@ -218,6 +218,7 @@
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	stalker resolve failed channelId=${channel.id}
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveViewModel.kt	tuneByNumber($number) failed
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveZapList.kt	LiveZapList
+1	log	app/src/main/java/tv/own/owntv/features/live/LiveZapList.kt	channel list: order refresh failed
 1	log	app/src/main/java/tv/own/owntv/features/live/LiveZapList.kt	direct tune: zap rebuild failed
 1	json	app/src/main/java/tv/own/owntv/features/live/ManualRecordingDialog.kt	EEE dd/MM
 1	json	app/src/main/java/tv/own/owntv/features/live/ManualRecordingDialog.kt	HH:mm
