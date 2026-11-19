@@ -1,173 +1,82 @@
-# Auditoria independente das propostas de áudio e recuperação HLS
+# Auditoria das propostas de áudio e recuperação HLS da OwnTV
 
-Data: 17/11/2026. Estado: **auditoria, sem alteração funcional da App/Core**.
+Revisão de 18/11/2026 sobre os 12 itens da auditoria de 17/11. Dos 12 itens originais, ficaram **uma correção de áudio reproduzida, uma falha de isolamento entre tentativas HLS a cobrir com um teste de integração e uma correção de texto**. A01 já está integrada. A secção 4 acrescenta a análise de continuidade, com prioridade à reconexão já agendada. Esta revisão alterou exclusivamente este documento.
 
-**Execução posterior à auditoria:** apenas A01 foi implementado, após autorização do utilizador. Consultar [o registo de implementação e validação](C:/Users/renat/Downloads/OwnTV-main/docs/IMPLEMENTACAO_A01_AUDIO_2026-11-17.md). As observações de código abaixo descrevem a baseline auditada; os restantes itens continuam pendentes.
+Três revisores de IA examinaram áudio, recuperação HLS e transporte. O arquivo de Core fixado pela App corresponde ao SHA-256 indicado no lock. Os 1117 ficheiros do arquivo coincidem com os ficheiros correspondentes no Core local. Versões analisadas: Media3 1.11.1 e OkHttp 5.5.0. [Lock da App](../core-source-lock.json)
 
-Documento auditado: [problemas e soluções](C:/Users/renat/Downloads/OwnTV-main/docs/PROBLEMAS_E_SOLUCOES_RECUPERACAO_HLS_AUDIO_2026-11-17.md). Este parecer revê o grau de aprovação dos 12 itens, não autoriza executar todos.
+## 1. Corrigir A02 · Uma falha de áudio antiga pode interromper a saída nova
 
-## 1. Método e limites
+**Reprodução.** Num ensaio JVM com o `AudioWatchdog` compilado, a saída AC3 em passthrough acumulou quatro faltas de dados de áudio elegíveis em dez segundos. Antes da consulta seguinte do leitor, uma saída PCM substituiu a AC3 e começou a avançar. Mesmo assim, `poll(true)` devolveu a falha da AC3. Repetindo a sequência com libertação da AC3 e sem saída substituta, devolveu a mesma falha. No controlo com a saída original ativa, a falha foi entregue uma única vez. No controlo com `reset()`, a consulta devolveu `null`.
 
-Foram obtidos quatro pareceres de agentes IA: áudio/codecs, HLS/HTTP, coordenação de recuperação e um revisor novo, sem o histórico anterior. O agente principal cruzou divergências e evidências. Não são profissionais humanos externos nem quatro reproduções independentes na box.
+**Impacto no direto.** A OwnTV já atribui um identificador a cada saída, mas guarda o motivo pendente sem esse identificador. A consulta entrega o motivo antes de verificar qual é a saída ativa. Uma decisão obsoleta pode provocar reconstrução do leitor em estéreo ou pausa terminal se o resgate estiver esgotado ou for incompatível com o modo selecionado. O teste demonstra este erro de estado. A ligação aos cortes periódicos de AAC/MP2 ouvidos na Xiaomi continua por demonstrar. [Estado e consulta em AudioOutputPolicy.kt](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/AudioOutputPolicy.kt) · [Consumo da decisão em LivePreviewEngine.kt](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LivePreviewEngine.kt)
 
-Lock atual: `C:/Users/renat/Downloads/OwnTV-main/core-source-lock.json`; snapshot `dda32fd9d2ef4442120e07570827ab88b4491228d271f04cf52368041d936021`. Os especialistas reconfirmaram igualdade dos ficheiros centrais com o ZIP; o revisor novo verificou percursos locais, sem repetir comparação integral. Media3 1.11.1; OkHttp 5.5.0.
+**Alteração mínima.** Em `AudioOutputPolicy.kt`, associar a decisão pendente à saída que a originou. Ao substituir ou libertar essa saída, descartar a decisão que ainda aguarda entrega. A saída atual deve continuar apta a detetar uma falha própria. Conservar o limite de um resgate já consumido. A identidade existente permite distinguir uma libertação tardia da saída anterior, mesmo quando as configurações são iguais.
 
-Foram consultados documentação, sources oficiais, discussões com mantenedores e relatos de utilizadores. Um relato de outro dispositivo/versão não prova a causa do sintoma Xiaomi. Não foram executados novos testes de reprodução, builds, alterações de dependências ou APK.
+**Aceitação em `AudioRecoveryTest.kt`.** Cobrir substituição antes da consulta, libertação sem substituta, libertação tardia com a mesma configuração e uma falha legítima da nova saída. Confirmar também entrega única na mesma saída e preservação da deteção inicial quando o som nunca começa a avançar. [Testes de áudio](../../OwnTV_Core/player-core/src/test/java/tv/own/owntv/player/AudioRecoveryTest.kt)
 
-## 2. Veredito por proposta
+## 2. H01/H02 · Separar as recusas de cada tentativa e testar o abandono prematuro
 
-| ID | Decisão revista | Existe solução conhecida? | O que fazer na OwnTV |
-| --- | --- | --- | --- |
-| **A01** | **Aplicar em lote controlado** | Sim: contrato explícito Media3 | Retirar a recuperação destrutiva desencadeada apenas pelo aviso de sink, preservando falhas fatais |
-| **A02** | **Teste residual após A01; correção mínima se demonstrada** | Existe problema de estado local; não foi encontrado patch externo idêntico | Validar razão, saída, `pendingReason` e `fired` em conjunto; evitar refactor amplo |
-| **A03** | **Manter e testar** | Sim, handler e recuperação já existem | Garantir que A01 não remove tratamento de erro fatal atual |
-| **H01** | **Manter e testar com H02** | Sim, recuperação Media3 e especialização OwnTV | Medir os três caminhos antes de mudar retry/handover |
-| **H02** | **Testar classificação e corrigir os casos demonstrados** | A política é configurável; não há receita universal para o fornecedor | Separar papel/status/contexto; não tornar todo 403 terminal |
-| **H03** | **Comparação separada** | Sim, exemplo Android e recuperação genérica local | Só integrar ramo específico se reduzir trabalho e preservar timeshift/arquivo |
-| **H04** | **Manter e validar** | Sim, reconexão, ownership e drain já existem | Corrigir falha reproduzida; não criar outro retry engine |
-| **H05** | **Manter guardas; esclarecer indicação e contrato** | Sim, Retry-After padronizado e guarda local | Testar datas, limites e saída; não prolongar espera automaticamente |
-| **H06** | **Experiência condicionada** | Há fundamento para ensaio, não benefício comprovado | Manter 12 s até teste comparativo justificar extensão finita |
-| **H07** | **Reproduzir e comparar upstream** | Sim, correção real posterior à 1.11.1 | Confirmar cenário de variante interna HLS; não atualizar para beta por suposição |
-| **T01** | **Experiência playback-only** | Sim, recuperação de ligação no OkHttp | Comparar pedidos/sessões/cancelamento; não tratar como solução geral de corpo interrompido |
-| **T02** | **Condicional; separar cookies de cabeçalhos** | Sim para origens que exigem cookie; headers dependem do destino | Não ativar cookies globais nem novas recusas de CDN sem caso concreto |
+**O que o código mostra.** Para um segmento HLS com 403, 404 ou 410, a política da OwnTV admite uma repetição curta de 500 ms. Em paralelo, duas URLs distintas de segmento recusadas com o mesmo código podem sinalizar mudança de tentativa. Um erro fatal HTTP após a reprodução ter começado também pode desencadear reconexão. Um segmento recebido com sucesso limpa o historial de recusas, mas o sinal de duas recusas já emitido pode continuar ativo até uma nova abertura. O controlador volta a verificar se o canal já está a reproduzir antes de avançar. A questão em aberto é o intervalo em que os dados já voltaram e o leitor ainda aparece em carregamento. [Política e eventos de carga](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LivePreviewEngine.kt) · [Observador](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LiveExoWatchdog.kt) · [Decisão final](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LiveTuneController.kt)
 
-**Contagem:** 12 itens auditados. A01 é a única mudança diretamente aprovada pelo contrato atual. A02 é uma correção residual dependente de ensaio. A03/H01/H04/H05 são quatro blocos principalmente de preservação/validação. H02/H03/H06/H07/T01/T02 são seis candidatos condicionados. Isto não corresponde a 12 bugs confirmados na box.
+**Falha de isolamento identificada no código.** O historial de recusas é descrito como pertencente a uma única fonte. No entanto, `reprepare()` incrementa `sourceId` sem reiniciar esse historial nem o sinal associado. Assim, uma recusa já registada na fonte A e outra na fonte B, com URLs distintas, o mesmo código e dentro de 30 s, podem completar o limiar de duas recusas mesmo que B só tenha falhado uma vez. Filtrar callbacks tardios pelo token não remove evidência já aceite. Confirmar com um teste que passe pela substituição real da fonte. A correção mínima é associar a evidência à fonte que a produziu ou reiniciá-la na mudança de `sourceId`, preservando o orçamento global de tentativas. Duas recusas na mesma fonte continuam a contar. O efeito sobre a reprodução do fornecedor ainda requer ensaio. [Contrato do historial](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/HlsSegmentRefusals.kt)
 
-## 3. Áudio: auditoria e solução por item
+**Ensaio de integração.** Num servidor HLS local de teste, observar pedidos reais e decisões sobre a mesma sintonia. Comparar um segmento que recupera após a primeira repetição, duas recusas seguidas de um segmento entregue enquanto o leitor ainda carrega e duas recusas persistentes. Incluir uma variante alternativa disponível e, como controlo, uma falha do manifesto. Registar estado do leitor, segmento, repetição, reapresentação da fonte e eventual troca de canal. Distinguir eventos de carregamento cancelados pelo próprio Media3 de uma saída voluntária do utilizador. [Semântica de onLoadError](https://developer.android.com/reference/androidx/media3/exoplayer/source/MediaSourceEventListener) · [Política de erros do ExoPlayer](https://developer.android.com/media/media3/exoplayer/customization#customizing-error-handling)
 
-### A01 — aviso de áudio provoca pausa ou rebuild
+**Critério.** Uma falha passageira que o leitor consiga recuperar deve permitir continuar no mesmo canal. Uma recusa persistente deve continuar a chegar à recuperação prevista dentro do prazo. Se o ensaio demonstrar abandono prematuro, corrigir apenas a decisão que o provocou e repetir os dois cenários. Se o leitor passar estes dois cenários, encerrar a hipótese de abandono prematuro dentro da mesma fonte. O caso entre duas fontes tem o seu próprio critério: uma única recusa de B não deve atingir o limiar pela soma com A. Os testes existentes cobrem o historial e o canal já recuperado, em separado. [Testes de recusas](../../OwnTV_Core/player-core/src/test/java/tv/own/owntv/player/HlsSegmentRefusalsTest.kt) · [Testes do controlador](../../OwnTV_Core/player-core/src/test/java/tv/own/owntv/player/LiveTuneControllerTest.kt)
 
-**Evidência local:** `AudioOutputPolicy.kt:397–423` promove o aviso a `raise`; `LivePreviewEngine.kt:1034–1051` pode pausar, latchear estéreo ou reconstruir a reprodução.
+## 3. Corrigir o texto de H05 · O contador promete uma tentativa que pode não acontecer
 
-**Evidência externa:** o [contrato exato Media3 1.11.1](https://raw.githubusercontent.com/androidx/media/1.11.1/libraries/exoplayer/src/main/java/androidx/media3/exoplayer/analytics/AnalyticsListener.java) distingue diagnóstico de falha. [Eventos do leitor](https://developer.android.com/media/media3/exoplayer/listening-to-player-events) descrevem o percurso fatal. Não é necessário encontrar um post de fórum para contrariar um contrato explícito.
+O leitor mostra «Nova tentativa dentro de … s». Com um limite de abertura de 15 s e uma espera de 30 s, o teste existente confirma que a aplicação abandona a abertura aos 15 s. O contador informa quanto falta para poder tentar novamente, e o utilizador pode entretanto ter escolhido outro canal. O protocolo também descreve uma espera antes do próximo pedido. [HUD da App](../app/src/main/java/tv/own/owntv/player/PlayerHud.kt) · [Teste do prazo de abertura](../../OwnTV_Core/player-core/src/test/java/tv/own/owntv/player/LiveTuneControllerTest.kt) · [RFC 9110, Retry-After](https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.3)
 
-**Solução aprovada:** manter observação/log e retirar desse aviso isolado a decisão destrutiva. Preservar `onPlayerError`, tokens e tratamento de falha efetiva. Os testes que equiparam exceção neste callback a erro fatal precisam de ser reespecificados.
+**Alteração mínima.** Ajustar apenas o recurso `player_provider_retry_after` e as traduções correspondentes, preservando código HTTP, motivo e segundos. Texto proposto para a contagem: **«Pode voltar a tentar dentro de %3$d s.»** Verificar a mensagem com um prazo do leitor mais curto do que a espera apresentada. [Texto pt-PT](../../OwnTV_Core/core/src/main/res/values-pt-rPT/strings_player.xml)
 
-**Teste:** aviso de inicialização/escrita seguido de recuperação; nenhum novo pedido/rebuild/pausa. Depois erro fatal atual; recuperação permanece funcional. Testar PCM, passthrough e eventos antigos.
+## Decisões encerradas
 
-### A02 — estado pendente obsoleto
-
-**Revisão importante:** retirar A01 elimina o produtor mais abrangente de `pendingReason`. Resta o caso de underruns passthrough repetidos. Não aprovar uma grande mudança de gerações por antecipação.
-
-**Caso residual:** saída A avança → quatro underruns elegíveis → decisão pendente → saída B inicia e avança → `poll` ainda entrega a decisão A. Novo output já tem identidade local; aproveitar a existente.
-
-**Risco de uma correção mal feita:** limpar só `pendingReason` pode deixar `fired=true` e desarmar deteções futuras. Limpar ambos indiscriminadamente pode rearmar resgates indefinidamente. `onAudioPositionAdvancing` sinaliza primeiro avanço, não saúde contínua; uma flag antiga não prova recuperação atual.
-
-**Decisão:** reproduzir o caso após A01; especificar invalidação e rearme por razão/saída, preservando o orçamento de resgate. Não foi encontrado um patch público exatamente equivalente para este estado personalizado da OwnTV.
-
-### A03 — falha fatal real
-
-O handler já existe. O filtro de playback confirmado considera `playerError`, pelo que não deve ser condenado só por ignorar certos eventos antigos. Testar erro atual vs obsoleto, Back, pausa, suspensão e troca de canal.
-
-**Solução:** preservar a integração existente; não acrescentar reset periódico, amplitude como detetor de falha ou correção automática de relógio. A01 não substitui a recuperação de ligação HLS.
-
-## 4. HLS: auditoria e solução por item
-
-### H01/H02 — auditar três caminhos em conjunto
-
-O documento anterior descrevia bem retries e erro fatal, mas precisava de explicitar uma escalada adicional:
-
-1. `edgeRefusalPolicy`, `LivePreviewEngine.kt:3478+`: especialização de segmentos 403/404/410 com retry curto, preservando fallback elegível.
-2. `onLoadError` → `noteSegmentRefusal` → duas URLs distintas com o mesmo status → `segmentsRefused`; o watchdog pode pedir handover antes do erro fatal do player.
-3. `onPlayerError` runtime → reconexão HLS rápida, cuja espera fica limitada a 1,5 s.
-
-O controlador revalida playback confirmado antes de avançar; isso protege um canal já recuperado. Durante BUFFERING, os caminhos ainda podem antecipar-se entre si. A origem de uma decisão não pode ser inferida apenas pelo último erro visível.
-
-**Fontes:** [política Media3 1.11.1](https://raw.githubusercontent.com/androidx/media/1.11.1/libraries/exoplayer/src/main/java/androidx/media3/exoplayer/upstream/DefaultLoadErrorHandlingPolicy.java), [personalização oficial](https://developer.android.com/media/media3/exoplayer/customization#customizing-error-handling).
-
-**Solução recomendada:** uma fixture para os três percursos, conservando papel do load, sintonia e status. Medir load retries, fallback, handover e reprepare, sem contagem simplista de «oito pedidos». Só alterar o caminho responsável pelo caso demonstrado.
-
-**Ensaios:** segmento recupera em 600–1500 ms; duas recusas seguidas de recuperação; variante elegível disponível; recusa persistente; 401/403 da entrada; 458 antes/depois de READY; 503 com/sem prazo.
-
-**Contraargumento obrigatório:** retirar retries curtos ou o sinal de recusas pode piorar canais que anunciam segmentos permanentemente inacessíveis. Não remover esses mecanismos globalmente.
-
-### H03 — posição anterior à janela do direto
-
-O [Android documenta](https://developer.android.com/media/media3/exoplayer/live-streaming) `seekToDefaultPosition()` e `prepare()` para a condição específica. O percurso genérico OwnTV já recria a fonte, pelo que o benefício de um ramo adicional ainda deve ser demonstrado.
-
-**Novo risco confirmado:** `LivePreviewEngine.isLiveContent` é constante true, e `LiveTuneController.startLocalHls` também usa esse motor para timeshift local. Essa flag não distingue direto do fornecedor de uma posição histórica local. O arquivo do fornecedor segue outro percurso.
-
-**Condição de implementação:** identificar provider-live/local-timeshift/archive e a intenção atual, além do token. `defaultPosition` não significa posição zero nem borda absoluta; respeita a janela e a configuração efetiva.
-
-**Teste:** comparar recuperação genérica e específica; impedir salto indevido de um rewind/arquivo válido e reinício após saída. Sem benefício mensurável, manter a recuperação atual.
-
-### H04 — ligação perdida ou bloqueada
-
-Reconexão, callback por fonte, cancelamento de chamadas/corpos e drain já existem. A [implementação HLS oficial](https://raw.githubusercontent.com/androidx/media/1.11.1/libraries/exoplayer_hls/src/main/java/androidx/media3/exoplayer/hls/playlist/DefaultHlsPlaylistTracker.java) também tem mecanismos internos. Não adicionar um recuperador paralelo.
-
-**Precisão:** «uma recuperação ativa» não significa um único HTTP. Áudio, vídeo, playlist e chave podem legitimamente ter pedidos concorrentes. O objetivo é impedir duas sintonias/reaberturas lógicas concorrentes ou pedidos de uma fonte abandonada.
-
-**Aceitação corrigida:** se o servidor voltar antes do abandono terminal, deve poder recuperar segundo a política atual. Se a App já saiu à lista, não há promessa atual de continuar a tentar. Essa continuação seria outra funcionalidade, opcional e explícita.
-
-**Manter:** drain imediato quando não há recursos pendentes; 300 ms não obrigatórios; fecho local não equivale a libertação remota da conta.
-
-### H05 — espera do servidor e limites
-
-O [RFC 9110](https://www.rfc-editor.org/rfc/rfc9110.html#section-10.2.3) fundamenta Retry-After; a guarda local continua a impedir pedidos antes do prazo. Não foi encontrada violação demonstrada. Desistir da interface antes do fim não é, por si, erro.
-
-**Melhoria:** explicitar se uma contagem é condicional à tentativa ainda ativa; distinguir abertura e recuperação sem alterar valores implicitamente.
-
-**Testes:** número e HTTP-date, prazo maior que o teto automático, nova seleção, volta à lista e duas contas no mesmo servidor. O parser já suporta datas; não criar esse suporte novamente a partir de comentário antigo.
-
-### H06 — alongar o watchdog
-
-A assimetria de progresso do primeiro stall existe, mas não comprova que esperar mais recuperaria. Manter 12 s. Não usar bytes de playlist/chave como prova suficiente.
-
-**Solução apenas condicional:** uma extensão finita por interrupção, se a comparação mostrar recuperação útil e não piorar os casos mortos. Não introduzir refresh externo da playlist, já gerido por Media3.
-
-Relatos [#3337](https://github.com/androidx/media/issues/3337) e [#3362](https://github.com/androidx/media/issues/3362) mostram outras classes de bloqueio de posição/timestamps; não são prova de defeito OwnTV, mas reforçam que «mais tempo» não é solução universal.
-
-### H07 — patch upstream de chunks parciais
-
-O [issue #3362](https://github.com/androidx/media/issues/3362) e o [patch c4b16f9](https://github.com/androidx/media/commit/c4b16f9) sustentam o caso; a correção completa não está na 1.11.1 analisada. O mantenedor indicou disponibilidade inicial em 1.12.0-beta01.
-
-**Condição ignorada que passa a ser explícita:** variante interna do mesmo manifesto HLS não é o mesmo que mudar SIC → SIC HD na lista. Confirmar que o cenário efetivo envolve variantes/chunks parciais antes de o relacionar com a falha.
-
-**Solução:** fixture reproduzível e comparação com versão que contenha o conjunto. Não copiar só o reset de posição nem atualizar para beta automaticamente. A correção distinta do #3311 já está presente; não a confundir com este ramo.
-
-## 5. Transporte e compatibilidade
-
-### T01 — sockets e rotas
-
-O [source OkHttp 5.5.0](https://raw.githubusercontent.com/square/okhttp/parent-5.5.0/okhttp/src/commonJvmAndroid/kotlin/okhttp3/OkHttpClient.kt) confirma a opção herdada `retryOnConnectionFailure(false)`. A alternativa pode tratar sockets reutilizados e falhas de rota/IP/proxy; não é recuperação universal de corpo já entregue ao Media3.
-
-O [relato #8587](https://github.com/lysine-dev/okhttp/issues/8587) discute repetições com efeitos de autenticação em versão antiga, sem prova de defeito em 5.5.0. É contraponto à ativação global, não diagnóstico da OwnTV.
-
-**Solução candidata:** protótipo só no playback, medindo falha antes/depois de o servidor processar o GET, rota, socket antigo e cancelamento. Contar pedidos físicos e sessões lógicas. Preservar provider guards e cliente de catálogo.
-
-### T02 — dividir cookies e cabeçalhos de CDN
-
-**Cookies:** o [ExoPlayer #5975](https://github.com/google/ExoPlayer/issues/5975) documenta necessidade em CloudFront, reconhecida pelo mantenedor. O [#6127](https://github.com/google/ExoPlayer/issues/6127) foi resolvido pela inicialização correta dos cookies, não pela suposição de um novo retry. Nenhum prova que o fornecedor atual precise disso.
-
-**Solução condicionada:** se `Set-Cookie` for necessário nos pedidos seguintes, memória limitada e isolamento por fonte/conta, respeitando validade/domínio/caminho/Secure. Não adicionar depósito global por defeito.
-
-**Cabeçalhos:** o guard de redirects e os novos pedidos para URLs absolutas de segmento não seguem exatamente o mesmo percurso. O [OkHttpDataSource 1.11.1](https://github.com/androidx/media/blob/1.11.1/libraries/datasource_okhttp/src/main/java/androidx/media3/datasource/okhttp/OkHttpDataSource.java) aplica cabeçalhos configurados aos pedidos. Isso exige testar destino autorizado e identidade, não permitir ou recusar tudo.
-
-**Solução condicionada:** fixture origem A, CDN B autorizada que exige Referer e destino C não autorizado. Não relaxar TLS nem criar nova barreira global. O ficheiro de propostas precisava de desenvolver este subcaso, além dos cookies.
-
-## 6. Auditoria das recomendações complementares e dos relatos
-
-| Proposta complementar | Resultado |
+| Itens | Motivo para os retirar das implementações pendentes |
 | --- | --- |
-| Aumentar buffer PCM por causa do #3210 | Não reaplicar: correções relevantes já constam da 1.11.1 |
-| Portar o fix LL-HLS #3311 | Já presente; usar como regressão |
-| Forçar software, PCM ou passthrough para todos | Rejeitar como default universal; manter capacidades e exceções verificadas |
-| Aumentar buffers/purgar memória por suposição | Não aprovar; medir Java/native/graphics primeiro |
-| Reset periódico, ligações de reserva paralelas ou delays fixos novos | Rejeitar para o plano imediato |
-| Fases de testes e integração do Core | Manter, com os limites e correções desta auditoria |
+| A01, A03 | A01 já foi integrada. A03 preserva o tratamento de falhas fatais que o leitor já tem. A validação anterior registou 88 testes dirigidos aprovados. A aceitação física de A01 na Xiaomi continua pendente. [Registo da implementação](IMPLEMENTACAO_A01_AUDIO_2026-11-17.md) · [Contrato Media3](https://developer.android.com/reference/androidx/media3/exoplayer/analytics/AnalyticsListener) |
+| H03, H04, H06 | Já existe recuperação da fonte, gestão de pedidos antigos e vigilância de carregamento prolongado. Um salto genérico à posição atual do direto também afetaria o motor usado para recuo local. Prolongar a espera de 12 s pode atrasar o abandono de uma emissão indisponível. A auditoria não encontrou um caso da OwnTV em que estas mudanças melhorem a recuperação. [Semântica da janela de direto](https://developer.android.com/media/media3/exoplayer/live-streaming) |
+| H07 | O defeito documentado no Media3 envolve transferência parcial seguida de mudança de qualidade **dentro do mesmo manifesto**. Não foi identificada essa sequência na OwnTV. [Caso original e parecer dos mantenedores](https://github.com/androidx/media/issues/3362) |
+| T01, T02 | Não foi identificado um canal cuja falha resulte da política de repetição de sockets ou de um cookie exigido pela origem. O leitor já aceita cabeçalhos explícitos da lista. Alterações globais podem duplicar aberturas ou encaminhar credenciais para outro destino. [Ligações no OkHttp](https://square.github.io/okhttp/features/connections/) · [Exemplo de fornecedor que exige cookies](https://github.com/google/ExoPlayer/issues/5975) |
 
-O [#3210](https://github.com/androidx/media/issues/3210) foi reproduzido pelo mantenedor e levou a correções já integradas. O [#3522](https://github.com/androidx/media/issues/3522) descreve seek/passthrough noutro equipamento/versão; não demonstra o corte periódico AAC/MP2 na Xiaomi.
+**Validação na box.** Para relacionar A02 com um corte audível, é preciso observar uma mudança real de saída e o consumo subsequente da decisão antiga na mesma sessão. Para H01/H02, é preciso observar a recuperação ou o abandono da sintonia na sequência descrita. Nesta revisão foi executado o ensaio JVM de A02. O ensaio integrado HLS e a reprodução prolongada na box continuam por fazer.
 
-Os fóruns [CoreELEC, cortes periódicos](https://discourse.coreelec.org/t/audio-dropouts-every-4-minutes-in-mp4-playback/9787) e [Ugoos, 44,1 kHz](https://discourse.coreelec.org/t/periodical-audio-dropouts-when-outputting-44-1-khz-via-hdmi/54477) contêm observações úteis, mas são outros sistemas de áudio, hardware e condições. Não portar configurações ALSA/driver como patch Android.
+## 4. Revisão de continuidade de 18/11/2026 · Onde uma proteção pode cortar o canal
 
-As referências [Android TV áudio](https://developer.android.com/training/tv/playback/audio-capabilities) e [memória](https://developer.android.com/training/tv/playback/memory) sustentam negociação e medição. Não foi encontrado um relato primário que comprove exatamente a causa Xiaomi descrita.
+Esta revisão acrescenta um caso prioritário de reconexão e três verificações dirigidas. As decisões das secções 1 a 3 mantêm o seu âmbito. Foram verificados o Core fixado pela App e o percurso ExoPlayer do direto. A comparação com mpv abaixo limita-se à política de memória.
 
-## 7. Ordem de execução revista
+### R1 · Um canal recuperado durante a espera pode ser aberto outra vez
 
-1. A01, com regressão A03; ensaio residual A02 e correção mínima necessária, sem rearmar resgates ilimitados.
-2. Fixture conjunta H01/H02; H04/H05 podem terminar validados sem mudança funcional. H03 exige teste próprio e distinção de origem.
-3. H06/H07/T01 separadamente; T02 só perante necessidade demonstrada.
+**Decisão de código confirmada.** Após 12 s em carregamento contínuo, o motor agenda uma reconexão. Se o canal voltar a reproduzir antes de o pedido agendado executar, o evento READY desarma o observador do bloqueio, mas a ação de reconexão já agendada é outra. No momento de execução, a ação verifica a identidade da fonte e a intenção de reproduzir. Ambas continuam verdadeiras quando *o mesmo canal recupera*. A ação pode então executar `reprepare()`, que para o leitor, limpa a fonte e volta a pedi-la. Isto também pode gastar uma tentativa e causar nova recusa num fornecedor com limite de sessões. A verificação existente em `LiveTuneController.advance()` protege uma decisão diferente. [Agendamento e execução em LivePreviewEngine.kt](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LivePreviewEngine.kt) · [Decisão do controlador](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LiveTuneController.kt)
 
-Antes de integrar: atualizar fonte fixada da App, verificar as fontes efetivamente compiladas e executar checks dirigidos. Aceitação física separada, com reprodução prolongada e falhas controladas. Não transformar testes propostos em resultados nem prometer percentagens.
+**Recomendação.** Começar por um teste com relógio controlado: deixar disparar o observador, devolver vídeo com fotogramas novos da mesma fonte durante a espera e contar paragens e reaberturas. O resultado esperado é zero de ambas. Repetir com rádio, exigindo avanço efetivo do áudio após o incidente. No controlo com a origem indisponível, a tentativa prevista tem de acontecer. Se o teste reproduzir a reabertura, invalidar apenas a ação pendente perante progresso novo e confirmado daquela fonte. Conservar os observadores necessários, o orçamento de falhas e a prioridade do comando. Um estado READY isolado, uma imagem antiga ou bytes de playlist não bastam. Esta revisão identificou o percurso por leitura de código; falta executar a sequência no leitor completo.
 
-**Conclusão operacional:** existem soluções oficiais e correções públicas relevantes, mas a maioria já está parcialmente presente ou depende de condições específicas. A auditoria aprova uma correção contratual imediata e restringe as restantes ao menor trabalho demonstravelmente necessário.
+### R2 · Uma superfície de vídeo ausente pode parecer um descodificador bloqueado
+
+O leitor dispõe de três sinais distintos: superfície de vídeo anexada, primeiro fotograma apresentado e notificações de fotogramas prestes a ser apresentados. Ao perder a superfície, `setSurface(null)` limpa a confirmação do primeiro fotograma. Na avaliação de imagem congelada, o motor observa o contador de notificações a cada 2,5 s. Com vídeo selecionado e modo só áudio desligado, três amostras sem alteração podem iniciar recuperação. Ao entrar em READY, o contador é reiniciado. O ramo «sem primeiro vídeo» usa 8 s e o seu próprio indicador. Nenhum destes dois ramos exige explicitamente uma superfície válida. O controlador ainda pode rejeitar uma decisão se houver reprodução confirmada. [Superfície e observador de vídeo](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LivePreviewEngine.kt) · [Critérios de confirmação](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LivePlaybackConfirmation.kt) · [Semântica do callback no Android](https://developer.android.com/reference/androidx/media3/exoplayer/video/VideoFrameMetadataListener)
+
+**Teste decisivo.** Com áudio e posição a avançar, retirar a superfície durante 10 s e voltar a anexá-la ao mesmo canal. Repetir com superfície válida e descodificador efetivamente parado, e passar por pré-visualização → fullscreen → lista. A primeira sequência deve sobreviver sem novo pedido de stream. A segunda deve manter recuperação limitada. Se o falso positivo ocorrer, suspender apenas a contagem dependente da imagem enquanto a superfície for inválida e dar à nova superfície a sua própria referência temporal. Uma imagem estática codificada a 25 fps pode continuar a enviar 25 fotogramas por segundo. O caso relevante é a ausência real de notificações.
+
+### R3 · Dois limites de 8 s podem ter causas diferentes
+
+- **Resposta HTTP.** Depois de o canal já ter reproduzido, `ResponseDeadline(8_000)` aplica um prazo para receber cabeçalhos. Não distingue o pedido normal de um segmento de uma atualização de playlist que espera pelo próximo segmento ou parte. Num servidor local HTTP, com o interceptor compilado do Core e uma URL de playlist com `_HLS_msn`, medimos **213 ms e HTTP 200** no controlo rápido, **8065 ms e timeout** ao atrasar os cabeçalhos e **9189 ms e HTTP 200** com o mesmo atraso e apenas esse limite desligado. O timeout de leitura era 20 s. O ensaio comprova o efeito do limite com cabeçalhos tardios. Não incluiu ExoPlayer completo, negociação real de LL-HLS, box ou fornecedor. Nos canais em teste, a utilização de atualização bloqueante está por confirmar. [Interceptor](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/ResponseDeadline.kt) · [Atualização bloqueante em LL-HLS](https://developer.apple.com/documentation/http-live-streaming/enabling-low-latency-http-live-streaming-hls)
+- **Sincronização de faixas.** O motor configura separadamente 8 s para inicializar o ajuste de timestamps HLS. Uma faixa de áudio separada pode estar à espera da referência da faixa principal depois de receber a resposta HTTP. Alterar um destes limites não altera o outro. Identificar a exceção e o tipo de pedido antes de propor um ajuste. [Configuração da fonte HLS](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LivePreviewEngine.kt) · [API de HlsMediaSource.Factory](https://developer.android.com/reference/androidx/media3/exoplayer/hls/HlsMediaSource.Factory)
+
+**Recomendação.** Se uma captura confirmar atualização bloqueante num canal afetado, testar uma playlist que anuncie essa capacidade, com partes disponíveis, partes atrasadas e origem que nunca responde. Só se o primeiro caso melhorar e o último continuar limitado faz sentido ajustar o prazo daquele tipo de pedido. Para HLS convencional, analisar a duração real dos pedidos e o buffer que ainda restava durante a falha.
+
+### R4 · O arranque pode terminar enquanto uma faixa ainda está a preparar
+
+No primeiro arranque, se o buffer reportado atingir o limiar configurado e o leitor continuar sem READY em quatro observações consecutivas, espaçadas de um segundo, `openWatchdog` chama `failLoad()`. O diagnóstico recolhe a prontidão dos renderizadores, mas a decisão deste ramo depende do buffer e das observações. O modo que espera pela cadência dos segmentos aplica-se ao outro ramo, quando o buffer ainda está abaixo do alvo. [Observador de arranque](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/LivePreviewEngine.kt) · [Lógica para pré-buffer insuficiente](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/PrerollReachability.kt)
+
+**Teste decisivo.** Usar uma playlist com áudio separado e atrasar deliberadamente a preparação de uma faixa ou a primeira imagem, registando prontidão e progresso de cada faixa. Comparar com uma faixa que nunca chega e com um arranque normal. Só ajustar a decisão se a regra atual abandonar um caso que, no mesmo ensaio, abriria dentro do prazo configurado pelo utilizador. Não acrescentar espera a todos os arranques.
+
+### Áudio, codecs e memória · Proteções que merecem ser preservadas
+
+| Área | O que o código faz e decisão |
+| --- | --- |
+| Cortes de som com imagem fluida | A02 já tem reprodução própria. O primeiro avanço de áudio indica que a saída arrancou. Um corte posterior pode ter outra causa. No próximo incidente, correlacionar hora do corte, buffer disponível, alterações de saída/descodificador, faltas de amostras no áudio e pedidos HLS de áudio. Se áudio e vídeo partilharem o mesmo segmento, registar esse facto. O silêncio pode fazer parte do programa. Evitar uma reabertura automática baseada no volume. [Política de áudio](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/AudioOutputPolicy.kt) |
+| Descodificação por software em boxes limitadas | Com preferência de hardware ativa, caixa classificada como limitada e descodificador identificado como software, uma imagem acima dos limites 1920×1080 pode terminar a tentativa, mesmo com descodificador já inicializado. Um descodificador de hardware ou de tipo desconhecido passa nesta regra. Verificar nomes, dimensões e variante selecionada se o registo apontar `decoder_budget declinedSoftware`. Testar uma variante inferior disponível antes de sugerir alargar a política. Conservar proteção nas boxes em que 4K por software excede os recursos. [Condição](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/PlaybackIntent.kt) · [Classificação do equipamento](../../OwnTV_Core/core/src/main/java/tv/own/owntv/core/player/PlayerBudget.kt) |
+| Reserva e cache | No direto ExoPlayer, o perfil equilibrado tem limiares de carregamento de 8 e 10 s, arranque automático de 1,5 s e limiar de retoma de 0 s. O leitor ainda precisa de amostras reproduzíveis. Com segmentos inteiros, a duração em memória pode ultrapassar 10 s. O alvo base do alocador é 16 MiB nas configurações limitadas e 24 MiB nas restantes; não representa toda a memória do processo. A reação à pressão de memória do ExoPlayer altera a construção seguinte. No mpv, a cache do demultiplexador é independente e pode ser reduzida sob pressão. Preservar estas diferenças. Para diagnosticar esgotamento, medir memória do processo, buffer e codec no instante da falha. Ultrapassar o alvo em segundos não justifica purgar dados nem ativar cache de disco no direto. [Cálculo da reserva](../../OwnTV_Core/core/src/main/java/tv/own/owntv/core/settings/LiveLatency.kt) · [Retoma ExoPlayer](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/InitialOnlyLoadControl.kt) · [Cache mpv](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/OwnTVPlayer.kt) |
+| Libertação do canal antigo | A verificação local termina imediatamente se o transporte já fechou. Se houver recursos pendentes, pode esperar por uma notificação e volta a verificar, com limite total de 1,5 s. Ao esgotar esse prazo, o novo pedido pode ser abandonado localmente. Isto explica a origem da mensagem de handover. Num zapping A→B→A, distinguir nos registos «o novo pedido nunca saiu» de «o servidor respondeu com recusa». Um prazo maior no fornecedor não corrige um corpo de resposta que ficou aberto localmente. [Espera local](../../OwnTV_Core/player-core/src/main/java/tv/own/owntv/player/SourceDrain.kt) · [Testes de fecho](../../OwnTV_Core/player-core/src/test/java/tv/own/owntv/player/SourceDrainTest.kt) |
+
+**Prova executada nesta revisão.** O arquivo fixado pela App continua a coincidir com os 1117 ficheiros correspondentes do Core. Foram executados 77 testes JVM em nove classes, com zero falhas, erros ou testes ignorados, e o ensaio HTTP local descrito em R3. Os 77 testes verificam regras existentes; não cobrem a sequência completa R1 ou demonstram causalidade na box. Para aceitação, comparar sessões na mesma box e no mesmo canal com reprodução contínua, uma falha recuperável, uma falha persistente e uma mudança escolhida no comando. Registar pausas audíveis, paragens de imagem, reaberturas efetivas e regressos à lista. Usar apenas identificadores locais e tempos nos registos partilhados.
