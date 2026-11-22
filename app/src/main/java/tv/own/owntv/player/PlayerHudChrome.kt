@@ -319,7 +319,7 @@ internal fun BottomBar(
     onInfo: (() -> Unit)? = null, infoOn: Boolean = false, onReport: (() -> Unit)? = null,
     favorite: Boolean = false, onToggleFavorite: (() -> Unit)? = null,
     onOpenDialog: (HudDialog) -> Unit, onPip: (() -> Unit)?, onAudioMode: (() -> Unit)?,
-    onMultiview: (() -> Unit)? = null, onRecordThis: (() -> Unit)? = null, recordingThis: Boolean = false,
+    onRecordThis: (() -> Unit)? = null, recordingThis: Boolean = false,
     onBack: () -> Unit, modifier: Modifier = Modifier,
 ) {
     // Changes only while rewound into the archive. The film position is read lower still, by
@@ -398,7 +398,7 @@ internal fun BottomBar(
                         // Belongs to the tools cluster; `clusterFor` never hands them to this loop.
                         PlayerControl.BRIGHTNESS, PlayerControl.CHANNEL_LIST, PlayerControl.ENGINE,
                         PlayerControl.ASPECT, PlayerControl.MINI_PLAYER, PlayerControl.AUDIO_ONLY,
-                        PlayerControl.MULTIVIEW, PlayerControl.RECORD, PlayerControl.INFO,
+                        PlayerControl.RECORD, PlayerControl.INFO,
                         PlayerControl.REPORT,
                         -> Unit
                     }
@@ -428,12 +428,6 @@ internal fun BottomBar(
                         // itself (see MpvVideoSurface), GL mode scales internally.
                         PlayerControl.ASPECT ->
                             CtrlButton(OwnTVIcon.ASPECT, active = zoomMode != ZoomMode.FIT, label = stringResource(CoreR.string.player_tool_aspect)) { onOpenDialog(HudDialog.ZOOM) }
-                        // Live only, and only once the user has switched Multiview on: four tiles
-                        // from the channel already playing. Next to the mini-player button, which is
-                        // its nearest relative.
-                        PlayerControl.MULTIVIEW -> if (onMultiview != null) {
-                            CtrlButton(OwnTVIcon.LIST_GRID, label = stringResource(CoreR.string.multiview_button)) { onMultiview() }
-                        }
                         // Record what is already on screen. Present only when the setting is on, so
                         // it never needs to explain itself here — the trade-off was accepted when it
                         // was enabled (D3). Tinted while running, and the label flips, because

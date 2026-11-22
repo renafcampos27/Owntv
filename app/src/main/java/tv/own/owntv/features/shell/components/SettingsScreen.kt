@@ -2168,7 +2168,7 @@ internal fun PlaybackErrorLogDialog(onDismiss: () -> Unit) {
                         exportFailed = path == null
                     }
                 }, style = OwnTVButtonStyle.SECONDARY)
-                if (!entries.isNullOrEmpty()) {
+                if (entries != null) {
                     OwnTVButton(stringResource(CoreR.string.settings_clear_log), onClick = {
                         tv.own.owntv.player.PlaybackErrorLog.clear(context)
                         exportPath = null

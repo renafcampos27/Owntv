@@ -79,6 +79,20 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
     val scrollState = rememberScrollState()
     val scrollScope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
+    val live = player as? LivePreviewEngine
+    val context = androidx.compose.ui.platform.LocalContext.current
+    var savingCut by remember(player) { mutableStateOf(false) }
+    fun markCut() {
+        if (live == null || savingCut) return
+        savingCut = true
+        scrollScope.launch {
+            try {
+                val message = if (live.markPlaybackCut()) tv.own.owntv.R.string.diagnostic_cut_saved
+                    else tv.own.owntv.R.string.diagnostic_cut_failed
+                android.widget.Toast.makeText(context, message, android.widget.Toast.LENGTH_SHORT).show()
+            } finally { savingCut = false }
+        }
+    }
     val configuration = LocalConfiguration.current
     val screenHeight = configuration.screenHeightDp
     val labelWidth = (configuration.screenWidthDp * 0.18f).coerceIn(100f, 144f).dp
@@ -116,6 +130,11 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
                     val direction = when (event.key) {
                         Key.DirectionUp -> -1
                         Key.DirectionDown -> 1
+                        Key.DirectionRight -> {
+                            if (live == null) return@onPreviewKeyEvent false
+                            if (event.type == KeyEventType.KeyUp) markCut()
+                            return@onPreviewKeyEvent true
+                        }
                         Key.DirectionCenter, Key.Enter -> {
                             if (event.type == KeyEventType.KeyUp) { details = !details; scrollScope.launch { scrollState.scrollTo(0) } }
                             return@onPreviewKeyEvent true
@@ -164,9 +183,15 @@ fun StreamInfoOverlay(player: PlaybackEngine, modifier: Modifier = Modifier) {
                 }
             }
         }
-        OwnTVButton(stringResource(if (details) tv.own.owntv.R.string.ui_diagnostic_summary else tv.own.owntv.R.string.ui_diagnostic_details),
-            onClick = { details = !details; scrollScope.launch { scrollState.scrollTo(0) } },
-            modifier = Modifier.focusProperties { canFocus = false })
+        Row {
+            if (live != null) {
+                OwnTVButton(stringResource(tv.own.owntv.R.string.diagnostic_mark_cut), onClick = ::markCut,
+                    modifier = Modifier.focusProperties { canFocus = false })
+            }
+            OwnTVButton(stringResource(if (details) tv.own.owntv.R.string.ui_diagnostic_summary else tv.own.owntv.R.string.ui_diagnostic_details),
+                onClick = { details = !details; scrollScope.launch { scrollState.scrollTo(0) } },
+                modifier = Modifier.focusProperties { canFocus = false })
+        }
         Text(stringResource(tv.own.owntv.R.string.ui_diagnostic_toggle_hint), color = colors.onSurfaceVariant, style = MaterialTheme.typography.labelSmall)
         if (scrollState.maxValue > 0) {
             Text(

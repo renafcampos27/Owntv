@@ -2495,6 +2495,12 @@
     "artifact": "gradle-9.9.0-src.zip"
   },
   {
+    "group": "gradle",
+    "name": "gradle",
+    "version": "9.9.1",
+    "artifact": "gradle-9.9.1-src.zip"
+  },
+  {
     "group": "org.jetbrains.kotlin",
     "name": "kotlin-stdlib",
     "version": "2.4.21",

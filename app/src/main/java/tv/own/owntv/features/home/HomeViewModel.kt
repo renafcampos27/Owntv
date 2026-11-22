@@ -440,7 +440,7 @@ class HomeViewModel(
                     url = resolvedUrl,
                     seekToMs = hero.seekToMs,
                     userAgent = src?.userAgent,
-                    httpHeaders = hero.httpHeaders,
+                    httpHeaders = tv.own.owntv.core.network.StreamHeaders.forSource(src, hero.httpHeaders),
                     sourceId = hero.sourceId,
                     singleSession = singleSession,
                 )

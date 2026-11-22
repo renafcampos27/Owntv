@@ -9,10 +9,13 @@ from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import shutil
 import subprocess
+import time
+from urllib.parse import urlsplit
 from xml.sax.saxutils import escape
 
 
-def create(destination: Path, base_url: str, channel_count: int) -> None:
+def create(destination: Path, base_url: str, channel_count: int, audio_gap: bool = False,
+           duration_seconds: int = 180) -> None:
     ffmpeg = shutil.which("ffmpeg")
     if ffmpeg is None:
         raise SystemExit("ffmpeg is required to create synthetic HLS. Existing content is not changed.")
@@ -21,7 +24,8 @@ def create(destination: Path, base_url: str, channel_count: int) -> None:
     subprocess.run([
         ffmpeg, "-nostdin", "-f", "lavfi", "-i", "testsrc2=size=640x360:rate=25",
         "-f", "lavfi", "-i", "sine=frequency=440:sample_rate=48000",
-        "-t", "180", "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
+        *(["-af", "volume=0:enable='between(t,8,10)'"] if audio_gap else []),
+        "-t", str(duration_seconds), "-c:v", "libx264", "-preset", "ultrafast", "-pix_fmt", "yuv420p",
         "-g", "50", "-c:a", "aac", "-b:a", "96k", "-f", "hls", "-hls_time", "2",
         "-hls_list_size", "0", "-hls_playlist_type", "vod", str(destination / "stream.m3u8"),
     ], check=True)
@@ -45,6 +49,19 @@ def create(destination: Path, base_url: str, channel_count: int) -> None:
     (destination / "epg.xml").write_text("\n".join(xml) + "\n", encoding="utf-8")
 
 
+class SegmentHandler(SimpleHTTPRequestHandler):
+    """Delay only the selected media response. Playlists and other segments stay available."""
+
+    def __init__(self, *args, directory, delay_ms=0, **kwargs):
+        self.delay_ms = delay_ms
+        super().__init__(*args, directory=directory, **kwargs)
+
+    def do_GET(self):
+        if self.delay_ms and urlsplit(self.path).path == "/stream4.ts":
+            time.sleep(self.delay_ms / 1000)
+        super().do_GET()
+
+
 def main() -> None:
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("mode", choices=["create", "serve"])
@@ -52,15 +69,19 @@ def main() -> None:
     parser.add_argument("--base-url", default="http://10.0.2.2:8765")
     parser.add_argument("--channels", type=int, default=240)
     parser.add_argument("--port", type=int, default=8765)
+    parser.add_argument("--audio-gap", action="store_true", help="create two seconds of silent AAC at 8 s; video continues")
+    parser.add_argument("--delay-ms", type=int, default=0, help="serve stream4.ts with this response delay (0-60000 ms)")
     args = parser.parse_args()
+    if not 0 <= args.delay_ms <= 60_000 or (args.mode == "create" and args.delay_ms) or (args.mode == "serve" and args.audio_gap):
+        parser.error("--audio-gap is for create; --delay-ms is for serve and must be 0-60000")
     if args.mode == "create":
         if not 3 <= args.channels <= 1000:
             parser.error("--channels must be between 3 and 1000")
-        create(args.directory, args.base_url, args.channels)
+        create(args.directory, args.base_url, args.channels, args.audio_gap)
     else:
         directory = args.directory.resolve(strict=True)
         # Loopback only. A physical device can use adb reverse and a fixture base URL of 127.0.0.1.
-        server = ThreadingHTTPServer(("127.0.0.1", args.port), partial(SimpleHTTPRequestHandler, directory=str(directory)))
+        server = ThreadingHTTPServer(("127.0.0.1", args.port), partial(SegmentHandler, directory=str(directory), delay_ms=args.delay_ms))
         print(f"Fixture: http://127.0.0.1:{args.port}/channels.m3u", flush=True)
         try:
             server.serve_forever()

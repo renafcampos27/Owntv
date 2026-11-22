@@ -10,5 +10,5 @@
     <string name="settings_live_engine_policy">Pedido: %1$s. Motor de base: %2$s. As escolhas por canal podem substituir esta definição.</string>
     <string name="settings_live_engine_hls_policy">Pedido: %1$s. Motor de base: ExoPlayer, porque Apenas HLS está ativo. A exceção é escolher mpv explicitamente por canal; as escolhas de motor por lista ficam guardadas.</string>
     <string name="settings_live_engine_hls_chip">ExoPlayer · Apenas HLS</string>
-    <string name="multiview_playback_wait_expired">Sem reprodução após 12 segundos. Prima OK para escolher novamente o canal.</string>
+    <string name="playback_retirement_failed">A reprodução anterior ainda não terminou de fechar. Tenta abrir o canal novamente.</string>
 </resources>

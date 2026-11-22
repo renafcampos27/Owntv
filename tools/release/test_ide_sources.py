@@ -33,12 +33,13 @@ class IdeSourcesTest(unittest.TestCase):
         app = Path(__file__).resolve().parents[2]
         dependencies = module.source_dependencies(app / 'gradle/verification-metadata.xml',
                                                   Path(__file__).with_name('ide-source-artifacts.json'))
-        self.assertEqual(413, len(dependencies))
+        self.assertEqual(414, len(dependencies))
         self.assertIn('org.jetbrains.kotlin:kotlin-stdlib:2.4.0:sources@jar', dependencies)
         self.assertIn('org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0:sources@jar', dependencies)
         self.assertIn('gradle:gradle:9.8.0:src@zip', dependencies)
         self.assertIn('gradle:gradle:9.8.2:src@zip', dependencies)
         self.assertIn('gradle:gradle:9.9.0:src@zip', dependencies)
+        self.assertIn('gradle:gradle:9.9.1:src@zip', dependencies)
         self.assertIn('gradle:gradle:9.7.1:src@zip', dependencies)
 
     def test_gradle_distribution_sources_need_their_own_checksum(self):
@@ -122,6 +123,7 @@ class IdeSourcesTest(unittest.TestCase):
             self.assertIn('gradle:gradle:9.8.0:src@zip', dependencies)
             self.assertIn('gradle:gradle:9.8.2:src@zip', dependencies)
             self.assertIn('gradle:gradle:9.9.0:src@zip', dependencies)
+            self.assertIn('gradle:gradle:9.9.1:src@zip', dependencies)
             for coordinate in ['com.google.zxing:core:3.5.4',
                                'com.github.albfernandez:juniversalchardet:2.5.0',
                                'com.google.guava:listenablefuture:1.0']:

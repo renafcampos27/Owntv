@@ -195,20 +195,19 @@ class ProgrammeReminderStore {
 
         /**
          * Resolves the channel id currently being watched live at the live edge, or `null` when
-         * the app is backgrounded, the player engine is not actively playing, multiview is open,
+         * the app is backgrounded, the player engine is not actively playing,
          * or playback is protected (catch-up, timeshift, local recording copy, or VOD).
          */
         fun resolveActiveLiveEdgeChannelId(
             lifecycleState: Lifecycle.State,
             playerFullscreen: Boolean,
-            multiviewOpen: Boolean,
             zapSource: MainSection?,
             enginePlaying: Boolean,
             protectedPlayback: Boolean,
             playingChannelId: Long?,
         ): Long? {
             if (!isForegroundLifecycle(lifecycleState)) return null
-            if (!playerFullscreen || multiviewOpen || zapSource != MainSection.LIVE_TV) return null
+            if (!playerFullscreen || zapSource != MainSection.LIVE_TV) return null
             if (!enginePlaying || protectedPlayback) return null
             return playingChannelId
         }

@@ -93,7 +93,6 @@ class SettingsViewModel(
     // single-connection account the measurement IS the thing that cuts the picture off.
     private val player: tv.own.owntv.player.OwnTVPlayer,
     private val livePreview: tv.own.owntv.player.LivePreviewEngine,
-    private val enginePool: tv.own.owntv.player.LiveEnginePool,
     // Adding a playlist is core's sequence, not a copy of it — see [importState].
     private val importer: SourceImporter,
 ) : ViewModel() {
@@ -305,28 +304,6 @@ class SettingsViewModel(
 
     val autoFrameRate: StateFlow<Boolean> = settings.autoFrameRate
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-    // Multiview (Plan D, feature B). The tile count is never reduced behind the user's back: the
-    // warning above two tiles is asked once and obeyed either way (D5, D12).
-    val multiviewEnabled: StateFlow<Boolean> = settings.multiviewEnabled
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-    val multiviewTiles: StateFlow<Int> = settings.multiviewTiles
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), tv.own.owntv.core.live.DEFAULT_MULTIVIEW_TILES)
-
-    val multiviewWarningAccepted: StateFlow<Boolean> = settings.multiviewWarningAccepted
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), false)
-
-    fun setMultiviewEnabled(enabled: Boolean) {
-        viewModelScope.launch { settings.setMultiviewEnabled(enabled) }
-    }
-
-    fun setMultiviewTiles(tiles: Int, acceptWarning: Boolean = false) {
-        viewModelScope.launch {
-            if (acceptWarning) settings.setMultiviewWarningAccepted(true)
-            settings.setMultiviewTiles(tiles)
-        }
-    }
 
     fun setAutoFrameRate(enabled: Boolean) {
         viewModelScope.launch { settings.setAutoFrameRate(enabled) }
@@ -1322,7 +1299,6 @@ class SettingsViewModel(
     private fun stopAllPlayback() {
         runCatching { player.stop() }
         runCatching { livePreview.stop() }
-        runCatching { enginePool.releaseAll() }
     }
 
     fun dismissSourceTest() {

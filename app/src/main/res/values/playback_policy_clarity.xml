@@ -10,5 +10,5 @@
     <string name="settings_live_engine_policy">Requested: %1$s. Base engine: %2$s. Channel-specific choices can override this.</string>
     <string name="settings_live_engine_hls_policy">Requested: %1$s. Base engine: ExoPlayer because HLS only is enabled. An explicit mpv choice for a channel is the exception; playlist engine choices remain saved.</string>
     <string name="settings_live_engine_hls_chip">ExoPlayer · HLS only</string>
-    <string name="multiview_playback_wait_expired">No playback after 12 seconds. Press OK to choose the channel again.</string>
+    <string name="playback_retirement_failed">The previous playback has not finished closing. Try opening the channel again.</string>
 </resources>

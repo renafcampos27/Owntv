@@ -317,16 +317,6 @@ fun LiveScreen(
             catchupOwner = null
         }
     }
-    // Multiview: whether the menu offers it at all, how many tiles the grid has, and the confirmation
-    // after a channel is kept (null = nothing to say).
-    val liveSettings = koinInject<tv.own.owntv.core.settings.SettingsRepository>()
-    val multiviewEnabled by liveSettings.multiviewEnabled.collectAsStateWithLifecycle(false)
-    val multiviewTiles by liveSettings.multiviewTiles.collectAsStateWithLifecycle(
-        tv.own.owntv.core.live.DEFAULT_MULTIVIEW_TILES,
-    )
-    val multiviewToast = tv.own.owntv.ui.components.rememberInAppToast()
-    // Resolved through resources rather than stringResource: the count is only known inside the click.
-    val multiviewRes = androidx.compose.ui.platform.LocalContext.current.resources
     var contextCategory by remember { mutableStateOf<LiveRailItem?>(null) }
     // The rail row a category menu was opened from, kept after the menu closes so the cursor can go
     // back to that exact row. Held as a key, not an index: a Move changes the row's position.
@@ -998,23 +988,6 @@ fun LiveScreen(
             onScheduleRecording = { manualRecordingChannel = ch; contextChannel = null },
             onLocalTimeshift = { vm.watchWithLocalTimeshift(ch); contextChannel = null; onFullscreen() },
             onPlayExternal = { vm.playExternal(ch); contextChannel = null },
-            // Only offered once Multiview is switched on. Adding is silent apart from the toast: the
-            // grid opens when the user plays a channel, which is the gesture that says "now".
-            onAddToMultiview = if (multiviewEnabled) {
-                {
-                    vm.addToMultiview(ch, multiviewTiles)
-                    multiviewToast.show(
-                        multiviewRes.getString(
-                            CoreR.string.multiview_added,
-                            vm.multiviewSelection.value.size,
-                            multiviewTiles,
-                        ),
-                    )
-                    contextChannel = null
-                }
-            } else {
-                null
-            },
             onMove = { contextChannel = null; enteringMoveMode = true; vm.enterMoveMode(ch, selectedKey) },
             onMoveToCategory = {
                 moveOriginKey = when (val k = selectedKey) {
@@ -1034,8 +1007,6 @@ fun LiveScreen(
             onDismiss = { contextChannel = null },
         )
     }
-
-    tv.own.owntv.ui.components.InAppToast(multiviewToast)
 
     LaunchedEffect(versionChannel, catchupContext) {
         if (versionChannel != null && versionOwner?.let(vm::acceptsCatchup) != true) versionChannel = null
@@ -1229,8 +1200,6 @@ private fun ChannelContextMenu(
     onScheduleRecording: () -> Unit,
     onLocalTimeshift: () -> Unit,
     onPlayExternal: () -> Unit,
-    // Null unless Multiview is switched on: keep this channel for the grid (Plan D, B5).
-    onAddToMultiview: (() -> Unit)?,
     onMove: () -> Unit,
     // "Move to category…" (issue #87): send this channel into a user's combined category.
     onMoveToCategory: () -> Unit,
@@ -1272,9 +1241,6 @@ private fun ChannelContextMenu(
                 // Always offered, regardless of the Live TV external-player default — this is the per-channel
                 // escape hatch for a stream neither in-app engine can open (same as Movies/Series/Downloads).
                 add(MenuAction("play_external", stringResource(CoreR.string.content_play_external_short), OwnTVIcon.PLAY, group = 1, onClick = onPlayExternal))
-                if (onAddToMultiview != null) {
-                    add(MenuAction("add_to_multiview", stringResource(CoreR.string.multiview_add_to), OwnTVIcon.LIST_GRID, group = 1, onClick = onAddToMultiview))
-                }
                 if (canMove) {
                     add(MenuAction("move", stringResource(CoreR.string.content_move), group = 2, onClick = onMove))
                     add(MenuAction("move_to_category", stringResource(CoreR.string.content_move_to_category), group = 2, onClick = onMoveToCategory))

@@ -139,7 +139,6 @@ val appModule = module {
             connectionLimits = get(),
             player = get(),
             livePreview = get(),
-            enginePool = get(),
             importer = get(),
         )
     }

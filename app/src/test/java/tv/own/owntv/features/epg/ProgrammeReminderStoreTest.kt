@@ -241,7 +241,6 @@ class ProgrammeReminderStoreTest {
         val bgLiveChannelId = ProgrammeReminderStore.resolveActiveLiveEdgeChannelId(
             lifecycleState = stoppedState,
             playerFullscreen = true,
-            multiviewOpen = false,
             zapSource = MainSection.LIVE_TV,
             enginePlaying = false,
             protectedPlayback = false,
@@ -307,7 +306,6 @@ class ProgrammeReminderStoreTest {
             ProgrammeReminderStore.resolveActiveLiveEdgeChannelId(
                 lifecycleState = resumed,
                 playerFullscreen = true,
-                multiviewOpen = false,
                 zapSource = MainSection.LIVE_TV,
                 enginePlaying = true,
                 protectedPlayback = false,
@@ -320,7 +318,6 @@ class ProgrammeReminderStoreTest {
             ProgrammeReminderStore.resolveActiveLiveEdgeChannelId(
                 lifecycleState = resumed,
                 playerFullscreen = true,
-                multiviewOpen = false,
                 zapSource = MainSection.LIVE_TV,
                 enginePlaying = false,
                 protectedPlayback = false,
@@ -333,7 +330,6 @@ class ProgrammeReminderStoreTest {
             ProgrammeReminderStore.resolveActiveLiveEdgeChannelId(
                 lifecycleState = resumed,
                 playerFullscreen = true,
-                multiviewOpen = false,
                 zapSource = MainSection.LIVE_TV,
                 enginePlaying = true,
                 protectedPlayback = true,

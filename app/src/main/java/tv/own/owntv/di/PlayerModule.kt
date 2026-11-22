@@ -10,7 +10,7 @@ import tv.own.owntv.player.OwnTVPlayer
 val playerModule = module {
     single {
         val context = androidContext()
-        tv.own.owntv.player.PlaybackMemoryMonitor(context, get(), get(), get()) {
+        tv.own.owntv.player.PlaybackMemoryMonitor(context, get(), get()) {
             coil3.SingletonImageLoader.get(context).memoryCache?.clear()
         }
     }
@@ -36,14 +36,6 @@ val playerModule = module {
     // context, streamingHttp, diagnostics, settings, connectivity (auto-resume when the network
     // returns), playbackPrefs (per-channel zoom/volume)
     single { LivePreviewEngine(androidContext(), get(), get(), get(), get(), get()) }
-    // Multiview's engines. The `single` above stays exactly what it was — the one long-lived engine
-    // behind the Live preview pane and promoted fullscreen playback. The pool builds its own, one per
-    // tile, and is the only thing that owns more than one at a time.
-    single {
-        tv.own.owntv.player.LiveEnginePool {
-            LivePreviewEngine(androidContext(), get(), get(), get(), get(), get())
-        }
-    }
     // Muted ExoPlayer engine for the Home hero preview. The guard asks whether another engine or
     // OpenStreamRegistry claim (excluding the preview's own session) is already streaming, so a
     // one-session provider isn't locked out by the hero preview (F19d).

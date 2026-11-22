@@ -4,6 +4,8 @@ import android.content.Context
 import android.os.SystemClock
 import androidx.work.*
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -14,9 +16,10 @@ import tv.own.owntv.core.epg.EpgLogoStore
 
 internal object ChannelLogoScheduler {
     private const val WORK = "owntv-channel-logos"
-    suspend fun observe(context: Context) {
+    suspend fun observe(context: Context, logos: Flow<Map<String, String>>) {
         GlobalContext.get().get<SourceDao>().observeAll()
             .map { sources -> sources.filter { it.syncLive }.map { Triple(it.id, it.lastSyncAt, it.userAgent) } }.distinctUntilChanged()
+            .combine(logos) { _, _ -> Unit }
             .collect {
                 val request = OneTimeWorkRequestBuilder<ChannelLogoWorker>()
                     .setConstraints(Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).setRequiresStorageNotLow(true).build())
@@ -36,6 +39,8 @@ class ChannelLogoWorker(context: Context, parameters: WorkerParameters) : Corout
         val active = mutableSetOf<String>()
         val start = SystemClock.elapsedRealtime()
         try {
+            // WorkManager may start with no Activity and no displayed logos yet.
+            val icons = EpgLogoStore.observeIcons(koin.get(), koin.get()).first()
             for (source in sources.observeAll().first().filter { it.syncLive }) {
                 var cursor = -1L
                 val generation = source.lastSyncAt ?: source.createdAt
@@ -49,7 +54,7 @@ class ChannelLogoWorker(context: Context, parameters: WorkerParameters) : Corout
                     if (current == null || current.lastSyncAt != source.lastSyncAt) return Result.retry()
                     val page = channels.logoPage(source.id, cursor, 200)
                     if (page.isEmpty()) break
-                    val urls = page.mapNotNull { EpgLogoStore.iconFor(it.epgChannelId) ?: it.logoUrl }
+                    val urls = page.mapNotNull { EpgLogoStore.iconFor(it.epgChannelId, icons) ?: it.logoUrl }
                         .map(String::trim)
                         .filter { it.startsWith("https://", true) || it.startsWith("http://", true) }.distinct()
                     urls.forEach { active.add(ChannelLogoDiskCache.key(it)) }

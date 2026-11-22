@@ -139,9 +139,6 @@ fun PlayerHud(
     onPip: (() -> Unit)? = null,
     // Switch to audio-only mode (stops video decode, surfaces the top-bar now-playing bar). Null hides it.
     onAudioMode: (() -> Unit)? = null,
-    // Live only, and only when Multiview is switched on in Settings: turn this channel into tile 1 of
-    // the grid. Null hides the button entirely — the feature is opt-in (D3's shape, applied to D5).
-    onMultiview: (() -> Unit)? = null,
     // Live only, and only once "Record what I'm watching" is switched on in Settings (D3): record the
     // channel already playing, over the connection already open. Null hides the button entirely —
     // the feature does not exist until the user has accepted the one-connection trade-off.
@@ -511,6 +508,7 @@ fun PlayerHud(
                 }
                 return@onPreviewKeyEvent true
             }
+            if (showInfo && player is LivePreviewEngine && e.key == Key.DirectionRight) return@onPreviewKeyEvent false
             // Configured player shortcuts run inside this original, stable preview handler. Direct
             // tune above has first priority, so number keys keep changing live channels fullscreen.
             if (remoteShortcuts.enabled && !inert && dialog == HudDialog.NONE && !digitsActive) {
@@ -731,7 +729,7 @@ fun PlayerHud(
                     },
                     favorite = favorite, onToggleFavorite = onToggleFavorite,
                     onOpenDialog = { dialog = it }, onPip = onPip, onAudioMode = onAudioMode,
-                    onMultiview = onMultiview, onRecordThis = onRecordThis, recordingThis = recordingThis, onBack = onBack,
+                    onRecordThis = onRecordThis, recordingThis = recordingThis, onBack = onBack,
                     modifier = Modifier.align(Alignment.BottomStart),
                 )
             }

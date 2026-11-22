@@ -5,4 +5,7 @@
     <string name="phase4diagnostics_cpu_summary">CPU do processo: %1$s ms / janela de %2$s s</string>
     <string name="phase4diagnostics_heap_summary">Heaps usados: Java %1$s MiB · nativo %2$s MiB</string>
     <string name="phase4diagnostics_gc_summary">GC: %1$s recolhas · %2$s ms na janela</string>
+    <string name="diagnostic_mark_cut">→ Marcar corte</string>
+    <string name="diagnostic_cut_saved">Último corte guardado no relatório de reprodução</string>
+    <string name="diagnostic_cut_failed">Não foi possível guardar o corte</string>
 </resources>

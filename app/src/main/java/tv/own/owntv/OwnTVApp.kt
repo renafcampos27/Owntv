@@ -108,7 +108,11 @@ class OwnTVApp : Application(), SingletonImageLoader.Factory, androidx.work.Conf
         }
         Perf.stamp("koin-started")
         appScope.launch {
-            try { tv.own.owntv.ui.images.ChannelLogoScheduler.observe(this@OwnTVApp) }
+            try {
+                val koin = GlobalContext.get()
+                val logos = tv.own.owntv.core.epg.EpgLogoStore.start(appScope, koin.get(), koin.get())
+                tv.own.owntv.ui.images.ChannelLogoScheduler.observe(this@OwnTVApp, logos)
+            }
             catch (cancelled: kotlinx.coroutines.CancellationException) { throw cancelled }
             catch (_: Exception) { /* Logo maintenance may retry at next launch; never abort TV startup. */ }
         }

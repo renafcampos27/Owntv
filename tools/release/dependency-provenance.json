@@ -6487,6 +6487,12 @@
     "proof": "https://services.gradle.org/distributions/gradle-9.9.0-src.zip.sha256"
   },
   {
+    "coordinate": "gradle:gradle:9.9.1",
+    "artifact": "gradle-9.9.1-src.zip",
+    "sha256": "3ff6caf155cbf86d6494ffc1b326ea43b7e3a2a937c4f6344ff8f0a29c9a55b9",
+    "proof": "https://services.gradle.org/distributions/gradle-9.9.1-src.zip.sha256"
+  },
+  {
     "coordinate": "io.coil-kt.coil3:coil-android:3.6.0",
     "artifact": "coil-android-3.6.0-sources.jar",
     "sha256": "8066e89ff9de76d2925364d272ca3548c08ef5c29c6f523180b20a25377ce875",

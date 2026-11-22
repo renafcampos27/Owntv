@@ -16,6 +16,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource
 import androidx.paging.cachedIn
+import tv.own.owntv.core.network.StreamHeaders
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
@@ -348,7 +349,7 @@ class LiveViewModel(
                     root
                 }
                 checkCatchup(owner)
-                val headers = tv.own.owntv.core.network.StreamHeaders.decode(channel.httpHeaders).toMutableMap()
+                val headers = StreamHeaders.decode(StreamHeaders.forSource(source, channel.httpHeaders)).toMutableMap()
                 if (headers.keys.none { it.equals("User-Agent", true) }) source.userAgent?.let { headers["User-Agent"] = it }
                 localOwner = owner
                 localClaim = requireNotNull(streams.tryClaim(source, tv.own.owntv.core.live.StreamPurpose.WATCHING))
@@ -1336,72 +1337,6 @@ class LiveViewModel(
         if (fullscreenTuneRequested || liveOnExo.value) return
         cancelChannelRecovery()
         liveTuner.preview(channel, muted = !livePreviewAudio.value)
-    }
-
-    // --- Multiview: channels kept from the browse screen ------------------------------------------
-    // The plan's second entry point: pick two to four channels from the Live list, then press play and
-    // the grid opens already filled. Held here rather than in the shell because the context menu that
-    // fills it and the player that empties it are two different screens.
-    private val _multiviewSelection = MutableStateFlow<List<ChannelEntity>>(emptyList())
-    val multiviewSelection: StateFlow<List<ChannelEntity>> = _multiviewSelection.asStateFlow()
-
-    /** Keep [channel] for the grid, up to [limit] tiles. Adding one twice does nothing. */
-    fun addToMultiview(channel: ChannelEntity, limit: Int) {
-        val current = _multiviewSelection.value
-        if (current.any { it.id == channel.id } || current.size >= limit) return
-        _multiviewSelection.value = current + channel
-    }
-
-    fun clearMultiviewSelection() {
-        _multiviewSelection.value = emptyList()
-    }
-
-    /** The playlist a channel came from, so a caller can ask what it allows (Multiview's tile budget). */
-    fun sourceOf(channel: ChannelEntity): SourceEntity? = sourceById[channel.sourceId]
-
-    /**
-     * Tune [channel] into a Multiview tile's own engine.
-     *
-     * Deliberately routed through here rather than built in the grid: which URL a channel actually
-     * plays is not a property of the channel row. It is the playlist's pre-buffer override, its live
-     * latency, its User-Agent, the channel's own headers and DRM, and — for Stalker — a `cmd` that
-     * has to be resolved to a link per play. All of that already lives here, and a second copy in the
-     * grid would drift the first time one of them changed.
-     */
-    private val tileJobs = HashMap<Int, Job>()
-    private val tileGenerations = HashMap<Int, Long>()
-
-    fun cancelTile(tile: Int) {
-        tileJobs.remove(tile)?.cancel()
-        tileGenerations[tile] = (tileGenerations[tile] ?: 0L) + 1
-    }
-
-    fun releaseAllTiles() {
-        tileJobs.values.forEach { it.cancel() }
-        tileJobs.clear()
-        tileGenerations.clear()
-    }
-
-    fun tuneTile(
-        tile: Int,
-        engine: tv.own.owntv.player.LivePreviewEngine,
-        channel: ChannelEntity,
-        muted: Boolean,
-        isStillActive: (() -> Boolean)? = null,
-    ) {
-        cancelTile(tile)
-        val gen = tileGenerations[tile] ?: 0L
-        tileJobs[tile] = viewModelScope.launch {
-            if (tileGenerations[tile] != gen || isStillActive?.invoke() == false) return@launch
-            liveTuner.playTile(engine, channel, muted) {
-                tileGenerations[tile] == gen && isStillActive?.invoke() != false
-            }
-        }
-    }
-
-    /** Compatibility overload for callers passing (engine, channel, muted). */
-    fun tuneTile(engine: tv.own.owntv.player.LivePreviewEngine, channel: ChannelEntity, muted: Boolean) {
-        tuneTile(-1, engine, channel, muted)
     }
 
     // The ordered channel list the player zaps within (CH+/CH-, D-pad up/down) and shows in the
@@ -2686,7 +2621,7 @@ class LiveViewModel(
                 tv.own.owntv.player.LiveDiagnosticsLog.event(
                     "archive_clock sourceId=${ch.sourceId} zone=${archive.clockZoneId} correctionMin=${archive.requestCorrectionMinutes} requestMs=${archive.requestStartMs} displayMs=${archive.displayStartMs}")
                 checkCatchup(owner)
-                val sourceUa = withContext(Dispatchers.IO) { sourceDao.getById(ch.sourceId)?.userAgent }
+                val source = withContext(Dispatchers.IO) { sourceDao.getById(ch.sourceId) }
                 checkCatchup(owner)
                 player.awaitPlaybackSettings()
                 checkCatchup(owner)
@@ -2704,7 +2639,8 @@ class LiveViewModel(
                 closeLocalTimeshift()
                 checkCatchup(owner)
                 player.play(url, title = ch.name, subtitle = programme.title, logoUrl = ch.displayLogoUrl,
-                    isLive = false, isArchive = true, startPaused = liveTuner.archiveStartPaused, userAgent = sourceUa, httpHeaders = ch.httpHeaders,
+                    isLive = false, isArchive = true, startPaused = liveTuner.archiveStartPaused, userAgent = source?.userAgent,
+                    httpHeaders = StreamHeaders.forSource(source, ch.httpHeaders),
                     contentKey = tv.own.owntv.core.player.catchupPinKey(ch), reconnectProvider = archive.reconnect,
                     manifestType = archive.manifestTypes[url], archiveAlternatives = archive.alternatives,
                     archiveManifestTypes = archive.manifestTypes)
@@ -2890,9 +2826,9 @@ class LiveViewModel(
         if (!tv.own.owntv.core.content.AdultCategoryClassifier.allows(owner.profileId, ch.categoryId, profileDao, categoryDao)) return null
         checkCatchup(owner)
         val tz = withContext(Dispatchers.IO) { settings.resolveCatchupTimeZone() }
-        val (archive, sourceUa) = withContext(Dispatchers.IO) {
+        val (archive, source) = withContext(Dispatchers.IO) {
             val source = sourceDao.getById(ch.sourceId) ?: return@withContext null
-            archiveUrls.resolveTimeshift(ch, source, startMs, offsetSec, tz)?.let { it to source.userAgent }
+            archiveUrls.resolveTimeshift(ch, source, startMs, offsetSec, tz)?.let { it to source }
         } ?: run {
             checkCatchup(owner)
             return null
@@ -2918,8 +2854,8 @@ class LiveViewModel(
             logoUrl = ch.displayLogoUrl,
             isArchive = true,
             startPaused = liveTuner.archiveStartPaused,
-            userAgent = sourceUa,
-            httpHeaders = ch.httpHeaders,
+            userAgent = source.userAgent,
+            httpHeaders = StreamHeaders.forSource(source, ch.httpHeaders),
             rewindStartMs = archive.displayStartMs ?: startMs,
             contentKey = tv.own.owntv.core.player.catchupPinKey(ch),
             reconnectProvider = archive.reconnect,

@@ -5,4 +5,7 @@
     <string name="phase4diagnostics_cpu_summary">Process CPU: %1$s ms / %2$s s window</string>
     <string name="phase4diagnostics_heap_summary">Allocated heaps: Java %1$s MiB · native %2$s MiB</string>
     <string name="phase4diagnostics_gc_summary">GC: %1$s collections · %2$s ms in window</string>
+    <string name="diagnostic_mark_cut">→ Mark cut</string>
+    <string name="diagnostic_cut_saved">Last cut saved to playback report</string>
+    <string name="diagnostic_cut_failed">Could not save cut</string>
 </resources>

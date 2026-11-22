@@ -230,7 +230,6 @@ fun AddSourceScreen(
     val connectionLimits: tv.own.owntv.core.live.ConnectionLimits = koinInject()
     val player: tv.own.owntv.player.OwnTVPlayer = koinInject()
     val livePreview: tv.own.owntv.player.LivePreviewEngine = koinInject()
-    val enginePool: tv.own.owntv.player.LiveEnginePool = koinInject()
 
     fun formSource(): SourceEntity {
         fun opt(value: String) = value.trim().takeIf { it.isNotBlank() }
@@ -295,7 +294,6 @@ fun AddSourceScreen(
         measureJob = scope.launch {
             runCatching { player.stop() }
             runCatching { livePreview.stop() }
-            runCatching { enginePool.releaseAll() }
             sourceTest = SourceTestUi.Measuring(label, tv.own.owntv.core.live.ProbeProgress(1, 1, tv.own.owntv.core.live.MAX_PROBE_STREAMS), source.id, revision)
             val limit = connectionLimits.measureAndStore(source, force = true) { progress ->
                 if (sourceTestToken === token && sourceTest is SourceTestUi.Measuring) sourceTest = SourceTestUi.Measuring(label, progress, source.id, revision)
